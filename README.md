@@ -1,4 +1,5 @@
 [![CI Status](https://github.com/se-edu/addressbook-level3/workflows/Java%20CI/badge.svg)](https://github.com/se-edu/addressbook-level3/actions)
+[![codecov](https://codecov.io/github/AY2627-CS2103T-F15-2/tp/branch/master/graph/badge.svg?token=YBWSCFRIVB)](https://codecov.io/github/AY2627-CS2103T-F15-2/tp)
 
 # Laplace
 
