@@ -18,16 +18,16 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[github](https://github.com/wtvlol)]
 
 * Role: CS2103T Team Member
+* Responsibilities: Some Features
+### Arjo
 
-### Jane Doe
+<img src="images/arjodas.png" width="200px">
 
-<img src="images/johndoe.png" width="200px">
+[[github](https://github.com/ArjoDas)]
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+* Role: Team Member
+* Responsibilities: Some Features
 
-* Role: Team Lead
-* Responsibilities: UI
 
 ### Johnny Doe
 
@@ -48,12 +48,11 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Developer
 * Responsibilities: Dev Ops + Threading
 
-### James Doe
+### Choong Jen Ern Isaac
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/isaaaxe.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](https://github.com/isaaaxe)]
 
-* Role: Developer
-* Responsibilities: UI
+* Role: Integration, CS2103/T student
+* In charge of: Undo
