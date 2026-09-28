@@ -11,13 +11,15 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 ## Project team
 
-### Keith Chia Wen Kai
+### John Doe
 
-<img src="images/wtvlol.png" width="200px">
+<img src="images/johndoe.png" width="200px">
 
-[[github](https://github.com/wtvlol)]
+[[homepage](http://www.comp.nus.edu.sg/~damithch)]
+[[github](https://github.com/johndoe)]
+[[portfolio](team/johndoe.md)]
 
-* Role: CS2103T Team Member
+* Role: Project Advisor
 
 ### Jane Doe
 
