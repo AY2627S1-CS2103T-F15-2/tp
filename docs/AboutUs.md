@@ -11,7 +11,7 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 ## Project team
 
-### Keith Chia
+### Keith Chia Wen Kai
 
 <img src="images/wtvlol.png" width="200px">
 
