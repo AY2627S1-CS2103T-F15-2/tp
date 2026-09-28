@@ -11,6 +11,44 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 ## Project team
 
+### Arjo
+
+<img src="images/arjodas.png" width="200px">
+
+[[github](https://github.com/ArjoDas)]
+
+* Role: Team Member
+* Responsibilities: Some Features
+
+### Jane Doe
+
+<img src="images/johndoe.png" width="200px">
+
+[[github](http://github.com/johndoe)]
+[[portfolio](team/johndoe.md)]
+
+* Role: Team Lead
+* Responsibilities: UI
+
+### Johnny Doe
+
+<img src="images/johndoe.png" width="200px">
+
+[[github](http://github.com/johndoe)] [[portfolio](team/johndoe.md)]
+
+* Role: Developer
+* Responsibilities: Data
+
+### Jean Doe
+
+<img src="images/johndoe.png" width="200px">
+
+[[github](http://github.com/johndoe)]
+[[portfolio](team/johndoe.md)]
+
+* Role: Developer
+* Responsibilities: Dev Ops + Threading
+
 ### Choong Jen Ern Isaac
 
 <img src="images/isaaaxe.png" width="200px">
