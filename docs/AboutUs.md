@@ -57,7 +57,7 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Integration, CS2103/T student
 * In charge of: Undo
 
-### Johnny Doe
+### Nguyen Anh Duy
 
 <img src="images/duynguyen21007.png" width="200px">
 
