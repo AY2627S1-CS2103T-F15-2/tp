@@ -39,6 +39,7 @@
     },
     {
       "src": "DeveloperGuide.md",
+      "title": "Developer Guide",
       "headings": {
         "laplace-developer-guide": "Laplace Developer Guide",
         "acknowledgements": "Acknowledgements",
