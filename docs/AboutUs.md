@@ -25,8 +25,8 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 [[github](https://github.com/ArjoDas)]
 
-* Role: Team Member
-* Responsibilities: Some Features
+* Role: Code quality
+* Responsibilities: Coding standards and code reviews
 
 
 ### Johnny Doe
