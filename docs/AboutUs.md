@@ -18,8 +18,17 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 [[github](https://github.com/keegan4)]
 
-* Role: Code Generator
+* Role: CS2103T Team Member
 * Responsibilities: Testing
+
+### Keith Chia Wen Kai
+
+<img src="images/wtvlol.png" width="200px">
+
+[[github](https://github.com/wtvlol)]
+
+* Role: CS2103T Team Member
+* Responsibilities: Some Features
 
 ### Arjo
 
@@ -30,34 +39,8 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Team Member
 * Responsibilities: Some Features
 
-### Jane Doe
 
-<img src="images/johndoe.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
-
-* Role: Team Lead
-* Responsibilities: UI
-
-### Johnny Doe
-
-<img src="images/johndoe.png" width="200px">
-
-[[github](http://github.com/johndoe)] [[portfolio](team/johndoe.md)]
-
-* Role: Developer
-* Responsibilities: Data
-
-### Jean Doe
-
-<img src="images/johndoe.png" width="200px">
-
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
-
-* Role: Developer
-* Responsibilities: Dev Ops + Threading
 
 ### Choong Jen Ern Isaac
 
