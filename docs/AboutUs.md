@@ -40,6 +40,15 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Responsibilities: Some Features
 
 
+### Nicholas Vun
+
+<img src="images/kimjunkuno.png" width="200px">
+
+[[github](http://github.com/kimjunkuno)]
+[[portfolio](team/kimjunkuno.md)]
+
+*Role: Team Member
+*Responsibilities: Testing
 
 
 ### Choong Jen Ern Isaac
