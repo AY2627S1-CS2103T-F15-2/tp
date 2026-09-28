@@ -1,10 +1,10 @@
 ---
   layout: default.md
-  title: "Developer Guide"
-  pageNav: 3
+    title: "Developer Guide"
+    pageNav: 3
 ---
 
-# AB-3 Developer Guide
+# Laplace Developer Guide
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -238,13 +238,13 @@ The following activity diagram summarizes what happens when a user executes a ne
 **Aspect: How undo & redo execute:**
 
 * **Alternative 1 (current choice):** Saves the entire address book.
-  * Pros: Easy to implement.
-  * Cons: May have performance issues in terms of memory usage.
+    * Pros: Easy to implement.
+    * Cons: May have performance issues in terms of memory usage.
 
 * **Alternative 2:** Individual command knows how to undo/redo by
   itself.
-  * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
-  * Cons: We must ensure that the implementation of each individual command is correct.
+    * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
+    * Cons: We must ensure that the implementation of each individual command is correct.
 
 _{more aspects and alternatives to be added}_
 
@@ -363,11 +363,11 @@ Use case ends.
 **Extensions**
 
 * 2a. Required details are missing or invalid.
-  * 2a1. Laplace identifies the invalid input and explains the accepted format.
-  * Use case resumes at step 1.
+    * 2a1. Laplace identifies the invalid input and explains the accepted format.
+    * Use case resumes at step 1.
 * 2b. The NUS ID already exists, ignoring letter case.
-  * 2b1. Laplace rejects the duplicate and identifies the existing member.
-  * Use case resumes at step 1.
+    * 2b1. Laplace rejects the duplicate and identifies the existing member.
+    * Use case resumes at step 1.
 
 Names, phone numbers, or email addresses shared by different NUS IDs do not by themselves constitute duplicates.
 
@@ -386,11 +386,11 @@ Use case ends.
 **Extensions**
 
 * 2a. Required details are missing or invalid.
-  * 2a1. Laplace explains what needs correcting.
-  * Use case resumes at step 1.
+    * 2a1. Laplace explains what needs correcting.
+    * Use case resumes at step 1.
 * 2b. Laplace cannot generate a unique identifier.
-  * 2b1. Laplace reports the failure without adding an item.
-  * Use case ends.
+    * 2b1. Laplace reports the failure without adding an item.
+    * Use case ends.
 
 Matching descriptions are permitted: each physical unit receives its own UUID. An item in `DAMAGED` or `UNDER_REPAIR` condition may be registered but is unavailable for issue.
 
@@ -410,20 +410,20 @@ Use case ends.
 **Extensions**
 
 * 2a. The member identifier is invalid or no matching member exists.
-  * 2a1. Laplace explains the problem.
-  * Use case resumes at step 1.
+    * 2a1. Laplace explains the problem.
+    * Use case resumes at step 1.
 * 2b. No equipment is available for issue.
-  * 2b1. Laplace shows that no suitable item is available.
-  * Use case ends.
+    * 2b1. Laplace shows that no suitable item is available.
+    * Use case ends.
 * 4a. A supplied identifier is invalid or does not identify an existing record.
-  * 4a1. Laplace identifies the invalid or missing reference.
-  * Use case resumes at step 3.
+    * 4a1. Laplace identifies the invalid or missing reference.
+    * Use case resumes at step 3.
 * 4b. The item already has an open loan, or its condition is `DAMAGED` or `UNDER_REPAIR`.
-  * 4b1. Laplace refuses the assignment and gives the reason, including the current holder when applicable.
-  * Use case resumes at step 3.
+    * 4b1. Laplace refuses the assignment and gives the reason, including the current holder when applicable.
+    * Use case resumes at step 3.
 * 4c. A date is invalid, the assignment date is after today, or the expected return date precedes assignment.
-  * 4c1. Laplace explains the violated date rule.
-  * Use case resumes at step 3.
+    * 4c1. Laplace explains the violated date rule.
+    * Use case resumes at step 3.
 
 #### UC04: Record an equipment return
 
@@ -441,17 +441,17 @@ Use case ends.
 **Extensions**
 
 * 2a. The UUID is invalid or no item matches it.
-  * 2a1. Laplace explains the problem.
-  * Use case resumes at step 1.
+    * 2a1. Laplace explains the problem.
+    * Use case resumes at step 1.
 * 2b. The item has no open loan.
-  * 2b1. Laplace reports that the item is not currently assigned.
-  * Use case ends.
+    * 2b1. Laplace reports that the item is not currently assigned.
+    * Use case ends.
 * 4a. The supplied item reference is invalid, missing, or has no open loan, including an already recorded return.
-  * 4a1. Laplace rejects the request and explains the problem.
-  * Use case resumes at step 1.
+    * 4a1. Laplace rejects the request and explains the problem.
+    * Use case resumes at step 1.
 * 4b. The actual return date is invalid, before assignment, or after today.
-  * 4b1. Laplace explains the allowed date range.
-  * Use case resumes at step 3.
+    * 4b1. Laplace explains the allowed date range.
+    * Use case resumes at step 3.
 
 Passing the expected return date never closes a loan automatically. A return after the expected date is valid. After return, only items in `GOOD` or `FAIR` condition become available.
 
@@ -471,13 +471,13 @@ Use case ends.
 **Extensions**
 
 * 2a. The requested list is empty.
-  * Use case ends.
+    * Use case ends.
 * 4a. The identifier is invalid or no matching record exists.
-  * 4a1. Laplace reports the problem without deleting anything.
-  * Use case resumes at step 3.
+    * 4a1. Laplace reports the problem without deleting anything.
+    * Use case resumes at step 3.
 * 4b. The member still holds equipment, or the equipment item is currently assigned.
-  * 4b1. Laplace refuses deletion and explains that the outstanding items must first be returned.
-  * Use case ends without deletion. The EXCO member may complete UC04 and start UC05 again.
+    * 4b1. Laplace refuses deletion and explains that the outstanding items must first be returned.
+    * Use case ends without deletion. The EXCO member may complete UC04 and start UC05 again.
 
 This is the MVP deletion policy. The future recovery and history stories require the retention changes described under Product scope.
 
@@ -497,16 +497,16 @@ Use case ends.
 **Extensions**
 
 * 2a. The file is missing, unreadable, or in an unsupported format.
-  * 2a1. Laplace explains why it cannot produce a preview.
-  * Use case resumes at step 1.
+    * 2a1. Laplace explains why it cannot produce a preview.
+    * Use case resumes at step 1.
 * 2b. Records are invalid, identifiers conflict, or the proposed changes would break loan references.
-  * 2b1. Laplace identifies the affected records and reasons and prevents confirmation until they are resolved.
-  * Use case resumes at step 1 after the EXCO member corrects or chooses another file.
+    * 2b1. Laplace identifies the affected records and reasons and prevents confirmation until they are resolved.
+    * Use case resumes at step 1 after the EXCO member corrects or chooses another file.
 * 3a. The EXCO member cancels.
-  * Use case ends with current data unchanged.
+    * Use case ends with current data unchanged.
 * 4a. The source file or current dataset has changed since the preview.
-  * 4a1. Laplace invalidates the old preview without applying it.
-  * Use case resumes at step 2.
+    * 4a1. Laplace invalidates the old preview without applying it.
+    * Use case resumes at step 2.
 
 #### UC07: Restore a complete backup
 
@@ -525,13 +525,13 @@ Use case ends.
 **Extensions**
 
 * 2a. The snapshot is unreadable, incompatible, incomplete, or contains invalid records or broken loan references.
-  * 2a1. Laplace rejects it and explains the problem without replacing current data.
-  * Use case resumes at step 1.
+    * 2a1. Laplace rejects it and explains the problem without replacing current data.
+    * Use case resumes at step 1.
 * 3a. The EXCO member cancels replacement.
-  * Use case ends with current data unchanged.
+    * Use case ends with current data unchanged.
 * 4a. The snapshot has changed since validation.
-  * 4a1. Laplace discards the previous validation result without replacing current data.
-  * Use case resumes at step 2.
+    * 4a1. Laplace discards the previous validation result without replacing current data.
+    * Use case resumes at step 2.
 
 #### UC08: Undo a mistaken change
 
@@ -548,14 +548,14 @@ Use case ends.
 **Extensions**
 
 * 2a. There is no action available to undo.
-  * 2a1. Laplace explains that no undo is available and leaves the data unchanged.
-  * Use case ends.
+    * 2a1. Laplace explains that no undo is available and leaves the data unchanged.
+    * Use case ends.
 * 3a. The EXCO member decides the undo was a mistake and requests redo before any new data-changing action.
-  * 3a1. Laplace reapplies and saves the undone action and shows the resulting records.
-  * Use case ends.
+    * 3a1. Laplace reapplies and saves the undone action and shows the resulting records.
+    * Use case ends.
 * 3b. The EXCO member requests redo after a new successful data-changing action has invalidated it.
-  * 3b1. Laplace explains that no redo is available and leaves the current data unchanged.
-  * Use case ends.
+    * 3b1. Laplace explains that no redo is available and leaves the current data unchanged.
+    * Use case ends.
 
 A new successful data-changing action after undo invalidates redo. Read-only actions and failed commands do not add undo entries or invalidate redo. The future retention policy must support restoring any deleted records covered by undo.
 
@@ -621,16 +621,16 @@ testers are expected to do more *exploratory* testing.
 
 1. Initial launch
 
-   1. Download the JAR file and copy it into an empty folder.
+    1. Download the JAR file and copy it into an empty folder.
 
-   1. Double-click the JAR file.<br>
-      Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+    1. Double-click the JAR file.<br>
+       Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
 
 1. Saving window preferences
 
-   1. Resize the window to an optimal size. Move the window to a different location. Close the window.
+    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+    1. Relaunch the app by double-clicking the JAR file.<br>
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
@@ -639,16 +639,16 @@ testers are expected to do more *exploratory* testing.
 
 1. Deleting a person while all persons are being shown
 
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+    1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
 
-   1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+    1. Test case: `delete 1`<br>
+       Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
 
-   1. Test case: `delete 0`<br>
-      Expected: No person is deleted. The status message shows error details.
+    1. Test case: `delete 0`<br>
+       Expected: No person is deleted. The status message shows error details.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+    1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
+       Expected: Similar to previous.
 
 1. _{ more test cases … }_
 
@@ -656,6 +656,6 @@ testers are expected to do more *exploratory* testing.
 
 1. Dealing with missing/corrupted data files
 
-   1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+    1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
 
 1. _{ more test cases … }_
