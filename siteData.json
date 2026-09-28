@@ -10,6 +10,7 @@
         "keegan-gan": "Keegan Gan",
         "keith-chia-wen-kai": "Keith Chia Wen Kai",
         "arjo": "Arjo",
+        "nicholas-vun": "Nicholas Vun",
         "choong-jen-ern-isaac": "Choong Jen Ern Isaac",
         "nguyen-anh-duy": "Nguyen Anh Duy"
       },
@@ -38,9 +39,8 @@
     },
     {
       "src": "DeveloperGuide.md",
-      "title": "Developer Guide",
       "headings": {
-        "ab-3-developer-guide": "AB-3 Developer Guide",
+        "laplace-developer-guide": "Laplace Developer Guide",
         "acknowledgements": "Acknowledgements",
         "setting-up-getting-started": "Setting up, getting started",
         "design": "Design",
@@ -136,8 +136,8 @@
       "headingKeywords": {}
     },
     {
-      "src": "team/johndoe.md",
-      "title": "John Doe's Project Portfolio Page",
+      "src": "team/kimjunkuno.md",
+      "title": "Nicholas' Project Portfolio Page",
       "headings": {
         "project-addressbook-level-3": "Project: AddressBook Level 3"
       },
