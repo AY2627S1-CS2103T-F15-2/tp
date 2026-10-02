@@ -57,8 +57,8 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 [[github](https://github.com/isaaaxe)]
 
-* Role: Integration, CS2103/T student
-* In charge of: Undo
+* Role: Integration, Fork CEO
+* In charge of: Undo, 
 
 ### Nguyen Anh Duy
 
