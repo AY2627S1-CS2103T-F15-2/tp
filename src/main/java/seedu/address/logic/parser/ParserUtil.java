@@ -3,8 +3,10 @@ package seedu.address.logic.parser;
 import static java.util.Objects.requireNonNull;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -127,30 +129,68 @@ public class ParserUtil {
     }
 
     /**
-     * Parses a NUS ID for a Laplace member command.
+     * Parses a NUS ID, trimming surrounding whitespace and normalizing case in {@code NusId}.
+     *
+     * @throws NullPointerException if {@code value} is null, following the AB3 value-parser contract.
+     * @throws ParseException if {@code value} is not a valid NUS ID.
      */
     public static NusId parseNusId(String value) throws ParseException {
-        throw new UnsupportedOperationException("NUS ID parsing is not implemented");
+        requireNonNull(value);
+        String trimmedValue = value.trim();
+        if (!NusId.isValidNusId(trimmedValue)) {
+            throw new ParseException(NusId.MESSAGE_CONSTRAINTS);
+        }
+        return new NusId(trimmedValue);
     }
 
     /**
-     * Parses an equipment UUID for a Laplace equipment or loan command.
+     * Parses an equipment UUID using Java UUID syntax after trimming surrounding whitespace.
+     *
+     * @throws NullPointerException if {@code value} is null.
+     * @throws ParseException if {@code value} is not accepted by {@link UUID#fromString(String)}.
      */
     public static UUID parseUuid(String value) throws ParseException {
-        throw new UnsupportedOperationException("UUID parsing is not implemented");
+        requireNonNull(value);
+        try {
+            return UUID.fromString(value.trim());
+        } catch (IllegalArgumentException e) {
+            throw new ParseException("Equipment UUID must use Java UUID syntax.", e);
+        }
     }
 
     /**
-     * Parses an ISO-8601 calendar date for a Laplace loan command.
+     * Parses a calendar date in {@code uuuu-MM-dd} format after trimming surrounding whitespace.
+     * Date ordering and restrictions relative to today belong to the domain and business commands.
+     *
+     * @throws NullPointerException if {@code value} is null.
+     * @throws ParseException if {@code value} is not a valid calendar date in the required format.
      */
     public static LocalDate parseDate(String value) throws ParseException {
-        throw new UnsupportedOperationException("Date parsing is not implemented");
+        requireNonNull(value);
+        String trimmedValue = value.trim();
+        if (!trimmedValue.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            throw new ParseException("Date must be a valid calendar date in uuuu-MM-dd format.");
+        }
+        try {
+            return LocalDate.parse(trimmedValue);
+        } catch (DateTimeParseException e) {
+            throw new ParseException("Date must be a valid calendar date in uuuu-MM-dd format.", e);
+        }
     }
 
     /**
-     * Parses an equipment condition for a Laplace equipment command.
+     * Parses a case-insensitive condition after trimming whitespace; spaces and hyphens become underscores.
+     *
+     * @throws NullPointerException if {@code value} is null.
+     * @throws ParseException if {@code value} does not identify a declared condition.
      */
     public static Condition parseCondition(String value) throws ParseException {
-        throw new UnsupportedOperationException("Condition parsing is not implemented");
+        requireNonNull(value);
+        String normalizedValue = value.trim().toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
+        try {
+            return Condition.valueOf(normalizedValue);
+        } catch (IllegalArgumentException e) {
+            throw new ParseException("Condition must be GOOD, FAIR, DAMAGED or UNDER_REPAIR.", e);
+        }
     }
 }

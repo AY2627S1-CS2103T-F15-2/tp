@@ -36,17 +36,6 @@ public class LaplaceScaffoldParserTest {
     }
 
     @Test
-    public void parserUtilScaffold_throwsUnsupportedOperationException() {
-        new ParserUtil();
-
-        assertThrows(UnsupportedOperationException.class, () -> ParserUtil.parseNusId("A0123456X"));
-        assertThrows(UnsupportedOperationException.class, () ->
-                ParserUtil.parseUuid("550e8400-e29b-41d4-a716-446655440000"));
-        assertThrows(UnsupportedOperationException.class, () -> ParserUtil.parseDate("2026-10-06"));
-        assertThrows(UnsupportedOperationException.class, () -> ParserUtil.parseCondition("GOOD"));
-    }
-
-    @Test
     public void familyParserScaffolds_throwUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class, () -> new MemberCommandParser().parse("list"));
         assertThrows(UnsupportedOperationException.class, () -> new EquipmentCommandParser().parse("list"));
