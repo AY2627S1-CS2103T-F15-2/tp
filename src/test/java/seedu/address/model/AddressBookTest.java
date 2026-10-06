@@ -82,9 +82,48 @@ public class AddressBookTest {
     }
 
     @Test
+    public void laplaceScaffoldOperations_throwUnsupportedOperationException() {
+        assertThrows(UnsupportedOperationException.class, () -> addressBook.hasMember(null));
+        assertThrows(UnsupportedOperationException.class, () -> addressBook.findMember(null));
+        assertThrows(UnsupportedOperationException.class, () -> addressBook.addMember(null));
+        assertThrows(UnsupportedOperationException.class, () -> addressBook.removeMember(null));
+        assertThrows(UnsupportedOperationException.class, () -> addressBook.hasEquipment(null));
+        assertThrows(UnsupportedOperationException.class, () -> addressBook.findEquipment(null));
+        assertThrows(UnsupportedOperationException.class, () -> addressBook.addEquipment(null));
+        assertThrows(UnsupportedOperationException.class, () -> addressBook.removeEquipment(null));
+        assertThrows(UnsupportedOperationException.class, () -> addressBook.addLoan(null));
+        assertThrows(UnsupportedOperationException.class, () -> addressBook.findOpenLoan(null));
+        assertThrows(UnsupportedOperationException.class, () -> addressBook.findOpenLoansForMember(null));
+        assertThrows(UnsupportedOperationException.class, () -> addressBook.closeLoan(null, null));
+        assertThrows(UnsupportedOperationException.class, addressBook::getMemberList);
+        assertThrows(UnsupportedOperationException.class, addressBook::getEquipmentList);
+        assertThrows(UnsupportedOperationException.class, addressBook::getLoanList);
+    }
+
+    @Test
+    public void readOnlyLaplaceScaffoldOperations_throwUnsupportedOperationException() {
+        ReadOnlyAddressBook readOnlyAddressBook = new AddressBookStub(List.of());
+
+        assertThrows(UnsupportedOperationException.class, readOnlyAddressBook::getMemberList);
+        assertThrows(UnsupportedOperationException.class, readOnlyAddressBook::getEquipmentList);
+        assertThrows(UnsupportedOperationException.class, readOnlyAddressBook::getLoanList);
+    }
+
+    @Test
     public void toStringMethod() {
         String expected = AddressBook.class.getCanonicalName() + "{persons=" + addressBook.getPersonList() + "}";
         assertEquals(expected, addressBook.toString());
+    }
+
+    @Test
+    public void equalsAndHashCode() {
+        AddressBook copy = new AddressBook(addressBook);
+
+        assertTrue(addressBook.equals(addressBook));
+        assertEquals(addressBook, copy);
+        assertEquals(addressBook.hashCode(), copy.hashCode());
+        assertFalse(addressBook.equals(null));
+        assertFalse(addressBook.equals("address book"));
     }
 
     /**

@@ -74,6 +74,26 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void laplaceScaffoldOperations_throwUnsupportedOperationException() {
+        assertThrows(UnsupportedOperationException.class, () -> modelManager.hasMember(null));
+        assertThrows(UnsupportedOperationException.class, () -> modelManager.findMember(null));
+        assertThrows(UnsupportedOperationException.class, () -> modelManager.addMember(null));
+        assertThrows(UnsupportedOperationException.class, () -> modelManager.deleteMember(null));
+        assertThrows(UnsupportedOperationException.class, modelManager::getMemberList);
+        assertThrows(UnsupportedOperationException.class, () -> modelManager.hasEquipment(null));
+        assertThrows(UnsupportedOperationException.class, () -> modelManager.findEquipment(null));
+        assertThrows(UnsupportedOperationException.class, () -> modelManager.addEquipment(null));
+        assertThrows(UnsupportedOperationException.class, () -> modelManager.deleteEquipment(null));
+        assertThrows(UnsupportedOperationException.class, modelManager::getEquipmentList);
+        assertThrows(UnsupportedOperationException.class, () -> modelManager.addLoan(null));
+        assertThrows(UnsupportedOperationException.class, () -> modelManager.findOpenLoan(null));
+        assertThrows(UnsupportedOperationException.class, () -> modelManager.findOpenLoansForMember(null));
+        assertThrows(UnsupportedOperationException.class, () -> modelManager.closeLoan(null, null));
+        assertThrows(UnsupportedOperationException.class, modelManager::getLoanList);
+        assertThrows(UnsupportedOperationException.class, () -> modelManager.getAvailability(null));
+    }
+
+    @Test
     public void equals() {
         AddressBook addressBook = new AddressBookBuilder().withPerson(ALICE).withPerson(BENSON).build();
         AddressBook differentAddressBook = new AddressBook();
