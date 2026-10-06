@@ -55,6 +55,33 @@ public class LoanTest {
     }
 
     @Test
+    public void constructor_expectedDateBeforeAssignedDate_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () ->
+                new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, ASSIGNED_DATE.minusDays(1), null));
+    }
+
+    @Test
+    public void constructor_returnedDateBeforeAssignedDate_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () ->
+                new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE, ASSIGNED_DATE.minusDays(1)));
+    }
+
+    @Test
+    public void withReturnedDate_returnsClosedCopyAndLeavesOriginalOpen() {
+        Loan loan = new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE, null);
+
+        Loan closedLoan = loan.withReturnedDate(RETURNED_DATE);
+
+        assertTrue(loan.isOpen());
+        assertFalse(closedLoan.isOpen());
+        assertEquals(Optional.of(RETURNED_DATE), closedLoan.getReturnedDate());
+        assertEquals(UUID_ONE, closedLoan.getEquipmentUuid());
+        assertEquals(NUS_ID, closedLoan.getMemberNusId());
+        assertEquals(ASSIGNED_DATE, closedLoan.getAssignedDate());
+        assertEquals(EXPECTED_DATE, closedLoan.getExpectedReturnDate());
+    }
+
+    @Test
     public void equals() {
         Loan loan = new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE, null);
         Loan copy = new Loan(UUID_ONE, new NusId("a0123456x"), ASSIGNED_DATE, EXPECTED_DATE, null);
