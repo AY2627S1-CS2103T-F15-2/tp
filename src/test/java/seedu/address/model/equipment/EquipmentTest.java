@@ -69,6 +69,8 @@ public class EquipmentTest {
         assertFalse(equipment.equals(
                 new Equipment(UUID_ONE, "Camera", "Photography", Condition.DAMAGED, "With strap")));
         assertFalse(equipment.equals(
+                new Equipment(UUID_ONE, "Camera", "Photography", Condition.GOOD, "No strap")));
+        assertFalse(equipment.equals(
                 new Equipment(UUID_ONE, "Camera", "Photography", Condition.UNDER_REPAIR, "No strap")));
         assertEquals(equipment.hashCode(), copy.hashCode());
     }
