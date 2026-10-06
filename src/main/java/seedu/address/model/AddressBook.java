@@ -2,10 +2,17 @@ package seedu.address.model;
 
 import static java.util.Objects.requireNonNull;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.equipment.Equipment;
+import seedu.address.model.loan.Loan;
+import seedu.address.model.member.Member;
+import seedu.address.model.member.NusId;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.UniquePersonList;
 
@@ -27,7 +34,7 @@ public class AddressBook implements ReadOnlyAddressBook {
         resetData(toBeCopied);
     }
 
-    //// list overwrite operations
+    // list overwrite operations
 
     /**
      * Replaces the contents of the person list with {@code persons}.
@@ -81,6 +88,71 @@ public class AddressBook implements ReadOnlyAddressBook {
      */
     public void removePerson(Person key) {
         persons.remove(key);
+    }
+
+    //// Laplace scaffold operations
+
+    public boolean hasMember(NusId nusId) {
+        throw new UnsupportedOperationException("Member storage is not implemented");
+    }
+
+    public Optional<Member> findMember(NusId nusId) {
+        throw new UnsupportedOperationException("Member storage is not implemented");
+    }
+
+    public void addMember(Member member) {
+        throw new UnsupportedOperationException("Member storage is not implemented");
+    }
+
+    public void removeMember(Member member) {
+        throw new UnsupportedOperationException("Member storage is not implemented");
+    }
+
+    public boolean hasEquipment(UUID uuid) {
+        throw new UnsupportedOperationException("Equipment storage is not implemented");
+    }
+
+    public Optional<Equipment> findEquipment(UUID uuid) {
+        throw new UnsupportedOperationException("Equipment storage is not implemented");
+    }
+
+    public void addEquipment(Equipment equipment) {
+        throw new UnsupportedOperationException("Equipment storage is not implemented");
+    }
+
+    public void removeEquipment(Equipment equipment) {
+        throw new UnsupportedOperationException("Equipment storage is not implemented");
+    }
+
+    public void addLoan(Loan loan) {
+        throw new UnsupportedOperationException("Loan storage is not implemented");
+    }
+
+    public Optional<Loan> findOpenLoan(UUID equipmentUuid) {
+        throw new UnsupportedOperationException("Loan storage is not implemented");
+    }
+
+    public List<Loan> findOpenLoansForMember(NusId nusId) {
+        throw new UnsupportedOperationException("Loan storage is not implemented");
+    }
+
+    public void closeLoan(UUID equipmentUuid, LocalDate returnedDate) {
+        throw new UnsupportedOperationException("Loan storage is not implemented");
+    }
+
+    @Override
+    public ObservableList<Member> getMemberList() {
+        throw new UnsupportedOperationException("Member storage is not implemented");
+    }
+
+    @Override
+    public ObservableList<Equipment> getEquipmentList() {
+        throw new UnsupportedOperationException("Equipment storage is not implemented");
+    }
+
+    @Override
+    public ObservableList<Loan> getLoanList() {
+        throw new UnsupportedOperationException("Loan storage is not implemented");
     }
 
     //// util methods

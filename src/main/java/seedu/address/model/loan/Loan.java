@@ -1,5 +1,6 @@
 package seedu.address.model.loan;
 
+import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.time.LocalDate;
@@ -16,6 +17,11 @@ import seedu.address.model.member.NusId;
  */
 public class Loan {
 
+    public static final String MESSAGE_EXPECTED_DATE_CONSTRAINTS =
+            "Expected return date cannot be before assigned date";
+    public static final String MESSAGE_RETURNED_DATE_CONSTRAINTS =
+            "Returned date cannot be before assigned date";
+
     private final UUID equipmentUuid;
     private final NusId memberNusId;
     private final LocalDate assignedDate;
@@ -30,6 +36,9 @@ public class Loan {
     public Loan(UUID equipmentUuid, NusId memberNusId, LocalDate assignedDate,
             LocalDate expectedReturnDate, LocalDate returnedDate) {
         requireAllNonNull(equipmentUuid, memberNusId, assignedDate, expectedReturnDate);
+        checkArgument(!expectedReturnDate.isBefore(assignedDate), MESSAGE_EXPECTED_DATE_CONSTRAINTS);
+        checkArgument(returnedDate == null || !returnedDate.isBefore(assignedDate),
+                MESSAGE_RETURNED_DATE_CONSTRAINTS);
         this.equipmentUuid = equipmentUuid;
         this.memberNusId = memberNusId;
         this.assignedDate = assignedDate;
@@ -62,6 +71,14 @@ public class Loan {
      */
     public boolean isOpen() {
         return returnedDate == null;
+    }
+
+    /**
+     * Returns a closed copy of this loan with the given actual return date.
+     */
+    public Loan withReturnedDate(LocalDate returnedDate) {
+        requireAllNonNull(returnedDate);
+        return new Loan(equipmentUuid, memberNusId, assignedDate, expectedReturnDate, returnedDate);
     }
 
     @Override
