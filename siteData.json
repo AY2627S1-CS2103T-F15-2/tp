@@ -85,6 +85,20 @@
       "headingKeywords": {}
     },
     {
+      "src": "ScaffoldContract.md",
+      "headings": {
+        "laplace-shared-scaffold-contract": "Laplace shared scaffold contract",
+        "domain-rules": "Domain rules",
+        "collection-contracts": "Collection contracts",
+        "root-model-contracts": "Root model contracts",
+        "json-contracts": "JSON contracts",
+        "parser-contracts": "Parser contracts",
+        "ownership-and-handoff": "Ownership and handoff",
+        "completion-milestones": "Completion milestones"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "SettingUp.md",
       "title": "Setting up and getting started",
       "headings": {
