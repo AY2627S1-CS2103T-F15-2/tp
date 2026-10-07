@@ -85,6 +85,13 @@ public class JsonAdaptedEquipmentTest {
     }
 
     @Test
+    public void toModelType_shorthandUuid_throwsIllegalValueException() {
+        JsonAdaptedEquipment adaptedEquipment = new JsonAdaptedEquipment(
+                "1-1-1-1-1", VALID_NAME, VALID_CATEGORY, VALID_CONDITION, VALID_NOTES);
+        assertThrows(IllegalValueException.class, "Equipment uuid is invalid.", adaptedEquipment::toModelType);
+    }
+
+    @Test
     public void toModelType_nullName_throwsIllegalValueException() {
         JsonAdaptedEquipment adaptedEquipment = new JsonAdaptedEquipment(
                 VALID_UUID, null, VALID_CATEGORY, VALID_CONDITION, VALID_NOTES);

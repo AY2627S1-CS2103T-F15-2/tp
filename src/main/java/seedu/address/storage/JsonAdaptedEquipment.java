@@ -3,6 +3,7 @@ package seedu.address.storage;
 import static java.util.Objects.requireNonNull;
 
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -18,6 +19,8 @@ import seedu.address.model.equipment.Equipment;
 class JsonAdaptedEquipment {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Equipment's %s field is missing!";
+    private static final Pattern STANDARD_IDENTIFIER_PATTERN = Pattern.compile(
+            "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
     private static final String INVALID_IDENTIFIER_MESSAGE = "Equipment uuid is invalid.";
     private static final String INVALID_NAME_MESSAGE = "Equipment names should not be blank";
     private static final String INVALID_CATEGORY_MESSAGE = "Equipment categories should not be blank";
@@ -90,6 +93,9 @@ class JsonAdaptedEquipment {
     }
 
     private static UUID parseUuid(String rawUuid) throws IllegalValueException {
+        if (!STANDARD_IDENTIFIER_PATTERN.matcher(rawUuid).matches()) {
+            throw new IllegalValueException(INVALID_IDENTIFIER_MESSAGE);
+        }
         try {
             return UUID.fromString(rawUuid);
         } catch (IllegalArgumentException exception) {
