@@ -118,12 +118,12 @@ public class UniqueMemberListTest {
 
     @Test
     public void setMembers_validList_copiesListAndReplacesMembers() {
-        List<Member> replacement = new ArrayList<>(List.of(ALEX));
+        List<Member> replacement = new ArrayList<>(List.of(ALEX, BEN));
 
         members.setMembers(replacement);
-        replacement.add(BEN);
+        replacement.clear();
 
-        assertEquals(List.of(ALEX), members.asUnmodifiableObservableList());
+        assertEquals(List.of(ALEX, BEN), members.asUnmodifiableObservableList());
     }
 
     @Test
