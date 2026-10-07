@@ -30,13 +30,13 @@ public class JsonLaplaceAdapterScaffoldTest {
     private static final LocalDate EXPECTED_RETURN_DATE = LocalDate.of(2026, 10, 13);
 
     @Test
-    public void memberConstructors_createAdaptersAndConversionFailsExplicitly() {
+    public void memberConstructors_createAdaptersAndConvertSuccessfully() throws Exception {
         JsonAdaptedMember rawAdapter =
                 new JsonAdaptedMember("A0123456X", "Alex Tan", "91234567", "alex@example.com");
         JsonAdaptedMember entityAdapter = new JsonAdaptedMember(MEMBER);
 
-        assertThrows(UnsupportedOperationException.class, rawAdapter::toModelType);
-        assertThrows(UnsupportedOperationException.class, entityAdapter::toModelType);
+        assertEquals(MEMBER, rawAdapter.toModelType());
+        assertEquals(MEMBER, entityAdapter.toModelType());
     }
 
     @Test
