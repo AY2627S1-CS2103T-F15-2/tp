@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-import javafx.beans.property.ListProperty;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -34,17 +33,19 @@ import seedu.address.model.person.UniquePersonList;
  */
 public class AddressBook implements ReadOnlyAddressBook {
 
-    private final UniquePersonList persons = new UniquePersonList();
+    private UniquePersonList persons = new UniquePersonList();
 
     // Null storage represents a known empty collection, without invoking unfinished scaffold methods.
     private UniqueMemberList members;
     private UniqueEquipmentList equipment;
     private UniqueLoanList loans;
 
-    // Properties forward changes from the current storage without copying domain objects or live lists.
-    private final ListProperty<Member> memberView = new SimpleListProperty<>(FXCollections.emptyObservableList());
-    private final ListProperty<Equipment> equipmentView = new SimpleListProperty<>(FXCollections.emptyObservableList());
-    private final ListProperty<Loan> loanView = new SimpleListProperty<>(FXCollections.emptyObservableList());
+    // Stable views defer replacement events until every collection has been published during reset.
+    private final CollectionView<Person> personView = new CollectionView<>(persons.asUnmodifiableObservableList());
+    private final CollectionView<Member> memberView = new CollectionView<>(FXCollections.emptyObservableList());
+    private final CollectionView<Equipment> equipmentView = new CollectionView<>(FXCollections.emptyObservableList());
+    private final CollectionView<Loan> loanView = new CollectionView<>(FXCollections.emptyObservableList());
+    private final ObservableList<Person> unmodifiablePersons = FXCollections.unmodifiableObservableList(personView);
     private final ObservableList<Member> unmodifiableMembers = FXCollections.unmodifiableObservableList(memberView);
     private final ObservableList<Equipment> unmodifiableEquipment =
             FXCollections.unmodifiableObservableList(equipmentView);
@@ -93,6 +94,7 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     /**
      * Resets the existing data of this {@code AddressBook} with {@code newData}.
+     * All collection views are updated before observers are notified. Unchanged data causes no notifications.
      */
     public void resetData(ReadOnlyAddressBook newData) {
         requireNonNull(newData);
@@ -102,6 +104,12 @@ public class AddressBook implements ReadOnlyAddressBook {
         List<Member> replacementMembers = List.copyOf(newData.getMemberList());
         List<Equipment> replacementEquipment = List.copyOf(newData.getEquipmentList());
         List<Loan> replacementLoans = List.copyOf(newData.getLoanList());
+        if (getPersonList().equals(replacementPersons)
+                && getMemberList().equals(replacementMembers)
+                && getEquipmentList().equals(replacementEquipment)
+                && getLoanList().equals(replacementLoans)) {
+            return;
+        }
 
         UniquePersonList validatedPersons = new UniquePersonList();
         validatedPersons.setPersons(replacementPersons);
@@ -132,13 +140,25 @@ public class AddressBook implements ReadOnlyAddressBook {
         ObservableList<Loan> replacementLoanView = validatedLoans == null
                 ? FXCollections.emptyObservableList() : validatedLoans.asUnmodifiableObservableList();
 
-        members = validatedMembers;
-        equipment = validatedEquipment;
-        loans = validatedLoans;
-        persons.setPersons(validatedPersons);
-        memberView.set(replacementMemberView);
-        equipmentView.set(replacementEquipmentView);
-        loanView.set(replacementLoanView);
+        personView.suspendNotifications();
+        memberView.suspendNotifications();
+        equipmentView.suspendNotifications();
+        loanView.suspendNotifications();
+        try {
+            persons = validatedPersons;
+            members = validatedMembers;
+            equipment = validatedEquipment;
+            loans = validatedLoans;
+            personView.set(validatedPersons.asUnmodifiableObservableList());
+            memberView.set(replacementMemberView);
+            equipmentView.set(replacementEquipmentView);
+            loanView.set(replacementLoanView);
+        } finally {
+            personView.resumeNotifications();
+            memberView.resumeNotifications();
+            equipmentView.resumeNotifications();
+            loanView.resumeNotifications();
+        }
     }
 
     //// person-level operations
@@ -225,10 +245,11 @@ public class AddressBook implements ReadOnlyAddressBook {
             UniqueLoanList validatedLoans = requireNonNull(loanFactory.get());
             validatedLoans.setLoans(retainedLoans);
         }
-        members.remove(member);
+        // Drop references first, so synchronous deletion observers never see dangling closed loans.
         if (loans != null) {
             loans.setLoans(retainedLoans);
         }
+        members.remove(member);
     }
 
     /**
@@ -276,10 +297,11 @@ public class AddressBook implements ReadOnlyAddressBook {
             UniqueLoanList validatedLoans = requireNonNull(loanFactory.get());
             validatedLoans.setLoans(retainedLoans);
         }
-        equipment.remove(item);
+        // Drop references first, for the same reason as member deletion.
         if (loans != null) {
             loans.setLoans(retainedLoans);
         }
+        equipment.remove(item);
     }
 
     /**
@@ -399,7 +421,7 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     @Override
     public ObservableList<Person> getPersonList() {
-        return persons.asUnmodifiableObservableList();
+        return unmodifiablePersons;
     }
 
     @Override
@@ -423,4 +445,42 @@ public class AddressBook implements ReadOnlyAddressBook {
     public int hashCode() {
         return Objects.hash(getPersonList(), getMemberList(), getEquipmentList(), getLoanList());
     }
+
+    /**
+     * Forwards collection changes through a stable view and defers replacement notifications during root reset.
+     * Ordinary element mutations retain JavaFX's normal change events.
+     */
+    private static class CollectionView<E> extends SimpleListProperty<E> {
+        private boolean notificationsSuspended;
+        private boolean notificationPending;
+
+        CollectionView(ObservableList<E> initialValue) {
+            super(initialValue);
+        }
+
+        private void suspendNotifications() {
+            notificationsSuspended = true;
+        }
+
+        /**
+         * Publishes one pending replacement event after the complete root state is visible.
+         */
+        private void resumeNotifications() {
+            notificationsSuspended = false;
+            if (notificationPending) {
+                notificationPending = false;
+                super.fireValueChangedEvent();
+            }
+        }
+
+        @Override
+        protected void fireValueChangedEvent() {
+            if (notificationsSuspended) {
+                notificationPending = true;
+            } else {
+                super.fireValueChangedEvent();
+            }
+        }
+    }
+
 }

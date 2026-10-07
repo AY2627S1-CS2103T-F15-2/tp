@@ -12,6 +12,7 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.getTypicalPersons;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +20,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
+import javafx.beans.InvalidationListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -271,6 +273,104 @@ public class AddressBookTest {
     }
 
     @Test
+    public void deletion_closedHistory_observersNeverSeeDanglingReferences() {
+        populateReferences(addressBook);
+        addressBook.addLoan(CLOSED_LOAN);
+        addressBook.addLoan(new Loan(OTHER_EQUIPMENT.getUuid(), OTHER_MEMBER.getNusId(),
+                ASSIGNED_DATE, RETURN_DATE, RETURN_DATE));
+        AddressBook equipmentDeletion = controlledCopy(addressBook);
+        List<Boolean> memberObservations = new ArrayList<>();
+        List<Boolean> equipmentObservations = new ArrayList<>();
+        observeRootChanges(addressBook, () -> memberObservations.add(hasValidVisibleReferences(addressBook)));
+        observeRootChanges(equipmentDeletion, () ->
+                equipmentObservations.add(hasValidVisibleReferences(equipmentDeletion)));
+
+        addressBook.removeMember(MEMBER);
+        equipmentDeletion.removeEquipment(EQUIPMENT);
+
+        assertFalse(memberObservations.isEmpty());
+        assertFalse(equipmentObservations.isEmpty());
+        assertTrue(memberObservations.stream().allMatch(Boolean::booleanValue));
+        assertTrue(equipmentObservations.stream().allMatch(Boolean::booleanValue));
+        assertEquals(1, addressBook.getLoanList().size());
+        assertEquals(1, equipmentDeletion.getLoanList().size());
+    }
+
+    @Test
+    public void resetData_observersSeeCompleteReplacement_beforeEveryCollectionNotification() {
+        populateReferences(addressBook);
+        addressBook.addPerson(ALICE);
+        addressBook.addLoan(OPEN_LOAN);
+        AddressBookStub replacement = new AddressBookStub(List.of());
+        replacement.members.add(OTHER_MEMBER);
+        replacement.equipment.add(OTHER_EQUIPMENT);
+        replacement.loans.add(new Loan(OTHER_EQUIPMENT.getUuid(), OTHER_MEMBER.getNusId(),
+                ASSIGNED_DATE, RETURN_DATE, null));
+        List<Boolean> observations = new ArrayList<>();
+        List<Boolean> invalidationObservations = new ArrayList<>();
+        observeRootChanges(addressBook, () -> observations.add(hasSameVisibleCollections(addressBook, replacement)
+                && hasValidVisibleReferences(addressBook)
+                && addressBook.findMember(MEMBER_ID).isEmpty()
+                && addressBook.findEquipment(EQUIPMENT_ID).isEmpty()
+                && addressBook.findOpenLoan(OTHER_EQUIPMENT.getUuid()).isPresent()));
+        observeRootInvalidations(addressBook, () ->
+                invalidationObservations.add(hasSameVisibleCollections(addressBook, replacement)));
+
+        addressBook.resetData(replacement);
+
+        assertEquals(4, observations.size());
+        assertTrue(observations.stream().allMatch(Boolean::booleanValue));
+        assertEquals(4, invalidationObservations.size());
+        assertTrue(invalidationObservations.stream().allMatch(Boolean::booleanValue));
+    }
+
+    @Test
+    public void resetData_equipmentAndLoanChanges_replacesDataWhenOtherCollectionsMatch() {
+        populateReferences(addressBook);
+        addressBook.addLoan(OPEN_LOAN);
+        AddressBookStub replacement = new AddressBookStub(List.of());
+        replacement.members.setAll(addressBook.getMemberList());
+        replacement.equipment.setAll(addressBook.getEquipmentList());
+        replacement.loans.setAll(addressBook.getLoanList());
+        Equipment editedEquipment = new Equipment(EQUIPMENT_ID, "Edited camera", "Photo", Condition.FAIR, "Updated");
+        replacement.equipment.set(0, editedEquipment);
+        List<Boolean> observations = new ArrayList<>();
+        observeRootChanges(addressBook, () -> observations.add(hasSameVisibleCollections(addressBook, replacement)));
+
+        addressBook.resetData(replacement);
+
+        assertSame(editedEquipment, addressBook.findEquipment(EQUIPMENT_ID).orElseThrow());
+        assertFalse(observations.isEmpty());
+        assertTrue(observations.stream().allMatch(Boolean::booleanValue));
+        observations.clear();
+        replacement.loans.set(0, CLOSED_LOAN);
+
+        addressBook.resetData(replacement);
+
+        assertEquals(List.of(CLOSED_LOAN), addressBook.getLoanList());
+        assertEquals(Optional.empty(), addressBook.findOpenLoan(EQUIPMENT_ID));
+        assertFalse(observations.isEmpty());
+        assertTrue(observations.stream().allMatch(Boolean::booleanValue));
+    }
+
+    @Test
+    public void resetData_unchangedData_doesNotNotifyObservers() {
+        populateReferences(addressBook);
+        addressBook.addPerson(ALICE);
+        addressBook.addLoan(OPEN_LOAN);
+        AddressBook copy = controlledCopy(addressBook);
+        int[] notifications = {0};
+        observeRootChanges(addressBook, () -> notifications[0]++);
+        observeRootInvalidations(addressBook, () -> notifications[0]++);
+
+        addressBook.resetData(addressBook);
+        addressBook.resetData(copy);
+
+        assertEquals(0, notifications[0]);
+        assertEquals(copy, addressBook);
+    }
+
+    @Test
     public void getters_unmodifiableObservableViews_remainLiveAcrossWritesAndReset() {
         ObservableList<Person> persons = addressBook.getPersonList();
         ObservableList<Member> members = addressBook.getMemberList();
@@ -336,6 +436,8 @@ public class AddressBookTest {
         addressBook.addPerson(ALICE);
         addressBook.addLoan(OPEN_LOAN);
         AddressBook before = controlledCopy(addressBook);
+        int[] notifications = {0};
+        observeRootChanges(addressBook, () -> notifications[0]++);
         AddressBookStub source = validReplacement();
         source.persons.add(ALICE);
         assertThrows(DuplicatePersonException.class, () -> addressBook.resetData(source));
@@ -371,6 +473,7 @@ public class AddressBookTest {
         source.loans.add(null);
         assertThrows(NullPointerException.class, () -> addressBook.resetData(source));
         assertEquals(before, addressBook);
+        assertEquals(0, notifications[0]);
     }
 
     @Test
@@ -546,6 +649,39 @@ public class AddressBookTest {
         }, () -> {
             throw new UnsupportedOperationException("Loan factory must not be used for person-only data");
         });
+    }
+
+    /**
+     * Observes public collection events, where synchronous UI listeners read the root's other collections.
+     */
+    private static void observeRootChanges(AddressBook root, Runnable observer) {
+        root.getPersonList().addListener((ListChangeListener<Person>) change -> observer.run());
+        root.getMemberList().addListener((ListChangeListener<Member>) change -> observer.run());
+        root.getEquipmentList().addListener((ListChangeListener<Equipment>) change -> observer.run());
+        root.getLoanList().addListener((ListChangeListener<Loan>) change -> observer.run());
+    }
+
+    /**
+     * Observes invalidations as well as list changes, because both can trigger UI refreshes.
+     */
+    private static void observeRootInvalidations(AddressBook root, Runnable observer) {
+        root.getPersonList().addListener((InvalidationListener) observable -> observer.run());
+        root.getMemberList().addListener((InvalidationListener) observable -> observer.run());
+        root.getEquipmentList().addListener((InvalidationListener) observable -> observer.run());
+        root.getLoanList().addListener((InvalidationListener) observable -> observer.run());
+    }
+
+    private static boolean hasSameVisibleCollections(AddressBook root, ReadOnlyAddressBook expected) {
+        return root.getPersonList().equals(expected.getPersonList())
+                && root.getMemberList().equals(expected.getMemberList())
+                && root.getEquipmentList().equals(expected.getEquipmentList())
+                && root.getLoanList().equals(expected.getLoanList());
+    }
+
+    private static boolean hasValidVisibleReferences(AddressBook root) {
+        return root.getLoanList().stream().allMatch(loan ->
+                root.getMemberList().stream().anyMatch(member -> member.getNusId().equals(loan.getMemberNusId()))
+                && root.getEquipmentList().stream().anyMatch(item -> item.getUuid().equals(loan.getEquipmentUuid())));
     }
 
     private static AddressBook controlledAddressBook() {
