@@ -1,13 +1,30 @@
 package seedu.address.storage;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.UUID;
+import java.util.regex.Pattern;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 
-/** Jackson-facing contract for an {@link Equipment}. */
+/**
+ * Jackson-friendly version of {@link Equipment}.
+ * Availability is derived and is not stored.
+ */
 class JsonAdaptedEquipment {
+
+    public static final String MISSING_FIELD_MESSAGE_FORMAT = "Equipment's %s field is missing!";
+    private static final Pattern STANDARD_IDENTIFIER_PATTERN = Pattern.compile(
+            "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
+    private static final String INVALID_IDENTIFIER_MESSAGE = "Equipment uuid is invalid.";
+    private static final String INVALID_NAME_MESSAGE = "Equipment names should not be blank";
+    private static final String INVALID_CATEGORY_MESSAGE = "Equipment categories should not be blank";
+    private static final String INVALID_CONDITION_MESSAGE = "Equipment condition is invalid.";
 
     private final String uuid;
     private final String name;
@@ -15,7 +32,9 @@ class JsonAdaptedEquipment {
     private final String condition;
     private final String notes;
 
-    /** Constructs an adapter from raw JSON fields. */
+    /**
+     * Constructs a {@code JsonAdaptedEquipment} with the given equipment details.
+     */
     @JsonCreator
     public JsonAdaptedEquipment(@JsonProperty("uuid") String uuid,
             @JsonProperty("name") String name, @JsonProperty("category") String category,
@@ -27,8 +46,11 @@ class JsonAdaptedEquipment {
         this.notes = notes;
     }
 
-    /** Constructs an adapter from domain equipment. */
+    /**
+     * Converts a given {@code Equipment} into this class for Jackson use.
+     */
     public JsonAdaptedEquipment(Equipment source) {
+        requireNonNull(source);
         uuid = source.getUuid().toString();
         name = source.getName();
         category = source.getCategory();
@@ -36,8 +58,56 @@ class JsonAdaptedEquipment {
         notes = source.getNotes();
     }
 
-    /** Converts this adapter to its domain type. */
+    /**
+     * Converts this Jackson-friendly adapted equipment object into the model's {@code Equipment} object.
+     * A missing or null {@code notes} value becomes an empty string. Text is not trimmed.
+     *
+     * @throws IllegalValueException if any persisted field violates an equipment constraint.
+     */
     public Equipment toModelType() throws IllegalValueException {
-        throw new UnsupportedOperationException("Equipment JSON conversion is not implemented");
+        if (uuid == null) {
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "uuid"));
+        }
+        final UUID modelUuid = parseUuid(uuid);
+
+        if (name == null) {
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "name"));
+        }
+        if (name.isBlank()) {
+            throw new IllegalValueException(INVALID_NAME_MESSAGE);
+        }
+
+        if (category == null) {
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "category"));
+        }
+        if (category.isBlank()) {
+            throw new IllegalValueException(INVALID_CATEGORY_MESSAGE);
+        }
+
+        if (condition == null) {
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "condition"));
+        }
+        final Condition modelCondition = parseCondition(condition);
+        final String modelNotes = notes == null ? "" : notes;
+        return new Equipment(modelUuid, name, category, modelCondition, modelNotes);
+    }
+
+    private static UUID parseUuid(String rawUuid) throws IllegalValueException {
+        if (!STANDARD_IDENTIFIER_PATTERN.matcher(rawUuid).matches()) {
+            throw new IllegalValueException(INVALID_IDENTIFIER_MESSAGE);
+        }
+        try {
+            return UUID.fromString(rawUuid);
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalValueException(INVALID_IDENTIFIER_MESSAGE, exception);
+        }
+    }
+
+    private static Condition parseCondition(String rawCondition) throws IllegalValueException {
+        try {
+            return Condition.valueOf(rawCondition);
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalValueException(INVALID_CONDITION_MESSAGE, exception);
+        }
     }
 }
