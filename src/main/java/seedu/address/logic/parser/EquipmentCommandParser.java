@@ -1,13 +1,26 @@
 package seedu.address.logic.parser;
 
+import static java.util.Objects.requireNonNull;
+
 import seedu.address.logic.commands.Command;
+import seedu.address.logic.commands.NotImplementedCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
-/** Parser contract for the {@code equipment} command family. */
+/** Parses the {@code equipment} command family without implementing business operations. */
 public class EquipmentCommandParser implements Parser<Command> {
 
+    /**
+     * Recognises a case-sensitive subcommand. Trailing arguments await business-command parsing.
+     *
+     * @throws ParseException if the subcommand is missing or unknown.
+     */
     @Override
     public Command parse(String userInput) throws ParseException {
-        throw new UnsupportedOperationException("Equipment command parsing is not implemented");
+        requireNonNull(userInput);
+        String subcommand = userInput.trim().split("\\s+", 2)[0];
+        return switch (subcommand) {
+            case "add", "list", "view", "delete" -> new NotImplementedCommand("equipment " + subcommand);
+            default -> throw new ParseException("Expected equipment subcommand: add, list, view, delete.");
+        };
     }
 }
