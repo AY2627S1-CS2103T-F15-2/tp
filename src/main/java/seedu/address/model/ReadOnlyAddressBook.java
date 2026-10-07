@@ -17,19 +17,19 @@ public interface ReadOnlyAddressBook {
      */
     ObservableList<Person> getPersonList();
 
-    /** Returns an unmodifiable view of the Laplace member list. */
-    default ObservableList<Member> getMemberList() {
-        throw new UnsupportedOperationException("Member storage is not implemented");
-    }
+    /**
+     * Returns an unmodifiable observable view with unique member NUS IDs.
+     */
+    ObservableList<Member> getMemberList();
 
-    /** Returns an unmodifiable view of the equipment list. */
-    default ObservableList<Equipment> getEquipmentList() {
-        throw new UnsupportedOperationException("Equipment storage is not implemented");
-    }
+    /**
+     * Returns an unmodifiable observable view with unique equipment UUIDs.
+     */
+    ObservableList<Equipment> getEquipmentList();
 
-    /** Returns an unmodifiable view of the loan list. */
-    default ObservableList<Loan> getLoanList() {
-        throw new UnsupportedOperationException("Loan storage is not implemented");
-    }
+    /**
+     * Returns an unmodifiable observable view of open loans and closed history.
+     */
+    ObservableList<Loan> getLoanList();
 
 }
