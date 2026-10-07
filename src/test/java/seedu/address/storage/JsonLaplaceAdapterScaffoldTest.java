@@ -1,5 +1,6 @@
 package seedu.address.storage;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.time.LocalDate;
@@ -39,13 +40,13 @@ public class JsonLaplaceAdapterScaffoldTest {
     }
 
     @Test
-    public void equipmentConstructors_createAdaptersAndConversionFailsExplicitly() {
+    public void equipmentConstructors_createAdaptersAndConvertToModelType() throws Exception {
         JsonAdaptedEquipment rawAdapter = new JsonAdaptedEquipment(
                 EQUIPMENT_UUID.toString(), "Camera", "Photography", "GOOD", "");
         JsonAdaptedEquipment entityAdapter = new JsonAdaptedEquipment(EQUIPMENT);
 
-        assertThrows(UnsupportedOperationException.class, rawAdapter::toModelType);
-        assertThrows(UnsupportedOperationException.class, entityAdapter::toModelType);
+        assertEquals(EQUIPMENT, rawAdapter.toModelType());
+        assertEquals(EQUIPMENT, entityAdapter.toModelType());
     }
 
     @Test
