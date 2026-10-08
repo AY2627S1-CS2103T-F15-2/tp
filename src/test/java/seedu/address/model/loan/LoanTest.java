@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -79,6 +80,25 @@ public class LoanTest {
         assertEquals(NUS_ID, closedLoan.getMemberNusId());
         assertEquals(ASSIGNED_DATE, closedLoan.getAssignedDate());
         assertEquals(EXPECTED_DATE, closedLoan.getExpectedReturnDate());
+    }
+
+    @Test
+    public void constructor_sameDayExpectedAndSameDayEarlyLateReturns_acceptsBoundaries() {
+        Loan sameDay = new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, ASSIGNED_DATE, ASSIGNED_DATE);
+        assertEquals(Optional.of(ASSIGNED_DATE), sameDay.getReturnedDate());
+        for (LocalDate date : List.of(ASSIGNED_DATE, EXPECTED_DATE.minusDays(1),
+                EXPECTED_DATE, EXPECTED_DATE.plusDays(1))) {
+            Loan loan = new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE, date);
+            assertEquals(Optional.of(date), loan.getReturnedDate());
+        }
+    }
+
+    @Test
+    public void withReturnedDate_nullOrBeforeAssignment_rejectsAndLeavesOriginalOpen() {
+        Loan loan = new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE, null);
+        assertThrows(NullPointerException.class, () -> loan.withReturnedDate(null));
+        assertThrows(IllegalArgumentException.class, () -> loan.withReturnedDate(ASSIGNED_DATE.minusDays(1)));
+        assertTrue(loan.isOpen());
     }
 
     @Test

@@ -50,7 +50,7 @@ public class JsonLaplaceAdapterScaffoldTest {
     }
 
     @Test
-    public void loanConstructors_createAdaptersAndConversionFailsExplicitly() {
+    public void loanConstructors_createAdaptersAndConvertToModelType() throws Exception {
         JsonAdaptedLoan rawAdapter = new JsonAdaptedLoan(EQUIPMENT_UUID.toString(),
                 MEMBER_NUS_ID.toString(), ASSIGNED_DATE.toString(), EXPECTED_RETURN_DATE.toString(), null);
         Loan openLoan = new Loan(EQUIPMENT_UUID, MEMBER_NUS_ID, ASSIGNED_DATE, EXPECTED_RETURN_DATE, null);
@@ -58,8 +58,8 @@ public class JsonLaplaceAdapterScaffoldTest {
         JsonAdaptedLoan openEntityAdapter = new JsonAdaptedLoan(openLoan);
         JsonAdaptedLoan closedEntityAdapter = new JsonAdaptedLoan(closedLoan);
 
-        assertThrows(UnsupportedOperationException.class, rawAdapter::toModelType);
-        assertThrows(UnsupportedOperationException.class, openEntityAdapter::toModelType);
-        assertThrows(UnsupportedOperationException.class, closedEntityAdapter::toModelType);
+        assertEquals(openLoan, rawAdapter.toModelType());
+        assertEquals(openLoan, openEntityAdapter.toModelType());
+        assertEquals(closedLoan, closedEntityAdapter.toModelType());
     }
 }
