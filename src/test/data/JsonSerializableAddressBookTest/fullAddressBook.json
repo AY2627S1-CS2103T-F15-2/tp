@@ -1,0 +1,46 @@
+{
+  "persons": [
+    {
+      "name": "Alice Pauline",
+      "phone": "94351253",
+      "email": "alice@example.com",
+      "address": "123, Jurong West Ave 6, #08-111",
+      "tags": [
+        "friends"
+      ]
+    }
+  ],
+  "members": [
+    {
+      "nusId": "A0123456X",
+      "name": "Alex Tan",
+      "phone": "91234567",
+      "email": "alex@example.com"
+    }
+  ],
+  "equipment": [
+    {
+      "uuid": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "Camera",
+      "category": "Photography",
+      "condition": "GOOD",
+      "notes": "Case included"
+    }
+  ],
+  "loans": [
+    {
+      "equipmentUuid": "550e8400-e29b-41d4-a716-446655440000",
+      "memberNusId": "A0123456X",
+      "assignedDate": "2026-10-06",
+      "expectedReturnDate": "2026-10-13",
+      "returnedDate": null
+    },
+    {
+      "equipmentUuid": "550e8400-e29b-41d4-a716-446655440000",
+      "memberNusId": "A0123456X",
+      "assignedDate": "2026-09-01",
+      "expectedReturnDate": "2026-09-08",
+      "returnedDate": "2026-09-07"
+    }
+  ]
+}
