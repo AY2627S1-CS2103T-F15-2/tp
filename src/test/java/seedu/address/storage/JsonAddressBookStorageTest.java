@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.HOON;
@@ -9,11 +10,18 @@ import static seedu.address.testutil.TypicalPersons.IDA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.model.AddressBook;
@@ -107,4 +115,86 @@ public class JsonAddressBookStorageTest {
     public void saveAddressBook_nullFilePath_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> saveAddressBook(new AddressBook(), null));
     }
+    @Test
+    public void readAndSaveAddressBook_allCollections_realRoundTripAndOverwrite() throws Exception {
+        AddressBook original = RootPersistenceTestData.fullAddressBook();
+        Path file = testFolder.resolve("full.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        storage.saveAddressBook(original);
+        AddressBook restored = new AddressBook(storage.readAddressBook().orElseThrow());
+        assertEquals(original, restored);
+        assertEquals(original.getMemberList(), restored.getMemberList());
+        assertEquals(original.getEquipmentList(), restored.getEquipmentList());
+        assertEquals(original.getLoanList(), restored.getLoanList());
+        assertTrue(restored.getLoanList().get(0).isOpen());
+        assertFalse(restored.getLoanList().get(1).isOpen());
+
+        JsonNode json = new ObjectMapper().readTree(Files.readString(file));
+        assertEquals(4, json.size());
+        assertEquals(1, json.get("persons").size());
+        assertEquals(1, json.get("members").size());
+        assertEquals(1, json.get("equipment").size());
+        assertEquals(2, json.get("loans").size());
+        assertFalse(Files.readString(file).contains("availability"));
+
+        restored.closeLoan(restored.getEquipmentList().get(0).getUuid(), LocalDate.of(2026, 10, 8));
+        storage.saveAddressBook(restored, file);
+        assertEquals(restored, new AddressBook(storage.readAddressBook(file).orElseThrow()));
+        restored.removeEquipment(restored.getEquipmentList().get(0));
+        restored.removeMember(restored.getMemberList().get(0));
+        storage.saveAddressBook(restored);
+        AddressBook afterDeletion = new AddressBook(storage.readAddressBook().orElseThrow());
+        assertEquals(restored, afterDeletion);
+        assertTrue(afterDeletion.getLoanList().isEmpty());
+        assertEquals(original.getPersonList(), afterDeletion.getPersonList());
+    }
+
+    @Test
+    public void readAddressBook_invalidRootFixtures_reportsLoadingErrorWithoutRewritingFile() throws Exception {
+        Path fixtures = Paths.get("src", "test", "data", "JsonSerializableAddressBookTest");
+        for (String name : List.of("duplicateMembers.json", "duplicateEquipment.json", "duplicateOpenLoans.json",
+                "missingMembersOpen.json", "missingMembersClosed.json", "missingEquipmentOpen.json",
+                "missingEquipmentClosed.json", "invalidMembers.json", "invalidEquipment.json", "invalidLoans.json")) {
+            Path file = fixtures.resolve(name);
+            String before = Files.readString(file);
+            JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+            assertThrows(DataLoadingException.class, storage::readAddressBook);
+            assertEquals(before, Files.readString(file));
+        }
+        assertThrows(DataLoadingException.class, () -> readAddressBook("missingLoanMember.json"));
+    }
+
+    @Test
+    public void readAddressBook_legacyFile_preservesPersonsAndEmptyNewCollections() throws Exception {
+        Path file = Paths.get("src", "test", "data", "JsonSerializableAddressBookTest",
+                "typicalPersonsAddressBook.json");
+        ReadOnlyAddressBook loaded = new JsonAddressBookStorage(file).readAddressBook().orElseThrow();
+        assertEquals(getTypicalAddressBook(), new AddressBook(loaded));
+        assertTrue(loaded.getMemberList().isEmpty());
+        assertTrue(loaded.getEquipmentList().isEmpty());
+        assertTrue(loaded.getLoanList().isEmpty());
+    }
+
+    @Test
+    public void readAddressBook_nullEntriesOrWrongArrayTypes_reportsLoadingError() throws Exception {
+        Path file = testFolder.resolve("invalid.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        for (String field : List.of("persons", "members", "equipment", "loans")) {
+            for (boolean nullEntry : List.of(true, false)) {
+                ObjectNode json = (ObjectNode) new ObjectMapper().readTree("{\"persons\":[]}");
+                if (nullEntry) {
+                    json.putArray(field).addNull();
+                } else {
+                    json.put(field, "unsupported");
+                }
+                Files.writeString(file, json.toString());
+                assertThrows(DataLoadingException.class, storage::readAddressBook);
+            }
+        }
+        for (String json : List.of("{}", "{\"persons\":null}")) {
+            Files.writeString(file, json);
+            assertThrows(DataLoadingException.class, storage::readAddressBook);
+        }
+    }
+
 }
