@@ -15,6 +15,7 @@ public class CliSyntax {
     /* Laplace prefix definitions. The legacy AB3 prefixes above remain unchanged. */
     public static final Prefix PREFIX_NUS_ID = new Prefix("nus/");
     public static final Prefix PREFIX_MEMBER_NAME = new Prefix("name/");
+    public static final Prefix PREFIX_EQUIPMENT_NAME = PREFIX_MEMBER_NAME;
     public static final Prefix PREFIX_MEMBER_PHONE = new Prefix("phone/");
     public static final Prefix PREFIX_MEMBER_EMAIL = new Prefix("email/");
     public static final Prefix PREFIX_EQUIPMENT_UUID = new Prefix("uuid/");
