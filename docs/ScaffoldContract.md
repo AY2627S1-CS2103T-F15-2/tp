@@ -2,7 +2,7 @@
 
 This document is the authoritative contract for the member, equipment, and loan scaffold. The baseline was created from PR #54 commit `d27afec19dfd2d4cb156e6dff2f93731ba7b0562`. Existing AddressBook Level 3 persons, commands, and persisted person data must continue to work.
 
-The declarations in this baseline deliberately throw `UnsupportedOperationException` where the assigned implementation is unfinished. A declaration proves that another contributor can compile against the signature; it does not prove that the feature works.
+Implementation status at team master `6b85337bce1664ec2774f0aca86b9d51a749019b` (PR #70): domain collections, root integrity, command-facing Model operations and JSON persistence are implemented. Top-level Laplace family routing is connected; individual business routes still return explicit `NotImplementedCommand` results. The new v1.3 display and GUI contracts are documented separately in [GuiCommandContract.md](GuiCommandContract.md).
 
 ## Domain rules
 
@@ -62,7 +62,7 @@ Failed writes leave the collection unchanged. Bulk setters validate the complete
 
 `AddressBook` owns the three collections and exposes member, equipment, and loan operations declared in the baseline. `ReadOnlyAddressBook` preserves `getPersonList()` and adds `getMemberList()`, `getEquipmentList()`, and `getLoanList()`. `Model` exposes the corresponding command-facing operations, using `deleteMember` and `deleteEquipment`, and adds `getAvailability(UUID)`.
 
-The implemented root model must:
+The implemented root model enforces the following contracts:
 
 - Preserve the legacy persons collection and all working AB3 paths.
 - Reject a loan whose member or equipment identity does not exist.
@@ -73,7 +73,7 @@ The implemented root model must:
 - Include every collection in reset, equality, hashing, and string output.
 - Copy collection containers and validate complete replacement data and references before committing a reset. A rejected reset leaves existing state unchanged.
 
-The current root methods are explicit placeholders. They are not connected to fabricated empty entities or silent successful writes.
+The root operations are implemented and delegated through ModelManager. Read-only observable collection views remain live across model updates; failed operations preserve consistent state.
 
 ## JSON contracts
 
@@ -88,7 +88,7 @@ JsonAdaptedLoan(String equipmentUuid, String memberNusId, String assignedDate,
 
 Each adapter also has an entity constructor and `toModelType() throws IllegalValueException`. Required null or malformed fields produce `IllegalValueException`. A missing or null equipment `notes` value becomes `""`. A missing or null loan `returnedDate` represents an open loan. Dates use ISO calendar text such as `2026-10-06`; implementations should use `LocalDate` ISO parsing rather than a `YYYY-MM-DD` formatter pattern. Enum names use the declared uppercase values. UUID text uses the standard hyphenated representation.
 
-The future root schema is:
+The implemented root schema is:
 
 ```json
 {
@@ -105,7 +105,7 @@ The future root schema is:
 }
 ```
 
-Existing `persons` data remains supported. A missing or null new root array means an empty collection. Root loading converts members and equipment before loans, then rejects invalid references and duplicate open loans. Availability is absent from JSON. These adapters are intentionally not connected to `JsonSerializableAddressBook`; Isaac owns that later integration.
+Existing `persons` data remains supported. A missing or null new root array means an empty collection. Root loading converts members and equipment before loans, then rejects invalid references and duplicate open loans. Availability is absent from JSON. These adapters are connected to `JsonSerializableAddressBook`, including root reference validation and legacy-person compatibility.
 
 ## Parser contracts
 
@@ -127,11 +127,11 @@ The shared Laplace prefixes are fixed as follows. Legacy AB3 prefixes keep their
 
 `ParserUtil` declares `parseNusId`, `parseUuid`, `parseDate`, and `parseCondition`. Each trims surrounding whitespace. NUS IDs retain their established validation and normalize to uppercase. UUID parsing accepts Java's standard UUID syntax. Dates accept ISO `uuuu-MM-dd`. Conditions are case-insensitive enum names; an implementation may convert spaces and hyphens to underscores. Malformed or blank values produce `ParseException` with a useful field-specific message.
 
-`MemberCommandParser`, `EquipmentCommandParser`, and `LoansCommandParser` implement the existing `Parser<Command>` interface. The routes are `member add`, `member list`, `member view`, `member delete`, `equipment add`, `equipment list`, `equipment view`, `equipment delete`, `loans add`, and `loans return`. Missing or unknown families and subcommands are rejected with `ParseException`. A recognized route awaiting its business command may return `NotImplementedCommand`, which reports the unfinished feature without mutating `Model`. Top-level routing is not connected in this baseline, so legacy parsing remains functional.
+`MemberCommandParser`, `EquipmentCommandParser`, and `LoansCommandParser` implement the existing `Parser<Command>` interface. The routes are `member add`, `member list`, `member view`, `member delete`, `equipment add`, `equipment list`, `equipment view`, `equipment delete`, `loans add`, and `loans return`. Missing or unknown families and subcommands are rejected with `ParseException`. A recognized route awaiting its business command may return `NotImplementedCommand`, which reports the unfinished feature without mutating `Model`. Top-level routing is connected in `AddressBookParser`; the recognized individual routes currently return placeholders. Legacy parsing remains functional. Duy owns activation of the feature routes after their implementations merge.
 
 ## Ownership and handoff
 
-Tab 8's instructions to create files now mean implement the supplied scaffold. Ownership of implementation remains:
+The table below records ownership of the completed scaffold foundation. For the new command and GUI milestone, use the owner matrix in [GuiCommandContract.md](GuiCommandContract.md):
 
 | Owner | Files and responsibility | Independent verification | Integration dependency |
 | --- | --- | --- | --- |
@@ -150,4 +150,4 @@ Each owner should avoid editing another row's files without coordinating first. 
 
 **B. Functional scaffold complete:** the collections, adapters, root model, and storage are implemented and connected. Only business-command placeholders may remain. A real integration test must add members and equipment through `ModelManager`, add and close loans, observe availability transitions, save and reload all identifiers, dates, and loan history, reject invalid references and prohibited deletions, and prove that rejected operations leave state unchanged.
 
-This baseline targets milestone A only.
+The integrated foundation now implements milestone B; its existing tests cover real model/storage behavior. This status does not imply that the v1.3 business commands, display consumers or GUI acceptance are complete. Those additions follow the staged handoff in [GuiCommandContract.md](GuiCommandContract.md).

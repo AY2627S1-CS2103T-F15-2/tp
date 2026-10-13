@@ -13,6 +13,8 @@ public class CommandResult {
 
     private final String feedbackToUser;
 
+    private final DisplayRequest displayRequest;
+
     /** Help information should be shown to the user. */
     private final boolean showHelp;
 
@@ -23,7 +25,12 @@ public class CommandResult {
      * Constructs a {@code CommandResult} with the specified fields.
      */
     public CommandResult(String feedbackToUser, boolean showHelp, boolean exit) {
+        this(feedbackToUser, showHelp, exit, DisplayRequest.legacyPersons());
+    }
+
+    private CommandResult(String feedbackToUser, boolean showHelp, boolean exit, DisplayRequest displayRequest) {
         this.feedbackToUser = requireNonNull(feedbackToUser);
+        this.displayRequest = requireNonNull(displayRequest);
         this.showHelp = showHelp;
         this.exit = exit;
     }
@@ -34,6 +41,15 @@ public class CommandResult {
      */
     public CommandResult(String feedbackToUser) {
         this(feedbackToUser, false, false);
+    }
+
+    /** Constructs a successful Laplace result with an explicit display target. */
+    public CommandResult(String feedbackToUser, DisplayRequest displayRequest) {
+        this(feedbackToUser, false, false, displayRequest);
+    }
+
+    public DisplayRequest getDisplayRequest() {
+        return displayRequest;
     }
 
     public String getFeedbackToUser() {
@@ -61,12 +77,13 @@ public class CommandResult {
 
         return feedbackToUser.equals(otherCommandResult.feedbackToUser)
                 && showHelp == otherCommandResult.showHelp
-                && exit == otherCommandResult.exit;
+                && exit == otherCommandResult.exit
+                && displayRequest.equals(otherCommandResult.displayRequest);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(feedbackToUser, showHelp, exit);
+        return Objects.hash(feedbackToUser, showHelp, exit, displayRequest);
     }
 
     @Override
@@ -75,6 +92,7 @@ public class CommandResult {
                 .add("feedbackToUser", feedbackToUser)
                 .add("showHelp", showHelp)
                 .add("exit", exit)
+                .add("displayRequest", displayRequest)
                 .toString();
     }
 

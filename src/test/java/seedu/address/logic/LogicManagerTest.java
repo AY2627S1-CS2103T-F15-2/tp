@@ -1,6 +1,8 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
@@ -12,7 +14,10 @@ import static seedu.address.testutil.TypicalPersons.AMY;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +25,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.DisplayRequest;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -27,6 +33,13 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.equipment.Availability;
+import seedu.address.model.equipment.Condition;
+import seedu.address.model.equipment.Equipment;
+import seedu.address.model.equipment.exceptions.EquipmentNotFoundException;
+import seedu.address.model.loan.Loan;
+import seedu.address.model.member.Member;
+import seedu.address.model.member.NusId;
 import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -87,6 +100,78 @@ public class LogicManagerTest {
         assertThrows(UnsupportedOperationException.class, () -> logic.getFilteredPersonList().remove(0));
     }
 
+    @Test
+    public void getAddressBook_returnsSameRootAndLiveUnmodifiableLists() {
+        ReadOnlyAddressBook root = logic.getAddressBook();
+        assertSame(model.getAddressBook(), root);
+        var persons = root.getPersonList();
+        var members = root.getMemberList();
+        var equipment = root.getEquipmentList();
+        var loans = root.getLoanList();
+        Member member = new Member(new NusId("A0123456X"), AMY.getName(), AMY.getPhone(), AMY.getEmail());
+        Equipment item = new Equipment(new UUID(0, 1), "Camera", "Photography", Condition.GOOD, "");
+        LocalDate date = LocalDate.of(2026, 1, 1);
+        Loan loan = new Loan(item.getUuid(), member.getNusId(), date, date, null);
+        model.addPerson(AMY);
+        model.addMember(member);
+        model.addEquipment(item);
+        model.addLoan(loan);
+        assertSame(root, logic.getAddressBook());
+        assertSame(members, root.getMemberList());
+        assertSame(equipment, root.getEquipmentList());
+        assertSame(loans, root.getLoanList());
+        assertEquals(AMY, persons.get(0));
+        assertEquals(member, members.get(0));
+        assertEquals(item, equipment.get(0));
+        assertEquals(loan, loans.get(0));
+        assertThrows(UnsupportedOperationException.class, () -> persons.remove(0));
+        assertThrows(UnsupportedOperationException.class, () -> members.remove(0));
+        assertThrows(UnsupportedOperationException.class, () -> equipment.remove(0));
+        assertThrows(UnsupportedOperationException.class, () -> loans.remove(0));
+        assertFalse(Files.exists(temporaryFolder.resolve("addressBook.json")));
+    }
+
+    @Test
+    public void getAvailability_tracksRealLoansAndAllConditions() {
+        Member member = new Member(new NusId("A0123456X"), AMY.getName(), AMY.getPhone(), AMY.getEmail());
+        model.addMember(member);
+        LocalDate date = LocalDate.of(2026, 1, 1);
+        for (Condition condition : Condition.values()) {
+            UUID uuid = new UUID(0, condition.ordinal() + 1);
+            model.addEquipment(new Equipment(uuid, "Camera", "Photography", condition, ""));
+            Availability idle = condition == Condition.GOOD || condition == Condition.FAIR
+                    ? Availability.AVAILABLE : Availability.UNAVAILABLE;
+            assertEquals(idle, logic.getAvailability(uuid));
+            model.addLoan(new Loan(uuid, member.getNusId(), date, date, null));
+            assertEquals(Availability.ASSIGNED, logic.getAvailability(uuid));
+            model.closeLoan(uuid, date);
+            assertEquals(idle, logic.getAvailability(uuid));
+        }
+        assertThrows(EquipmentNotFoundException.class, () -> logic.getAvailability(new UUID(0, 100)));
+        assertThrows(NullPointerException.class, () -> logic.getAvailability(null));
+        assertFalse(Files.exists(temporaryFolder.resolve("addressBook.json")));
+    }
+
+    @Test
+    public void getAvailability_delegatesExactIdentityAndPreservesFailure() {
+        UUID uuid = new UUID(0, 7);
+        EquipmentNotFoundException failure = new EquipmentNotFoundException();
+        Model boundary = new ModelManager() {
+            @Override
+            public Availability getAvailability(UUID requested) {
+                assertSame(uuid, requested);
+                throw failure;
+            }
+        };
+        JsonAddressBookStorage addressStorage =
+                new JsonAddressBookStorage(temporaryFolder.resolve("boundary.json"));
+        Logic boundaryLogic = new LogicManager(boundary, new StorageManager(addressStorage,
+                new JsonUserPrefsStorage(temporaryFolder.resolve("boundary-prefs.json"))));
+        EquipmentNotFoundException actual = org.junit.jupiter.api.Assertions.assertThrows(
+                EquipmentNotFoundException.class, () -> boundaryLogic.getAvailability(uuid));
+        assertSame(failure, actual);
+    }
+
     /**
      * Executes the command and confirms that
      * - no exceptions are thrown <br>
@@ -98,6 +183,7 @@ public class LogicManagerTest {
             Model expectedModel) throws CommandException, ParseException {
         CommandResult result = logic.execute(inputCommand);
         assertEquals(expectedMessage, result.getFeedbackToUser());
+        assertEquals(DisplayRequest.legacyPersons(), result.getDisplayRequest());
         assertEquals(expectedModel, model);
     }
 

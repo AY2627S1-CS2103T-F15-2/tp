@@ -4,10 +4,52 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.Assert.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
 public class CommandResultTest {
+    @Test
+    public void constructors_preserveLegacyFlagsAndDisplay() {
+        CommandResult legacy = new CommandResult("feedback");
+        assertEquals(DisplayRequest.legacyPersons(), legacy.getDisplayRequest());
+        assertFalse(legacy.isShowHelp());
+        assertFalse(legacy.isExit());
+        for (boolean help : new boolean[] {false, true}) {
+            for (boolean exit : new boolean[] {false, true}) {
+                CommandResult result = new CommandResult("feedback", help, exit);
+                assertEquals("feedback", result.getFeedbackToUser());
+                assertEquals(help, result.isShowHelp());
+                assertEquals(exit, result.isExit());
+                assertEquals(DisplayRequest.legacyPersons(), result.getDisplayRequest());
+            }
+        }
+    }
+
+    @Test
+    public void explicitDisplay_preservesFeedbackAndValueSemantics() {
+        CommandResult result = new CommandResult("feedback", DisplayRequest.members());
+        CommandResult equal = new CommandResult("feedback", DisplayRequest.members());
+        assertEquals("feedback", result.getFeedbackToUser());
+        assertEquals(DisplayRequest.members(), result.getDisplayRequest());
+        assertFalse(result.isShowHelp());
+        assertFalse(result.isExit());
+        assertEquals(result, equal);
+        assertEquals(result.hashCode(), equal.hashCode());
+        assertNotEquals(result, new CommandResult("feedback", DisplayRequest.equipment()));
+        assertNotEquals(result, new CommandResult("feedback"));
+        assertEquals(new CommandResult("feedback"),
+                new CommandResult("feedback", DisplayRequest.legacyPersons()));
+    }
+
+    @Test
+    public void constructors_nullRequiredFields_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new CommandResult(null));
+        assertThrows(NullPointerException.class, () -> new CommandResult(null, true, true));
+        assertThrows(NullPointerException.class, () -> new CommandResult(null, DisplayRequest.members()));
+        assertThrows(NullPointerException.class, () -> new CommandResult("feedback", null));
+    }
+
     @Test
     public void equals() {
         CommandResult commandResult = new CommandResult("feedback");
@@ -57,7 +99,8 @@ public class CommandResultTest {
         CommandResult commandResult = new CommandResult("feedback");
         String expected = CommandResult.class.getCanonicalName() + "{feedbackToUser="
                 + commandResult.getFeedbackToUser() + ", showHelp=" + commandResult.isShowHelp()
-                + ", exit=" + commandResult.isExit() + "}";
+                + ", exit=" + commandResult.isExit()
+                + ", displayRequest=" + commandResult.getDisplayRequest() + "}";
         assertEquals(expected, commandResult.toString());
     }
 }
