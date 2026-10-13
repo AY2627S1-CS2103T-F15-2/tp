@@ -41,25 +41,19 @@ execution through `LogicManager` and shell navigation require their owners' inte
 
 ## Validation evidence
 
-The display and parser contracts are now merged and incorporated from team baseline
-`cf479a15091483ffaf74118c9558d11b0511c3af` (display PR #80, parser PR #83).
-The normal `gradlew.bat check coverage --console=plain` now compiles production code
-but cannot compile `MemberCardTest` until Keith's UI foundation PR #81 supplies `FxTestUtil`.
-No replacement helper or committed test exclusion has been introduced.
-
-All 12 new command/parser/storage tests pass with zero failures, errors or skips using
-an uncommitted init script excluding only `MemberCardTest` from test compilation:
-`gradlew.bat -I build/member-add-work/command-tests.gradle test --tests '*MemberAddCommandTest' --tests '*MemberAddCommandParserTest' --tests '*MemberAddCommandIntegrationTest' checkstyleMain checkstyleTest --console=plain`.
-Both Checkstyle tasks pass. This is component validation, not full CI acceptance.
-
-At the original baseline, all 428 existing tests passed with the dependency-blocked new
-files excluded by an uncommitted scoped build. The normal full suite and card tests
-must be rerun once the UI foundation merges.
+All shared setup contracts are merged and incorporated through team baseline
+`9083cdceca1b3b89544b83dcdf52c8b9fe05a93f` (display PR #80, parser PR #83, UI PR #81).
+The normal `gradlew.bat check coverage shadowJar --console=plain` passes on Windows
+with JDK 25.0.4. All command/parser/storage and card tests run using the real shared
+APIs and `FxTestUtil`. Both Checkstyle tasks and coverage generation pass.
+No init script, test exclusion or replacement helper is needed for this run.
 
 A standalone JavaFX preview runs the real card FXML and verifies fields, supplied counts,
 distinct same-name IDs, misuse rejection, absent activation handlers and wrapping at
-308px and 210px. It also passes using resources loaded from the scoped packaged JAR.
+308px and 210px. It also passes with the actual shared theme and resources loaded
+from the full packaged JAR.
 Visually inspected screenshots are available locally at
 `build/member-add-work/card-308.png` and `build/member-add-work/card-210.png`.
-They show the component CSS on a white surface; verification with Keith's actual shared
-theme and parent ListView selection remains pending. Generated output is not committed.
+The preview uses `laplace-root` and the shared theme. Parent ListView selection and
+shell navigation remain the integration owners' responsibility. Generated output is
+not committed.
