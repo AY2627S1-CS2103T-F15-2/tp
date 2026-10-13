@@ -158,6 +158,15 @@
       "headingKeywords": {}
     },
     {
+      "src": "commands/member-add.md",
+      "headings": {
+        "add-a-member": "Add a member",
+        "component-handoff-and-integration-boundary": "Component handoff and integration boundary",
+        "validation-evidence": "Validation evidence"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "gui/Verification.md",
       "headings": {
         "laplace-gui-verification": "Laplace GUI verification",
