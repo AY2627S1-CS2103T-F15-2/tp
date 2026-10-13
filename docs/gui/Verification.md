@@ -108,3 +108,29 @@ the packaged application from a temporary data directory to verify classpath res
 
 Keep the integration issue open until this evidence exists. Do not report the foundation's
 passing tests, stylesheet probes or JAR build as completed command/GUI milestone acceptance.
+
+## Stage B deletion handoff
+
+The deletion component PR is based on team master
+`6230007d781478bc2a740a73fce6036e8a534996`, after display #80, parsing #83, UI foundation
+#81 and member-add/card #79 merged. It adds MemberDeleteCommand/EquipmentDeleteCommand and
+their individual parsers. It does not change the shell, family routers, cards, domain or storage.
+
+Both commands resolve stored identities through Model and delegate open-loan restrictions
+and related closed-history removal to the root. Success requests the corresponding directory.
+Unknown identities and forbidden deletions become CommandException with the original domain
+cause. Direct parser/command/model/temporary-file storage tests cover rejected-state integrity,
+same-name identities, cleanup boundaries and fresh-model reloads. Saving in those tests is
+explicit; they do not establish the as-yet unactivated LogicManager routes.
+
+Normal Java 25 validation: `./gradlew check coverage shadowJar` passed with 510 tests and
+zero failures, errors or skips. Both Checkstyle tasks and coverage generation passed.
+`./.github/run-checks.sh` passed with the existing AboutUs whitespace warning. All 28 new
+deletion tests ran. No GUI behavior changed, so the foundation's existing graphical tests
+remain accurate; no new shell screenshot or full-application acceptance is claimed.
+
+After Duy activates both routes, verify that successful deletion saves through LogicManager
+and rejected parsing/execution never saves. Exercise the actual GUI: blocked deletion keeps
+the current screen, selection and input; permitted deletion shows the directory, chooses a
+deterministic surviving identity or empty state, and removes stale details. Refresh holdings,
+availability and loan history after cleanup. Final shell and milestone issues remain open.
