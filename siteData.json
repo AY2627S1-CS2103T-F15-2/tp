@@ -158,6 +158,17 @@
       "headingKeywords": {}
     },
     {
+      "src": "gui/Verification.md",
+      "headings": {
+        "laplace-gui-verification": "Laplace GUI verification",
+        "stage-a-foundation": "Stage A foundation",
+        "shared-component-apis": "Shared component APIs",
+        "foundation-evidence": "Foundation evidence",
+        "final-shell-gate-pending-dependencies": "Final shell gate (pending dependencies)"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "index.md",
       "title": "",
       "headings": {
