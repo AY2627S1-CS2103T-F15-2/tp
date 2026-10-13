@@ -1,11 +1,21 @@
 package seedu.address.model.util;
 
+import static java.util.Objects.requireNonNull;
+
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.equipment.Condition;
+import seedu.address.model.equipment.Equipment;
+import seedu.address.model.loan.Loan;
+import seedu.address.model.member.Member;
+import seedu.address.model.member.NusId;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
@@ -40,11 +50,41 @@ public class SampleDataUtil {
         };
     }
 
+    /**
+     * Returns a fresh sample book for startup when no saved data exists.
+     */
     public static ReadOnlyAddressBook getSampleAddressBook() {
+        return getSampleAddressBook(Clock.systemDefaultZone());
+    }
+
+    /**
+     * Builds sample relationships relative to the supplied clock, without touching stored data.
+     */
+    static ReadOnlyAddressBook getSampleAddressBook(Clock clock) {
+        requireNonNull(clock);
+        LocalDate today = LocalDate.now(clock);
         AddressBook sampleAb = new AddressBook();
         for (Person samplePerson : getSamplePersons()) {
             sampleAb.addPerson(samplePerson);
         }
+
+        NusId alexId = new NusId("A0123456X");
+        sampleAb.addMember(new Member(alexId, new Name("Alex Tan"), new Phone("91234567"),
+                new Email("alex.tan@example.com")));
+        sampleAb.addMember(new Member(new NusId("A0234567R"), new Name("Jamie Lim"), new Phone("98765432"),
+                new Email("jamie.lim@example.com")));
+        sampleAb.addMember(new Member(new NusId("A0345678M"), new Name("Priya Nair"), new Phone("90123456"),
+                new Email("priya.nair@example.com")));
+
+        UUID availableCameraId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+        UUID assignedCameraId = UUID.fromString("550e8400-e29b-41d4-a716-446655440001");
+        sampleAb.addEquipment(new Equipment(availableCameraId, "Camera", "Photography", Condition.GOOD,
+                "Case included"));
+        sampleAb.addEquipment(new Equipment(assignedCameraId, "Camera", "Photography", Condition.FAIR,
+                "Strap included"));
+        sampleAb.addEquipment(new Equipment(UUID.fromString("550e8400-e29b-41d4-a716-446655440002"),
+                "Tripod", "Photography", Condition.DAMAGED, "Loose leg; do not issue"));
+        sampleAb.addLoan(new Loan(assignedCameraId, alexId, today.minusDays(2), today.plusDays(5), null));
         return sampleAb;
     }
 
