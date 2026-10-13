@@ -1,0 +1,177 @@
+/* Shared Laplace theme. Load on a laplace-root; keep legacy/help dark styles local to their content. */
+.laplace-root {
+    -fx-font-family: "System";
+    -fx-font-size: 13px;
+    -fx-background-color: #EEF1F3;
+    -fx-base: #FFFFFF;
+    -fx-control-inner-background: #FFFFFF;
+    -fx-accent: #1688E8;
+    -fx-focus-color: #1688E8;
+    -fx-faint-focus-color: #1688E822;
+}
+
+.laplace-root .label {
+    -fx-text-fill: #37474F;
+}
+
+.laplace-surface {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 3;
+    -fx-border-color: #DCE3E8;
+    -fx-border-radius: 3;
+    -fx-border-width: 1;
+}
+
+.laplace-root .laplace-title {
+    -fx-font-size: 19px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #37474F;
+}
+
+.laplace-root .laplace-muted {
+    -fx-font-size: 12px;
+    -fx-text-fill: #607D8B;
+}
+
+.laplace-root .laplace-count-badge {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0874C9;
+    -fx-background-color: #E8F5E9;
+    -fx-background-radius: 12;
+    -fx-padding: 4 10;
+}
+
+.laplace-header {
+    -fx-background-color: #263238;
+    -fx-padding: 12 20;
+    -fx-spacing: 12;
+}
+
+.laplace-root .laplace-header .label,
+.laplace-root .laplace-header .laplace-title {
+    -fx-text-fill: #FFFFFF;
+}
+
+.laplace-navigation {
+    -fx-background-color: transparent;
+    -fx-text-fill: #CFD8DC;
+    -fx-padding: 7 12;
+    -fx-border-color: transparent;
+    -fx-border-width: 0 0 2 0;
+    -fx-background-radius: 3;
+}
+
+.laplace-navigation:hover {
+    -fx-background-color: #37474F;
+    -fx-text-fill: #FFFFFF;
+}
+
+.laplace-navigation-active,
+.laplace-navigation:selected {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-border-color: #1688E8;
+}
+
+.laplace-navigation:focused {
+    -fx-background-color: #455A64;
+    -fx-border-color: #FFFFFF;
+}
+
+.laplace-success {
+    -fx-background-color: #E8F5E9;
+    -fx-border-color: #DCE3E8;
+    -fx-background-radius: 3;
+    -fx-border-radius: 3;
+    -fx-padding: 12 16;
+}
+
+.laplace-root .laplace-success .label {
+    -fx-text-fill: #285331;
+}
+
+.laplace-error {
+    -fx-background-color: #FDECEC;
+    -fx-border-color: #E6B9B9;
+    -fx-background-radius: 3;
+    -fx-border-radius: 3;
+    -fx-padding: 12 16;
+}
+
+.laplace-root .laplace-error .label,
+.laplace-root .label.laplace-error {
+    -fx-text-fill: #A12626;
+}
+
+.laplace-row {
+    -fx-background-color: transparent;
+    -fx-padding: 12 16;
+    -fx-spacing: 4;
+}
+
+.laplace-root .list-view {
+    -fx-background-color: #FFFFFF;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.laplace-root .list-cell {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #37474F;
+    -fx-padding: 0;
+    -fx-border-color: #DCE3E8;
+    -fx-border-width: 0 0 1 0;
+}
+
+.laplace-root .list-cell:empty {
+    -fx-border-width: 0;
+}
+
+.laplace-root .list-cell:filled:hover {
+    -fx-background-color: #F3F8FC;
+}
+
+.laplace-root .list-cell:filled:selected {
+    -fx-background-color: #E3F2FD;
+    -fx-border-color: #1688E8;
+    -fx-border-width: 1;
+    -fx-text-fill: #0874C9;
+}
+
+.laplace-root .list-cell:filled:selected .label {
+    -fx-text-fill: #0874C9;
+}
+
+.laplace-root .text-field {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #37474F;
+    -fx-prompt-text-fill: #607D8B;
+    -fx-border-color: #DCE3E8;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 10 12;
+}
+
+.laplace-root .text-field:focused {
+    -fx-border-color: #1688E8;
+}
+
+.laplace-root .text-field.error {
+    -fx-border-color: #A12626;
+    -fx-background-color: #FDECEC;
+}
+
+.laplace-root .scroll-pane,
+.laplace-root .scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.laplace-root .scroll-bar {
+    -fx-background-color: #EEF1F3;
+}
+
+.laplace-root .scroll-bar .thumb {
+    -fx-background-color: #B0BEC5;
+    -fx-background-radius: 4;
+}
