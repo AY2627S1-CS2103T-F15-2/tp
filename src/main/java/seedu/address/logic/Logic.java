@@ -1,10 +1,14 @@
 package seedu.address.logic;
 
+import java.util.UUID;
+
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.equipment.Availability;
 import seedu.address.model.person.Person;
 
 /**
@@ -22,6 +26,12 @@ public interface Logic {
 
     /** Returns an unmodifiable view of the filtered list of persons */
     ObservableList<Person> getFilteredPersonList();
+
+    /** Returns the existing read-only root with live, unmodifiable entity lists. */
+    ReadOnlyAddressBook getAddressBook();
+
+    /** Returns derived availability; unknown UUIDs throw EquipmentNotFoundException. */
+    Availability getAvailability(UUID uuid);
 
     /**
      * Returns the user prefs' GUI settings.
