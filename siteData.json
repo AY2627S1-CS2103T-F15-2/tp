@@ -77,6 +77,21 @@
       "headingKeywords": {}
     },
     {
+      "src": "GuiCommandContract.md",
+      "headings": {
+        "laplace-gui-and-command-integration-contract": "Laplace GUI and command integration contract",
+        "status-and-delivery": "Status and delivery",
+        "display-and-read-only-interfaces": "Display and read-only interfaces",
+        "view-feature-handoff-pending": "View-feature handoff (pending)",
+        "gui-reference-and-required-behavior": "GUI reference and required behavior",
+        "shared-display-contract-owned-by-nicholas": "Shared display contract owned by Nicholas",
+        "shared-parsing-and-sorting-contracts-owned-by-duy": "Shared parsing and sorting contracts owned by Duy",
+        "gui-component-contracts-and-ownership": "GUI component contracts and ownership",
+        "ownership-of-shared-files": "Ownership of shared files"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "Logging.md",
       "title": "Logging guide",
       "headings": {
