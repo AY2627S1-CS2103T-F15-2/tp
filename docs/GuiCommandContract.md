@@ -9,8 +9,8 @@ by the named contributors; their presence here does not imply working commands o
 Baseline: team master `6b85337bce1664ec2774f0aca86b9d51a749019b` (PR #70).
 
 Nicholas's scope is tracked in [issue #72](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/72).
-Setup uses `codex/v1.3-display-contract`; after maintainers merge the shared setup,
-dependent views use `codex/v1.3-detail-views` from the recorded merged baseline.
+Setup uses `v1.3`; after maintainers merge the shared setup,
+dependent views use `v1.3` from the recorded merged baseline.
 Duy supplies parsing/sorting and Keith supplies the theme/test helper separately.
 Do not copy unmerged dependencies or create competing implementations.
 
