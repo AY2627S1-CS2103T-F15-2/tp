@@ -39,19 +39,22 @@ contract, theme and FX test helper are not merged. Family routing remains a plac
 Direct parser/command/storage verification is component integration. Full command
 execution through `LogicManager` and shell navigation require their owners' integration.
 
-## Initial validation evidence
+## Validation evidence
 
-The standard `gradlew.bat check coverage shadowJar --console=plain` fails compilation
-because `DisplayRequest` and `LaplaceArgumentParser` are absent from the merged baseline.
-The new command/parser/storage tests and `MemberCardTest` are written but not yet run;
-the latter also needs Keith's shared `FxTestUtil`. These are required follow-up checks.
-Display and parser setup are tracked in team PRs #78 and #77, respectively.
+The display and parser contracts are now merged and incorporated from team baseline
+`cf479a15091483ffaf74118c9558d11b0511c3af` (display PR #80, parser PR #83).
+The normal `gradlew.bat check coverage --console=plain` now compiles production code
+but cannot compile `MemberCardTest` until Keith's UI foundation PR #81 supplies `FxTestUtil`.
+No replacement helper or committed test exclusion has been introduced.
 
-Both standard Checkstyle tasks pass when invoked independently of compilation.
-A temporary, uncommitted Gradle init script excludes only the two blocked production
-files and four new test classes, allowing the card and all 428 existing tests to build:
-`gradlew.bat -I build/member-add-work/card-only.gradle test coverage shadowJar writePreviewClasspath --console=plain`.
-That scoped run passes with zero failures, errors or skips. It is not a full feature check.
+All 12 new command/parser/storage tests pass with zero failures, errors or skips using
+an uncommitted init script excluding only `MemberCardTest` from test compilation:
+`gradlew.bat -I build/member-add-work/command-tests.gradle test --tests '*MemberAddCommandTest' --tests '*MemberAddCommandParserTest' --tests '*MemberAddCommandIntegrationTest' checkstyleMain checkstyleTest --console=plain`.
+Both Checkstyle tasks pass. This is component validation, not full CI acceptance.
+
+At the original baseline, all 428 existing tests passed with the dependency-blocked new
+files excluded by an uncommitted scoped build. The normal full suite and card tests
+must be rerun once the UI foundation merges.
 
 A standalone JavaFX preview runs the real card FXML and verifies fields, supplied counts,
 distinct same-name IDs, misuse rejection, absent activation handlers and wrapping at
