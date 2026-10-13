@@ -25,7 +25,6 @@ docs/_site/
 AGENTS.md
 CLAUDE.md
 /.claude/
-/.codex/
 
 # Temp files
 _temp/

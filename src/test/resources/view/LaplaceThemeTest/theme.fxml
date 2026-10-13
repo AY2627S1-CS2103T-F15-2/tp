@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- A stylesheet probe, not the application shell or milestone acceptance data. -->
+<VBox styleClass="laplace-root" spacing="14" xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1">
+  <HBox styleClass="laplace-header" alignment="CENTER_LEFT">
+    <Label text="Laplace theme probe" styleClass="laplace-title" />
+    <Region HBox.hgrow="ALWAYS" />
+    <Button text="Active style" styleClass="laplace-navigation,laplace-navigation-active" />
+    <Button text="Inactive style" styleClass="laplace-navigation" />
+  </HBox>
+  <VBox spacing="14" VBox.vgrow="ALWAYS">
+    <padding><Insets top="0" right="20" bottom="20" left="20" /></padding>
+    <Label id="title" text="Foundation stylesheet preview" styleClass="laplace-title" />
+    <Label text="This preview checks shared styles; feature panels are pending."
+           styleClass="laplace-muted" wrapText="true" />
+    <VBox id="surface" styleClass="laplace-surface" spacing="10" VBox.vgrow="ALWAYS">
+      <padding><Insets top="16" right="16" bottom="16" left="16" /></padding>
+      <Label id="badge" text="BADGE STYLE" styleClass="laplace-count-badge" />
+      <ListView fx:id="rows" VBox.vgrow="ALWAYS" />
+    </VBox>
+    <VBox id="success" styleClass="laplace-success">
+      <Label text="Success treatment" wrapText="true" />
+    </VBox>
+    <VBox id="error" styleClass="laplace-error">
+      <Label text="Error treatment: invalid input remains available for correction." wrapText="true" />
+    </VBox>
+    <Label text="Command field style" />
+    <TextField id="command" promptText="Theme probe only" />
+    <Label text="Press Enter to execute" styleClass="laplace-muted" />
+  </VBox>
+</VBox>

@@ -24,8 +24,25 @@ checkstyle {
     toolVersion = '14.1.0'
 }
 
+configurations {
+    javafxTestRuntime
+}
+
+// Test with one matching native platform, while preserving the existing distributable dependencies.
+String javaFxVersion = '17.0.7'
+String operatingSystem = System.getProperty('os.name').toLowerCase(Locale.ROOT)
+String architecture = System.getProperty('os.arch').toLowerCase(Locale.ROOT)
+boolean isArm = architecture in ['aarch64', 'arm64']
+String javaFxTestPlatform = operatingSystem.contains('mac') ? (isArm ? 'mac-aarch64' : 'mac')
+        : operatingSystem.contains('win') ? 'win' : (isArm ? 'linux-aarch64' : 'linux')
+
 test {
     useJUnitPlatform()
+    // A JDK with bundled JavaFX must not silently replace the declared test runtime.
+    jvmArgs '--limit-modules=java.se,jdk.unsupported', '--enable-native-access=ALL-UNNAMED'
+    classpath = configurations.javafxTestRuntime + sourceSets.test.runtimeClasspath.filter {
+        !it.name.startsWith('javafx-')
+    }
     finalizedBy jacocoTestReport
 }
 
@@ -47,7 +64,12 @@ task coverage(type: JacocoReport) {
 
 dependencies {
     String jUnitVersion = '5.14.4'
-    String javaFxVersion = '17.0.7'
+
+    ['base', 'controls', 'fxml', 'graphics'].each { module ->
+        javafxTestRuntime("org.openjfx:javafx-${module}:${javaFxVersion}:${javaFxTestPlatform}") {
+            transitive = false
+        }
+    }
 
     implementation "org.openjfx:javafx-base:${javaFxVersion}:win"
     implementation "org.openjfx:javafx-base:${javaFxVersion}:mac"
