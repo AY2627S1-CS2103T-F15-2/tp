@@ -119,6 +119,27 @@ public class MemberDeleteCommandTest {
     }
 
     @Test
+    public void execute_openLoanModelFailure_preservesOriginalCause() {
+        IllegalStateException failure = new IllegalStateException("Member still has an open loan");
+        ModelManager model = new ModelManager() {
+            @Override
+            public void deleteMember(Member member) {
+                throw failure;
+            }
+        };
+        model.addMember(FIRST_MEMBER);
+        model.addEquipment(FIRST_EQUIPMENT);
+        model.addLoan(DeletionTestData.loan(FIRST_EQUIPMENT, FIRST_MEMBER, true));
+        AddressBook before = new AddressBook(model.getAddressBook());
+        CommandException error = assertThrows(
+                CommandException.class, () -> new MemberDeleteCommand(FIRST_MEMBER.getNusId()).execute(model));
+        assertSame(failure, error.getCause());
+        assertEquals(String.format(MemberDeleteCommand.MESSAGE_OPEN_LOAN, FIRST_MEMBER.getNusId()),
+                error.getMessage());
+        assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
     public void constructorAndExecute_nullArguments_rejectsMisuse() {
         assertThrows(NullPointerException.class, () -> new MemberDeleteCommand(null));
         assertThrows(NullPointerException.class, () -> new MemberDeleteCommand(FIRST_MEMBER.getNusId()).execute(null));

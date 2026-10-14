@@ -123,9 +123,9 @@ cause. Direct parser/command/model/temporary-file storage tests cover rejected-s
 same-name identities, cleanup boundaries and fresh-model reloads. Saving in those tests is
 explicit; they do not establish the as-yet unactivated LogicManager routes.
 
-Normal Java 25 validation: `./gradlew check coverage shadowJar` passed with 510 tests and
+Normal Java 25 validation: `./gradlew check coverage shadowJar` passed with 512 tests and
 zero failures, errors or skips. Both Checkstyle tasks and coverage generation passed.
-`./.github/run-checks.sh` passed with the existing AboutUs whitespace warning. All 28 new
+`./.github/run-checks.sh` passed with the existing AboutUs whitespace warning. All 30 new
 deletion tests ran. No GUI behavior changed, so the foundation's existing graphical tests
 remain accurate; no new shell screenshot or full-application acceptance is claimed.
 

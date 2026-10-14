@@ -118,6 +118,27 @@ public class EquipmentDeleteCommandTest {
     }
 
     @Test
+    public void execute_openLoanModelFailure_preservesOriginalCause() {
+        IllegalStateException failure = new IllegalStateException("Equipment still has an open loan");
+        ModelManager model = new ModelManager() {
+            @Override
+            public void deleteEquipment(Equipment equipment) {
+                throw failure;
+            }
+        };
+        model.addMember(FIRST_MEMBER);
+        model.addEquipment(FIRST_EQUIPMENT);
+        model.addLoan(DeletionTestData.loan(FIRST_EQUIPMENT, FIRST_MEMBER, true));
+        AddressBook before = new AddressBook(model.getAddressBook());
+        CommandException error = assertThrows(
+                CommandException.class, () -> new EquipmentDeleteCommand(FIRST_EQUIPMENT.getUuid()).execute(model));
+        assertSame(failure, error.getCause());
+        assertEquals(String.format(EquipmentDeleteCommand.MESSAGE_OPEN_LOAN, FIRST_EQUIPMENT.getUuid()),
+                error.getMessage());
+        assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
     public void constructorAndExecute_nullArguments_rejectsMisuse() {
         assertThrows(NullPointerException.class, () -> new EquipmentDeleteCommand(null));
         assertThrows(
