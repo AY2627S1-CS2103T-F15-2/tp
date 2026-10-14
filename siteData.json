@@ -175,6 +175,20 @@
       "headingKeywords": {}
     },
     {
+      "src": "commands/loans-add.md",
+      "headings": {
+        "assign-equipment-loans-add": "Assign equipment: loans add"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "commands/loans-return.md",
+      "headings": {
+        "record-a-return-loans-return": "Record a return: loans return"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "commands/member-add.md",
       "headings": {
         "add-a-member": "Add a member",
