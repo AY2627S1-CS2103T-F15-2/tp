@@ -82,7 +82,7 @@
         "laplace-gui-and-command-integration-contract": "Laplace GUI and command integration contract",
         "status-and-delivery": "Status and delivery",
         "display-and-read-only-interfaces": "Display and read-only interfaces",
-        "view-feature-handoff-pending": "View-feature handoff (pending)",
+        "view-feature-handoff-components-implemented-integration-pending": "View-feature handoff (components implemented; integration pending)",
         "gui-reference-and-required-behavior": "GUI reference and required behavior",
         "shared-display-contract-owned-by-nicholas": "Shared display contract owned by Nicholas",
         "shared-parsing-and-sorting-contracts-owned-by-duy": "Shared parsing and sorting contracts owned by Duy",
@@ -183,6 +183,14 @@
       "headingKeywords": {}
     },
     {
+      "src": "commands/equipment-view.md",
+      "headings": {
+        "equipment-view": "Equipment view",
+        "integration-status": "Integration status"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "commands/loans-add.md",
       "headings": {
         "assign-equipment-loans-add": "Assign equipment: loans add"
@@ -219,6 +227,14 @@
       "src": "commands/member-list.md",
       "headings": {
         "member-list": "Member list"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "commands/member-view.md",
+      "headings": {
+        "member-view": "Member view",
+        "integration-status": "Integration status"
       },
       "headingKeywords": {}
     },
