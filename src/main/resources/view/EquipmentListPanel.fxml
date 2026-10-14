@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1" minWidth="0" minHeight="0" prefWidth="300"
+      styleClass="laplace-surface,directory-list" stylesheets="@DirectoryList.css">
+    <HBox spacing="8" alignment="CENTER_LEFT" styleClass="directory-list-header">
+        <Label text="Equipment" styleClass="directory-list-title" />
+        <Label fx:id="countLabel" styleClass="laplace-muted" wrapText="true" minWidth="0" />
+    </HBox>
+    <ListView fx:id="rows" minWidth="0" minHeight="0" VBox.vgrow="ALWAYS" />
+    <Label text="Select an item to view full details. Press Enter or Space to open."
+           styleClass="laplace-muted,directory-selection-hint" wrapText="true" minWidth="0"
+           minHeight="-Infinity" maxWidth="Infinity">
+        <padding><Insets top="6" right="8" bottom="8" left="8" /></padding>
+    </Label>
+</VBox>
