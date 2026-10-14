@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      minWidth="0" maxWidth="Infinity" spacing="4" styleClass="laplace-row, equipment-card"
+      stylesheets="@EquipmentCard.css">
+  <padding>
+    <Insets top="12" right="14" bottom="12" left="14" />
+  </padding>
+  <Label fx:id="name" minWidth="0" maxWidth="Infinity" wrapText="true"
+         styleClass="equipment-name" />
+  <Label fx:id="category" minWidth="0" maxWidth="Infinity" wrapText="true"
+         styleClass="equipment-category" />
+  <Label fx:id="uuid" minWidth="0" maxWidth="Infinity" wrapText="true"
+         styleClass="equipment-uuid" />
+  <Label fx:id="condition" minWidth="0" maxWidth="Infinity" wrapText="true"
+         styleClass="equipment-condition" />
+  <Label fx:id="availability" minWidth="0" maxWidth="Infinity" wrapText="true"
+         styleClass="equipment-availability" />
+  <Label fx:id="holder" minWidth="0" maxWidth="Infinity" wrapText="true"
+         styleClass="equipment-holder" />
+</VBox>
