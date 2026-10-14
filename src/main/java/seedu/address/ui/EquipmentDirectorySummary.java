@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.EnumMap;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
@@ -55,18 +56,15 @@ public class EquipmentDirectorySummary extends UiPart<Region> {
     public void refresh(Optional<UUID> selected) {
         requireNonNull(selected);
         int count = data.getEquipmentList().size();
-        int available = 0;
-        int assigned = 0;
-        int unavailable = 0;
+        EnumMap<Availability, Integer> counts = new EnumMap<>(Availability.class);
+        for (Availability availability : Availability.values()) {
+            counts.put(availability, 0);
+        }
         int unknown = 0;
         for (Equipment equipment : data.getEquipmentList()) {
             try {
-                switch (requireNonNull(availabilityLookup.apply(equipment.getUuid()))) {
-                    case AVAILABLE -> available++;
-                    case ASSIGNED -> assigned++;
-                    case UNAVAILABLE -> unavailable++;
-                    default -> throw new AssertionError("Unhandled equipment availability");
-                }
+                Availability availability = requireNonNull(availabilityLookup.apply(equipment.getUuid()));
+                counts.merge(availability, 1, Integer::sum);
             } catch (EquipmentNotFoundException e) {
                 unknown++;
             }
@@ -74,9 +72,9 @@ public class EquipmentDirectorySummary extends UiPart<Region> {
         countBadge.setText(count + " ITEMS");
         totalCount.setText(Integer.toString(count));
         displayedCount.setText(Integer.toString(count));
-        availableCount.setText(Integer.toString(available));
-        assignedCount.setText(Integer.toString(assigned));
-        unavailableCount.setText(Integer.toString(unavailable));
+        availableCount.setText(Integer.toString(counts.get(Availability.AVAILABLE)));
+        assignedCount.setText(Integer.toString(counts.get(Availability.ASSIGNED)));
+        unavailableCount.setText(Integer.toString(counts.get(Availability.UNAVAILABLE)));
         Optional<Equipment> item = selected.flatMap(uuid -> data.getEquipmentList().stream()
                 .filter(candidate -> candidate.getUuid().equals(uuid)).findFirst());
         selection.setText(selected.isEmpty() ? "No equipment selected"

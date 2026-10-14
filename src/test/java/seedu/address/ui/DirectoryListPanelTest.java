@@ -129,6 +129,10 @@ public class DirectoryListPanelTest {
             rows(panel).fireEvent(key(KeyCode.ENTER));
             rows(panel).fireEvent(key(KeyCode.SPACE));
             assertEquals(List.of(id, id, id), callbacks);
+            cell.fireEvent(click(MouseButton.PRIMARY, 2));
+            cell.fireEvent(click(MouseButton.SECONDARY, 1));
+            rows(panel).fireEvent(key(KeyCode.DOWN));
+            assertEquals(List.of(id, id, id), callbacks);
             panel.refresh();
             assertEquals(3, callbacks.size());
             panel.select(Optional.empty());
@@ -254,6 +258,28 @@ public class DirectoryListPanelTest {
     }
 
     @Test
+    public void cells_reusedForEmptyAndNullSlots_clearGraphicsAndNeverActivate() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = model();
+            AddressBook before = new AddressBook(model.getAddressBook());
+            List<NusId> memberCallbacks = new ArrayList<>();
+            List<UUID> equipmentCallbacks = new ArrayList<>();
+            MemberListPanel members = new MemberListPanel(model.getAddressBook(), memberCallbacks::add);
+            EquipmentListPanel equipment = new EquipmentListPanel(model.getAddressBook(), model::getAvailability,
+                    equipmentCallbacks::add);
+            verifyCellReuse(typedRows(members));
+            verifyCellReuse(typedRows(equipment));
+            assertTrue(memberCallbacks.isEmpty());
+            assertTrue(equipmentCallbacks.isEmpty());
+            assertEquals(before, model.getAddressBook());
+            members.refresh();
+            equipment.refresh();
+            assertEquals(3, rows(members).getItems().size());
+            assertEquals(3, rows(equipment).getItems().size());
+        });
+    }
+
+    @Test
     public void emptyAndNullInputs_haveUsefulPlaceholderAndRejectMisuse() {
         FxTestUtil.runAndWait(() -> {
             ModelManager model = new ModelManager();
@@ -309,6 +335,32 @@ public class DirectoryListPanelTest {
 
     private static String label(Region root, String id) {
         return ((Label) root.lookup("#" + id)).getText();
+    }
+
+    /** Exercise the real JavaFX virtual-cell lifecycle without reflection or production test seams. */
+    private static <T> void verifyCellReuse(ListView<T> list) {
+        ListCell<T> cell = list.getCellFactory().call(list);
+        cell.updateListView(list);
+        cell.updateIndex(0);
+        assertTrue(cell.getGraphic() != null);
+        list.getItems().clear();
+        cell.updateIndex(-1);
+        assertTrue(cell.isEmpty());
+        assertEquals(null, cell.getGraphic());
+        cell.fireEvent(click(MouseButton.PRIMARY, 1));
+
+        // A null display slot is not a domain record and must not leave the previous card visible.
+        list.getItems().add(null);
+        cell.updateIndex(0);
+        assertTrue(!cell.isEmpty());
+        assertEquals(null, cell.getItem());
+        assertEquals(null, cell.getGraphic());
+        cell.fireEvent(click(MouseButton.PRIMARY, 1));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> ListView<T> typedRows(UiPart<Region> panel) {
+        return (ListView<T>) rows(panel);
     }
 
     private static MouseEvent click(MouseButton button, int count) {
