@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox styleClass="loan-panel" minWidth="0.0" prefWidth="780.0" prefHeight="540.0"
+      stylesheets="@LoanPanel.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <ScrollPane fitToWidth="true" hbarPolicy="NEVER" minWidth="0.0" VBox.vgrow="ALWAYS">
+    <content>
+      <VBox spacing="18.0" minWidth="0.0" styleClass="loan-content">
+        <Label text="Loans" styleClass="laplace-title,loan-title" wrapText="true" />
+        <Label text="Current assignments and returned equipment history"
+               styleClass="laplace-muted,loan-subtitle" wrapText="true" />
+        <VBox spacing="12.0" minWidth="0.0" styleClass="laplace-surface,loan-section">
+          <HBox spacing="12.0" alignment="CENTER_LEFT">
+            <Label text="Open loans" styleClass="loan-section-title" />
+            <Label fx:id="openCount" text="0" styleClass="laplace-count-badge,loan-count" />
+          </HBox>
+          <VBox fx:id="openLoans" spacing="10.0" minWidth="0.0" />
+        </VBox>
+        <VBox spacing="12.0" minWidth="0.0" styleClass="laplace-surface,loan-section">
+          <HBox spacing="12.0" alignment="CENTER_LEFT">
+            <Label text="Returned history" styleClass="loan-section-title" />
+            <Label fx:id="historyCount" text="0" styleClass="laplace-count-badge,loan-count" />
+          </HBox>
+          <VBox fx:id="loanHistory" spacing="10.0" minWidth="0.0" />
+        </VBox>
+      </VBox>
+    </content>
+  </ScrollPane>
+</VBox>

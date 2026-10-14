@@ -1,0 +1,93 @@
+.loan-panel {
+    -fx-background-color: #eef1f3;
+    -fx-font-family: "System";
+    -fx-font-size: 13px;
+}
+
+.loan-panel .scroll-pane,
+.loan-panel .scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.loan-content {
+    -fx-padding: 18;
+}
+
+.loan-panel .label {
+    -fx-text-fill: #37474f;
+}
+
+.loan-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.loan-panel .loan-subtitle,
+.loan-panel .loan-empty {
+    -fx-text-fill: #607d8b;
+}
+
+.loan-section {
+    -fx-background-color: white;
+    -fx-border-color: #dce3e8;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-padding: 16;
+}
+
+.loan-section-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.loan-panel .loan-count {
+    -fx-background-color: #e3f2fd;
+    -fx-text-fill: #126bb3;
+    -fx-background-radius: 12;
+    -fx-padding: 3 10;
+    -fx-font-weight: bold;
+}
+
+.loan-row {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #dce3e8;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-padding: 12;
+}
+
+.loan-identity-link {
+    -fx-background-color: transparent;
+    -fx-text-fill: #126bb3;
+    -fx-alignment: center-left;
+    -fx-padding: 4 0;
+    -fx-cursor: hand;
+}
+
+.loan-identity-link:hover {
+    -fx-background-color: #e3f2fd;
+}
+
+.loan-identity-link:focused {
+    -fx-border-color: #1688e8;
+    -fx-border-radius: 2;
+}
+
+.loan-identity-link:disabled {
+    -fx-text-fill: #a32323;
+    -fx-opacity: 1;
+}
+
+.loan-status {
+    -fx-padding: 3 8;
+    -fx-background-radius: 3;
+    -fx-font-weight: bold;
+}
+
+.loan-open-status {
+    -fx-background-color: #e3f2fd;
+}
+
+.loan-returned-status {
+    -fx-background-color: #e8f5e9;
+}
