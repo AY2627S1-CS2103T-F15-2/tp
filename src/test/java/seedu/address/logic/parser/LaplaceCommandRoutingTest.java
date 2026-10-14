@@ -12,14 +12,16 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.EquipmentListCommand;
+import seedu.address.logic.commands.MemberListCommand;
 import seedu.address.logic.commands.NotImplementedCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 
 public class LaplaceCommandRoutingTest {
 
-    private static final String[] ROUTES = {"member add", "member list", "member view", "member delete",
-        "equipment add", "equipment list", "equipment view", "equipment delete", "loans add", "loans return"};
+    private static final String[] UNFINISHED_ROUTES = {"member add", "member view", "member delete",
+        "equipment add", "equipment view", "equipment delete", "loans add", "loans return"};
 
     // Any model access, including an unfinished scaffold operation, fails the test.
     private final Model model = (Model) Proxy.newProxyInstance(Model.class.getClassLoader(),
@@ -28,9 +30,9 @@ public class LaplaceCommandRoutingTest {
             });
 
     @Test
-    public void parseCommand_allRoutes_reportUnfinishedWithoutModelAccess() throws Exception {
+    public void parseCommand_unfinishedRoutes_reportUnfinishedWithoutModelAccess() throws Exception {
         AddressBookParser parser = new AddressBookParser();
-        for (String route : ROUTES) {
+        for (String route : UNFINISHED_ROUTES) {
             assertPlaceholder(parser.parseCommand(route), route);
             assertPlaceholder(parser.parseCommand(" \t" + route.replace(" ", "\t  ") + " \t"), route);
             assertPlaceholder(parser.parseCommand(route + " nus/A0123456X unknown/value"), route);
@@ -38,8 +40,8 @@ public class LaplaceCommandRoutingTest {
     }
 
     @Test
-    public void parseFamilies_allRoutes_recognizeSubcommandsIndependently() throws Exception {
-        for (String route : ROUTES) {
+    public void parseFamilies_unfinishedRoutes_recognizeSubcommandsIndependently() throws Exception {
+        for (String route : UNFINISHED_ROUTES) {
             String[] parts = route.split(" ");
             Parser<Command> parser = switch (parts[0]) {
                 case "member" -> new MemberCommandParser();
@@ -69,6 +71,20 @@ public class LaplaceCommandRoutingTest {
                 assertThrows(ParseException.class, () -> parser.parse(input));
             }
             assertThrows(NullPointerException.class, () -> parser.parse(null));
+        }
+    }
+
+    @Test
+    public void parseCommand_listRoutes_returnsRealCommandsAndRejectsArguments() throws Exception {
+        AddressBookParser parser = new AddressBookParser();
+        assertInstanceOf(MemberListCommand.class, parser.parseCommand(" \tmember\t list \t"));
+        assertInstanceOf(EquipmentListCommand.class, parser.parseCommand("equipment list"));
+        assertInstanceOf(MemberListCommand.class, new MemberCommandParser().parse("list \t"));
+        assertInstanceOf(EquipmentListCommand.class, new EquipmentCommandParser().parse("\tlist"));
+        for (String route : new String[] {"member list", "equipment list"}) {
+            for (String args : new String[] {"extra", "nus/A0123456X", "notes/ notes/", "unknown/value"}) {
+                assertThrows(ParseException.class, () -> parser.parseCommand(route + "\t" + args));
+            }
         }
     }
 
