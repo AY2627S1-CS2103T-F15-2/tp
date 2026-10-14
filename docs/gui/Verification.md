@@ -1,5 +1,9 @@
 # Laplace GUI verification
 
+The available-component application shell and its current evidence are documented in
+[ShellVerification.md](ShellVerification.md). The historical foundation/component evidence below
+and the final gate remain separate from the shell's available-component acceptance.
+
 ## Stage A foundation
 
 The foundation branch supplies shared styles and a JavaFX test helper. It does not implement
