@@ -2,17 +2,17 @@
 
 ## Status and delivery
 
-These are v1.3 milestone additions, not declarations inherited from the original scaffold.
-The Stage A display setup implements `DisplayRequest`, the `CommandResult` extension and
-read-only `Logic` access. The remaining contracts below are implementation targets owned
-by the named contributors; their presence here does not imply working commands or panels.
-Baseline: team master `6b85337bce1664ec2774f0aca86b9d51a749019b` (PR #70).
+These are v1.3 milestone additions. The Stage A display setup was merged in #80;
+shared parsing/sorting in #83 and the theme/FX test helper in #81. The directory/list
+components, cards and Loans panel are also merged in the v1.3.2 baseline:
+team master `900cee6fe5ce3aadbf3fba3be5dbff346d481409` (PR #85).
 
-Nicholas's scope is tracked in [issue #72](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/72).
-Setup uses `v1.3`; after maintainers merge the shared setup,
-dependent views use `v1.3` from the recorded merged baseline.
-Duy supplies parsing/sorting and Keith supplies the theme/test helper separately.
-Do not copy unmerged dependencies or create competing implementations.
+Nicholas's remaining scope is tracked in [issue #92](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/92)
+on branch `v1.3.2`, following the setup tracked in #72. Both individual view commands/parsers
+and both detail panels are now implemented with tests and rendered component previews.
+List routes are active; view-route activation remains with Duy (#73), and application-shell
+assembly/navigation/refresh remains with Keith (#91). Independent components do not imply
+that the application already renders or navigates to these panels.
 
 ## Display and read-only interfaces
 
@@ -63,7 +63,7 @@ are live and unmodifiable; panels must never cast the root to mutate it.
 does not reach saving; a save failure is reported with its original cause. This pipeline
 provides no rollback of an in-memory mutation on an I/O failure. UI selection is not stored.
 
-## View-feature handoff (pending)
+## View-feature handoff (components implemented; integration pending)
 
 Duy will route `MemberViewCommandParser` to `MemberViewCommand(NusId)` and
 `EquipmentViewCommandParser` to `EquipmentViewCommand(UUID)`. Parsers use
@@ -71,7 +71,10 @@ Duy will route `MemberViewCommandParser` to `MemberViewCommand(NusId)` and
 without mutation, then return the typed requests below. Panels perform read-only joins.
 Keith consumes the panel signatures below and calls show/refresh on the FX thread.
 Missing referenced data is an explicit inconsistency, never an invented holder or an
-unassigned item. Actual feature classes and GUI evidence follow after shared setup merges.
+unassigned item. The concrete parsers, commands and panels are present. `DetailsPanelTest` verifies fields
+and state changes; `DetailsPanelPreviewTest` renders normal, small, long-text, empty and
+missing-state previews under `build/reports/laplace/details-*.png`. These previews pair real
+directory/detail components without claiming the final shell or routed command execution.
 
 Laplace parameter markers are start-of-input or whitespace-delimited
 `[A-Za-z][A-Za-z0-9_-]*/` tokens, including in free text. Unknown markers are errors.
