@@ -158,6 +158,14 @@
       "headingKeywords": {}
     },
     {
+      "src": "commands/equipment-add.md",
+      "headings": {
+        "equipment-addition": "Equipment addition",
+        "integration-boundary": "Integration boundary"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "commands/equipment-delete.md",
       "headings": {
         "delete-equipment": "Delete equipment",
