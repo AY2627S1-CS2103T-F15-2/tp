@@ -33,6 +33,7 @@ import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.equipment.exceptions.EquipmentNotFoundException;
+import seedu.address.model.loan.Loan;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
 import seedu.address.model.person.Email;
@@ -272,6 +273,44 @@ public class DetailsPanelTest {
             assertEquals("1 item(s) held", value(members.getRoot(), "heldCount"));
             assertTrue(value(members.getRoot(), "detailsStatus").contains(CAMERA.getUuid().toString()));
             assertNotNull(members.getRoot().lookup("#expectedReturnDate"));
+        });
+    }
+
+    @Test
+    public void memberDetails_multipleMissingEquipmentReferences_sortedByUuidWithLoanDates() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = ViewTestData.model();
+            Loan firstLoan = loan(CAMERA, ALEX, true);
+            Loan secondLoan = new Loan(OTHER_CAMERA.getUuid(), ALEX.getNusId(),
+                    ViewTestData.ASSIGNED.plusDays(1), ViewTestData.EXPECTED.plusDays(2), null);
+            model.addLoan(secondLoan);
+            model.addLoan(firstLoan);
+            AddressBook before = new AddressBook(model.getAddressBook());
+            AddressBook missingEquipment = new AddressBook(model.getAddressBook()) {
+                @Override
+                public ObservableList<Equipment> getEquipmentList() {
+                    return FXCollections.emptyObservableList();
+                }
+            };
+            MemberDetailsPanel panel = new MemberDetailsPanel(missingEquipment, id -> {
+                throw new AssertionError("Missing equipment must not be passed to availability lookup");
+            });
+            mount(panel.getRoot());
+            panel.showMember(ALEX.getNusId());
+            assertEquals("2 item(s) held", value(panel.getRoot(), "heldCount"));
+            VBox holdings = (VBox) panel.getRoot().lookup("#holdings");
+            assertEquals(2, holdings.getChildren().size());
+            List<Loan> expectedOrder = List.of(firstLoan, secondLoan);
+            for (int i = 0; i < expectedOrder.size(); i++) {
+                Loan expected = expectedOrder.get(i);
+                Parent row = (Parent) holdings.getChildren().get(i);
+                assertEquals("Inconsistent data: missing equipment reference " + expected.getEquipmentUuid() + ".",
+                        value(row, "detailsStatus"));
+                assertEquals(expected.getAssignedDate().toString(), value(row, "assignedDate"));
+                assertEquals(expected.getExpectedReturnDate().toString(), value(row, "expectedReturnDate"));
+            }
+            assertEquals(List.of(secondLoan, firstLoan), missingEquipment.getLoanList());
+            assertEquals(before, model.getAddressBook());
         });
     }
 
