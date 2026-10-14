@@ -158,11 +158,25 @@
       "headingKeywords": {}
     },
     {
+      "src": "commands/equipment-list.md",
+      "headings": {
+        "equipment-list": "Equipment list"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "commands/member-add.md",
       "headings": {
         "add-a-member": "Add a member",
         "component-handoff-and-integration-boundary": "Component handoff and integration boundary",
         "validation-evidence": "Validation evidence"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "commands/member-list.md",
+      "headings": {
+        "member-list": "Member list"
       },
       "headingKeywords": {}
     },
