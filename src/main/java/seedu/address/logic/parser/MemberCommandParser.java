@@ -6,20 +6,23 @@ import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.NotImplementedCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
-/** Parses the {@code member} command family without implementing business operations. */
+/** Parses the {@code member} command family with explicit placeholders for unfinished operations. */
 public class MemberCommandParser implements Parser<Command> {
 
     /**
-     * Recognises a case-sensitive subcommand. Trailing arguments await business-command parsing.
+     * Recognises a case-sensitive subcommand. List arguments are validated by its dedicated parser.
      *
      * @throws ParseException if the subcommand is missing or unknown.
      */
     @Override
     public Command parse(String userInput) throws ParseException {
         requireNonNull(userInput);
-        String subcommand = userInput.trim().split("\\s+", 2)[0];
+        String[] parts = userInput.stripLeading().split("\\s+", 2);
+        String subcommand = parts[0];
+        String arguments = parts.length == 2 ? parts[1] : "";
         return switch (subcommand) {
-            case "add", "list", "view", "delete" -> new NotImplementedCommand("member " + subcommand);
+            case "list" -> new MemberListCommandParser().parse(arguments);
+            case "add", "view", "delete" -> new NotImplementedCommand("member " + subcommand);
             default -> throw new ParseException("Expected member subcommand: add, list, view, delete.");
         };
     }

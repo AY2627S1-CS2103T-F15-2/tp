@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      minWidth="0" maxWidth="Infinity" spacing="4" styleClass="laplace-row, member-card"
+      stylesheets="@MemberCard.css">
+  <padding>
+    <Insets top="12" right="14" bottom="12" left="14" />
+  </padding>
+  <Label fx:id="name" minWidth="0" maxWidth="Infinity" wrapText="true"
+         styleClass="member-name" />
+  <Label fx:id="identityAndPhone" minWidth="0" maxWidth="Infinity" wrapText="true"
+         styleClass="member-contact" />
+  <Label fx:id="email" minWidth="0" maxWidth="Infinity" wrapText="true"
+         styleClass="member-contact" />
+  <Label fx:id="itemsHeld" minWidth="0" maxWidth="Infinity" wrapText="true"
+         styleClass="member-holdings" />
+</VBox>
