@@ -62,6 +62,8 @@ public class MainWindow extends UiPart<Stage> {
     private EquipmentListPanel equipment;
     private MemberDirectorySummary memberSummary;
     private EquipmentDirectorySummary equipmentSummary;
+    private MemberDetailsPanel memberDetails;
+    private EquipmentDetailsPanel equipmentDetails;
     private LoanPanel loans;
     private CommandBox commandBox;
     private ResultDisplay resultDisplay;
@@ -129,6 +131,8 @@ public class MainWindow extends UiPart<Stage> {
                 id -> activate("equipment view uuid/" + id, true));
         memberSummary = new MemberDirectorySummary(data);
         equipmentSummary = new EquipmentDirectorySummary(data, logic::getAvailability);
+        memberDetails = new MemberDetailsPanel(data, logic::getAvailability);
+        equipmentDetails = new EquipmentDetailsPanel(data, logic::getAvailability);
         loans = new LoanPanel(data, id -> activate("equipment view uuid/" + id, true),
                 id -> activate("member view nus/" + id.value, true));
         resultDisplay = new ResultDisplay();
@@ -181,6 +185,8 @@ public class MainWindow extends UiPart<Stage> {
         equipmentOrder = newEquipment;
         refreshSummaries();
         loans.refresh();
+        memberDetails.refresh();
+        equipmentDetails.refresh();
         if (currentDisplay.getType() == DisplayRequest.Type.MEMBER_DETAILS
                 && !newMembers.contains(currentDisplay.getMemberNusId().orElseThrow())) {
             display(DisplayRequest.members());
@@ -207,7 +213,7 @@ public class MainWindow extends UiPart<Stage> {
         equipmentSummary.refresh(equipment.getSelection());
     }
 
-    /** Interprets typed navigation only; missing detail components keep an explicit directory fallback. */
+    /** Mounts the real summary or detail panel according to the typed display request. */
     private void display(DisplayRequest request) {
         if (request.getType() == DisplayRequest.Type.UNCHANGED) {
             return;
@@ -224,20 +230,25 @@ public class MainWindow extends UiPart<Stage> {
         singlePanelPlaceholder.setManaged(!directoryView);
         if (directoryView) {
             directoryListPlaceholder.getChildren().setAll(memberView ? members.getRoot() : equipment.getRoot());
-            directorySummaryPlaceholder.getChildren().setAll(memberView
-                    ? memberSummary.getRoot() : equipmentSummary.getRoot());
+            if (request.getType() == DisplayRequest.Type.MEMBER_DETAILS) {
+                memberDetails.showMember(request.getMemberNusId().orElseThrow());
+                directorySummaryPlaceholder.getChildren().setAll(memberDetails.getRoot());
+            } else if (request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS) {
+                equipmentDetails.showEquipment(request.getEquipmentUuid().orElseThrow());
+                directorySummaryPlaceholder.getChildren().setAll(equipmentDetails.getRoot());
+            } else {
+                directorySummaryPlaceholder.getChildren().setAll(memberView
+                        ? memberSummary.getRoot() : equipmentSummary.getRoot());
+            }
         } else {
             singlePanelPlaceholder.getChildren().setAll(request.getType() == DisplayRequest.Type.LOANS
                     ? loans.getRoot() : personListPanel.getRoot());
         }
         request.getMemberNusId().ifPresent(id -> members.select(Optional.of(id)));
         request.getEquipmentUuid().ifPresent(id -> equipment.select(Optional.of(id)));
-        boolean detailsPending = request.getType() == DisplayRequest.Type.MEMBER_DETAILS
-                || request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS;
-        featureNotice.setText(detailsPending
-                ? "Details are not available yet. Showing the selected item in the directory." : "");
-        featureNotice.setVisible(detailsPending);
-        featureNotice.setManaged(detailsPending);
+        featureNotice.setText("");
+        featureNotice.setVisible(false);
+        featureNotice.setManaged(false);
         setActive(membersNavigation, memberView);
         setActive(equipmentNavigation, equipmentView);
         setActive(loansNavigation, request.getType() == DisplayRequest.Type.LOANS);
@@ -306,7 +317,8 @@ public class MainWindow extends UiPart<Stage> {
             } else if (!result.isShowHelp()) {
                 if (detailActivation && result.getDisplayRequest().getType() == DisplayRequest.Type.LEGACY_PERSONS) {
                     resultDisplay.setFeedbackToUser(result.getFeedbackToUser(), true);
-                    featureNotice.setText("Detail view is unavailable. The current screen has been kept open.");
+                    featureNotice.setText("The view command is not available yet. "
+                            + "The current screen has been kept open.");
                     featureNotice.setVisible(true);
                     featureNotice.setManaged(true);
                 } else {

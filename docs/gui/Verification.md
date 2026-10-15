@@ -2,7 +2,9 @@
 
 The available-component application shell and its current evidence are documented in
 [ShellVerification.md](ShellVerification.md). The historical foundation/component evidence below
-and the final gate remain separate from the shell's available-component acceptance.
+and the final gate remain separate from the shell's component acceptance.
+Final integration tracker [#75](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/75) is open again;
+[ReviewResponse.md](ReviewResponse.md) distinguishes implemented detail integration from remaining prerequisites.
 
 ## Stage A foundation
 
