@@ -3,6 +3,7 @@ package seedu.address.commons.core;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
@@ -81,16 +82,20 @@ public class LogsCenter {
         consoleHandler.setLevel(Level.ALL);
         baseLogger.addHandler(consoleHandler);
 
-        // add a FileHandler to log to a file
+        addFileHandler(baseLogger, AppPaths.getLogFilePath());
+    }
+
+    /** Installs file logging, reporting an I/O failure through the logger's existing handlers. */
+    static void addFileHandler(Logger target, Path logFile) {
         try {
             // FileHandler treats percent signs as pattern tokens, even when they occur in folder names.
-            String pattern = AppPaths.getLogFilePath().toString().replace("%", "%%");
+            String pattern = logFile.toString().replace("%", "%%");
             FileHandler fileHandler = new FileHandler(pattern, MAX_FILE_SIZE_IN_BYTES, MAX_FILE_COUNT, true);
             fileHandler.setFormatter(new SimpleFormatter());
             fileHandler.setLevel(Level.ALL);
-            baseLogger.addHandler(fileHandler);
+            target.addHandler(fileHandler);
         } catch (IOException e) {
-            baseLogger.log(Level.WARNING, "Could not create a log file in the application folder.", e);
+            target.log(Level.WARNING, "Could not create a log file in the application folder.", e);
         }
     }
 

@@ -1,10 +1,12 @@
 package seedu.address.commons.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -36,6 +38,17 @@ public class AppPathsTest {
     public void homeDirectoryFor_nullPaths_rejectsNull() {
         assertThrows(NullPointerException.class, () -> AppPaths.homeDirectoryFor(null, directory));
         assertThrows(NullPointerException.class, () -> AppPaths.homeDirectoryFor(directory, null));
+    }
+
+    @Test
+    public void homeDirectoryForLocation_escapedOrMalformedUri_decodesOrFailsWithoutFallback() {
+        Path home = directory.resolve("release %t with spaces");
+        assertEquals(home, AppPaths.homeDirectoryForLocation(home.resolve("Laplace.jar").toUri().toString(),
+                directory));
+        IllegalStateException failure = assertThrows(IllegalStateException.class, () ->
+                AppPaths.homeDirectoryForLocation("file:/invalid%location/Laplace.jar", directory));
+        assertEquals("Could not locate the Laplace application folder.", failure.getMessage());
+        assertInstanceOf(URISyntaxException.class, failure.getCause());
     }
 
     @Test

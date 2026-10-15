@@ -2,6 +2,7 @@ package seedu.address.commons.core;
 
 import static java.util.Objects.requireNonNull;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Locale;
@@ -45,9 +46,15 @@ public final class AppPaths {
     }
 
     private static Path locateHomeDirectory() {
+        String location = AppPaths.class.getProtectionDomain().getCodeSource().getLocation().toExternalForm();
+        return homeDirectoryForLocation(location, Path.of(""));
+    }
+
+    /** Decodes the code-source location and rejects malformed URIs without falling back outside the JAR. */
+    static Path homeDirectoryForLocation(String codeLocation, Path workingDirectory) {
         try {
-            Path location = Path.of(AppPaths.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-            return homeDirectoryFor(location, Path.of(""));
+            Path location = Path.of(new URI(codeLocation));
+            return homeDirectoryFor(location, workingDirectory);
         } catch (URISyntaxException e) {
             throw new IllegalStateException("Could not locate the Laplace application folder.", e);
         }
