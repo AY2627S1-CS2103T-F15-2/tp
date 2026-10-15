@@ -1,0 +1,74 @@
+Oct 15, 2026 3:34:33 PM seedu.address.Main main
+WARNING: The warnings about a 'restricted method in java.lang.System' and 'enabling native access' appearing below (if any) can be ignored.
+Oct 15, 2026 3:34:39 PM seedu.address.MainApp init
+INFO: =============================[ Initializing AddressBook ]===========================
+Oct 15, 2026 3:34:39 PM seedu.address.MainApp initPrefs
+INFO: Using preference file : preferences.json
+Oct 15, 2026 3:34:39 PM seedu.address.commons.util.JsonUtil readJsonFile
+INFO: JSON file preferences.json found.
+Oct 15, 2026 3:34:39 PM seedu.address.MainApp initModelManager
+INFO: Using data file : data/addressbook.json
+Oct 15, 2026 3:34:39 PM seedu.address.commons.util.JsonUtil readJsonFile
+INFO: JSON file data/addressbook.json found.
+Oct 15, 2026 3:34:39 PM seedu.address.MainApp start
+INFO: Starting AddressBook V0.5.1
+Oct 15, 2026 3:34:39 PM seedu.address.ui.UiManager start
+INFO: Starting UI...
+Oct 15, 2026 3:40:52 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][equipment view uuid/fb52566f-049b-43c5-b856-42a4f1f151f9]
+Oct 15, 2026 3:41:10 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][equipment view uuid/78c2a348-cd24-44c4-987d-d59a44718d07]
+Oct 15, 2026 3:41:30 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][member add nus/A0000003X name/Final Member phone/91234567 email/final@example.com]
+Oct 15, 2026 3:41:49 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][member list]
+Oct 15, 2026 3:41:59 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][member add nus/A0000003X name/Final Member phone/91234567 email/final@example.com]
+Oct 15, 2026 3:42:07 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][equipment add name/Final Camera category/Verification condition/GOOD notes/Temporary acceptance item]
+Oct 15, 2026 3:42:17 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][loans add nus/A0000003X uuid/5165f781-8aa3-49ae-9ac4-f07844245cd0 date/2026-10-15 expected/2026-10-16]
+Oct 15, 2026 3:42:30 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][loans add nus/A0000003X uuid/5165f781-8aa3-49ae-9ac4-f07844245cd0 assigned/2026-10-15 expected/2026-10-16]
+Oct 15, 2026 3:42:37 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][member view nus/A0000003X]
+Oct 15, 2026 3:42:46 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][member delete nus/A0000003X]
+Oct 15, 2026 3:42:58 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][loans return uuid/5165f781-8aa3-49ae-9ac4-f07844245cd0 returned/2026-10-15]
+Oct 15, 2026 3:43:07 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][member delete nus/A0000003X]
+Oct 15, 2026 3:43:15 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][equipment delete uuid/5165f781-8aa3-49ae-9ac4-f07844245cd0]
+Oct 15, 2026 3:43:22 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][equipment list]
+Oct 15, 2026 3:43:40 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][exit]
+Oct 15, 2026 3:43:40 PM seedu.address.MainApp stop
+INFO: ============================ [ Stopping AddressBook ] =============================
+Oct 15, 2026 3:44:12 PM seedu.address.Main main
+WARNING: The warnings about a 'restricted method in java.lang.System' and 'enabling native access' appearing below (if any) can be ignored.
+Oct 15, 2026 3:44:18 PM seedu.address.MainApp init
+INFO: =============================[ Initializing AddressBook ]===========================
+Oct 15, 2026 3:44:18 PM seedu.address.MainApp initPrefs
+INFO: Using preference file : preferences.json
+Oct 15, 2026 3:44:18 PM seedu.address.commons.util.JsonUtil readJsonFile
+INFO: JSON file preferences.json found.
+Oct 15, 2026 3:44:18 PM seedu.address.MainApp initModelManager
+INFO: Using data file : data/addressbook.json
+Oct 15, 2026 3:44:18 PM seedu.address.commons.util.JsonUtil readJsonFile
+INFO: JSON file data/addressbook.json found.
+Oct 15, 2026 3:44:18 PM seedu.address.MainApp start
+INFO: Starting AddressBook V0.5.1
+Oct 15, 2026 3:44:18 PM seedu.address.ui.UiManager start
+INFO: Starting UI...
+Oct 15, 2026 3:44:29 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][member view nus/A0000003X]
+Oct 15, 2026 3:44:40 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][equipment view uuid/78c2a348-cd24-44c4-987d-d59a44718d07]
+Oct 15, 2026 3:44:51 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][equipment list]
+Oct 15, 2026 3:45:19 PM seedu.address.logic.LogicManager execute
+INFO: ----------------[USER COMMAND][exit]
+Oct 15, 2026 3:45:19 PM seedu.address.MainApp stop
+INFO: ============================ [ Stopping AddressBook ] =============================

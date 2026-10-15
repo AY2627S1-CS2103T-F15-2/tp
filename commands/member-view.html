@@ -29,17 +29,16 @@ a parse error with usage. Parameter markers are reserved tokens; quoting/escapin
 supported. Unknown members and missing equipment references produce <code class="hljs inline no-lang">CommandException</code>,
 with original causes retained for expected domain lookup failures.</p> <p><code class="hljs inline no-lang">MemberDetailsPanel</code> displays name, NUS ID, phone, email and the current held-item count.
 Each open holding shows equipment name, full UUID, category, condition, availability,
-assigned date and expected-return date. Holdings use the shared category/name/UUID order;
-closed loans do not count. An unresolved equipment reference remains an explicit error
-record with its UUID and dates instead of being silently dropped from the holdings count.</p> <p>The panel keeps only the selected identity. <code class="hljs inline no-lang">refresh()</code> resolves current contacts and loans,
+assigned date and expected-return date. Holdings sort by expected return date, normalized
+equipment name and UUID; closed loans do not count. Unresolved equipment references produce
+an explicit error listing the missing UUIDs instead of rendering an incomplete holdings list.</p> <p>The panel keeps only the selected identity. <code class="hljs inline no-lang">refresh()</code> resolves current contacts and loans,
 including changes caused only by assignment/return. No selection, no holdings and a deleted
 member have explicit states. Long text wraps and many holdings scroll vertically. Neither
-the command nor panel modifies collections, persists selection or installs root listeners.</p> <h2 id="integration-status">Integration status<a class="fa fa-anchor" href="#integration-status" onclick="event.stopPropagation()"></a></h2> <p>The individual command/parser and detail panel are implemented and independently tested in
-v1.3.2 (#92). Duy owns family-route activation (#73); Keith owns shell assembly, typed
-navigation and coordinated refresh (#91). Until those changes merge, the full command line
-still reports member view as not implemented. Component/persistence tests do not claim
-execution through the activated LogicManager route.</p> <p>When routed, the existing LogicManager save-after-success behavior still applies to views.
-Save errors remain visible; no alternate persistence or rollback mechanism is introduced.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Thu, 15 Oct 2026, 1:42:01 GMT+8]</small></div></footer><!--]--></div>
+the command nor panel modifies collections, persists selection or installs root listeners.</p> <h2 id="integration-status">Integration status<a class="fa fa-anchor" href="#integration-status" onclick="event.stopPropagation()"></a></h2> <p>Merged #95 activates the real route; merged #93 mounts this existing detail panel and coordinates
+identity selection and refresh. Read-only view commands retain the existing LogicManager save behavior.
+Save errors remain visible. Laplace mutations use the staged/atomic boundary described in
+<a href="/tp/commands/MvpFields.html">MVP fields</a>. Current combined acceptance is in
+<a href="/tp/gui/MvpCompletion.html">MvpCompletion.md</a>.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Thu, 15 Oct 2026, 19:26:06 GMT+8]</small></div></footer><!--]--></div>
 </body><script src="/tp/markbind/js/bootstrap-utility.min.js"></script>
 <script src="/tp/markbind/js/polyfill.min.js"></script>
 <script src="/tp/markbind/js/vue.global.prod.min.js"></script>

@@ -1,0 +1,138 @@
+INPUT: member add nus/A0000001X name/Alex Tan phone/91234567 email/alex@example.com
+STATUS: Success
+OUTPUT: New member added: Alex Tan (A0000001X)
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 1
+INPUT: member add nus/A0000002X name/Alex Tan phone/98765432 email/other@example.com
+STATUS: Success
+OUTPUT: New member added: Alex Tan (A0000002X)
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 2
+INPUT: equipment add name/Camera category/Photography condition/GOOD notes/Keep lens cap on
+STATUS: Success
+OUTPUT: New equipment added: Camera (6047070f-3e8a-4251-bde3-3708d5be8621), availability: AVAILABLE
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 3
+INPUT: equipment add name/Camera category/Photography condition/GOOD notes/Keep lens cap on
+STATUS: Success
+OUTPUT: New equipment added: Camera (902938eb-5c75-4a6a-a130-a648e56a7676), availability: AVAILABLE
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 4
+INPUT: member list
+STATUS: Success
+OUTPUT: Listed 2 active members.
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 5
+INPUT: equipment list
+STATUS: Success
+OUTPUT: Listed 2 equipment items.
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 6
+INPUT: loans add uuid/6047070f-3e8a-4251-bde3-3708d5be8621 nus/A0000001X assigned/2026-10-13 expected/2026-10-18
+STATUS: Success
+OUTPUT: Assigned Camera (6047070f-3e8a-4251-bde3-3708d5be8621) to Alex Tan (A0000001X) on 2026-10-13; expected return: 2026-10-18.
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 7
+INPUT: loans add uuid/902938eb-5c75-4a6a-a130-a648e56a7676 nus/A0000001X assigned/2026-10-13 expected/2026-10-18
+STATUS: Success
+OUTPUT: Assigned Camera (902938eb-5c75-4a6a-a130-a648e56a7676) to Alex Tan (A0000001X) on 2026-10-13; expected return: 2026-10-18.
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 8
+INPUT: member view nus/A0000001X
+STATUS: Success
+OUTPUT: Viewing member: Alex Tan (A0000001X). Currently holds 2 item(s).
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 9
+INPUT: member view nus/A0000002X
+STATUS: Success
+OUTPUT: Viewing member: Alex Tan (A0000002X). Currently holds 0 item(s).
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 10
+RELOAD: all collections equal saved JSON; fresh ModelManager, LogicManager and MainWindow.
+INPUT: member view nus/A0000001X
+STATUS: Success
+OUTPUT: Viewing member: Alex Tan (A0000001X). Currently holds 2 item(s).
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 11
+INPUT: equipment view uuid/6047070f-3e8a-4251-bde3-3708d5be8621
+STATUS: Success
+OUTPUT: Viewing equipment: Camera (6047070f-3e8a-4251-bde3-3708d5be8621). Availability: ASSIGNED.
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 12
+INPUT: member delete nus/A0000001X
+STATUS: Error
+OUTPUT: Cannot delete member A0000001X with open loans. Return their outstanding equipment first.
+RETAINED INPUT: member delete nus/A0000001X
+SUCCESSFUL SAVES: 12
+INPUT: equipment delete uuid/6047070f-3e8a-4251-bde3-3708d5be8621
+STATUS: Error
+OUTPUT: Cannot delete equipment 6047070f-3e8a-4251-bde3-3708d5be8621 with an open loan. Record its return first.
+RETAINED INPUT: equipment delete uuid/6047070f-3e8a-4251-bde3-3708d5be8621
+SUCCESSFUL SAVES: 12
+INPUT: loans return uuid/6047070f-3e8a-4251-bde3-3708d5be8621 returned/2026-10-15
+STATUS: Success
+OUTPUT: Returned Camera (6047070f-3e8a-4251-bde3-3708d5be8621) from Alex Tan (A0000001X) on 2026-10-15.
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 13
+INPUT: loans return uuid/6047070f-3e8a-4251-bde3-3708d5be8621 returned/2026-10-15
+STATUS: Error
+OUTPUT: Equipment 6047070f-3e8a-4251-bde3-3708d5be8621 has no open loan to return.
+RETAINED INPUT: loans return uuid/6047070f-3e8a-4251-bde3-3708d5be8621 returned/2026-10-15
+SUCCESSFUL SAVES: 13
+INPUT: loans return uuid/902938eb-5c75-4a6a-a130-a648e56a7676 returned/2026-10-15
+STATUS: Success
+OUTPUT: Returned Camera (902938eb-5c75-4a6a-a130-a648e56a7676) from Alex Tan (A0000001X) on 2026-10-15.
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 14
+INPUT: loans return uuid/902938eb-5c75-4a6a-a130-a648e56a7676 returned/2026-10-15
+STATUS: Error
+OUTPUT: Equipment 902938eb-5c75-4a6a-a130-a648e56a7676 has no open loan to return.
+RETAINED INPUT: loans return uuid/902938eb-5c75-4a6a-a130-a648e56a7676 returned/2026-10-15
+SUCCESSFUL SAVES: 14
+INPUT: member view nus/A0000001X
+STATUS: Success
+OUTPUT: Viewing member: Alex Tan (A0000001X). Currently holds 0 item(s).
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 15
+RELOAD: all collections equal saved JSON; fresh ModelManager, LogicManager and MainWindow.
+INPUT: member view nus/A0000001X
+STATUS: Success
+OUTPUT: Viewing member: Alex Tan (A0000001X). Currently holds 0 item(s).
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 16
+INPUT: member delete nus/A0000001X
+STATUS: Success
+OUTPUT: Deleted member: A0000001X
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 17
+INPUT: equipment view uuid/6047070f-3e8a-4251-bde3-3708d5be8621
+STATUS: Success
+OUTPUT: Viewing equipment: Camera (6047070f-3e8a-4251-bde3-3708d5be8621). Availability: AVAILABLE.
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 18
+INPUT: equipment delete uuid/6047070f-3e8a-4251-bde3-3708d5be8621
+STATUS: Success
+OUTPUT: Deleted equipment: 6047070f-3e8a-4251-bde3-3708d5be8621
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 19
+RELOAD: all collections equal saved JSON; fresh ModelManager, LogicManager and MainWindow.
+INPUT: member list
+STATUS: Success
+OUTPUT: Listed 1 active members.
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 20
+INPUT: member view nus/A0000002X
+STATUS: Success
+OUTPUT: Viewing member: Alex Tan (A0000002X). Currently holds 0 item(s).
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 21
+INPUT: equipment list
+STATUS: Success
+OUTPUT: Listed 1 equipment items.
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 22
+INPUT: equipment view uuid/902938eb-5c75-4a6a-a130-a648e56a7676
+STATUS: Success
+OUTPUT: Viewing equipment: Camera (902938eb-5c75-4a6a-a130-a648e56a7676). Availability: AVAILABLE.
+RETAINED INPUT: <empty>
+SUCCESSFUL SAVES: 23

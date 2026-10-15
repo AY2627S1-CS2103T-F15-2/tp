@@ -158,10 +158,28 @@
       "headingKeywords": {}
     },
     {
+      "src": "commands/MvpFields.md",
+      "headings": {
+        "mvp-fields-and-failure-behavior": "MVP fields and failure behavior",
+        "error-order": "Error order",
+        "persistence-and-presentation": "Persistence and presentation"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "commands/README.md",
+      "headings": {
+        "laplace-command-routing-reference": "Laplace command routing reference",
+        "integration-status": "Integration status",
+        "loan-rules": "Loan rules",
+        "integration-verification": "Integration verification"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "commands/equipment-add.md",
       "headings": {
-        "equipment-addition": "Equipment addition",
-        "integration-boundary": "Integration boundary"
+        "equipment-addition": "Equipment addition"
       },
       "headingKeywords": {}
     },
@@ -170,7 +188,7 @@
       "headings": {
         "delete-equipment": "Delete equipment",
         "input-and-behavior": "Input and behavior",
-        "integration-handoff": "Integration handoff",
+        "command-contract": "Command contract",
         "verification": "Verification"
       },
       "headingKeywords": {}
@@ -207,9 +225,7 @@
     {
       "src": "commands/member-add.md",
       "headings": {
-        "add-a-member": "Add a member",
-        "component-handoff-and-integration-boundary": "Component handoff and integration boundary",
-        "validation-evidence": "Validation evidence"
+        "add-a-member": "Add a member"
       },
       "headingKeywords": {}
     },
@@ -218,7 +234,7 @@
       "headings": {
         "delete-a-member": "Delete a member",
         "input-and-behavior": "Input and behavior",
-        "integration-handoff": "Integration handoff",
+        "command-contract": "Command contract",
         "verification": "Verification"
       },
       "headingKeywords": {}
@@ -239,13 +255,85 @@
       "headingKeywords": {}
     },
     {
+      "src": "gui/MvpCompletion.md",
+      "headings": {
+        "v1-3-3-mvp-completion-and-acceptance": "v1.3.3 MVP completion and acceptance",
+        "revision-and-scope": "Revision and scope",
+        "implementation-and-regressions": "Implementation and regressions",
+        "automated-checks": "Automated checks",
+        "packaged-standalone-interaction": "Packaged standalone interaction",
+        "screenshots": "Screenshots",
+        "remaining-final-acceptance": "Remaining final acceptance"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "gui/MvpCoverageFollowUp.md",
+      "headings": {
+        "pr-97-coverage-follow-up": "PR #97 coverage follow-up",
+        "added-coverage": "Added coverage",
+        "small-production-simplifications": "Small production simplifications",
+        "local-verification": "Local verification"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "gui/MvpReviewFollowUp.md",
+      "headings": {
+        "pr-97-review-follow-up": "PR #97 review follow-up",
+        "multiline-notes-through-the-full-input-path": "Multiline notes through the full input path",
+        "feedback-required-by-the-detailed-mvp-specification": "Feedback required by the detailed MVP specification",
+        "verification": "Verification",
+        "actual-standalone-review-build-interaction": "Actual standalone review-build interaction"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "gui/ReviewResponse.md",
+      "headings": {
+        "pr-93-completion-review-response": "PR #93 completion-review response",
+        "review-status-after-merged-routing": "Review status after merged routing",
+        "mvp-reconciliation": "MVP reconciliation",
+        "evidence": "Evidence"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "gui/ShellVerification.md",
+      "headings": {
+        "laplace-shell-verification": "Laplace shell verification",
+        "behavior-and-ownership": "Behavior and ownership",
+        "real-routed-integration": "Real routed integration",
+        "tests-and-repeatable-checks": "Tests and repeatable checks",
+        "local-evidence": "Local evidence",
+        "members": "Members",
+        "equipment": "Equipment",
+        "real-details-actual-routed-view-commands": "Real details (actual routed view commands)",
+        "loans": "Loans",
+        "small-window": "Small window",
+        "error-recovery": "Error recovery",
+        "manual-acceptance-record": "Manual acceptance record"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "gui/StandaloneAcceptance.md",
+      "headings": {
+        "standalone-acceptance-record-15-october-2026": "Standalone acceptance record - 15 October 2026",
+        "completed-final-build-observations": "Completed final-build observations",
+        "earlier-build-observations-and-fixes": "Earlier-build observations and fixes",
+        "remaining-final-build-acceptance": "Remaining final-build acceptance"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "gui/Verification.md",
       "headings": {
         "laplace-gui-verification": "Laplace GUI verification",
         "stage-a-foundation": "Stage A foundation",
         "shared-component-apis": "Shared component APIs",
         "foundation-evidence": "Foundation evidence",
-        "final-shell-gate-pending-dependencies": "Final shell gate (pending dependencies)",
+        "final-shell-gate-routed-tests-complete-interactive-and-ci-pending": "Final shell gate (routed tests complete; interactive and CI pending)",
         "stage-b-deletion-handoff": "Stage B deletion handoff"
       },
       "headingKeywords": {}
