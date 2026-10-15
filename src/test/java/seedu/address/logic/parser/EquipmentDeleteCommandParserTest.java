@@ -26,7 +26,7 @@ public class EquipmentDeleteCommandParserTest {
     public void parse_caseAndWhitespace_resolvesSameUuid() throws Exception {
         EquipmentDeleteCommand expected = new EquipmentDeleteCommand(UUID.fromString(UUID_TEXT));
         assertEquals(expected, parser.parse("uuid/" + UUID_TEXT));
-        assertEquals(new EquipmentDeleteCommand(UUID.fromString("1-1-1-1-1")), parser.parse("uuid/1-1-1-1-1"));
+        assertThrows(ParseException.class, () -> parser.parse("uuid/1-1-1-1-1"));
         assertEquals(expected, parser.parse(" \tuuid/ 550E8400-E29B-41D4-A716-446655440000 \t "));
     }
 

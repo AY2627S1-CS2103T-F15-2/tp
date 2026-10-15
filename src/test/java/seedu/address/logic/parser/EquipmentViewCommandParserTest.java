@@ -50,8 +50,8 @@ public class EquipmentViewCommandParserTest {
     }
 
     @Test
-    public void parse_javaUuidSyntax_preservesSharedParserBehavior() throws Exception {
-        assertEquals(new EquipmentViewCommand(UUID.fromString("1-1-1-1-1")), parser.parse("uuid/1-1-1-1-1"));
+    public void parse_abbreviatedJavaUuidSyntax_rejectsNonCanonicalInput() throws Exception {
+        assertThrows(ParseException.class, () -> parser.parse("uuid/1-1-1-1-1"));
     }
 
     @Test

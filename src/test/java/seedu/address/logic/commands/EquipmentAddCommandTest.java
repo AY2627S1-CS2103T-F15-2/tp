@@ -42,8 +42,36 @@ public class EquipmentAddCommandTest {
         assertTrue(result.getFeedbackToUser().contains("AVAILABLE"));
         AddressBook before = new AddressBook(model.getAddressBook());
         assertThrows(CommandException.class, () -> command.execute(model));
-        assertEquals(2, calls.get());
+        assertEquals(1 + EquipmentAddCommand.MAX_UUID_ATTEMPTS, calls.get());
         assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
+    public void execute_collisionsBeforeNewIdentity_retriesAndReturnsActualNewIdentity() throws Exception {
+        for (int collisions : new int[] {1, 4}) {
+            ModelManager model = new ModelManager();
+            Equipment original = new Equipment(ID, "Original", "Photo", Condition.GOOD, "Keep");
+            model.addEquipment(original);
+            UUID fresh = UUID.fromString("550e8400-e29b-41d4-a716-446655440001");
+            AtomicInteger calls = new AtomicInteger();
+            EquipmentAddCommand command = new EquipmentAddCommand("Camera", "Photo", Condition.GOOD, "", () ->
+                    calls.getAndIncrement() < collisions ? ID : fresh);
+            assertEquals(0, calls.get());
+            CommandResult result = command.execute(model);
+            assertEquals(collisions + 1, calls.get());
+            assertEquals(original, model.findEquipment(ID).orElseThrow());
+            assertEquals(2, model.getEquipmentList().size());
+            assertEquals(DisplayRequest.equipmentDetails(fresh), result.getDisplayRequest());
+            assertTrue(result.getFeedbackToUser().contains(fresh.toString()));
+        }
+    }
+
+    @Test
+    public void execute_nullGeneratedIdentity_failsWithoutChangingRecords() {
+        ModelManager model = new ModelManager();
+        assertThrows(CommandException.class, () ->
+                new EquipmentAddCommand("Camera", "Photo", Condition.GOOD, "", () -> null).execute(model));
+        assertTrue(model.getEquipmentList().isEmpty());
     }
 
     @Test

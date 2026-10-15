@@ -31,17 +31,17 @@ public class LaplaceParserUtilTest {
     }
 
     @Test
-    public void parseUuid_validValues_usesJavaSyntaxAndTrims() throws Exception {
+    public void parseUuid_validValues_acceptsCanonicalSyntaxAndTrims() throws Exception {
         UUID expected = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
         assertEquals(expected, ParserUtil.parseUuid(" \t550E8400-E29B-41D4-A716-446655440000\n"));
-        assertEquals(UUID.fromString("1-1-1-1-1"), ParserUtil.parseUuid("1-1-1-1-1"));
+        assertThrows(ParseException.class, () -> ParserUtil.parseUuid("1-1-1-1-1"));
     }
 
     @Test
     public void parseUuid_invalidValues_throwsFieldSpecificParseException() {
         for (String value : new String[] {"", " ", "not-a-uuid", "550e8400-e29b-41d4-a716-44665544000z",
             "550e8400e29b41d4a716446655440000", "550e8400-e29b-41d4-a716-446655440000-extra"}) {
-            assertThrows(ParseException.class, "Equipment UUID must use Java UUID syntax.", () ->
+            assertThrows(ParseException.class, "Invalid equipment UUID. Use the UUID shown by Laplace.", () ->
                     ParserUtil.parseUuid(value));
         }
     }
@@ -68,8 +68,8 @@ public class LaplaceParserUtilTest {
             assertEquals(condition,
                     ParserUtil.parseCondition(" \t" + condition.name().toLowerCase(Locale.ROOT) + "\n"));
         }
-        assertEquals(Condition.UNDER_REPAIR, ParserUtil.parseCondition("under repair"));
-        assertEquals(Condition.UNDER_REPAIR, ParserUtil.parseCondition("under-repair"));
+        assertThrows(ParseException.class, () -> ParserUtil.parseCondition("under repair"));
+        assertThrows(ParseException.class, () -> ParserUtil.parseCondition("under-repair"));
     }
 
     @Test

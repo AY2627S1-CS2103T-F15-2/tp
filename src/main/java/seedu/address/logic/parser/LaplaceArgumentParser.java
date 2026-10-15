@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static java.util.Objects.requireNonNull;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -17,15 +18,15 @@ import seedu.address.logic.parser.exceptions.ParseException;
  */
 public final class LaplaceArgumentParser {
 
-    private static final Pattern MARKER = Pattern.compile("(?<!\\S)[A-Za-z][A-Za-z0-9_-]*/");
+    private static final Pattern MARKER = Pattern.compile("(?U)(?<!\\S)[A-Za-z][A-Za-z0-9_-]*/");
 
     private LaplaceArgumentParser() {
     }
 
     /**
      * Parses trimmed values into an existing {@code ArgumentMultimap}. Optional values may be blank.
-     * Diagnostics report preamble first, then marker errors in input order, then required-field
-     * errors in lexicographic prefix order. Empty prefix sets accept only whitespace arguments.
+     * Diagnostics follow supplied fields in input order, then absent required fields
+     * in lexicographic prefix order. Empty prefix sets accept only whitespace arguments.
      *
      * @throws NullPointerException for null arguments, sets, prefixes or prefix tokens.
      * @throws IllegalArgumentException for overlapping sets or tokens outside the marker grammar.
@@ -33,9 +34,20 @@ public final class LaplaceArgumentParser {
      */
     public static ArgumentMultimap parse(String args, Set<Prefix> required,
             Set<Prefix> optional) throws ParseException {
+        return parse(args, required, optional, Map.of());
+    }
+
+    /**
+     * Scans supplied fields left to right, validating each value before the following marker.
+     * Blank required values occupy their field's position. Missing fields have no input position and
+     * are reported only after supplied fields, in lexicographic prefix order. Legacy AB3 is unaffected.
+     */
+    public static ArgumentMultimap parse(String args, Set<Prefix> required, Set<Prefix> optional,
+            Map<Prefix, ValueValidator> validators) throws ParseException {
         requireNonNull(args);
         requireNonNull(required);
         requireNonNull(optional);
+        requireNonNull(validators);
         Set<Prefix> allowed = new HashSet<>();
         Set<String> requiredTokens = new TreeSet<>();
         for (Prefix prefix : required) {
@@ -59,7 +71,7 @@ public final class LaplaceArgumentParser {
             if (current == null) {
                 rejectPreamble(args.substring(0, matcher.start()));
             } else {
-                result.put(current, args.substring(valueStart, matcher.start()).trim());
+                addValue(result, current, args.substring(valueStart, matcher.start()).strip(), required, validators);
             }
             current = new Prefix(matcher.group());
             if (!allowed.contains(current)) {
@@ -73,7 +85,7 @@ public final class LaplaceArgumentParser {
         if (current == null) {
             rejectPreamble(args);
         } else {
-            result.put(current, args.substring(valueStart).trim());
+            addValue(result, current, args.substring(valueStart).strip(), required, validators);
         }
         for (String token : requiredTokens) {
             Prefix prefix = new Prefix(token);
@@ -85,6 +97,24 @@ public final class LaplaceArgumentParser {
             }
         }
         return result;
+    }
+
+    /** A field's pure validation step; method references may discard their parsed return value. */
+    @FunctionalInterface
+    public interface ValueValidator {
+        void validate(String value) throws ParseException;
+    }
+
+    private static void addValue(ArgumentMultimap result, Prefix prefix, String value, Set<Prefix> required,
+            Map<Prefix, ValueValidator> validators) throws ParseException {
+        if (required.contains(prefix) && value.isBlank()) {
+            throw new ParseException("Required parameter must not be blank: " + prefix);
+        }
+        ValueValidator validator = validators.get(prefix);
+        if (validator != null) {
+            validator.validate(value);
+        }
+        result.put(prefix, value);
     }
 
     private static void validatePrefix(Prefix prefix) {

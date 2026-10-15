@@ -54,9 +54,9 @@ public class MemberAddCommandParserTest {
     @Test
     public void parse_invalidValues_providesFieldConstraints() {
         assertFieldFailure(VALID.replace("A0123456X", "123"), NusId.MESSAGE_CONSTRAINTS);
-        assertFieldFailure(VALID.replace("Alex Tan", "Alex!"), Name.MESSAGE_CONSTRAINTS);
-        assertFieldFailure(VALID.replace("91234567", "phone"), Phone.MESSAGE_CONSTRAINTS);
-        assertFieldFailure(VALID.replace("alex@example.com", "invalid"), Email.MESSAGE_CONSTRAINTS);
+        assertFieldFailure(VALID.replace("Alex Tan", "Alex!"), Name.MEMBER_MESSAGE_CONSTRAINTS);
+        assertFieldFailure(VALID.replace("91234567", "phone"), Phone.MEMBER_MESSAGE_CONSTRAINTS);
+        assertFieldFailure(VALID.replace("alex@example.com", "invalid"), Email.MEMBER_MESSAGE_CONSTRAINTS);
     }
 
     @Test

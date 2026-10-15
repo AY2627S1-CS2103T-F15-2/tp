@@ -3,11 +3,19 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.util.Locale;
+import java.util.function.Predicate;
+
+import seedu.address.commons.util.LaplaceText;
+
 /**
  * Represents a Person's email in the address book.
- * Guarantees: immutable; is valid as declared in {@link #isValidEmail(String)}
+ * Guarantees: immutable; legacy construction and member factories apply their respective validation rules.
  */
 public class Email {
+
+    public static final String MEMBER_MESSAGE_CONSTRAINTS =
+            "Invalid email address. Enter an address such as name@example.com.";
 
     private static final String SPECIAL_CHARACTERS = "+_.-";
     public static final String MESSAGE_CONSTRAINTS = "Emails should be of the format local-part@domain "
@@ -31,6 +39,8 @@ public class Email {
     private static final String DOMAIN_REGEX = "(" + DOMAIN_PART_REGEX + "\\.)*" + DOMAIN_LAST_PART_REGEX;
     public static final String VALIDATION_REGEX = LOCAL_PART_REGEX + "@" + DOMAIN_REGEX;
 
+    private static final String MEMBER_DOMAIN_LABEL = "[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?";
+
     public final String value;
 
     /**
@@ -39,9 +49,32 @@ public class Email {
      * @param email A valid email address.
      */
     public Email(String email) {
-        requireNonNull(email);
-        checkArgument(isValidEmail(email), MESSAGE_CONSTRAINTS);
-        value = email;
+        this(email, Email::isValidEmail, MESSAGE_CONSTRAINTS);
+    }
+
+    private Email(String value, Predicate<String> validator, String message) {
+        requireNonNull(value);
+        checkArgument(validator.test(value), message);
+        this.value = value;
+    }
+
+    /** Validates the MVP ASCII syntax, including a domain dot and the complete length limit. */
+    public static boolean isValidMemberEmail(String value) {
+        return value.length() >= 3 && value.length() <= 254
+                && value.matches("[A-Za-z0-9._%+\\-]+@" + MEMBER_DOMAIN_LABEL
+                        + "(?:\\." + MEMBER_DOMAIN_LABEL + ")+");
+    }
+
+    /** Normalizes and validates new Laplace member input without changing legacy AB3 parsing. */
+    public static Email forMember(String value) {
+        String normalized = LaplaceText.normalize(value).toLowerCase(Locale.ROOT);
+        return new Email(normalized, Email::isValidMemberEmail, MEMBER_MESSAGE_CONSTRAINTS);
+    }
+
+    /** Accepts either the former stored form or the MVP form, preserving the exact saved value. */
+    public static Email fromStoredMember(String value) {
+        return new Email(value, candidate -> isValidEmail(candidate) || isValidMemberEmail(candidate),
+                MESSAGE_CONSTRAINTS);
     }
 
     /**

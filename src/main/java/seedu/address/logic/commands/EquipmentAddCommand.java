@@ -1,7 +1,6 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Objects;
@@ -23,7 +22,10 @@ public class EquipmentAddCommand extends Command {
             + ": Adds equipment. Parameters: name/NAME category/CATEGORY condition/CONDITION [notes/NOTES]\n"
             + "Example: equipment add name/Camera category/Photography condition/GOOD";
     public static final String MESSAGE_SUCCESS = "New equipment added: %1$s (%2$s), availability: %3$s";
-    public static final String MESSAGE_COLLISION = "Could not generate a unique equipment UUID. Please retry.";
+    public static final String MESSAGE_COLLISION =
+            "Equipment was not added because a unique identifier could not be generated. Try again.";
+
+    static final int MAX_UUID_ATTEMPTS = 100;
 
     private final String name;
     private final String category;
@@ -39,12 +41,10 @@ public class EquipmentAddCommand extends Command {
     /** Supplies deterministic identity generation for command tests. */
     EquipmentAddCommand(String name, String category, Condition condition, String notes, Supplier<UUID> uuidSupplier) {
         requireAllNonNull(name, category, condition, notes, uuidSupplier);
-        checkArgument(!name.isBlank(), "Equipment name must not be blank.");
-        checkArgument(!category.isBlank(), "Equipment category must not be blank.");
-        this.name = name.trim();
-        this.category = category.trim();
+        this.name = Equipment.normalizeName(name);
+        this.category = Equipment.normalizeCategory(category);
         this.condition = condition;
-        this.notes = notes.trim();
+        this.notes = Equipment.normalizeNotes(notes);
         this.uuidSupplier = uuidSupplier;
     }
 
@@ -56,18 +56,29 @@ public class EquipmentAddCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        UUID uuid = requireNonNull(uuidSupplier.get());
-        if (model.hasEquipment(uuid)) {
-            throw new CommandException(MESSAGE_COLLISION);
+        DuplicateEquipmentException lastCollision = null;
+        for (int attempt = 0; attempt < MAX_UUID_ATTEMPTS; attempt++) {
+            UUID uuid = uuidSupplier.get();
+            if (uuid == null) {
+                throw new CommandException(MESSAGE_COLLISION);
+            }
+            if (model.hasEquipment(uuid)) {
+                continue;
+            }
+            Equipment equipment = new Equipment(uuid, name, category, condition, notes);
+            try {
+                model.addEquipment(equipment);
+            } catch (DuplicateEquipmentException e) {
+                lastCollision = e;
+                continue;
+            }
+            return new CommandResult(String.format(MESSAGE_SUCCESS, name, uuid, model.getAvailability(uuid)),
+                    DisplayRequest.equipmentDetails(uuid));
         }
-        Equipment equipment = new Equipment(uuid, name, category, condition, notes);
-        try {
-            model.addEquipment(equipment);
-        } catch (DuplicateEquipmentException e) {
-            throw new CommandException(MESSAGE_COLLISION, e);
+        if (lastCollision != null) {
+            throw new CommandException(MESSAGE_COLLISION, lastCollision);
         }
-        return new CommandResult(String.format(MESSAGE_SUCCESS, name, uuid, model.getAvailability(uuid)),
-                DisplayRequest.equipmentDetails(uuid));
+        throw new CommandException(MESSAGE_COLLISION);
     }
 
     @Override
