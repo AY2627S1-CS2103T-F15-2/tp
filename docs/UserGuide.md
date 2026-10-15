@@ -4,201 +4,106 @@
   pageNav: 3
 ---
 
-# AB-3 User Guide
+# Laplace User Guide
 
-AddressBook Level 3 (AB3) is a **desktop application for managing contacts, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). If you type quickly, AB3 can help you manage contacts faster than traditional GUI applications.
+Laplace helps a CCA EXCO member manage **members, equipment and equipment loans** on one computer.
+Type commands to register records, find an exact member or item, issue equipment, record returns and
+remove erroneous records. Lists and details show who holds each item and what each member holds.
 
-<!-- * Table of Contents -->
+This guide describes the **MVP release**. Use it with the matching release supplied by the team;
+earlier builds may not support every behavior described here. Laplace is a local, single-user application.
+
 <page-nav-print />
-
---------------------------------------------------------------------------------------------------------------------
 
 ## Quick start
 
-1. Ensure that Java `25` or later is installed on your computer.<br>
-   **Mac users:** Ensure you have the precise JDK version prescribed [here](https://se-education.org/guides/tutorials/javaInstallationMac.html).
-
-1. Download the latest `.jar` file from [here](https://github.com/se-edu/addressbook-level3/releases).
-
-1. Copy the file to the folder you want to use as the _home folder_ for your AddressBook.
-
-1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
-   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
-   ![Ui](images/Ui.png)
-
-1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
-   Some example commands you can try:
-
-   * `list` : Lists all contacts.
-
-   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a contact named `John Doe` to the Address Book.
-
-   * `delete 3` : Deletes the 3rd contact shown in the current list.
-
-   * `clear` : Deletes all contacts.
-
-   * `exit` : Exits the app.
-
-1. Refer to the [Features](#features) section below for details of each command.
-
---------------------------------------------------------------------------------------------------------------------
-
-## Features
-
-<box type="info" seamless>
-
-**Notes about the command format:**<br>
-
-* Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
-  For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
-
-* Items in square brackets are optional.<br>
-  For example, `n/NAME [t/TAG]` can be used as `n/John Doe t/friend` or as `n/John Doe`.
-
-* Items followed by `...` can appear zero or more times.<br>
-  For example, `[t/TAG]... ` may be omitted, or written as `t/friend` or `t/friend t/family`.
-
-* Parameters can be in any order.<br>
-  For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
-
-* Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
-  For example, `help 123` is interpreted as `help`.
-
-* If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
-</box>
-
-### Viewing help: `help`
-
-Shows a message explaining how to access the help page.
-
-![help message](images/helpMessage.png)
-
-Format: `help`
-
-
-### Adding a person: `add`
-
-Adds a person to the address book.
-
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... `
-
-<box type="tip" seamless>
-
-**Tip:** A person can have any number of tags, including zero.
-</box>
-
-Examples:
-* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
-* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
-
-### Listing all persons: `list`
-
-Shows a list of all persons in the address book.
-
-Format: `list`
-
-### Editing a person: `edit`
-
-Edits an existing person in the address book.
-
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]... `
-
-* Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
-* At least one of the optional fields must be provided.
-* Existing values will be updated to the input values.
-* When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
-* To remove all of a person's tags, enter `t/` without a tag after it.
-
-Examples:
-*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
-
-### Locating persons by name: `find`
-
-Finds persons whose names contain any of the given keywords.
-
-Format: `find KEYWORD [MORE_KEYWORDS]`
-
-* The search is case-insensitive; for example, `hans` matches `Hans`.
-* Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
-* The search considers only names.
-* Only full words match; for example, `Han` does not match `Hans`.
-* Persons matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
-
-Examples:
-* `find John` returns `john` and `John Doe`
-* `find alex david` returns `Alex Yeoh`, `David Li`<br>
-  ![result for 'find alex david'](images/findAlexDavidResult.png)
-
-### Deleting a person: `delete`
-
-Deletes the specified person from the address book.
-
-Format: `delete INDEX`
-
-* Deletes the person at the specified `INDEX`.
-* The index refers to the index number shown in the displayed person list.
-* The index **must be a positive integer** 1, 2, 3, ...
-
-Examples:
-* `list` followed by `delete 2` deletes the 2nd person in the address book.
-* `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
-
-### Clearing all entries: `clear`
-
-Clears all entries from the address book.
-
-Format: `clear`
-
-### Exiting the program: `exit`
-
-Exits the program.
-
-Format: `exit`
-
-### Saving the data
-
-AddressBook automatically saves data after every command. You do not need to save manually.
-
-### Editing the data file
-
-AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
-
-<box type="warning" seamless>
-
-**Caution:**
-If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command (AddressBook saves after every command). Still, we recommend backing up the file before editing it.<br>
-Furthermore, certain edits can cause the AddressBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
-</box>
-
-### Archiving data files `[coming in v2.0]`
-
-_Details coming soon ..._
-
---------------------------------------------------------------------------------------------------------------------
-
-## FAQ
-
-**Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous AddressBook home folder.
-
---------------------------------------------------------------------------------------------------------------------
-
-## Known issues
-
-1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
-
---------------------------------------------------------------------------------------------------------------------
-
-## Command summary
-
-Action     | Format, Examples
------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
-**Clear**  | `clear`
-**Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
-**Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
-**List**   | `list`
-**Help**   | `help`
+1. Install Java **25** for your operating system and processor architecture.
+2. Obtain the Laplace MVP JAR supplied by the team. Published builds are listed on the
+   [team Releases page](https://github.com/AY2627S1-CS2103T-F15-2/tp/releases).
+3. Put the JAR in a folder you can write to. Keep the application and its data in this folder.
+4. Open a terminal in that folder and run `java -jar addressbook.jar`. Substitute the actual filename
+   if your supplied JAR has a different name. Keep the terminal open while using the application.
+5. On the first launch without a saved data file, Laplace provides sample records. Existing saved data
+   takes precedence; restarting does not add another set of samples.
+6. Type `member list` in the command box and press **Enter**. Try `equipment list` next.
+7. Use `help` or **F1** to open Help, and `exit` to close the application normally.
+
+![Laplace directory layout reference](images/Ui.png)
+
+The image is a layout reference. Your rows, counts and selected record depend on your data.
+If startup fails, check the JAR filename and Java version and keep the terminal error for the team.
+Do not delete your data file to troubleshoot startup.
+
+## Using the window
+
+- **Members** opens the member directory. **Equipment** opens the equipment directory.
+- The left panel contains selectable records. The right panel shows a directory summary or record
+  details. Startup selects the first member, when present, while leaving the summary visible.
+- Click a record, or focus its row and press **Enter** or **Space**, to open its details.
+  Identically named records remain distinguishable by NUS ID or equipment UUID.
+- The **Loans** tab shows current open assignments and links to their member and equipment.
+  Completed loan history is not a user-facing MVP feature. There is no `loans list` command.
+- The feedback area reports the last command's result. The command box and Enter hint appear below it.
+- At smaller sizes, use the list/detail scrollbars to reach long identifiers, notes and holdings.
+
+## Command format and feedback
+
+Commands and prefixes are **lowercase and case-sensitive**. Use `member add`, not `Member Add`.
+
+- Replace uppercase placeholders with your values: replace `NUS_ID` with `A0123456X`, for example.
+- Square brackets mean an optional parameter; do not type them. Only equipment notes are optional.
+- Put spaces between command words and parameters. Parameters may appear in any order; tabs also separate fields.
+- Each prefix may appear **at most once**, including `notes/`.
+- Leading/trailing whitespace is ignored. Runs of whitespace in text values become one ordinary space.
+- A value continues to the next parameter marker. A start-of-value or whitespace-delimited token such as
+  `notes/` or `unknown/` is reserved as a marker. Unknown markers are errors, even inside free text.
+  There is no quoting or escaping. An ordinary URL such as `https://example.com` is not a marker.
+- Use the full field names: `nus/`, `name/`, `phone/` and `email/`. Short alternatives are not accepted.
+- `member list` and `equipment list` take no arguments. Additional text or prefixes are rejected.
+- An empty or whitespace-only submission does nothing.
+
+On success, the input clears and the requested list/details view appears. Newly added records are selected
+and open in details. On failure, the command stays in the input box, focus returns there, and the current
+view and selection remain unchanged. Correct it and press Enter again. Only the first detected error is
+shown; another error may appear after correction. Rejected commands do not change records.
+
+### Shared field rules
+
+| Field | Accepted input and stored form |
+| --- | --- |
+| NUS ID `nus/` | One ASCII letter, exactly seven digits, and an optional final ASCII letter. Case-insensitive; stored/displayed uppercase, such as `A0123456X` or `E0123456`. |
+| Member name `name/` | 1–100 characters after normalization. Unicode letters, spaces, apostrophes, hyphens and periods only; must contain at least one letter. Example: `Anne-Marie O'Connor`. |
+| Phone `phone/` | Optional leading `+`, then 8–15 digits. Spaces and hyphens are removed: `+65 9123-4567` becomes `+6591234567`. |
+| Email `email/` | 3–254 ASCII characters, one `@`, no spaces and at least one domain dot. Local-part characters: letters, digits, `.`, `_`, `%`, `+`, `-`. Domain labels contain letters/digits/hyphens and cannot begin/end with a hyphen. Stored lowercase. |
+| Equipment UUID `uuid/` | Full `8-4-4-4-12` hexadecimal form, such as `550e8400-e29b-41d4-a716-446655440000`. Case-insensitive input; lowercase display. Shortened UUIDs are rejected. |
+| Equipment name `name/` | 1–100 printable Unicode characters after whitespace normalization. Punctuation and model numbers are allowed; control characters are rejected. |
+| Category `category/` | 1–50 printable Unicode characters after normalization. Free text; control characters are rejected. |
+| Condition `condition/` | Exactly `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`, ignoring case. Stored uppercase. Use the underscore in `UNDER_REPAIR`. |
+| Notes `notes/` | Optional, at most 300 printable Unicode characters after trimming. Line breaks become spaces. Omitted or empty notes mean no notes. |
+| Dates | Exactly `YYYY-MM-DD` and a real Gregorian calendar date, such as `2026-10-15`. Assignment/actual-return dates cannot be later than the computer's local date. Expected return may be in the future. |
+
+Copy the actual UUID displayed by Laplace when issuing, viewing, returning or deleting equipment.
+The UUID in this guide is an example; it does not identify every newly added item.
+
+### Availability
+
+| Item state | Displayed availability | Can be assigned? |
+| --- | --- | --- |
+| Has an open loan, regardless of condition | `ASSIGNED` | No |
+| No open loan and condition `GOOD` or `FAIR` | `AVAILABLE` | Yes |
+| No open loan and condition `DAMAGED` or `UNDER_REPAIR` | `UNAVAILABLE` | No |
+
+You do not enter availability or a holder manually. Laplace derives both from the item and its open loan.
+A member can hold multiple different items; one physical item can have only one open loan.
+
+### Correcting common errors
+
+| Problem | What to do |
+| --- | --- |
+| Missing or blank required field | Supply a nonempty value for every required prefix shown in the command's usage. |
+| Repeated prefix | Keep one occurrence of that prefix, including optional notes. |
+| Unknown parameter or unexpected text | Remove the unrecognized marker or text before the first parameter. Check the full prefix names. |
+| Invalid field | Follow the field rule above and the displayed field-specific explanation. |
+| Unknown identity | Copy the full NUS ID or UUID from its list. Names and row numbers are not identifiers. |
+| Command rejected by a loan rule | Return an assigned item before deleting its member/item or assigning that item again. |
+| Data cannot be saved | Check that the application folder/data file are writable, correct the file-access problem, then retry. Failed MVP mutations leave records unchanged. |
