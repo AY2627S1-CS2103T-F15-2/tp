@@ -296,3 +296,162 @@ directory appears with a surviving selection or an empty state; deleted-item det
 | Saving fails | The item and loan records remain unchanged. Correct file access and retry. |
 
 Deleting one UUID never deletes other items with the same description. Deletion cannot be undone.
+
+### Assign equipment: `loans add`
+
+Assign one AVAILABLE physical item to an existing member.
+
+```text
+loans add uuid/UUID nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE
+```
+
+All four parameters are required. Use the actual UUID from `equipment list` and the NUS ID from
+`member list`. Both identities must exist. Assignment must be on or before the computer's local date;
+expected return must be on or after assignment. Expected return may be in the future.
+
+Example, assuming these identities exist and the assignment date is not in the future:
+
+```text
+loans add uuid/550e8400-e29b-41d4-a716-446655440000 nus/A0123456X assigned/2026-09-14 expected/2026-09-21
+```
+
+Success creates an open loan and immediately changes availability to ASSIGNED. Equipment details show
+the holder/dates; the member's current holdings and item count update. Feedback is:
+`Assigned UUID to NUS_ID from ASSIGNMENT_DATE. Expected return: EXPECTED_RETURN_DATE.`
+
+A member may hold several different items. Assigning an already assigned item is rejected, even if the
+new loan names the same member. Reaching the expected return date does not automatically return an item.
+
+| Situation | Result or correction |
+| --- | --- |
+| Equipment/member does not exist | `No equipment found with UUID UUID.` or `No member found with NUS ID NUS_ID.` Check the corresponding list. |
+| Item already has an open loan | `Equipment UUID is unavailable because it is assigned to CURRENT_NUS_ID.` Return it before assigning it again. |
+| Condition is DAMAGED/UNDER_REPAIR | `Equipment UUID is unavailable because its condition is CONDITION.` Choose an AVAILABLE item. |
+| Expected date precedes assignment | `Expected return date must be on or after the assignment date.` |
+| Assignment is in the future | `Assignment date cannot be later than today.` Check your entry and the computer's date. |
+| Field syntax/date is invalid | Correct the first reported parameter and retry; use a real `YYYY-MM-DD` date. |
+| Saving fails | No loan is recorded and no records change; correct file access before retrying. |
+
+On failure, no loan is created. Availability, holder, holdings, view and selection stay unchanged.
+
+### Return equipment: `loans return`
+
+```text
+loans return uuid/UUID returned/ACTUAL_RETURN_DATE
+```
+
+Both parameters are required. The equipment must exist and have an open loan. Its referenced member
+must also exist. The return date must be **from the assignment date through the computer's local date**,
+inclusive. Same-day, early and late returns are valid; the expected return date does not limit returns.
+
+Example, for the assignment above and a computer date on or after 20 September 2026:
+
+```text
+loans return uuid/550e8400-e29b-41d4-a716-446655440000 returned/2026-09-20
+```
+
+Success records the actual return date and closes that item's open loan. Equipment details clear its
+holder/loan dates, the item leaves the member's current holdings, and open-loan counts refresh.
+Availability becomes AVAILABLE for GOOD/FAIR, or UNAVAILABLE for DAMAGED/UNDER_REPAIR.
+Feedback is `Returned UUID from NUS_ID on ACTUAL_RETURN_DATE.`
+
+| Situation | Result or correction |
+| --- | --- |
+| Equipment does not exist | `No equipment found with UUID UUID.` Check the full UUID. |
+| No open loan, including an already returned item | `Equipment UUID is not currently assigned and cannot be returned.` A repeated return is rejected. |
+| Return is before assignment | `Actual return date cannot be earlier than ASSIGNMENT_DATE.` |
+| Return is in the future | `Actual return date cannot be later than today.` |
+| Missing/repeated/unknown field or invalid date | Correct the reported parameter and use the full command syntax. |
+| Open loan refers to a missing member | `Return could not be recorded because the stored loan data is inconsistent.` Preserve the data and report the error to the team. |
+| Saving fails | No return is recorded and no records change; correct file access and retry. |
+
+A rejected return leaves the loan, return date, holder and availability unchanged. Closing a loan retains
+its record internally; the MVP does not provide a completed-history screen.
+
+## A complete issue-and-return workflow
+
+Use a new member ID if the example ID already exists. The dates below are examples for a computer date
+on or after 20 September 2026; choose valid actual dates for your own operation.
+
+1. Register the member:
+   `member add nus/A0456789B name/Mei Tan phone/91234567 email/mei@example.com`.
+2. Register an item:
+   `equipment add name/Camera Kit category/Photography condition/GOOD notes/Includes strap`.
+3. Copy the UUID generated in step 2. **Replace `UUID` in the remaining steps with that value.**
+4. Assign it:
+   `loans add uuid/UUID nus/A0456789B assigned/2026-09-14 expected/2026-09-21`.
+5. Run `member view nus/A0456789B` and `equipment view uuid/UUID`. Check the holdings, holder and dates.
+6. Return it: `loans return uuid/UUID returned/2026-09-20`.
+7. View both records again. The member has no current holding for this item; the GOOD item is AVAILABLE.
+8. If these were erroneous/test records, remove them with `equipment delete uuid/UUID` and
+   `member delete nus/A0456789B`. Delete only records you intend to remove permanently.
+
+## Saving, file access and recovery
+
+Successful changes save automatically; there is no manual-save command. By default, data is stored in
+`data/addressbook.json` under the folder from which Laplace is launched. Keep launching from the same
+folder to use the same data. The window's status area identifies its configured data-file path.
+
+For the six MVP mutation commands, a failed save leaves the live records and previously saved data
+unchanged. An error is not a successful addition, deletion, assignment or return. The command remains
+available for correction. Fix the folder/file access problem, then retry. Do not repeatedly resubmit a
+successful command: duplicate members, already-assigned items and repeated returns are rejected.
+
+Data includes members, equipment and open/closed loan records. Availability and holders are derived;
+do not try to maintain separate holder/availability fields. Deleting a permitted member/item also
+permanently deletes its related closed loans. There is no recovery feature for that deletion.
+
+Back up the data file while Laplace is closed. Do not edit it while the app is running or run multiple
+instances against the same file. Manual data editing is not an MVP operation. If startup or a view
+reports invalid/inconsistent data, preserve the original file and report the message; do not overwrite
+it with an empty file or assume that an incomplete view is safe to use.
+
+## FAQ
+
+**Why are two identical equipment items shown?** Each physical unit has its own UUID. Equal names,
+categories, conditions and notes are allowed. Use the UUID to choose the unit you mean.
+
+**How do I find a member or current holder?** Use `member view nus/NUS_ID` for exact member details and
+holdings, or `equipment view uuid/UUID` for an exact item and its current holder. Partial/fuzzy searches
+and separate member-find/holder commands are outside the MVP.
+
+**Why can I not delete a record?** A member with an open loan or equipment currently on loan cannot be
+deleted. Return the relevant items first. Closed loans do not block deletion and are cleaned up with it.
+
+**Can I register broken equipment?** Yes. DAMAGED/UNDER_REPAIR records are UNAVAILABLE and cannot be
+assigned. The MVP does not include editing condition or other existing record fields.
+
+**Does an overdue loan close itself?** No. Record an actual return using `loans return`. A return later
+than expected is valid if it is no earlier than assignment and no later than the computer's local date.
+
+**How do I move my data?** Close Laplace, back up the data file, copy it to the other computer's chosen
+Laplace folder at the configured data path, and launch the matching release there. Keep the original
+backup until you have checked members, equipment and current loans on the other computer.
+
+**Where is Help?** Enter `help` or press F1. Use `exit` for normal shutdown; saved window preferences are
+reused within usable screen bounds. These are application utilities, separate from the ten MVP commands.
+
+## MVP limits
+
+The MVP excludes record editing, archiving/restoring deleted records, separate find/member-loans/holder
+commands, completed loan-history viewing, import/export, undo/redo, batch operations, fuzzy search,
+filters, user-selected sorting and automatic overdue notifications. Copying a backup file while the app
+is closed is a file-management task, not an import/export command. Data is local to one operator;
+authentication and concurrent multi-user operation are not provided.
+
+## Command summary
+
+| Task | Format |
+| --- | --- |
+| Add member | `member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL` |
+| List members | `member list` |
+| View member and current holdings | `member view nus/NUS_ID` |
+| Delete member | `member delete nus/NUS_ID` |
+| Add equipment | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES]` |
+| List equipment | `equipment list` |
+| View equipment and current holder | `equipment view uuid/UUID` |
+| Delete equipment | `equipment delete uuid/UUID` |
+| Assign equipment | `loans add uuid/UUID nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |
+| Return equipment | `loans return uuid/UUID returned/ACTUAL_RETURN_DATE` |
+
+Application utilities: `help` (or F1) opens Help; `exit` closes Laplace.
