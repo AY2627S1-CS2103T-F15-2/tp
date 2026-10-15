@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EQUIPMENT_UUID;
 
+import java.util.Map;
 import java.util.Set;
 
 import seedu.address.logic.commands.EquipmentDeleteCommand;
@@ -16,7 +17,8 @@ public class EquipmentDeleteCommandParser implements Parser<EquipmentDeleteComma
     public EquipmentDeleteCommand parse(String args) throws ParseException {
         ArgumentMultimap arguments;
         try {
-            arguments = LaplaceArgumentParser.parse(args, Set.of(PREFIX_EQUIPMENT_UUID), Set.of());
+            arguments = LaplaceArgumentParser.parse(args, Set.of(PREFIX_EQUIPMENT_UUID), Set.of(),
+                    Map.of(PREFIX_EQUIPMENT_UUID, ParserUtil::parseUuid));
         } catch (ParseException e) {
             throw new ParseException(e.getMessage() + "\n" + EquipmentDeleteCommand.MESSAGE_USAGE, e);
         }

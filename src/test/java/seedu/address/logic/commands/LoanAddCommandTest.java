@@ -81,9 +81,28 @@ public class LoanAddCommandTest {
             model.addLoan(LoanCommandTestData.openLoan());
             AddressBook before = new AddressBook(model.getAddressBook());
             CommandException error = assertThrows(CommandException.class, () -> command(TODAY, TODAY).execute(model));
-            assertEquals(String.format(LoanAddCommand.MESSAGE_ASSIGNED, FIRST_UUID), error.getMessage());
+            assertEquals("Equipment " + FIRST_UUID + " is unavailable because it is assigned to A0123456X.",
+                    error.getMessage());
             assertEquals(before, model.getAddressBook());
         }
+    }
+
+    @Test
+    public void execute_modelDetectsDuplicate_reportsCurrentHolderAndPreservesCause() {
+        ModelManager model = new ModelManager(LoanCommandTestData.model().getAddressBook(), new UserPrefs()) {
+            @Override
+            public Availability getAvailability(UUID uuid) {
+                return Availability.AVAILABLE;
+            }
+        };
+        model.addLoan(LoanCommandTestData.openLoan());
+        AddressBook before = new AddressBook(model.getAddressBook());
+        CommandException error = assertThrows(CommandException.class, () -> new LoanAddCommand(
+                FIRST_UUID, SECOND_MEMBER.getNusId(), TODAY, TODAY, CLOCK).execute(model));
+        assertEquals("Equipment " + FIRST_UUID + " is unavailable because it is assigned to A0123456X.",
+                error.getMessage());
+        assertInstanceOf(DuplicateOpenLoanException.class, error.getCause());
+        assertEquals(before, model.getAddressBook());
     }
 
     @Test

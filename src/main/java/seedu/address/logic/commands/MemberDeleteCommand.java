@@ -18,10 +18,10 @@ public class MemberDeleteCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Deletes a member without open loans. Parameters: nus/NUS_ID\n"
             + "Example: member delete nus/A0123456X";
-    public static final String MESSAGE_SUCCESS = "Deleted member: %1$s";
+    public static final String MESSAGE_SUCCESS = "Deleted member %1$s: %2$s.";
     public static final String MESSAGE_NOT_FOUND = "No member with NUS ID %1$s exists.";
     public static final String MESSAGE_OPEN_LOAN =
-            "Cannot delete member %1$s with open loans. Return their outstanding equipment first.";
+            "Cannot delete %1$s because the member holds %2$d item(s). Return the items first.";
 
     private final NusId targetNusId;
 
@@ -33,17 +33,26 @@ public class MemberDeleteCommand extends Command {
     }
 
     @Override
+    public boolean isTransactional() {
+        return true;
+    }
+
+    @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         try {
             Member member = model.findMember(targetNusId).orElseThrow(MemberNotFoundException::new);
-            model.deleteMember(member);
+            int heldCount = model.findOpenLoansForMember(targetNusId).size();
+            try {
+                model.deleteMember(member);
+            } catch (IllegalStateException e) {
+                throw new CommandException(String.format(MESSAGE_OPEN_LOAN, targetNusId, heldCount), e);
+            }
+            return new CommandResult(String.format(MESSAGE_SUCCESS, targetNusId, member.getName()),
+                    DisplayRequest.members());
         } catch (MemberNotFoundException e) {
             throw new CommandException(String.format(MESSAGE_NOT_FOUND, targetNusId), e);
-        } catch (IllegalStateException e) {
-            throw new CommandException(String.format(MESSAGE_OPEN_LOAN, targetNusId), e);
         }
-        return new CommandResult(String.format(MESSAGE_SUCCESS, targetNusId), DisplayRequest.members());
     }
 
     @Override

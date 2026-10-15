@@ -44,6 +44,14 @@ public interface Model {
      */
     void setAddressBook(ReadOnlyAddressBook addressBook);
 
+    /**
+     * Returns an isolated snapshot for a transactional command. Mutable collections must not be shared.
+     * Implementations with additional validation behavior must preserve it in their snapshot implementation.
+     */
+    default Model createTransactionSnapshot() {
+        return new ModelManager(getAddressBook(), getUserPrefs());
+    }
+
     /** Returns the AddressBook */
     ReadOnlyAddressBook getAddressBook();
 

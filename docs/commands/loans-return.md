@@ -12,7 +12,7 @@ loans return uuid/UUID returned/DATE
 
 Both parameters are required and may appear in either order. Family and subcommand names are
 lowercase and case-sensitive. Spaces and tabs separate parameters. Use the equipment UUID and
-a real calendar date in `uuuu-MM-dd` format.
+a real calendar date in `yyyy-MM-dd` format.
 
 Example for the sample camera already held by Alex Tan:
 
@@ -35,8 +35,10 @@ Success closes the loan using an immutable replacement, preserves returned histo
 the affected equipment's details. The member no longer holds that item. Equipment in `GOOD` or
 `FAIR` condition becomes available; damaged or under-repair equipment stays unavailable.
 
-The read-only Loans tab shows open loans and returned history with identities and dates. Its
+The read-only Loans tab shows open assignments only, with identities and dates. Closed records
+remain in the model and JSON but have no history presentation. Its
 equipment/member links request their detail views. It has no loan-editing or deletion actions.
 
-The existing command pipeline saves successful mutations. A save error is reported and does not
-promise rollback of an already completed change in memory.
+LogicManager stages the return, atomically saves and then publishes the committed snapshot.
+A save failure preserves the open loan, holder, availability and prior saved bytes. See
+[MVP fields and failure behavior](MvpFields.md).

@@ -4,17 +4,14 @@
 
 Example: `equipment delete uuid/550e8400-e29b-41d4-a716-446655440000`
 
-The individual parser and command are implemented. The application family route is still
-a placeholder on this PR's baseline; Duy owns its activation. These instructions specify
-the implemented component behavior, not a claim that typing the command already deletes
-equipment in the application. The shell and final acceptance remain under issues #74 and #75.
+The real `equipment delete` route is integrated by merged #95 and mounted in the shell by #93.
+Final milestone acceptance remains tracked in #75.
 
 ## Input and behavior
 
 Supply exactly one `uuid/` parameter. Leading/trailing spaces and tabs are accepted.
-UUID values use the existing ParserUtil Java UUID syntax, including hexadecimal case
-normalization and shortened forms accepted by UUID.fromString. Feedback uses canonical
-UUID text. Missing/blank values, repeated parameters, unknown markers and text before the
+UUID values require canonical 8-4-4-4-12 syntax, ignoring hexadecimal case. Shortened
+forms accepted by UUID.fromString are rejected. Feedback uses canonical UUID text. Missing/blank values, repeated parameters, unknown markers and text before the
 first marker are rejected. Malformed values produce the existing equipment UUID explanation.
 Row numbers and equipment names cannot identify a physical item.
 Whitespace-delimited `[A-Za-z][A-Za-z0-9_-]*/` tokens are reserved markers; quoting and
@@ -26,26 +23,23 @@ deletion only when the item has no open loan and removes that item's closed hist
 Other items, members, legacy persons and unrelated loans remain intact. Items with
 identical descriptions but different UUIDs remain independent.
 
-Success produces `Deleted equipment: UUID` with the actual UUID and
+Success produces `Deleted equipment UUID: EQUIPMENT_NAME.` with the stored name/actual UUID and
 `DisplayRequest.equipment()`. Unknown UUIDs and open-loan references produce CommandException
-with an identity-specific message and the domain cause. Rejection preserves all model data.
+with an identity-specific message and the domain cause. Blocked deletion includes the current holder NUS ID. Rejection preserves all model data.
 Record the item's return before retrying a blocked deletion.
 
-## Integration handoff
+## Command contract
 
 - Public constructor: `EquipmentDeleteCommand(UUID uuid)`.
 - Parser: `EquipmentDeleteCommandParser implements Parser<EquipmentDeleteCommand>`; pass
   the argument remainder only, such as `uuid/550e8400-e29b-41d4-a716-446655440000`.
 - Shared dependencies are merged: display/Logic #80, parsing/sorting #83 and UI foundation #81.
-- This component PR starts from team master `6230007d781478bc2a740a73fce6036e8a534996`.
-- Duy activates `equipment delete` and updates routing expectations. Keith's shell consumes
-  the typed directory request and handles identity selection recovery after deletion.
+- The shell consumes the typed directory request and recovers selection by identity after deletion.
 
-Command classes never save. Once routed, the existing LogicManager parse/execute/save
-pipeline owns persistence. A failed parse/command must not reach saving; an I/O save failure
-must be reported and does not promise rollback of an already changed in-memory model.
-This PR's direct parser/command/JSON round trips save explicitly to temporary files and
-reload a fresh ModelManager. They do not prove that the unactivated route reaches saving.
+Command classes never save. LogicManager owns persistence: it executes the deletion on a snapshot,
+atomically saves it and only then publishes through the existing live root. Parsing/business rejection
+never saves; write/replacement failures preserve every record and the old file. Current routed,
+failure and fresh-reload evidence is in [MvpCompletion.md](../gui/MvpCompletion.md).
 
 ## Verification
 
@@ -63,4 +57,5 @@ Run the focused component checks with Java 25:
 ```
 
 Run the full normal `./gradlew check coverage shadowJar` and `./.github/run-checks.sh`
-before handoff. Final routed pipeline and GUI deletion/selection tests remain pending.
+before handoff. Routed deletion, failed-save preservation, selection recovery and reload are covered
+by the current combined suite; remaining native/CI acceptance is recorded in #75.

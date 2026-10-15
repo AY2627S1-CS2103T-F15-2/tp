@@ -172,7 +172,7 @@ public class MemberEquipmentRoutingIntegrationTest {
     }
 
     @Test
-    public void routes_saveFailure_reportsCauseWithoutClaimingInMemoryRollback() throws Exception {
+    public void routes_saveFailure_preservesMemoryAndDisk() throws Exception {
         addMembers();
         byte[] beforeSave = Files.readAllBytes(storage.getAddressBookFilePath());
         IOException failure = new IOException("test save failure");
@@ -180,7 +180,7 @@ public class MemberEquipmentRoutingIntegrationTest {
         CommandException actual = assertThrows(CommandException.class, () -> logic.execute(
                 "member add nus/A0000003X name/Third Member phone/91234567 email/third@example.com"));
         assertSame(failure, actual.getCause());
-        assertTrue(model.hasMember(new NusId("A0000003X")));
+        assertFalse(model.hasMember(new NusId("A0000003X")));
         assertArrayEquals(beforeSave, Files.readAllBytes(storage.getAddressBookFilePath()));
         ModelManager reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
         assertFalse(reloaded.hasMember(new NusId("A0000003X")));

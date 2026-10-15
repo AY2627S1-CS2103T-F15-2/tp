@@ -32,7 +32,7 @@ public class EquipmentAddCommandParserTest {
             assertEquals(new EquipmentAddCommand("Camera", "Photo", Condition.GOOD, ""),
                     parser.parse("name/Camera category/Photo condition/GOOD" + notes));
         }
-        for (String alias : List.of("UNDER_REPAIR", "under-repair", "under repair")) {
+        for (String alias : List.of("UNDER_REPAIR", "under_repair")) {
             assertEquals(new EquipmentAddCommand("Camera", "Photo", Condition.UNDER_REPAIR, ""),
                     parser.parse("name/Camera category/Photo condition/" + alias));
         }

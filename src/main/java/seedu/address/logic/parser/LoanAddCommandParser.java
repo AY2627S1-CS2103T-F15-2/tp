@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_EQUIPMENT_UUID;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EXPECTED_RETURN_DATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NUS_ID;
 
+import java.util.Map;
 import java.util.Set;
 
 import seedu.address.logic.commands.LoanAddCommand;
@@ -17,7 +18,10 @@ public class LoanAddCommandParser implements Parser<LoanAddCommand> {
         try {
             ArgumentMultimap arguments = LaplaceArgumentParser.parse(args,
                     Set.of(PREFIX_EQUIPMENT_UUID, PREFIX_NUS_ID, PREFIX_ASSIGNED_DATE, PREFIX_EXPECTED_RETURN_DATE),
-                    Set.of());
+                    Set.of(), Map.of(PREFIX_EQUIPMENT_UUID, ParserUtil::parseUuid,
+                            PREFIX_NUS_ID, ParserUtil::parseNusId,
+                            PREFIX_ASSIGNED_DATE, ParserUtil::parseDate,
+                            PREFIX_EXPECTED_RETURN_DATE, ParserUtil::parseDate));
             return new LoanAddCommand(ParserUtil.parseUuid(arguments.getValue(PREFIX_EQUIPMENT_UUID).orElseThrow()),
                     ParserUtil.parseNusId(arguments.getValue(PREFIX_NUS_ID).orElseThrow()),
                     ParserUtil.parseDate(arguments.getValue(PREFIX_ASSIGNED_DATE).orElseThrow()),

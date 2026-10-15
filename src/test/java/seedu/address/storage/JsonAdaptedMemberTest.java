@@ -34,6 +34,18 @@ public class JsonAdaptedMemberTest {
     }
 
     @Test
+    public void toModelType_mvpOnlyValues_preservesSavedValues() throws Exception {
+        JsonAdaptedMember adaptedMember = new JsonAdaptedMember(VALID_NUS_ID,
+                "Anne-Marie  O'Connor", "+6591234567", "%ANNE@EXAMPLE.COM");
+
+        var restored = adaptedMember.toModelType();
+        assertEquals("Anne-Marie  O'Connor", restored.getName().fullName);
+        assertEquals("+6591234567", restored.getPhone().value);
+        assertEquals("%ANNE@EXAMPLE.COM", restored.getEmail().value);
+        assertEquals(restored, new JsonAdaptedMember(restored).toModelType());
+    }
+
+    @Test
     public void toModelType_invalidNusId_throwsIllegalValueException() {
         JsonAdaptedMember adaptedMember =
                 new JsonAdaptedMember("not-an-id", VALID_NAME, VALID_PHONE, VALID_EMAIL);

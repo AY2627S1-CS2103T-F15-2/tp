@@ -39,7 +39,7 @@ public class MemberDeleteCommandTest {
         assertEquals(equipment, model.getEquipmentList());
         assertEquals(List.of(LEGACY_PERSON), model.getFilteredPersonList());
         assertEquals(DisplayRequest.members(), result.getDisplayRequest());
-        assertEquals("Deleted member: A0123456X", result.getFeedbackToUser());
+        assertEquals("Deleted member A0123456X: Alex Tan.", result.getFeedbackToUser());
         assertFalse(result.isShowHelp());
         assertFalse(result.isExit());
     }
@@ -80,7 +80,7 @@ public class MemberDeleteCommandTest {
         CommandException error = assertThrows(
                 CommandException.class, () -> new MemberDeleteCommand(FIRST_MEMBER.getNusId()).execute(model));
         assertInstanceOf(IllegalStateException.class, error.getCause());
-        assertEquals(String.format(MemberDeleteCommand.MESSAGE_OPEN_LOAN, FIRST_MEMBER.getNusId()),
+        assertEquals("Cannot delete A0123456X because the member holds 1 item(s). Return the items first.",
                 error.getMessage());
         assertEquals(before, model.getAddressBook());
     }
@@ -134,7 +134,7 @@ public class MemberDeleteCommandTest {
         CommandException error = assertThrows(
                 CommandException.class, () -> new MemberDeleteCommand(FIRST_MEMBER.getNusId()).execute(model));
         assertSame(failure, error.getCause());
-        assertEquals(String.format(MemberDeleteCommand.MESSAGE_OPEN_LOAN, FIRST_MEMBER.getNusId()),
+        assertEquals("Cannot delete A0123456X because the member holds 1 item(s). Return the items first.",
                 error.getMessage());
         assertEquals(before, model.getAddressBook());
     }

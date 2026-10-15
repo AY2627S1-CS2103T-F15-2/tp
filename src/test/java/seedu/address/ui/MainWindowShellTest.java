@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import javax.imageio.ImageIO;
@@ -33,6 +34,9 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -97,6 +101,53 @@ public class MainWindowShellTest {
         FxTestUtil.runAndWait(() -> {
             window.dispose();
             window.getPrimaryStage().hide();
+        });
+    }
+
+    @Test
+    public void pastedMultilineNotes_realInput_preservesSeparatorsPersistsAndRetainsRejectedCorrection() {
+        FxTestUtil.runAndWait(() -> {
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            var previous = new HashMap<DataFormat, Object>();
+            for (DataFormat format : clipboard.getContentTypes()) {
+                Object value = clipboard.getContent(format);
+                if (value != null) {
+                    previous.put(format, value);
+                }
+            }
+            try {
+                for (String separator : List.of("\n", "\r\n", "\r", "\t", "\u000b", "\f",
+                        "\u0085", "\u2028", "\u2029")) {
+                    ClipboardContent content = new ClipboardContent();
+                    String command = "equipment add name/Camera category/Test condition/GOOD notes/First line"
+                            + separator + "Second line";
+                    content.putString(command);
+                    assertTrue(clipboard.setContent(content));
+                    field().selectAll();
+                    field().paste();
+                    assertTrue(field().getText().contains("First line Second line")
+                            || field().getText().contains("First line  Second line"));
+                    int saves = storage.saves;
+                    int dispatches = logic.commands.size();
+                    field().fireEvent(new ActionEvent());
+                    assertEquals("Success", label("feedbackStatus"), feedback());
+                    assertEquals("First line Second line", detailLabel("notes"));
+                    assertEquals(saves + 1, storage.saves);
+                    assertEquals(dispatches + 1, logic.commands.size());
+                    assertEquals(model.getAddressBook(), assertDoesNotThrow(() -> storage.readAddressBook())
+                            .orElseThrow());
+                }
+                ClipboardContent invalid = new ClipboardContent();
+                invalid.putString("equipment add name/Camera category/Test condition/GOOD notes/First\nunknown/value");
+                clipboard.setContent(invalid);
+                field().paste();
+                String correction = field().getText();
+                reject(correction);
+                assertTrue(feedback().startsWith("Unknown parameter: unknown/"));
+                assertEquals(field(), window.getPrimaryStage().getScene().getFocusOwner());
+            } finally {
+                clipboard.setContent(previous);
+            }
         });
     }
 
@@ -236,6 +287,75 @@ public class MainWindowShellTest {
     }
 
     @Test
+    public void activation_spaceSaveFailure_returnsCorrectionFocusAfterKeyReleaseWithoutLeakingSpace() {
+        FxTestUtil.runAndWait(() -> {
+            AddressBook before = new AddressBook(model.getAddressBook());
+            rows().requestFocus();
+            storage.fail = true;
+            rows().fireEvent(key(KeyCode.SPACE));
+            assertEquals("Error", label("feedbackStatus"));
+            assertEquals(rows(), window.getPrimaryStage().getScene().getFocusOwner());
+            rows().fireEvent(new KeyEvent(KeyEvent.KEY_TYPED, " ", " ", KeyCode.UNDEFINED,
+                    false, false, false, false));
+            rows().fireEvent(new KeyEvent(KeyEvent.KEY_RELEASED, "", "", KeyCode.SPACE,
+                    false, false, false, false));
+            assertEquals(field(), window.getPrimaryStage().getScene().getFocusOwner());
+            assertEquals("", field().getText());
+            assertEquals(before, model.getAddressBook());
+            assertEquals(List.of("member view nus/A0000001X"), logic.commands);
+            assertEquals(0, storage.saves);
+        });
+    }
+
+    @Test
+    public void activation_successfulSpaceRelease_keepsRowFocusWithoutDuplicateDispatch() {
+        FxTestUtil.runAndWait(() -> {
+            rows().requestFocus();
+            rows().fireEvent(key(KeyCode.SPACE));
+            rows().fireEvent(new KeyEvent(KeyEvent.KEY_RELEASED, "", "", KeyCode.SPACE,
+                    false, false, false, false));
+            assertEquals(rows(), window.getPrimaryStage().getScene().getFocusOwner());
+            assertEquals("", field().getText());
+            assertEquals(List.of("member view nus/A0000001X"), logic.commands);
+            assertEquals(1, storage.saves);
+        });
+    }
+
+    @Test
+    public void activation_disposedBeforeSpaceRelease_detachesPendingCorrectionFocus() {
+        FxTestUtil.runAndWait(() -> {
+            rows().requestFocus();
+            storage.fail = true;
+            rows().fireEvent(key(KeyCode.SPACE));
+            Node focusBeforeDisposal = window.getPrimaryStage().getScene().getFocusOwner();
+            assertEquals(rows(), focusBeforeDisposal);
+            assertEquals("Error", label("feedbackStatus"));
+
+            window.dispose();
+            rows().fireEvent(new KeyEvent(KeyEvent.KEY_RELEASED, "", "", KeyCode.SPACE,
+                    false, false, false, false));
+            assertEquals(focusBeforeDisposal, window.getPrimaryStage().getScene().getFocusOwner());
+            assertEquals(List.of("member view nus/A0000001X"), logic.commands);
+            assertEquals(0, storage.saves);
+        });
+    }
+
+    @Test
+    public void fillInnerParts_disposedBeforeInitialization_doesNotMountComponentsOrObserveChanges() {
+        FxTestUtil.runAndWait(() -> {
+            window.dispose();
+            window.getPrimaryStage().hide();
+            window = new MainWindow(new Stage(), logic, temporaryDirectory.resolve("laplace.json"));
+            window.dispose();
+            window.fillInnerParts();
+            model.setAddressBook(new AddressBook());
+            assertEquals(null, window.getPersonListPanel());
+            assertTrue(logic.commands.isEmpty());
+            assertEquals(0, storage.saves);
+        });
+    }
+
+    @Test
     public void displayRequests_typedAndUnchanged_useIntentInsteadOfFeedback() {
         FxTestUtil.runAndWait(() -> {
             logic.nextResult = new CommandResult("member list", DisplayRequest.equipment());
@@ -291,7 +411,7 @@ public class MainWindowShellTest {
             assertEquals("No current holder", ((Label) card.lookup("#holder")).getText());
             button("loansNavigation").fire();
             assertEquals("0", label("openCount"));
-            assertEquals("1", label("historyCount"));
+            assertEquals(null, node("historyCount"));
             assertEquals(List.of("equipment list"), logic.commands);
         });
     }
@@ -432,7 +552,7 @@ public class MainWindowShellTest {
                     assertEquals(null, node("directorySummaryPlaceholder").lookup("#assignedDate"));
                 } else {
                     assertEquals("1", label("openCount"));
-                    assertEquals("1", label("historyCount"));
+                    assertEquals(null, node("historyCount"));
                 }
                 assertEquals(dispatchCount[0], logic.commands.size());
                 model.closeLoan(new UUID(0, 2), LocalDate.of(2026, 1, 3));
@@ -442,7 +562,7 @@ public class MainWindowShellTest {
                     assertEquals("0 item(s) held", detailLabel("heldCount"));
                 } else if (active == DisplayRequest.Type.LOANS) {
                     assertEquals("0", label("openCount"));
-                    assertEquals("2", label("historyCount"));
+                    assertEquals(null, node("historyCount"));
                 }
                 assertEquals(dispatchCount[0], logic.commands.size());
             });
@@ -490,6 +610,33 @@ public class MainWindowShellTest {
                     window.getPrimaryStage().getWidth(), 1);
             window.show();
         });
+    }
+
+    @Test
+    public void storageFailure_laplaceDelete_preservesDetailsSelectionInputAndLaterSavedRecords() throws Exception {
+        FxTestUtil.runAndWait(() -> {
+            succeed("member view nus/A0000002X");
+            AddressBook before = new AddressBook(model.getAddressBook());
+            storage.fail = true;
+            submit("member delete nus/A0000002X");
+            assertEquals("Error", label("feedbackStatus"));
+            assertEquals("member delete nus/A0000002X", field().getText());
+            assertEquals(field(), window.getPrimaryStage().getScene().getFocusOwner());
+            assertEquals("A0000002X", detailLabel("memberNusId"));
+            assertEquals(id(2), ((Member) rows().getSelectionModel().getSelectedItem()).getNusId());
+            assertEquals(before, model.getAddressBook());
+        });
+        ReadOnlyAddressBook saved = storage.readAddressBook().orElseThrow();
+        FxTestUtil.runAndWait(() -> {
+            assertEquals(saved, model.getAddressBook());
+            storage.fail = false;
+            succeed("member list");
+            assertEquals(saved, model.getAddressBook());
+            succeed("member delete nus/A0000002X");
+            assertFalse(model.hasMember(id(2)));
+            assertEquals(3, storage.saves);
+        });
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
     }
 
     @Test
@@ -626,7 +773,7 @@ public class MainWindowShellTest {
                 session.add("RETAINED INPUT: " + field().getText());
             }
             button("loansNavigation").fire();
-            session.add("Loans tab: " + label("openCount") + " open; " + label("historyCount") + " history.");
+            session.add("Loans tab: " + label("openCount") + " open; closed history is not presented.");
             session.add("Commands executed: " + logic.commands);
             session.add("Successful saves: " + storage.saves);
             assertEquals(6, logic.commands.size());
@@ -714,7 +861,7 @@ public class MainWindowShellTest {
             assertEquals(null, node("detailsTitle"));
             button("loansNavigation").fire();
             assertEquals("0", label("openCount"));
-            assertEquals("0", label("historyCount"));
+            assertEquals(null, node("historyCount"));
             assertTrue(model.getLoanList().isEmpty());
         });
         reloadFreshShell();
@@ -814,7 +961,7 @@ public class MainWindowShellTest {
                     assertEquals("No current holder", detailLabel("holder"));
                 } else {
                     assertEquals("1", label("openCount"));
-                    assertEquals("1", label("historyCount"));
+                    assertEquals(null, node("historyCount"));
                 }
                 assertEquals(count + 1, logic.commands.size());
             });

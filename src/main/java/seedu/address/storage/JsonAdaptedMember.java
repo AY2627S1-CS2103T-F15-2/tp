@@ -54,28 +54,28 @@ class JsonAdaptedMember {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
                     Name.class.getSimpleName()));
         }
-        if (!Name.isValidName(name)) {
+        if (!Name.isValidName(name) && !Name.isValidMemberName(name)) {
             throw new IllegalValueException(Name.MESSAGE_CONSTRAINTS);
         }
-        Name modelName = new Name(name);
+        Name modelName = Name.fromStoredMember(name);
 
         if (phone == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
                     Phone.class.getSimpleName()));
         }
-        if (!Phone.isValidPhone(phone)) {
+        if (!Phone.isValidPhone(phone) && !Phone.isValidMemberPhone(phone)) {
             throw new IllegalValueException(Phone.MESSAGE_CONSTRAINTS);
         }
-        Phone modelPhone = new Phone(phone);
+        Phone modelPhone = Phone.fromStoredMember(phone);
 
         if (email == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
                     Email.class.getSimpleName()));
         }
-        if (!Email.isValidEmail(email)) {
+        if (!Email.isValidEmail(email) && !Email.isValidMemberEmail(email)) {
             throw new IllegalValueException(Email.MESSAGE_CONSTRAINTS);
         }
-        Email modelEmail = new Email(email);
+        Email modelEmail = Email.fromStoredMember(email);
 
         return new Member(modelNusId, modelName, modelPhone, modelEmail);
     }

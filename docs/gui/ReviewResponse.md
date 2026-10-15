@@ -1,3 +1,7 @@
+> Historical #93/component evidence. The later v1.3.3 completion changes and current acceptance
+> results are recorded in [MvpCompletion.md](MvpCompletion.md). Earlier save-error, validation,
+> history-presentation and pending-route statements below describe their original baseline.
+
 # PR #93 completion-review response
 
 This responds to Keegan4's six completion threads on

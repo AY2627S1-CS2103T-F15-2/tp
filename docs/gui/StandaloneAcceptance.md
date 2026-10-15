@@ -1,3 +1,7 @@
+> Historical #93/component evidence. The later v1.3.3 completion changes and current acceptance
+> results are recorded in [MvpCompletion.md](MvpCompletion.md). Earlier save-error, validation,
+> history-presentation and pending-route statements below describe their original baseline.
+
 # Standalone acceptance record - 15 October 2026
 
 Environment: ARM macOS, Zulu Java 25.0.3, JavaFX 17.0.7 matching ARM native jars.

@@ -6,6 +6,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_MEMBER_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_MEMBER_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NUS_ID;
 
+import java.util.Map;
 import java.util.Set;
 
 import seedu.address.logic.commands.MemberAddCommand;
@@ -29,15 +30,18 @@ public class MemberAddCommandParser implements Parser<MemberAddCommand> {
         requireNonNull(args);
         ArgumentMultimap arguments;
         try {
-            arguments = LaplaceArgumentParser.parse(args, REQUIRED_PREFIXES, Set.of());
+            arguments = LaplaceArgumentParser.parse(args, REQUIRED_PREFIXES, Set.of(), Map.of(
+                    PREFIX_NUS_ID, ParserUtil::parseNusId, PREFIX_MEMBER_NAME, ParserUtil::parseMemberName,
+                    PREFIX_MEMBER_PHONE, ParserUtil::parseMemberPhone,
+                    PREFIX_MEMBER_EMAIL, ParserUtil::parseMemberEmail));
         } catch (ParseException e) {
             throw new ParseException(e.getMessage() + "\n" + MemberAddCommand.MESSAGE_USAGE, e);
         }
 
         NusId nusId = ParserUtil.parseNusId(arguments.getValue(PREFIX_NUS_ID).orElseThrow());
-        Name name = ParserUtil.parseName(arguments.getValue(PREFIX_MEMBER_NAME).orElseThrow());
-        Phone phone = ParserUtil.parsePhone(arguments.getValue(PREFIX_MEMBER_PHONE).orElseThrow());
-        Email email = ParserUtil.parseEmail(arguments.getValue(PREFIX_MEMBER_EMAIL).orElseThrow());
+        Name name = ParserUtil.parseMemberName(arguments.getValue(PREFIX_MEMBER_NAME).orElseThrow());
+        Phone phone = ParserUtil.parseMemberPhone(arguments.getValue(PREFIX_MEMBER_PHONE).orElseThrow());
+        Email email = ParserUtil.parseMemberEmail(arguments.getValue(PREFIX_MEMBER_EMAIL).orElseThrow());
         return new MemberAddCommand(new Member(nusId, name, phone, email));
     }
 }

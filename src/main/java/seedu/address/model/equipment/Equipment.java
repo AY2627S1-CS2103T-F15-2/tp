@@ -1,10 +1,12 @@
 package seedu.address.model.equipment;
 
+import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Objects;
 import java.util.UUID;
 
+import seedu.address.commons.util.LaplaceText;
 import seedu.address.commons.util.ToStringBuilder;
 
 /**
@@ -29,6 +31,27 @@ public class Equipment {
         this.category = category;
         this.condition = condition;
         this.notes = notes;
+    }
+
+    /** Validates and normalizes a newly entered equipment name; stored legacy descriptions remain readable. */
+    public static String normalizeName(String value) {
+        return normalizeText(value, 1, 100, "Invalid equipment name. Enter 1-100 printable characters.");
+    }
+
+    /** Validates the MVP category length and printable-text contract. */
+    public static String normalizeCategory(String value) {
+        return normalizeText(value, 1, 50, "Invalid category. Enter 1-50 printable characters.");
+    }
+
+    /** Converts whitespace/line breaks to spaces; omitted or blank notes remain empty. */
+    public static String normalizeNotes(String value) {
+        return normalizeText(value, 0, 300, "Invalid notes. Use at most 300 printable characters.");
+    }
+
+    private static String normalizeText(String value, int minimum, int maximum, String message) {
+        String normalized = LaplaceText.normalize(value);
+        checkArgument(LaplaceText.isPrintable(normalized, minimum, maximum), message);
+        return normalized;
     }
 
     public UUID getUuid() {

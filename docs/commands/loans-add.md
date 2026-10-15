@@ -11,7 +11,7 @@ loans add uuid/UUID nus/NUS_ID assigned/DATE expected/DATE
 ```
 
 All four parameters are required and may appear in any order. Family and subcommand names are
-lowercase and case-sensitive. Spaces and tabs separate parameters. Dates use `uuuu-MM-dd`,
+lowercase and case-sensitive. Spaces and tabs separate parameters. Dates use `yyyy-MM-dd`,
 for example `2026-10-13`; replace example dates with dates appropriate to your computer's local date.
 NUS IDs are case-insensitive and normalize to uppercase. Use the item's UUID, rather than a row
 number or equipment name, to distinguish identically named physical items.
@@ -40,3 +40,10 @@ parameter markers.
 
 The existing command pipeline saves successful mutations. If saving fails, the application reports
 the error; it does not promise to undo an already completed change in memory.
+
+Assignment is staged and atomically persisted before live publication. A failed save leaves all
+collections and saved bytes unchanged. See [MVP fields](MvpFields.md) for canonical UUIDs, exact
+conditions/dates and supplied-field error ordering. Loans presents open assignments only.
+
+Assignment refusal for an existing open loan names its current holder NUS ID, including when
+the requested new holder differs. The current loan is read before attempting any mutation.

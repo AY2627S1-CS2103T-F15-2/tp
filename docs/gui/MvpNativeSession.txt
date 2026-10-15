@@ -1,0 +1,106 @@
+Laplace v1.3.3 standalone acceptance, 15 October 2026, Asia/Singapore
+This is an observed interaction record, not a generated console UI transcript.
+The application logs inputs/start/stop only; feedback below was read from native accessibility state.
+See MvpNativeApplication.txt for the final-build application's own log.
+
+Final production source: a2c349b9d627e368ff664cde7a6b9071c7237f59
+Final JAR SHA-256: a059b5256414a74f68f37b07e2e92714a244ffa423ef9a84a41871f71a0c64ca
+Java 25.0.3, JavaFX 17.0.7 matching mac-aarch64 jars ahead of addressbook.jar.
+Disposable working directory: /private/tmp/laplace-mvp-interactive
+App executable: /private/tmp/laplace-mvp-native/LaplaceMvp.app/Contents/MacOS/LaplaceMvp
+Window: 760x500 logical pixels (Retina native screenshots appear at 1520x1000).
+
+Final-build process 4:
+INPUT: equipment view uuid/fb52566f-049b-43c5-b856-42a4f1f151f9
+OBSERVED: persisted 100-character name, 50-character category, 300-character notes; AVAILABLE; no holder.
+ACTION: native accessibility scrollbar increment buttons to bottom.
+OBSERVED: detail scrollbar value 1.
+INPUT: equipment view uuid/78c2a348-cd24-44c4-987d-d59a44718d07
+OBSERVED: Camera Kit; Photography; GOOD; AVAILABLE; Keep lens cap on; no holder; detail scrollbar reset 0.
+
+ACTION: temporarily set only disposable data directory permissions to 0555.
+INPUT: member add nus/A0000003X name/Final Member phone/91234567 email/final@example.com
+OUTPUT: Could not save data to file data/addressbook.json due to insufficient permissions to write to the file or the folder.
+OBSERVED: Error, exact typed input retained, command field focused; saved bytes unchanged, one saved member.
+ACTION: restored directory permissions to 0755 immediately.
+INPUT: member list
+OUTPUT: Listed 1 active members.
+OBSERVED: original Anne-Marie Lim, A0000001X, +6591234567, anne@example.com, 0 holdings. Failed addition absent.
+INPUT: member add nus/A0000003X name/Final Member phone/91234567 email/final@example.com
+OUTPUT: New member added: Final Member (A0000003X)
+OBSERVED: 2 members, exact new identity/contacts, 0 holdings; input cleared/focused.
+INPUT: equipment add name/Final Camera category/Verification condition/GOOD notes/Temporary acceptance item
+OUTPUT: New equipment added: Final Camera (5165f781-8aa3-49ae-9ac4-f07844245cd0), availability: AVAILABLE
+OBSERVED: 3 equipment, exact UUID/notes/condition, no holder.
+INPUT: loans add nus/A0000003X uuid/5165f781-8aa3-49ae-9ac4-f07844245cd0 date/2026-10-15 expected/2026-10-16
+OUTPUT: Unknown parameter: date/
+OBSERVED: equipment remains AVAILABLE, no holder; invalid input retained/focused.
+INPUT: loans add nus/A0000003X uuid/5165f781-8aa3-49ae-9ac4-f07844245cd0 assigned/2026-10-15 expected/2026-10-16
+OUTPUT: Assigned Final Camera (5165f781-8aa3-49ae-9ac4-f07844245cd0) to Final Member (A0000003X) on 2026-10-15; expected return: 2026-10-16.
+OBSERVED: ASSIGNED, Final Member's exact NUS ID/phone/email, correct assigned/expected dates.
+INPUT: member view nus/A0000003X
+OUTPUT: Viewing member: Final Member (A0000003X). Currently holds 1 item(s).
+OBSERVED: Final Camera exact UUID, Verification, GOOD, ASSIGNED, correct dates and contacts.
+INPUT: member delete nus/A0000003X
+OUTPUT: Cannot delete member A0000003X with open loans. Return their outstanding equipment first.
+OBSERVED: details/one holding unchanged, input retained/focused.
+INPUT: loans return uuid/5165f781-8aa3-49ae-9ac4-f07844245cd0 returned/2026-10-15
+OUTPUT: Returned Final Camera (5165f781-8aa3-49ae-9ac4-f07844245cd0) from Final Member (A0000003X) on 2026-10-15.
+OBSERVED: AVAILABLE, no holder, old dates/contact fields removed.
+INPUT: member delete nus/A0000003X
+OUTPUT: Deleted member: A0000003X
+OBSERVED: 1 member; Anne-Marie Lim selected; directory summary, no stale detail.
+INPUT: equipment delete uuid/5165f781-8aa3-49ae-9ac4-f07844245cd0
+OUTPUT: Deleted equipment: 5165f781-8aa3-49ae-9ac4-f07844245cd0
+OBSERVED: 2 available equipment, 0 assigned/unavailable; Camera Kit selected in summary.
+INPUT: equipment list
+OUTPUT: Listed 2 equipment items.
+ACTION: Loans accessibility button.
+OBSERVED: Open loans 0, no history section/closed rows.
+INPUT: exit
+OBSERVED: MainApp.stop 15:43:40 SGT; process exit code 0.
+SAVED: persons=1, members=1, equipment=2, loans=1 (closed), zero open loans.
+Saved bytes again equal pre-failure bytes; SHA-256 4ef8246a2401877bf3044b77bf4b5743cb2b2ffdc54ff3c71ef797c81b9d9f92.
+
+Final-build process 5, fresh launch, same data:
+STARTUP: 1 member, Anne-Marie Lim/A0000001X selected, +6591234567, anne@example.com, 0 holdings.
+INPUT: member view nus/A0000003X
+OUTPUT: No member with NUS ID A0000003X exists.
+OBSERVED: directory/current selection retained, invalid input retained/focused.
+INPUT: equipment view uuid/78c2a348-cd24-44c4-987d-d59a44718d07
+OUTPUT: Viewing equipment: Camera Kit (78c2a348-cd24-44c4-987d-d59a44718d07). Availability: AVAILABLE.
+OBSERVED: correct notes, GOOD, Photography, no holder.
+INPUT: equipment list
+OUTPUT: Listed 2 equipment items.
+ACTION: attempted native coordinate row click.
+TOOL RESULT: Computer Use server error -10005: noWindowsAvailable.
+This is not a native pointer pass. Accessibility row click previously performed no dispatch.
+ACTION: Loans accessibility button.
+OBSERVED: Open loans 0, no history section.
+INPUT: exit
+OBSERVED: MainApp.stop 15:45:19 SGT; process exit code 0.
+SAVED: data file byte-identical to process 4 after exit. Directory mode 0755.
+
+Additional earlier-build evidence (JAR d1d78abde30098bdd67dacb84a68f51deff0b435f923eaa64f6028c3871723c8):
+- Process 1 typed two same-name members A0000001X/A0000002X with distinct contacts; normalized name/phone/email.
+- Typed two identical Camera Kit items with UUIDs 78c2a348-cd24-44c4-987d-d59a44718d07 and 39a1cf1a-7c90-4170-b99d-34bb87e98c7e.
+- Native Tab/Space and Enter activated the exact equipment once per activation, without typed-space leakage.
+- Assigned both to A0000001X with expected dates 2026-10-17/2026-10-16; holdings showed the earlier due item first.
+- Blocked deletion retained member/details/holdings/input/focus.
+- F1 opened actual Help with Copy URL button. Closing Help lost the desktop tool's main-window binding.
+  Process 1 was terminated for recovery; it is not a normal Exit pass.
+- Process 2 loaded the two members/items/open loans in a fresh process.
+- Actual accessibility loan equipment/member buttons navigated to exact identities once.
+- Return changed availability/holder fields; open count dropped 2 -> 1 -> 0; repeated return was rejected.
+- Genuine directory-permission failure on member deletion retained records/details/input/focus and exact saved bytes.
+  Permissions restored; later list did not persist failed deletion; successful deletion removed only idle member A2.
+- Successful equipment deletion removed only the returned 39a1... item and its associated history.
+- Abbreviated UUID was rejected. Legacy add preserved Legacy123, short phone 123 and UPPER@EXAMPLE.COM.
+- Typed maximum-length 100/50/300 equipment fields; records rendered with accessible bottom input.
+- Process 2 typed Exit and stopped normally; process 3 freshly reloaded the same records in 760x500.
+- Process 3 used actual accessibility scrollbar buttons to reach long notes at the bottom, confirmed 0 holdings,
+  AVAILABLE Camera Kit, no open/history presentation, and deleted-member rejection; typed Exit normally.
+- Native coordinate clicks/scroll-wheel actions returned noWindowsAvailable; physical pointer remains unverified.
+
+Automated mounted FX mouse events/once-only actions and packaged-resource tests are separate evidence.
+No physical mouse pass, final-build Help-close pass, team CI pass, merge readiness or full milestone closure is asserted here.

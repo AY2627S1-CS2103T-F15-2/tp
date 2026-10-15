@@ -67,6 +67,25 @@ public class CommandBoxTest {
         });
     }
 
+    @Test
+    public void multilineReplacement_preservesWordBoundariesCaretAndUndo() {
+        FxTestUtil.runAndWait(() -> {
+            CommandBox box = new CommandBox(command -> new CommandResult("Success"));
+            TextField field = field(box);
+            field.setText("notes/keep tail");
+            field.selectRange(6, 10);
+            field.replaceSelection("First\r\nSecond");
+            assertEquals("notes/First  Second tail", field.getText());
+            assertEquals(19, field.getCaretPosition());
+            assertEquals(19, field.getAnchor());
+            field.undo();
+            assertEquals("notes/keep tail", field.getText());
+            field.redo();
+            assertEquals("notes/First  Second tail", field.getText());
+            assertEquals(19, field.getCaretPosition());
+        });
+    }
+
     private static TextField field(CommandBox box) {
         new Scene(new StackPane(box.getRoot()));
         return (TextField) box.getRoot().lookup("#commandTextField");

@@ -22,7 +22,7 @@ import seedu.address.model.member.exceptions.MemberNotFoundException;
 public class LoanReturnCommand extends Command {
     public static final String COMMAND_WORD = "loans return";
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Records an equipment return. Parameters: uuid/UUID returned/DATE\nDates must use uuuu-MM-dd.";
+            + ": Records an equipment return. Parameters: uuid/UUID returned/DATE\nDates must use yyyy-MM-dd.";
     public static final String MESSAGE_SUCCESS = "Returned %1$s (%2$s) from %3$s (%4$s) on %5$s.";
     public static final String MESSAGE_EQUIPMENT_NOT_FOUND = "No equipment with UUID %1$s exists.";
     public static final String MESSAGE_NO_OPEN_LOAN = "Equipment %1$s has no open loan to return.";
@@ -45,6 +45,11 @@ public class LoanReturnCommand extends Command {
         this.equipmentUuid = equipmentUuid;
         this.returnedDate = returnedDate;
         this.clock = clock;
+    }
+
+    @Override
+    public boolean isTransactional() {
+        return true;
     }
 
     @Override

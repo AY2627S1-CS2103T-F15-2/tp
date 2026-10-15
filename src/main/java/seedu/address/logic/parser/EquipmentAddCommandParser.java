@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_CONDITION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EQUIPMENT_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTES;
 
+import java.util.Map;
 import java.util.Set;
 
 import seedu.address.logic.commands.EquipmentAddCommand;
@@ -18,7 +19,10 @@ public class EquipmentAddCommandParser implements Parser<EquipmentAddCommand> {
         ArgumentMultimap arguments;
         try {
             arguments = LaplaceArgumentParser.parse(args,
-                    Set.of(PREFIX_EQUIPMENT_NAME, PREFIX_CATEGORY, PREFIX_CONDITION), Set.of(PREFIX_NOTES));
+                    Set.of(PREFIX_EQUIPMENT_NAME, PREFIX_CATEGORY, PREFIX_CONDITION), Set.of(PREFIX_NOTES),
+                    Map.of(PREFIX_EQUIPMENT_NAME, ParserUtil::parseEquipmentName,
+                            PREFIX_CATEGORY, ParserUtil::parseCategory, PREFIX_CONDITION, ParserUtil::parseCondition,
+                            PREFIX_NOTES, ParserUtil::parseNotes));
         } catch (ParseException e) {
             throw new ParseException(e.getMessage() + "\n" + EquipmentAddCommand.MESSAGE_USAGE, e);
         }

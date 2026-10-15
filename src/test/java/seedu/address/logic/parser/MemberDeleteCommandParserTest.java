@@ -44,7 +44,7 @@ public class MemberDeleteCommandParserTest {
     public void parse_malformedIdentity_providesFieldConstraints() {
         for (String value : List.of("123", "A0123", "A0123456XX", "A0123456X extra", "A0123456X/extra")) {
             ParseException error = assertThrows(ParseException.class, () -> parser.parse("nus/" + value));
-            assertEquals(NusId.MESSAGE_CONSTRAINTS, error.getMessage());
+            assertTrue(error.getMessage().startsWith(NusId.MESSAGE_CONSTRAINTS));
         }
     }
 
