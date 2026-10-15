@@ -47,11 +47,15 @@ public class MainWindow extends UiPart<Stage> {
     private final HelpWindow helpWindow;
     private final InvalidationListener dataListener = unused -> queueRefresh();
     private final EventHandler<KeyEvent> helpFilter = event -> {
+        if (event.getCode() == KeyCode.SPACE) {
+            spacePressed = true;
+        }
         if (event.getCode() == KeyCode.F1) {
             handleHelp();
             event.consume();
         }
     };
+    private final EventHandler<KeyEvent> activationReleaseFilter = this::handleActivationRelease;
     private final EventHandler<KeyEvent> selectionKeyHandler = unused -> refreshSummaries();
     private final EventHandler<MouseEvent> selectionMouseHandler = unused -> refreshSummaries();
     private final EventHandler<WindowEvent> hiddenHandler = unused -> dispose();
@@ -70,6 +74,8 @@ public class MainWindow extends UiPart<Stage> {
     private List<NusId> memberOrder = List.of();
     private List<UUID> equipmentOrder = List.of();
     private boolean initialized;
+    private boolean spacePressed;
+    private boolean focusAfterActivationKey;
     private boolean refreshQueued;
     private boolean disposed;
 
@@ -108,6 +114,7 @@ public class MainWindow extends UiPart<Stage> {
         directory.widthProperty().addListener((unused, previous, current) -> directory.setDividerPositions(0.28));
         helpMenuItem.setAccelerator(KeyCombination.valueOf("F1"));
         primaryStage.addEventFilter(KeyEvent.KEY_PRESSED, helpFilter);
+        primaryStage.addEventFilter(KeyEvent.KEY_RELEASED, activationReleaseFilter);
         primaryStage.addEventHandler(WindowEvent.WINDOW_HIDDEN, hiddenHandler);
     }
 
@@ -285,12 +292,28 @@ public class MainWindow extends UiPart<Stage> {
         commandBox.requestFocus();
     }
 
+    /** Returns correction focus only after Space's typed event has finished on its originating control. */
+    private void handleActivationRelease(KeyEvent event) {
+        if (event.getCode() == KeyCode.SPACE) {
+            spacePressed = false;
+            if (focusAfterActivationKey && !disposed) {
+                focusAfterActivationKey = false;
+                commandBox.requestFocus();
+            }
+        }
+    }
+
     /** Routes explicit UI activation through exactly the same pipeline as command input. */
     private void activate(String commandText) {
         try {
             executeCommand(commandText);
         } catch (CommandException | ParseException e) {
-            // executeCommand has already displayed the actual parser, command, or storage failure.
+            // Delay Space's correction focus until release so its typed event cannot enter the command box.
+            if (spacePressed) {
+                focusAfterActivationKey = true;
+            } else {
+                commandBox.requestFocus();
+            }
         }
         // Keep row/link focus until its key finishes; moving it here leaks Space into command input.
     }
@@ -369,6 +392,7 @@ public class MainWindow extends UiPart<Stage> {
         }
         disposed = true;
         primaryStage.removeEventFilter(KeyEvent.KEY_PRESSED, helpFilter);
+        primaryStage.removeEventFilter(KeyEvent.KEY_RELEASED, activationReleaseFilter);
         primaryStage.removeEventHandler(WindowEvent.WINDOW_HIDDEN, hiddenHandler);
         helpWindow.hide();
         if (initialized) {

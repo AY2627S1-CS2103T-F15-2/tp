@@ -60,6 +60,30 @@ public class DetailsPanelTest {
     }
 
     @Test
+    public void details_newIdentityResetsScroll_backgroundRefreshPreservesPosition() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = ViewTestData.model();
+            model.addLoan(loan(CAMERA, ALEX, true));
+            MemberDetailsPanel memberPanel = members(model);
+            memberPanel.showMember(ALEX.getNusId());
+            ScrollPane memberScroll = (ScrollPane) memberPanel.getRoot();
+            memberScroll.setVvalue(0.75);
+            memberPanel.refresh();
+            assertEquals(0.75, memberScroll.getVvalue());
+            memberPanel.showMember(OTHER_ALEX.getNusId());
+            assertEquals(0, memberScroll.getVvalue());
+            EquipmentDetailsPanel equipmentPanel = equipment(model);
+            equipmentPanel.showEquipment(CAMERA.getUuid());
+            ScrollPane equipmentScroll = (ScrollPane) equipmentPanel.getRoot();
+            equipmentScroll.setVvalue(0.75);
+            equipmentPanel.refresh();
+            assertEquals(0.75, equipmentScroll.getVvalue());
+            equipmentPanel.showEquipment(OTHER_CAMERA.getUuid());
+            assertEquals(0, equipmentScroll.getVvalue());
+        });
+    }
+
+    @Test
     public void memberDetails_completeContactsSameNamesAndNoHoldings_useNusIdentity() {
         FxTestUtil.runAndWait(() -> {
             ModelManager model = ViewTestData.model();
@@ -71,7 +95,7 @@ public class DetailsPanelTest {
             assertEquals(ALEX.getPhone().value, value(panel.getRoot(), "phone"));
             assertEquals(ALEX.getEmail().value, value(panel.getRoot(), "email"));
             assertEquals("0 item(s) held", value(panel.getRoot(), "heldCount"));
-            assertEquals("No equipment currently held.", value(panel.getRoot(), "detailsStatus"));
+            assertEquals("This member currently holds no equipment.", value(panel.getRoot(), "detailsStatus"));
             panel.showMember(OTHER_ALEX.getNusId());
             assertEquals("Alex Tan", value(panel.getRoot(), "memberName"));
             assertEquals(OTHER_ALEX.getNusId().value, value(panel.getRoot(), "memberNusId"));
@@ -81,7 +105,7 @@ public class DetailsPanelTest {
     }
 
     @Test
-    public void memberDetails_holdingsSortedByCategoryNameAndUuid_excludesClosedAndOtherMembers() {
+    public void memberDetails_holdingsSortedByExpectedDateNameAndUuid_excludesClosedAndOtherMembers() {
         FxTestUtil.runAndWait(() -> {
             ModelManager model = ViewTestData.model();
             Equipment microphone = new Equipment(new UUID(0, 4), "Microphone", " audio ", Condition.GOOD, "");
@@ -96,10 +120,10 @@ public class DetailsPanelTest {
             panel.showMember(ALEX.getNusId());
             assertEquals("4 item(s) held", value(panel.getRoot(), "heldCount"));
             VBox holdings = (VBox) panel.getRoot().lookup("#holdings");
-            assertEquals(List.of(microphone.getUuid(), SPEAKER.getUuid(), CAMERA.getUuid(), OTHER_CAMERA.getUuid()),
+            assertEquals(List.of(CAMERA.getUuid(), OTHER_CAMERA.getUuid(), microphone.getUuid(), SPEAKER.getUuid()),
                     holdings.getChildren().stream().map(row -> UUID.fromString(value((Parent) row, "equipmentUuid")))
                             .toList());
-            Parent camera = (Parent) holdings.getChildren().get(2);
+            Parent camera = (Parent) holdings.getChildren().get(0);
             assertEquals(CAMERA.getCategory(), value(camera, "category"));
             assertEquals("GOOD", value(camera, "condition"));
             assertEquals("ASSIGNED", value(camera, "availability"));
@@ -109,6 +133,39 @@ public class DetailsPanelTest {
             assertEquals("0 item(s) held", value(panel.getRoot(), "heldCount"));
             assertNull(panel.getRoot().lookup("#holdings"));
             assertEquals(before, model.getAddressBook());
+        });
+    }
+
+    @Test
+    public void memberDetails_dueDateThenNameUuid_refreshKeepsDatesWithItemsAndExcludesReturnedLoans() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = ViewTestData.model();
+            Loan earlySpeaker = new Loan(SPEAKER.getUuid(), ALEX.getNusId(), ViewTestData.ASSIGNED,
+                    ViewTestData.EXPECTED.minusDays(1), null);
+            model.addLoan(loan(OTHER_CAMERA, ALEX, true));
+            model.addLoan(earlySpeaker);
+            model.addLoan(loan(CAMERA, ALEX, true));
+            MemberDetailsPanel panel = members(model);
+            panel.showMember(ALEX.getNusId());
+            VBox holdings = (VBox) panel.getRoot().lookup("#holdings");
+            assertEquals(List.of(SPEAKER.getUuid(), CAMERA.getUuid(), OTHER_CAMERA.getUuid()),
+                    holdings.getChildren().stream().map(row -> UUID.fromString(value((Parent) row, "equipmentUuid")))
+                            .toList());
+            assertEquals(earlySpeaker.getExpectedReturnDate().toString(),
+                    value((Parent) holdings.getChildren().getFirst(), "expectedReturnDate"));
+            model.closeLoan(SPEAKER.getUuid(), ViewTestData.ASSIGNED);
+            panel.refresh();
+            assertEquals(2, ((VBox) panel.getRoot().lookup("#holdings")).getChildren().size());
+            model.addLoan(new Loan(SPEAKER.getUuid(), ALEX.getNusId(), ViewTestData.ASSIGNED,
+                    ViewTestData.EXPECTED.plusDays(1), null));
+            panel.refresh();
+            holdings = (VBox) panel.getRoot().lookup("#holdings");
+            assertEquals(List.of(CAMERA.getUuid(), OTHER_CAMERA.getUuid(), SPEAKER.getUuid()),
+                    holdings.getChildren().stream().map(row -> UUID.fromString(value((Parent) row, "equipmentUuid")))
+                            .toList());
+            assertEquals(ViewTestData.EXPECTED.plusDays(1).toString(),
+                    value((Parent) holdings.getChildren().getLast(), "expectedReturnDate"));
+            assertEquals(4, model.getLoanList().size());
         });
     }
 
@@ -270,14 +327,14 @@ public class DetailsPanelTest {
             });
             mount(members.getRoot());
             members.showMember(ALEX.getNusId());
-            assertEquals("1 item(s) held", value(members.getRoot(), "heldCount"));
+            assertNull(members.getRoot().lookup("#heldCount"));
             assertTrue(value(members.getRoot(), "detailsStatus").contains(CAMERA.getUuid().toString()));
-            assertNotNull(members.getRoot().lookup("#expectedReturnDate"));
+            assertNull(members.getRoot().lookup("#holdings"));
         });
     }
 
     @Test
-    public void memberDetails_multipleMissingEquipmentReferences_sortedByUuidWithLoanDates() {
+    public void memberDetails_multipleMissingEquipmentReferences_reportsSortedIdentitiesWithoutPartialRows() {
         FxTestUtil.runAndWait(() -> {
             ModelManager model = ViewTestData.model();
             Loan firstLoan = loan(CAMERA, ALEX, true);
@@ -297,18 +354,12 @@ public class DetailsPanelTest {
             });
             mount(panel.getRoot());
             panel.showMember(ALEX.getNusId());
-            assertEquals("2 item(s) held", value(panel.getRoot(), "heldCount"));
-            VBox holdings = (VBox) panel.getRoot().lookup("#holdings");
-            assertEquals(2, holdings.getChildren().size());
-            List<Loan> expectedOrder = List.of(firstLoan, secondLoan);
-            for (int i = 0; i < expectedOrder.size(); i++) {
-                Loan expected = expectedOrder.get(i);
-                Parent row = (Parent) holdings.getChildren().get(i);
-                assertEquals("Inconsistent data: missing equipment reference " + expected.getEquipmentUuid() + ".",
-                        value(row, "detailsStatus"));
-                assertEquals(expected.getAssignedDate().toString(), value(row, "assignedDate"));
-                assertEquals(expected.getExpectedReturnDate().toString(), value(row, "expectedReturnDate"));
-            }
+            assertNull(panel.getRoot().lookup("#heldCount"));
+            assertNull(panel.getRoot().lookup("#holdings"));
+            String error = value(panel.getRoot(), "detailsStatus");
+            assertTrue(error.contains("No incomplete holdings list is shown"));
+            assertTrue(error.indexOf(firstLoan.getEquipmentUuid().toString())
+                    < error.indexOf(secondLoan.getEquipmentUuid().toString()));
             assertEquals(List.of(secondLoan, firstLoan), missingEquipment.getLoanList());
             assertEquals(before, model.getAddressBook());
         });

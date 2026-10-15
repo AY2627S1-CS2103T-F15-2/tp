@@ -10,6 +10,7 @@ import java.util.UUID;
 import java.util.function.Function;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -38,8 +39,14 @@ public class EquipmentDetailsPanel extends UiPart<Region> {
 
     /** Selects an identity and resolves its current data. */
     public void showEquipment(UUID uuid) {
-        selectedUuid = requireNonNull(uuid);
+        requireNonNull(uuid);
+        boolean identityChanged = !uuid.equals(selectedUuid);
+        selectedUuid = uuid;
         refresh();
+        if (identityChanged) {
+            ScrollPane scroll = (ScrollPane) getRoot();
+            scroll.setVvalue(0);
+        }
     }
 
     /** Rebuilds fields, clearing stale holder/loan details after return, reset or removal. */
