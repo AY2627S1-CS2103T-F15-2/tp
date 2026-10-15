@@ -34,6 +34,19 @@ The image is a layout reference. Your rows, counts and selected record depend on
 If startup fails, check the JAR filename and Java version and keep the terminal error for the team.
 Do not delete your data file to troubleshoot startup.
 
+### Sample records on first launch
+
+When there is no saved data file, Laplace starts with five fictional members and seven equipment items.
+The samples include two cameras, a damaged tripod, a microphone, a speaker, a projector under repair
+and an event laptop. Three open loans illustrate current holders, one overdue item and a member holding
+multiple items. One closed loan is retained internally and is hidden from the Loans tab.
+
+Dates are relative to the day of first launch. Try `member list`, `equipment list` and `loans list`,
+then copy displayed identities to view details or try a return. These are ordinary records:
+additions, returns and deletions are saved normally. Existing saved data always takes precedence;
+samples are not appended to it. To explore a fresh sample set, run the JAR from a separate empty folder
+instead of removing your existing data file.
+
 ## Using the window
 
 - **Members** opens the member directory. **Equipment** opens the equipment directory.
@@ -42,7 +55,7 @@ Do not delete your data file to troubleshoot startup.
 - Click a record, or focus its row and press **Enter** or **Space**, to open its details.
   Identically named records remain distinguishable by NUS ID or equipment UUID.
 - The **Loans** tab shows current open assignments and links to their member and equipment.
-  Completed loan history is not a user-facing MVP feature. There is no `loans list` command.
+  Type `loans list` to open the same tab. Completed loan history is not a user-facing feature.
 - The feedback area reports the last command's result. The command box and Enter hint appear below it.
 - At smaller sizes, use the list/detail scrollbars to reach long identifiers, notes and holdings.
 
@@ -59,7 +72,7 @@ Commands and prefixes are **lowercase and case-sensitive**. Use `member add`, no
   `notes/` or `unknown/` is reserved as a marker. Unknown markers are errors, even inside free text.
   There is no quoting or escaping. An ordinary URL such as `https://example.com` is not a marker.
 - Use the full field names: `nus/`, `name/`, `phone/` and `email/`. Short alternatives are not accepted.
-- `member list` and `equipment list` take no arguments. Additional text or prefixes are rejected.
+- `member list`, `equipment list` and `loans list` take no arguments. Additional text or prefixes are rejected.
 - An empty or whitespace-only submission does nothing.
 
 On success, the input clears and the requested list/details view appears. Newly added records are selected
@@ -302,6 +315,20 @@ directory appears with a surviving selection or an empty state; deleted-item det
 
 Deleting one UUID never deletes other items with the same description. Deletion cannot be undone.
 
+### Open the Loans tab: `loans list`
+
+```text
+loans list
+```
+
+Open the existing Loans tab, just as clicking **Loans** does. It shows current open loans and links
+to the corresponding member and equipment details. If there are no open loans, the tab shows its
+empty state. Closed loan history is not displayed.
+
+Feedback is `Showing current loans.` This command does not create, return, delete or change any
+member, equipment or loan records. It uses the same save/error handling as the other list commands.
+Extra text or parameters, such as `loans list uuid/UUID`, are rejected and leave the current view unchanged.
+
 ### Assign equipment: `loans add`
 
 Assign one AVAILABLE physical item to an existing member.
@@ -456,6 +483,7 @@ authentication and concurrent multi-user operation are not provided.
 | List equipment | `equipment list` |
 | View equipment and current holder | `equipment view uuid/UUID` |
 | Delete equipment | `equipment delete uuid/UUID` |
+| Open the Loans tab | `loans list` |
 | Assign equipment | `loans add uuid/UUID nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |
 | Return equipment | `loans return uuid/UUID returned/ACTUAL_RETURN_DATE` |
 

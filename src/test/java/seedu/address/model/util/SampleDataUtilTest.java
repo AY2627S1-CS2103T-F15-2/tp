@@ -21,9 +21,11 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.equipment.Availability;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.member.Member;
+import seedu.address.model.member.NusId;
 import seedu.address.storage.JsonAddressBookStorage;
 
 public class SampleDataUtilTest {
@@ -37,10 +39,11 @@ public class SampleDataUtilTest {
     public void getSampleAddressBook_preservesLegacyPersonsAndAddsUniqueMembers() {
         ReadOnlyAddressBook book = SampleDataUtil.getSampleAddressBook(CLOCK);
         assertEquals(Arrays.asList(SampleDataUtil.getSamplePersons()), book.getPersonList());
-        assertEquals(List.of("Alex Tan", "Jamie Lim", "Priya Nair"), book.getMemberList().stream()
-                .map(member -> member.getName().fullName).toList());
-        assertEquals(3, book.getMemberList().stream().map(Member::getNusId).distinct().count());
-        assertEquals(3, book.getEquipmentList().stream().map(Equipment::getUuid).distinct().count());
+        assertEquals(List.of("Alex Tan", "Jamie Lim", "Priya Nair", "Siti Nur", "Daniel Wong"),
+                book.getMemberList().stream()
+                        .map(member -> member.getName().fullName).toList());
+        assertEquals(5, book.getMemberList().stream().map(Member::getNusId).distinct().count());
+        assertEquals(7, book.getEquipmentList().stream().map(Equipment::getUuid).distinct().count());
     }
 
     @Test
@@ -82,7 +85,29 @@ public class SampleDataUtilTest {
         first.closeLoan(first.getLoanList().get(0).getEquipmentUuid(), LocalDate.now(CLOCK));
         first.removeEquipment(first.getEquipmentList().get(0));
         assertTrue(second.getLoanList().get(0).isOpen());
-        assertEquals(3, second.getEquipmentList().size());
+        assertEquals(7, second.getEquipmentList().size());
+    }
+
+    @Test
+    public void getSampleAddressBook_additionalLoans_coverOverdueReturnedAndMultipleHoldings() {
+        ModelManager model = new ModelManager(SampleDataUtil.getSampleAddressBook(CLOCK), new UserPrefs());
+        LocalDate today = LocalDate.now(CLOCK);
+        assertEquals(3, model.getLoanList().stream().filter(Loan::isOpen).count());
+        assertEquals(1, model.getLoanList().stream().filter(loan -> !loan.isOpen()).count());
+        assertEquals(2, model.findOpenLoansForMember(new NusId("A0123456X")).size());
+        assertTrue(model.getLoanList().stream()
+                .anyMatch(loan -> loan.isOpen() && loan.getExpectedReturnDate().isBefore(today)));
+        assertTrue(model.getEquipmentList().stream()
+                .anyMatch(item -> item.getCondition() == Condition.UNDER_REPAIR
+                        && model.getAvailability(item.getUuid()) == Availability.UNAVAILABLE));
+        for (Loan loan : model.getLoanList()) {
+            assertTrue(model.hasMember(loan.getMemberNusId()));
+            assertTrue(model.hasEquipment(loan.getEquipmentUuid()));
+            assertFalse(loan.getAssignedDate().isAfter(today));
+            assertFalse(loan.getExpectedReturnDate().isBefore(loan.getAssignedDate()));
+            assertEquals(loan.isOpen() ? Availability.ASSIGNED : Availability.AVAILABLE,
+                    model.getAvailability(loan.getEquipmentUuid()));
+        }
     }
 
     @Test
