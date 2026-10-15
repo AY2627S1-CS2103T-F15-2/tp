@@ -67,6 +67,9 @@ and open in details. On failure, the command stays in the input box, focus retur
 view and selection remain unchanged. Correct it and press Enter again. Only the first detected error is
 shown; another error may appear after correction. Rejected commands do not change records.
 
+In feedback examples, `N` is the current count and uppercase placeholders such as `UUID`, `NUS_ID`
+and `EQUIPMENT_NAME` stand for the actual record values. `TODAY` is the computer's local date.
+
 ### Shared field rules
 
 | Field | Accepted input and stored form |
@@ -80,7 +83,7 @@ shown; another error may appear after correction. Rejected commands do not chang
 | Category `category/` | 1–50 printable Unicode characters after normalization. Free text; control characters are rejected. |
 | Condition `condition/` | Exactly `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`, ignoring case. Stored uppercase. Use the underscore in `UNDER_REPAIR`. |
 | Notes `notes/` | Optional, at most 300 printable Unicode characters after trimming. Line breaks become spaces. Omitted or empty notes mean no notes. |
-| Dates | Exactly `YYYY-MM-DD` and a real Gregorian calendar date, such as `2026-10-15`. Assignment/actual-return dates cannot be later than the computer's local date. Expected return may be in the future. |
+| Dates | Exactly `yyyy-MM-dd` and a real Gregorian calendar date, such as `2026-10-15`. Assignment/actual-return dates cannot be later than the computer's local date. Expected return may be in the future. |
 
 Copy the actual UUID displayed by Laplace when issuing, viewing, returning or deleting equipment.
 The UUID in this guide is an example; it does not identify every newly added item.
@@ -128,11 +131,11 @@ member add email/siti@u.nus.edu name/Siti Nur phone/+65 8123-4567 nus/E0123456
 ```
 
 Success adds the member, selects the new row and opens details showing the normalized values.
-For the first example, the result is `Added member A0123456X: Alex Tan.`
+For the first example, the result is `New member added: Alex Tan (A0123456X)`.
 
 Two members are duplicates **only when their normalized NUS IDs are equal**. Different IDs can share
 a name, phone or email. A duplicate is rejected with a message such as:
-`Member A0123456X already exists. Use member view to inspect it.`
+`A member with NUS ID A0123456X already exists.`
 
 Missing, blank, malformed, repeated or unknown parameters are rejected. Failure creates no member and
 preserves the current view/selection. If saving fails, correct file access and retry the retained command.
@@ -147,8 +150,8 @@ Show every active member, ordered by normalized name and then NUS ID. Each row s
 NUS ID, phone, email and **Items Held** count. All stored members are active; archiving is not supported.
 The directory summary shows the active/displayed counts, sorting and selection.
 
-The result is `Showing N member(s).` If there are no records, the list displays:
-`No members found. Add one with member add.`
+The result is `Listed N active members.` If there are no records, the list displays:
+`No members yet. Use member add to get started.`
 
 This command takes no parameters. For example, `member list nus/A0123456X` is rejected; use
 `member view nus/A0123456X` for an exact lookup. A syntax failure leaves the current screen unchanged.
@@ -167,13 +170,13 @@ shows each open loan's full equipment UUID, name, assignment date and expected r
 ordered by **expected return date, equipment name, then UUID**. Returned items are not current holdings.
 The matching member row is selected when the member list is visible.
 
-Example feedback: `Showing member A0123456X: Alex Tan. Currently holding N item(s).`
+Example feedback: `Viewing member: Alex Tan (A0123456X). Currently holds N item(s).`
 With no current loans, the holdings section says `This member currently holds no equipment.`
 
 | Situation | Result or correction |
 | --- | --- |
 | ID exists | Open that exact member's details; equal names do not affect lookup. |
-| ID is well formed but does not exist | `No member found with NUS ID NUS_ID.` Copy an existing ID from `member list`. |
+| ID is well formed but does not exist | `No member with NUS ID NUS_ID exists.` Copy an existing ID from `member list`. |
 | ID is incomplete or malformed | Correct it using the shared NUS ID rule. A well-formed shorter ID is still an exact identity, not a partial-name or partial-ID search. |
 | Required parameter is missing, repeated or unknown | Correct the command to `member view nus/NUS_ID`. |
 | A current loan refers to missing equipment | Report inconsistent stored loan data; do not show an incomplete holdings list. |
@@ -199,7 +202,7 @@ or an empty state when no members remain. Stale details for the deleted member a
 | Situation | Result or correction |
 | --- | --- |
 | Member holds equipment | `Cannot delete NUS_ID because the member holds N item(s). Return the items first.` Use `member view` to identify them. |
-| Member does not exist | `No member found with NUS ID NUS_ID.` Check `member list`. |
+| Member does not exist | `No member with NUS ID NUS_ID exists.` Check `member list`. |
 | Malformed/missing/repeated/unknown parameter | Correct the identity or syntax and retry. |
 | Saving fails | No records change. Correct file access before retrying. |
 
@@ -225,7 +228,8 @@ equipment add name/Tripod category/Camera Support condition/fair
 ```
 
 Success creates one item, selects its row and opens its details. Feedback includes the generated UUID
-and name, for example `Added equipment 550e8400-e29b-41d4-a716-446655440000: Canon EOS R50.`
+and name, for example:
+`New equipment added: Canon EOS R50 (550e8400-e29b-41d4-a716-446655440000), availability: AVAILABLE`.
 Copy the **actual generated UUID**, which will normally differ from that example, for later commands.
 
 GOOD/FAIR items start as AVAILABLE. DAMAGED/UNDER_REPAIR items can be registered but start UNAVAILABLE.
@@ -243,8 +247,8 @@ Show every equipment item, ordered by normalized **category, name, then UUID**. 
 name, category, condition, derived availability and current holder when assigned. An unassigned item has
 no current holder. Identical descriptions remain separate rows.
 
-Feedback is `Showing N equipment item(s).` An empty list displays:
-`No equipment found. Add one with equipment add.`
+Feedback is `Listed N equipment items.` An empty list displays:
+`No equipment yet. Use equipment add to get started.`
 
 No parameters are accepted. Use `equipment view uuid/UUID` to look up one item. Syntax errors preserve
 the current view. Inconsistent loan references produce an error rather than a partial or misleading
@@ -266,11 +270,12 @@ equipment row is selected when its list is visible. Long notes wrap and scroll w
 
 | Item state | Example feedback |
 | --- | --- |
-| Has an open loan | `Showing equipment UUID. Currently held by NUS_ID: MEMBER_NAME.` |
-| Has no open loan | `Showing equipment UUID. This item is not currently on loan.` |
+| Has an open loan | `Viewing equipment: EQUIPMENT_NAME (UUID). Availability: ASSIGNED.` |
+| Has no open loan and condition is GOOD/FAIR | `Viewing equipment: EQUIPMENT_NAME (UUID). Availability: AVAILABLE.` |
+| Has no open loan and condition is DAMAGED/UNDER_REPAIR | `Viewing equipment: EQUIPMENT_NAME (UUID). Availability: UNAVAILABLE.` |
 
 With no open loan, there is no holder and no current loan dates; old holder details are cleared after
-return. A missing UUID produces `No equipment found with UUID UUID.` Malformed UUIDs show the shared
+return. A missing UUID produces `No equipment with UUID UUID exists.` Malformed UUIDs show the shared
 validation error. Missing/repeated/unknown parameters are rejected. An open loan referring to a missing
 member produces an inconsistent-data error instead of incomplete holder information. Failure leaves the
 previous view and selection unchanged.
@@ -291,7 +296,7 @@ directory appears with a surviving selection or an empty state; deleted-item det
 | Situation | Result or correction |
 | --- | --- |
 | Item is on loan | `Cannot delete UUID because it is assigned to NUS_ID. Return the item first.` View it to confirm the holder. |
-| UUID does not exist | `No equipment found with UUID UUID.` Copy an existing UUID from `equipment list`. |
+| UUID does not exist | `No equipment with UUID UUID exists.` Copy an existing UUID from `equipment list`. |
 | UUID or syntax is invalid | Correct the full UUID/required prefix and retry. |
 | Saving fails | The item and loan records remain unchanged. Correct file access and retry. |
 
@@ -317,19 +322,19 @@ loans add uuid/550e8400-e29b-41d4-a716-446655440000 nus/A0123456X assigned/2026-
 
 Success creates an open loan and immediately changes availability to ASSIGNED. Equipment details show
 the holder/dates; the member's current holdings and item count update. Feedback is:
-`Assigned UUID to NUS_ID from ASSIGNMENT_DATE. Expected return: EXPECTED_RETURN_DATE.`
+`Assigned EQUIPMENT_NAME (UUID) to MEMBER_NAME (NUS_ID) on ASSIGNMENT_DATE; expected return: EXPECTED_RETURN_DATE.`
 
 A member may hold several different items. Assigning an already assigned item is rejected, even if the
 new loan names the same member. Reaching the expected return date does not automatically return an item.
 
 | Situation | Result or correction |
 | --- | --- |
-| Equipment/member does not exist | `No equipment found with UUID UUID.` or `No member found with NUS ID NUS_ID.` Check the corresponding list. |
+| Equipment/member does not exist | `No equipment with UUID UUID exists.` or `No member with NUS ID NUS_ID exists.` Check the corresponding list. |
 | Item already has an open loan | `Equipment UUID is unavailable because it is assigned to CURRENT_NUS_ID.` Return it before assigning it again. |
-| Condition is DAMAGED/UNDER_REPAIR | `Equipment UUID is unavailable because its condition is CONDITION.` Choose an AVAILABLE item. |
-| Expected date precedes assignment | `Expected return date must be on or after the assignment date.` |
-| Assignment is in the future | `Assignment date cannot be later than today.` Check your entry and the computer's date. |
-| Field syntax/date is invalid | Correct the first reported parameter and retry; use a real `YYYY-MM-DD` date. |
+| Condition is DAMAGED/UNDER_REPAIR | `Equipment UUID is unavailable (condition: CONDITION).` Choose an AVAILABLE item. |
+| Expected date precedes assignment | `Expected return date cannot be before assigned date` |
+| Assignment is in the future | `Assigned date cannot be after today (TODAY).` Check your entry and the computer's date. |
+| Field syntax/date is invalid | Correct the first reported parameter and retry; use a real `yyyy-MM-dd` date. |
 | Saving fails | No loan is recorded and no records change; correct file access before retrying. |
 
 On failure, no loan is created. Availability, holder, holdings, view and selection stay unchanged.
@@ -353,16 +358,16 @@ loans return uuid/550e8400-e29b-41d4-a716-446655440000 returned/2026-09-20
 Success records the actual return date and closes that item's open loan. Equipment details clear its
 holder/loan dates, the item leaves the member's current holdings, and open-loan counts refresh.
 Availability becomes AVAILABLE for GOOD/FAIR, or UNAVAILABLE for DAMAGED/UNDER_REPAIR.
-Feedback is `Returned UUID from NUS_ID on ACTUAL_RETURN_DATE.`
+Feedback is `Returned EQUIPMENT_NAME (UUID) from MEMBER_NAME (NUS_ID) on ACTUAL_RETURN_DATE.`
 
 | Situation | Result or correction |
 | --- | --- |
-| Equipment does not exist | `No equipment found with UUID UUID.` Check the full UUID. |
-| No open loan, including an already returned item | `Equipment UUID is not currently assigned and cannot be returned.` A repeated return is rejected. |
-| Return is before assignment | `Actual return date cannot be earlier than ASSIGNMENT_DATE.` |
-| Return is in the future | `Actual return date cannot be later than today.` |
+| Equipment does not exist | `No equipment with UUID UUID exists.` Check the full UUID. |
+| No open loan, including an already returned item | `Equipment UUID has no open loan to return.` A repeated return is rejected. |
+| Return is before assignment | `Returned date cannot be before assigned date` |
+| Return is in the future | `Returned date cannot be after today (TODAY).` |
 | Missing/repeated/unknown field or invalid date | Correct the reported parameter and use the full command syntax. |
-| Open loan refers to a missing member | `Return could not be recorded because the stored loan data is inconsistent.` Preserve the data and report the error to the team. |
+| Open loan refers to a missing member | `Cannot return equipment UUID: its open loan refers to a missing member.` Preserve the data and report the error to the team. |
 | Saving fails | No return is recorded and no records change; correct file access and retry. |
 
 A rejected return leaves the loan, return date, holder and availability unchanged. Closing a loan retains
