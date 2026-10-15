@@ -3,6 +3,7 @@ package seedu.address.commons.core;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
@@ -23,14 +24,11 @@ public class LogsCenter {
 
     private static final int MAX_FILE_COUNT = 5;
     private static final int MAX_FILE_SIZE_IN_BYTES = (int) (Math.pow(2, 20) * 5); // 5MB
-    private static final String LOG_FILE = "addressbook.log";
-    private static final Logger logger; // logger for this class
     private static Logger baseLogger; // to be used as the parent of all other loggers created by this class.
 
     // This static block ensures essential loggers are created early
     static {
         setBaseLogger();
-        logger = LogsCenter.getLogger(LogsCenter.class);
     }
 
     /**
@@ -84,14 +82,20 @@ public class LogsCenter {
         consoleHandler.setLevel(Level.ALL);
         baseLogger.addHandler(consoleHandler);
 
-        // add a FileHandler to log to a file
+        addFileHandler(baseLogger, AppPaths.getLogFilePath());
+    }
+
+    /** Installs file logging, reporting an I/O failure through the logger's existing handlers. */
+    static void addFileHandler(Logger target, Path logFile) {
         try {
-            FileHandler fileHandler = new FileHandler(LOG_FILE, MAX_FILE_SIZE_IN_BYTES, MAX_FILE_COUNT, true);
+            // FileHandler treats percent signs as pattern tokens, even when they occur in folder names.
+            String pattern = logFile.toString().replace("%", "%%");
+            FileHandler fileHandler = new FileHandler(pattern, MAX_FILE_SIZE_IN_BYTES, MAX_FILE_COUNT, true);
             fileHandler.setFormatter(new SimpleFormatter());
             fileHandler.setLevel(Level.ALL);
-            baseLogger.addHandler(fileHandler);
+            target.addHandler(fileHandler);
         } catch (IOException e) {
-            logger.warning("Error adding file handler for logger.");
+            target.log(Level.WARNING, "Could not create a log file in the application folder.", e);
         }
     }
 
