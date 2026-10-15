@@ -443,9 +443,15 @@ on or after 20 September 2026; choose valid actual dates for your own operation.
 
 ## Saving, file access and recovery
 
-Successful changes save automatically; there is no manual-save command. By default, data is stored in
-`data/addressbook.json` under the folder from which Laplace is launched. Keep launching from the same
-folder to use the same data. The window's status area identifies its configured data-file path.
+Successful changes save automatically; there is no manual-save command. For the packaged application,
+data is stored in `data/addressbook.json` inside the folder containing `Laplace.jar`, even if you launch
+the JAR from another terminal folder. `preferences.json` and rotating `addressbook.log.*` files also
+stay beside the JAR. The window's status area identifies the data-file path.
+
+If you previously launched from another folder, close Laplace and back up the old data and preferences
+before copying them into the matching locations beside the JAR. Data is not automatically read or moved
+from the old working folder. Moving only the JAR to a new empty folder starts a separate sample dataset.
+When running development classes with Gradle, runtime files remain relative to the project working folder.
 
 For the six MVP mutation commands, a failed save leaves the live records and previously saved data
 unchanged. An error is not a successful addition, deletion, assignment or return. The command remains
