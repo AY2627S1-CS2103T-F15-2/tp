@@ -23,7 +23,6 @@
           <MenuButton text="Menu" mnemonicParsing="false" styleClass="laplace-navigation">
             <items>
               <MenuItem fx:id="helpMenuItem" text="Help" onAction="#handleHelp" />
-              <MenuItem text="Legacy persons" onAction="#handleLegacyPersons" />
               <MenuItem text="Exit" onAction="#handleExit" />
             </items>
           </MenuButton>

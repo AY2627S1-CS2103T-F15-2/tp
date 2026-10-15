@@ -286,12 +286,6 @@ public class MainWindow extends UiPart<Stage> {
         commandBox.requestFocus();
     }
 
-    @FXML
-    private void handleLegacyPersons() {
-        activate("list");
-        commandBox.requestFocus();
-    }
-
     /** Returns correction focus only after Space's typed event has finished on its originating control. */
     private void handleActivationRelease(KeyEvent event) {
         if (event.getCode() == KeyCode.SPACE) {
