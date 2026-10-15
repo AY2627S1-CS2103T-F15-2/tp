@@ -14,6 +14,7 @@ import seedu.address.logic.commands.EquipmentDeleteCommand;
 import seedu.address.logic.commands.EquipmentListCommand;
 import seedu.address.logic.commands.EquipmentViewCommand;
 import seedu.address.logic.commands.LoanAddCommand;
+import seedu.address.logic.commands.LoanListCommand;
 import seedu.address.logic.commands.LoanReturnCommand;
 import seedu.address.logic.commands.MemberAddCommand;
 import seedu.address.logic.commands.MemberDeleteCommand;
@@ -27,8 +28,8 @@ public class LaplaceCommandRoutingTest {
     public void parseCommand_missingUnknownOrWrongCase_throwsParseException() {
         AddressBookParser parser = new AddressBookParser();
         for (String input : new String[] {"", " \t", "member", "equipment \t", "loans", "members list",
-            "equipmentx list", "loan add", "member unknown", "equipment return", "loans list",
-            "Member list", "member LIST", "equipment ADD", "loans Return", "member addExtra"}) {
+            "equipmentx list", "loan add", "member unknown", "equipment return", "loans unknown",
+            "Member list", "member LIST", "equipment ADD", "loans Return", "loans LIST", "member addExtra"}) {
             assertThrows(ParseException.class, () -> parser.parseCommand(input));
         }
     }
@@ -49,9 +50,10 @@ public class LaplaceCommandRoutingTest {
         AddressBookParser parser = new AddressBookParser();
         assertInstanceOf(MemberListCommand.class, parser.parseCommand(" \tmember\t list \t"));
         assertInstanceOf(EquipmentListCommand.class, parser.parseCommand("equipment list"));
+        assertInstanceOf(LoanListCommand.class, parser.parseCommand("loans list"));
         assertInstanceOf(MemberListCommand.class, new MemberCommandParser().parse("list \t"));
         assertInstanceOf(EquipmentListCommand.class, new EquipmentCommandParser().parse("\tlist"));
-        for (String route : new String[] {"member list", "equipment list"}) {
+        for (String route : new String[] {"member list", "equipment list", "loans list"}) {
             for (String args : new String[] {"extra", "nus/A0123456X", "notes/ notes/", "unknown/value"}) {
                 assertThrows(ParseException.class, () -> parser.parseCommand(route + "\t" + args));
             }

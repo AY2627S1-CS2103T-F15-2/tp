@@ -2,7 +2,8 @@
 
 ## Integration status
 
-All ten routes dispatch to their concrete individual parsers. Command execution uses the
+The ten MVP routes and the additional `loans list` navigation command dispatch to concrete parsers.
+Command execution uses the
 LogicManager persistence boundary. Merged #93 integrates the real shell and #95 activates all ten routes.
 Current MVP completion evidence is in [MvpCompletion.md](../gui/MvpCompletion.md); #75 remains the final gate.
 
@@ -18,6 +19,7 @@ Current MVP completion evidence is in [MvpCompletion.md](../gui/MvpCompletion.md
 | equipment list | `equipment list` | [List equipment](equipment-list.md) |
 | loans add | `loans add uuid/UUID nus/NUS_ID assigned/DATE expected/DATE` | [Assign equipment](loans-add.md) |
 | loans return | `loans return uuid/UUID returned/DATE` | [Return equipment](loans-return.md) |
+| loans list | `loans list` | [Open Loans tab](loans-list.md) |
 
 Families/subcommands are lowercase and case-sensitive. Parameter order is free, and
 spaces/tabs separate arguments. List commands accept whitespace only. Other implemented
@@ -32,8 +34,8 @@ rejection and save failures preserve all records; rejected operations do not sav
 writes and failed replacements preserve the prior data file and useful I/O causes. See
 [MVP fields and failure behavior](MvpFields.md) for normalization and ordered diagnostics.
 
-Existing person commands and data remain supported. No `loans list` CLI command is
-introduced; the Loans tab is a read-only presentation of current open loans only. Closed records remain stored without a history presentation.
+Existing person commands and data remain supported. `loans list` opens the existing Loans tab,
+a read-only presentation of current open loans. Closed records remain stored without a history presentation.
 
 ## Loan rules
 

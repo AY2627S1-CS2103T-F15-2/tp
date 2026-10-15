@@ -12,7 +12,7 @@
 
 **Laplace helps CCA EXCO members manage members, equipment and equipment loans.** It is a local, single-user desktop application with a graphical interface and typed commands.
 
-* To register members and equipment, issue items and record returns, start with the [_Quick Start_ section of the **User Guide**](UserGuide.html#quick-start). The guide describes the MVP release and all ten commands.
+* To register members and equipment, issue items and record returns, start with the [_Quick Start_ section of the **User Guide**](UserGuide.html#quick-start). The guide covers all eleven commands, including `loans list`, and the bundled first-launch examples.
 * To contribute to Laplace, start with the [**Developer Guide**](DeveloperGuide.html).
 
 

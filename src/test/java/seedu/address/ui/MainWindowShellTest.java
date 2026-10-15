@@ -231,6 +231,23 @@ public class MainWindowShellTest {
     }
 
     @Test
+    public void loansList_typedCommand_opensExistingLoansTabWithoutChangingRecords() {
+        FxTestUtil.runAndWait(() -> {
+            AddressBook before = new AddressBook(model.getAddressBook());
+            submit("loans list");
+            assertTrue(button("loansNavigation").getStyleClass().contains("laplace-navigation-active"));
+            assertTrue(node("openLoans") != null);
+            assertEquals("Showing current loans.", feedback());
+            assertEquals("", field().getText());
+            assertEquals(List.of("loans list"), logic.commands);
+            assertEquals(before, model.getAddressBook());
+            reject("loans list extra");
+            assertTrue(button("loansNavigation").getStyleClass().contains("laplace-navigation-active"));
+            assertEquals(before, model.getAddressBook());
+        });
+    }
+
+    @Test
     public void activation_selectedRowAndLoanLinks_executeExactIdentityOnce() {
         FxTestUtil.runAndWait(() -> {
             ListCell<?> selected = rows().lookupAll(".list-cell").stream().map(node -> (ListCell<?>) node)

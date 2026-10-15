@@ -85,7 +85,34 @@ public class SampleDataUtil {
         sampleAb.addEquipment(new Equipment(UUID.fromString("550e8400-e29b-41d4-a716-446655440002"),
                 "Tripod", "Photography", Condition.DAMAGED, "Loose leg; do not issue"));
         sampleAb.addLoan(new Loan(assignedCameraId, alexId, today.minusDays(2), today.plusDays(5), null));
+        addMoreSampleData(sampleAb, today, alexId);
         return sampleAb;
+    }
+
+    /** Adds overdue, returned and multiple-holding examples alongside the basic camera workflow. */
+    private static void addMoreSampleData(AddressBook book, LocalDate today, NusId alexId) {
+        book.addMember(new Member(new NusId("A0456789B"), Name.forMember("Siti Nur"),
+                Phone.forMember("+65 8123-4567"), Email.forMember("siti.nur@example.com")));
+        book.addMember(new Member(new NusId("A0567890C"), Name.forMember("Daniel Wong"),
+                Phone.forMember("92345678"), Email.forMember("daniel.wong@example.com")));
+
+        UUID microphoneId = UUID.fromString("550e8400-e29b-41d4-a716-446655440003");
+        UUID speakerId = UUID.fromString("550e8400-e29b-41d4-a716-446655440004");
+        UUID projectorId = UUID.fromString("550e8400-e29b-41d4-a716-446655440005");
+        UUID laptopId = UUID.fromString("550e8400-e29b-41d4-a716-446655440006");
+        book.addEquipment(new Equipment(microphoneId, "Wireless Microphone", "Audio", Condition.GOOD,
+                "Includes receiver and two rechargeable batteries"));
+        book.addEquipment(new Equipment(speakerId, "Portable Speaker", "Audio", Condition.FAIR,
+                "Minor scratches; charging cable included"));
+        book.addEquipment(new Equipment(projectorId, "Projector", "Presentation", Condition.UNDER_REPAIR,
+                "Lamp replacement pending; do not issue"));
+        book.addEquipment(new Equipment(laptopId, "Event Laptop", "Computing", Condition.GOOD,
+                "Power adapter and carry case included"));
+
+        book.addLoan(new Loan(microphoneId, new NusId("A0234567R"), today.minusDays(7), today.minusDays(1), null));
+        book.addLoan(new Loan(laptopId, alexId, today.minusDays(1), today.plusDays(3), null));
+        book.addLoan(new Loan(speakerId, new NusId("A0345678M"), today.minusDays(5), today.minusDays(2),
+                today.minusDays(3)));
     }
 
     /**

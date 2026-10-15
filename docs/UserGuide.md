@@ -10,7 +10,8 @@ Laplace helps a CCA EXCO member manage **members, equipment and equipment loans*
 Type commands to register records, find an exact member or item, issue equipment, record returns and
 remove erroneous records. Lists and details show who holds each item and what each member holds.
 
-This guide describes the **MVP release**. Use it with the matching release supplied by the team;
+This guide describes the **MVP release and the additional `loans list` navigation command**:
+eleven member, equipment and loan commands in total. Use it with the matching release supplied by the team;
 earlier builds may not support every behavior described here. Laplace is a local, single-user application.
 
 <page-nav-print />
@@ -25,7 +26,8 @@ earlier builds may not support every behavior described here. Laplace is a local
    if your supplied JAR has a different name. Keep the terminal open while using the application.
 5. On the first launch without a saved data file, Laplace provides sample records. Existing saved data
    takes precedence; restarting does not add another set of samples.
-6. Type `member list` in the command box and press **Enter**. Try `equipment list` next.
+6. Type `member list` in the command box and press **Enter**. Try `equipment list`, then `loans list`
+   to open each directory and the current-loans tab.
 7. Use `help` or **F1** to open Help, and `exit` to close the application normally.
 
 ![Laplace directory layout reference](images/Ui.png)
@@ -33,6 +35,40 @@ earlier builds may not support every behavior described here. Laplace is a local
 The image is a layout reference. Your rows, counts and selected record depend on your data.
 If startup fails, check the JAR filename and Java version and keep the terminal error for the team.
 Do not delete your data file to troubleshoot startup.
+
+### Sample records on first launch
+
+When there is no saved data file, Laplace starts with five fictional members and seven equipment items.
+The samples include two cameras, a damaged tripod, a microphone, a speaker, a projector under repair
+and an event laptop. Three open loans illustrate current holders, one overdue item and a member holding
+multiple items. One closed loan is retained internally and is hidden from the Loans tab.
+
+Dates are relative to the day of first launch. Try `member list`, `equipment list` and `loans list`,
+then copy displayed identities to view details or try a return. These are ordinary records:
+additions, returns and deletions are saved normally. Existing saved data always takes precedence;
+samples are not appended to it. To explore a fresh sample set, run the JAR from a separate empty folder
+instead of removing your existing data file.
+
+The equipment identities below are stable in a fresh sample set. The states and holders change as you
+issue, return or delete records.
+
+| Sample equipment | UUID | Initial availability | Current holder |
+| --- | --- | --- | --- |
+| Camera, case included | `550e8400-e29b-41d4-a716-446655440000` | AVAILABLE | None |
+| Camera, strap included | `550e8400-e29b-41d4-a716-446655440001` | ASSIGNED | Alex Tan (`A0123456X`) |
+| Tripod, damaged | `550e8400-e29b-41d4-a716-446655440002` | UNAVAILABLE | None |
+| Wireless Microphone | `550e8400-e29b-41d4-a716-446655440003` | ASSIGNED | Jamie Lim (`A0234567R`), overdue |
+| Portable Speaker | `550e8400-e29b-41d4-a716-446655440004` | AVAILABLE | None; previously returned |
+| Projector, under repair | `550e8400-e29b-41d4-a716-446655440005` | UNAVAILABLE | None |
+| Event Laptop | `550e8400-e29b-41d4-a716-446655440006` | ASSIGNED | Alex Tan (`A0123456X`) |
+
+To explore without changing the sample records:
+
+1. Run `loans list`. The Loans tab shows three open loans; the closed speaker loan is hidden.
+2. Run `member view nus/A0123456X`. Alex's details show the camera and laptop under Held Equipment.
+3. Run `equipment view uuid/550e8400-e29b-41d4-a716-446655440003`. The microphone's details identify
+   Jamie as the holder and show its assignment and expected return dates.
+4. Run `loans list` again to return to the Loans tab.
 
 ## Using the window
 
@@ -42,7 +78,7 @@ Do not delete your data file to troubleshoot startup.
 - Click a record, or focus its row and press **Enter** or **Space**, to open its details.
   Identically named records remain distinguishable by NUS ID or equipment UUID.
 - The **Loans** tab shows current open assignments and links to their member and equipment.
-  Completed loan history is not a user-facing MVP feature. There is no `loans list` command.
+  Type `loans list` to open the same tab. Completed loan history is not a user-facing feature.
 - The feedback area reports the last command's result. The command box and Enter hint appear below it.
 - At smaller sizes, use the list/detail scrollbars to reach long identifiers, notes and holdings.
 
@@ -59,7 +95,7 @@ Commands and prefixes are **lowercase and case-sensitive**. Use `member add`, no
   `notes/` or `unknown/` is reserved as a marker. Unknown markers are errors, even inside free text.
   There is no quoting or escaping. An ordinary URL such as `https://example.com` is not a marker.
 - Use the full field names: `nus/`, `name/`, `phone/` and `email/`. Short alternatives are not accepted.
-- `member list` and `equipment list` take no arguments. Additional text or prefixes are rejected.
+- `member list`, `equipment list` and `loans list` take no arguments. Additional text or prefixes are rejected.
 - An empty or whitespace-only submission does nothing.
 
 On success, the input clears and the requested list/details view appears. Newly added records are selected
@@ -302,6 +338,20 @@ directory appears with a surviving selection or an empty state; deleted-item det
 
 Deleting one UUID never deletes other items with the same description. Deletion cannot be undone.
 
+### Open the Loans tab: `loans list`
+
+```text
+loans list
+```
+
+Open the existing Loans tab, just as clicking **Loans** does. It shows current open loans and links
+to the corresponding member and equipment details. If there are no open loans, the tab shows its
+empty state. Closed loan history is not displayed.
+
+Feedback is `Showing current loans.` This command does not create, return, delete or change any
+member, equipment or loan records. It uses the same save/error handling as the other list commands.
+Extra text or parameters, such as `loans list uuid/UUID`, are rejected and leave the current view unchanged.
+
 ### Assign equipment: `loans add`
 
 Assign one AVAILABLE physical item to an existing member.
@@ -379,17 +429,17 @@ Use a new member ID if the example ID already exists. The dates below are exampl
 on or after 20 September 2026; choose valid actual dates for your own operation.
 
 1. Register the member:
-   `member add nus/A0456789B name/Mei Tan phone/91234567 email/mei@example.com`.
+   `member add nus/E0678901C name/Mei Tan phone/91234567 email/mei@example.com`.
 2. Register an item:
    `equipment add name/Camera Kit category/Photography condition/GOOD notes/Includes strap`.
 3. Copy the UUID generated in step 2. **Replace `UUID` in the remaining steps with that value.**
 4. Assign it:
-   `loans add uuid/UUID nus/A0456789B assigned/2026-09-14 expected/2026-09-21`.
-5. Run `member view nus/A0456789B` and `equipment view uuid/UUID`. Check the holdings, holder and dates.
+   `loans add uuid/UUID nus/E0678901C assigned/2026-09-14 expected/2026-09-21`.
+5. Run `member view nus/E0678901C` and `equipment view uuid/UUID`. Check the holdings, holder and dates.
 6. Return it: `loans return uuid/UUID returned/2026-09-20`.
 7. View both records again. The member has no current holding for this item; the GOOD item is AVAILABLE.
 8. If these were erroneous/test records, remove them with `equipment delete uuid/UUID` and
-   `member delete nus/A0456789B`. Delete only records you intend to remove permanently.
+   `member delete nus/E0678901C`. Delete only records you intend to remove permanently.
 
 ## Saving, file access and recovery
 
@@ -429,12 +479,17 @@ assigned. The MVP does not include editing condition or other existing record fi
 **Does an overdue loan close itself?** No. Record an actual return using `loans return`. A return later
 than expected is valid if it is no earlier than assignment and no later than the computer's local date.
 
+**Why do I not see the sample records?** Laplace loads your existing saved file instead of adding samples
+to it, even if that file contains no records. To try the bundled examples, launch the JAR from a separate
+empty folder. Keep your existing data file and backup intact.
+
 **How do I move my data?** Close Laplace, back up the data file, copy it to the other computer's chosen
 Laplace folder at the configured data path, and launch the matching release there. Keep the original
 backup until you have checked members, equipment and current loans on the other computer.
 
 **Where is Help?** Enter `help` or press F1. Use `exit` for normal shutdown; saved window preferences are
-reused within usable screen bounds. These are application utilities, separate from the ten MVP commands.
+reused within usable screen bounds. These utilities are separate from the eleven member, equipment
+and loan commands, including `loans list`.
 
 ## MVP limits
 
@@ -456,6 +511,7 @@ authentication and concurrent multi-user operation are not provided.
 | List equipment | `equipment list` |
 | View equipment and current holder | `equipment view uuid/UUID` |
 | Delete equipment | `equipment delete uuid/UUID` |
+| Open the Loans tab | `loans list` |
 | Assign equipment | `loans add uuid/UUID nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |
 | Return equipment | `loans return uuid/UUID returned/ACTUAL_RETURN_DATE` |
 
