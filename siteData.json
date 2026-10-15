@@ -139,6 +139,7 @@
       "headings": {
         "laplace-user-guide": "Laplace User Guide",
         "quick-start": "Quick start",
+        "sample-records-on-first-launch": "Sample records on first launch",
         "using-the-window": "Using the window",
         "command-format-and-feedback": "Command format and feedback",
         "shared-field-rules": "Shared field rules",
@@ -153,6 +154,7 @@
         "list-equipment-equipment-list": "List equipment: equipment list",
         "view-equipment-and-its-holder-equipment-view": "View equipment and its holder: equipment view",
         "delete-equipment-equipment-delete": "Delete equipment: equipment delete",
+        "open-the-loans-tab-loans-list": "Open the Loans tab: loans list",
         "assign-equipment-loans-add": "Assign equipment: loans add",
         "return-equipment-loans-return": "Return equipment: loans return",
         "a-complete-issue-and-return-workflow": "A complete issue-and-return workflow",
@@ -218,6 +220,13 @@
       "src": "commands/loans-add.md",
       "headings": {
         "assign-equipment-loans-add": "Assign equipment: loans add"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "commands/loans-list.md",
+      "headings": {
+        "open-the-loans-tab": "Open the Loans tab"
       },
       "headingKeywords": {}
     },
