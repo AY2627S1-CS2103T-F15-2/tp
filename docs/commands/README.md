@@ -2,10 +2,9 @@
 
 ## Integration status
 
-On the local `v1.3-final-routing` branch, all eight member/equipment routes dispatch to
-real individual parsers. Loan routes remain explicit placeholders until Isaac's loan
-commands and parsers merge. This branch is not published as a final routing PR yet.
-The application shell is integrated separately by Keith.
+All ten routes dispatch to their concrete individual parsers. Command execution uses the
+existing LogicManager save pipeline. Application-shell integration and verification
+remain Keith's responsibility; working routes do not establish complete GUI acceptance.
 
 | Command | Syntax | Reference |
 | --- | --- | --- |
@@ -17,8 +16,8 @@ The application shell is integrated separately by Keith.
 | equipment delete | `equipment delete uuid/UUID` | [Delete equipment](equipment-delete.md) |
 | equipment view | `equipment view uuid/UUID` | [View equipment](equipment-view.md) |
 | equipment list | `equipment list` | [List equipment](equipment-list.md) |
-| loans add (pending) | `loans add uuid/UUID nus/NUS_ID assigned/DATE expected/DATE` | [Assign equipment](loans-add.md) |
-| loans return (pending) | `loans return uuid/UUID returned/DATE` | [Return equipment](loans-return.md) |
+| loans add | `loans add uuid/UUID nus/NUS_ID assigned/DATE expected/DATE` | [Assign equipment](loans-add.md) |
+| loans return | `loans return uuid/UUID returned/DATE` | [Return equipment](loans-return.md) |
 
 Families/subcommands are lowercase and case-sensitive. Parameter order is free, and
 spaces/tabs separate arguments. List commands accept whitespace only. Other implemented
@@ -31,7 +30,27 @@ Commands retain the existing LogicManager save pipeline. Parser/business validat
 failures do not save or modify domain data. An I/O save failure is reported with its
 cause and does not promise rollback of a preceding in-memory mutation.
 
-Existing AB3 person commands and data remain supported. Loan records used by the current
-routing integration tests are valid model fixtures, not evidence of completed loan CLI
-routing. Final route activation and all-ten-command acceptance remain pending Isaac's
-merged parsers. No `loans list` CLI command is introduced.
+Existing AB3 person commands and data remain supported. No `loans list` CLI command is
+introduced; the Loans tab is a read-only presentation of open loans and history.
+
+## Loan rules
+
+Assignments require an existing member, existing AVAILABLE equipment, an assigned date
+on or before today, and an expected return on or after assignment. GOOD/FAIR equipment
+is available when it has no open loan; DAMAGED/UNDER_REPAIR items cannot be assigned.
+Expected returns may be after today. Returns require an open loan and its existing member,
+with assigned date <= returned date <= today. Same-day, early and late returns are allowed;
+a second return is rejected. Today uses the computer's local date when execution occurs.
+
+Successful operations request the corresponding typed directory/details view. Holder,
+holdings and availability are derived from current loans; closing retains immutable loan
+history. Open loans block deletion; permitted deletion removes associated closed history.
+
+## Integration verification
+
+`FullCommandRoutingIntegrationTest` runs all ten routes through real LogicManager,
+ModelManager and temporary-file JSON storage. It checks automatic saving/reload, distinct
+same-name identities, loan lifecycle/holdings/availability, invalid parameter and business
+rejection without writes, and save-error propagation. The member/equipment routing and
+legacy AB3 compatibility scenarios are also retained. Full GUI navigation, refresh and
+packaged-window acceptance remain tracked separately in milestone integration issue #75.

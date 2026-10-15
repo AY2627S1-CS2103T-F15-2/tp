@@ -35,7 +35,7 @@ import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
 import seedu.address.testutil.PersonBuilder;
 
-/** Real top-level routing/persistence checks; loan records are fixtures until Isaac's parsers merge. */
+/** Member/equipment top-level routing checks, including controlled loan fixtures for deletion boundaries. */
 public class MemberEquipmentRoutingIntegrationTest {
 
     private static final NusId FIRST_MEMBER = new NusId("A0000001X");

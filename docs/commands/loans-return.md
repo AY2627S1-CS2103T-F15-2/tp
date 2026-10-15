@@ -1,8 +1,8 @@
 # Record a return: `loans return`
 
-Integration status: `LoanReturnCommand` and its individual parser are implemented for issue #76.
-The current application route remains a placeholder until Duy connects `LoansCommandParser` to
-`LoanReturnCommandParser`. Keith's shell integration handles the resulting equipment-details request.
+Integration status: the return route dispatches to its real command parser through
+`LoansCommandParser`. Successful execution requests the affected equipment details.
+Keith's application-shell integration and final GUI acceptance are tracked separately in issue #75.
 
 Format:
 
