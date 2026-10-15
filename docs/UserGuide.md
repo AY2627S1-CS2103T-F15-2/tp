@@ -205,3 +205,94 @@ or an empty state when no members remain. Stale details for the deleted member a
 
 Deletion is permanent: the MVP has no undo, restore or archive operation. Return all outstanding items
 with `loans return` before retrying a blocked deletion. A failed deletion preserves the member and loans.
+
+### Add equipment: `equipment add`
+
+Register one physical item and let Laplace generate its immutable UUID.
+
+```text
+equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES]
+```
+
+`name/`, `category/` and `condition/` are required. Notes are optional; `notes/` with no value also means
+no notes. Do not supply `uuid/`, a holder or availability. Follow the shared text limits and condition rules.
+
+Examples:
+
+```text
+equipment add name/Canon EOS R50 category/Camera condition/GOOD notes/Includes battery and strap
+equipment add name/Tripod category/Camera Support condition/fair
+```
+
+Success creates one item, selects its row and opens its details. Feedback includes the generated UUID
+and name, for example `Added equipment 550e8400-e29b-41d4-a716-446655440000: Canon EOS R50.`
+Copy the **actual generated UUID**, which will normally differ from that example, for later commands.
+
+GOOD/FAIR items start as AVAILABLE. DAMAGED/UNDER_REPAIR items can be registered but start UNAVAILABLE.
+Otherwise identical items are allowed: two cameras with the same description are separate physical units
+with different UUIDs. Laplace silently retries a generated UUID collision; if it cannot obtain a unique
+identifier, it reports an error without adding an item. A save failure also commits no new item.
+
+### List equipment: `equipment list`
+
+```text
+equipment list
+```
+
+Show every equipment item, ordered by normalized **category, name, then UUID**. Rows expose the UUID,
+name, category, condition, derived availability and current holder when assigned. An unassigned item has
+no current holder. Identical descriptions remain separate rows.
+
+Feedback is `Showing N equipment item(s).` An empty list displays:
+`No equipment found. Add one with equipment add.`
+
+No parameters are accepted. Use `equipment view uuid/UUID` to look up one item. Syntax errors preserve
+the current view. Inconsistent loan references produce an error rather than a partial or misleading
+availability list.
+
+### View equipment and its holder: `equipment view`
+
+```text
+equipment view uuid/UUID
+```
+
+Example: `equipment view uuid/550e8400-e29b-41d4-a716-446655440000`.
+Uppercase hexadecimal letters identify the same UUID. You must use the complete UUID; shortened forms
+and partial matching are not supported.
+
+Details show the full UUID, name, category, condition, notes and derived availability. An open loan also
+shows the holder's NUS ID, name, phone and email, plus assignment and expected return dates. The matching
+equipment row is selected when its list is visible. Long notes wrap and scroll with the details.
+
+| Item state | Example feedback |
+| --- | --- |
+| Has an open loan | `Showing equipment UUID. Currently held by NUS_ID: MEMBER_NAME.` |
+| Has no open loan | `Showing equipment UUID. This item is not currently on loan.` |
+
+With no open loan, there is no holder and no current loan dates; old holder details are cleared after
+return. A missing UUID produces `No equipment found with UUID UUID.` Malformed UUIDs show the shared
+validation error. Missing/repeated/unknown parameters are rejected. An open loan referring to a missing
+member produces an inconsistent-data error instead of incomplete holder information. Failure leaves the
+previous view and selection unchanged.
+
+### Delete equipment: `equipment delete`
+
+```text
+equipment delete uuid/UUID
+```
+
+Example: `equipment delete uuid/550e8400-e29b-41d4-a716-446655440000`.
+
+Permanently delete one exact item **only when it has no open loan**. Its condition does not prevent
+deletion. Success removes the item and its associated closed loans, leaving unrelated records intact.
+Feedback includes the identity and name: `Deleted equipment UUID: EQUIPMENT_NAME.` The equipment
+directory appears with a surviving selection or an empty state; deleted-item details disappear.
+
+| Situation | Result or correction |
+| --- | --- |
+| Item is on loan | `Cannot delete UUID because it is assigned to NUS_ID. Return the item first.` View it to confirm the holder. |
+| UUID does not exist | `No equipment found with UUID UUID.` Copy an existing UUID from `equipment list`. |
+| UUID or syntax is invalid | Correct the full UUID/required prefix and retry. |
+| Saving fails | The item and loan records remain unchanged. Correct file access and retry. |
+
+Deleting one UUID never deletes other items with the same description. Deletion cannot be undone.
