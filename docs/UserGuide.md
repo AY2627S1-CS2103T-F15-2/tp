@@ -107,3 +107,101 @@ A member can hold multiple different items; one physical item can have only one 
 | Unknown identity | Copy the full NUS ID or UUID from its list. Names and row numbers are not identifiers. |
 | Command rejected by a loan rule | Return an assigned item before deleting its member/item or assigning that item again. |
 | Data cannot be saved | Check that the application folder/data file are writable, correct the file-access problem, then retry. Failed MVP mutations leave records unchanged. |
+
+## Features
+
+### Add a member: `member add`
+
+Create one active member with a unique, immutable NUS ID.
+
+```text
+member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL
+```
+
+All four parameters are required and follow the shared field rules. No address is required.
+
+Examples:
+
+```text
+member add nus/A0123456X name/Alex Tan phone/91234567 email/alex.tan@u.nus.edu
+member add email/siti@u.nus.edu name/Siti Nur phone/+65 8123-4567 nus/E0123456
+```
+
+Success adds the member, selects the new row and opens details showing the normalized values.
+For the first example, the result is `Added member A0123456X: Alex Tan.`
+
+Two members are duplicates **only when their normalized NUS IDs are equal**. Different IDs can share
+a name, phone or email. A duplicate is rejected with a message such as:
+`Member A0123456X already exists. Use member view to inspect it.`
+
+Missing, blank, malformed, repeated or unknown parameters are rejected. Failure creates no member and
+preserves the current view/selection. If saving fails, correct file access and retry the retained command.
+
+### List members: `member list`
+
+```text
+member list
+```
+
+Show every active member, ordered by normalized name and then NUS ID. Each row shows the member's name,
+NUS ID, phone, email and **Items Held** count. All stored members are active; archiving is not supported.
+The directory summary shows the active/displayed counts, sorting and selection.
+
+The result is `Showing N member(s).` If there are no records, the list displays:
+`No members found. Add one with member add.`
+
+This command takes no parameters. For example, `member list nus/A0123456X` is rejected; use
+`member view nus/A0123456X` for an exact lookup. A syntax failure leaves the current screen unchanged.
+Inconsistent stored data produces an error rather than a partial list.
+
+### View a member and their equipment: `member view`
+
+```text
+member view nus/NUS_ID
+```
+
+Example: `member view nus/a0123456x` finds the same identity as `member view nus/A0123456X`.
+
+Details show the NUS ID, name, phone, email and current held-item count. The **Held Equipment** section
+shows each open loan's full equipment UUID, name, assignment date and expected return date. Items are
+ordered by **expected return date, equipment name, then UUID**. Returned items are not current holdings.
+The matching member row is selected when the member list is visible.
+
+Example feedback: `Showing member A0123456X: Alex Tan. Currently holding N item(s).`
+With no current loans, the holdings section says `This member currently holds no equipment.`
+
+| Situation | Result or correction |
+| --- | --- |
+| ID exists | Open that exact member's details; equal names do not affect lookup. |
+| ID is well formed but does not exist | `No member found with NUS ID NUS_ID.` Copy an existing ID from `member list`. |
+| ID is incomplete or malformed | Correct it using the shared NUS ID rule. A well-formed shorter ID is still an exact identity, not a partial-name or partial-ID search. |
+| Required parameter is missing, repeated or unknown | Correct the command to `member view nus/NUS_ID`. |
+| A current loan refers to missing equipment | Report inconsistent stored loan data; do not show an incomplete holdings list. |
+
+Failed viewing preserves the previous details and selection. This command covers both exact-ID lookup
+and viewing a member's equipment; no separate member-find or member-loans command is needed.
+
+### Delete a member: `member delete`
+
+```text
+member delete nus/NUS_ID
+```
+
+Example: `member delete nus/A0123456X`.
+
+Delete one exact member **only if they currently hold no equipment**. Equal-name members with other
+IDs remain. Success removes the member from lists/details and permanently removes closed loans that
+refer to that member. Unrelated members, equipment and loans are preserved.
+
+Example feedback: `Deleted member A0123456X: Alex Tan.` The directory appears with a surviving selection,
+or an empty state when no members remain. Stale details for the deleted member are removed.
+
+| Situation | Result or correction |
+| --- | --- |
+| Member holds equipment | `Cannot delete NUS_ID because the member holds N item(s). Return the items first.` Use `member view` to identify them. |
+| Member does not exist | `No member found with NUS ID NUS_ID.` Check `member list`. |
+| Malformed/missing/repeated/unknown parameter | Correct the identity or syntax and retry. |
+| Saving fails | No records change. Correct file access before retrying. |
+
+Deletion is permanent: the MVP has no undo, restore or archive operation. Return all outstanding items
+with `loans return` before retrying a blocked deletion. A failed deletion preserves the member and loans.
