@@ -308,6 +308,54 @@ public class MainWindowShellTest {
     }
 
     @Test
+    public void activation_successfulSpaceRelease_keepsRowFocusWithoutDuplicateDispatch() {
+        FxTestUtil.runAndWait(() -> {
+            rows().requestFocus();
+            rows().fireEvent(key(KeyCode.SPACE));
+            rows().fireEvent(new KeyEvent(KeyEvent.KEY_RELEASED, "", "", KeyCode.SPACE,
+                    false, false, false, false));
+            assertEquals(rows(), window.getPrimaryStage().getScene().getFocusOwner());
+            assertEquals("", field().getText());
+            assertEquals(List.of("member view nus/A0000001X"), logic.commands);
+            assertEquals(1, storage.saves);
+        });
+    }
+
+    @Test
+    public void activation_disposedBeforeSpaceRelease_detachesPendingCorrectionFocus() {
+        FxTestUtil.runAndWait(() -> {
+            rows().requestFocus();
+            storage.fail = true;
+            rows().fireEvent(key(KeyCode.SPACE));
+            Node focusBeforeDisposal = window.getPrimaryStage().getScene().getFocusOwner();
+            assertEquals(rows(), focusBeforeDisposal);
+            assertEquals("Error", label("feedbackStatus"));
+
+            window.dispose();
+            rows().fireEvent(new KeyEvent(KeyEvent.KEY_RELEASED, "", "", KeyCode.SPACE,
+                    false, false, false, false));
+            assertEquals(focusBeforeDisposal, window.getPrimaryStage().getScene().getFocusOwner());
+            assertEquals(List.of("member view nus/A0000001X"), logic.commands);
+            assertEquals(0, storage.saves);
+        });
+    }
+
+    @Test
+    public void fillInnerParts_disposedBeforeInitialization_doesNotMountComponentsOrObserveChanges() {
+        FxTestUtil.runAndWait(() -> {
+            window.dispose();
+            window.getPrimaryStage().hide();
+            window = new MainWindow(new Stage(), logic, temporaryDirectory.resolve("laplace.json"));
+            window.dispose();
+            window.fillInnerParts();
+            model.setAddressBook(new AddressBook());
+            assertEquals(null, window.getPersonListPanel());
+            assertTrue(logic.commands.isEmpty());
+            assertEquals(0, storage.saves);
+        });
+    }
+
+    @Test
     public void displayRequests_typedAndUnchanged_useIntentInsteadOfFeedback() {
         FxTestUtil.runAndWait(() -> {
             logic.nextResult = new CommandResult("member list", DisplayRequest.equipment());

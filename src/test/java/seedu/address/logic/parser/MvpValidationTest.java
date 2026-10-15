@@ -170,6 +170,25 @@ public class MvpValidationTest {
     }
 
     @Test
+    public void parseUuid_canonicalBoundaries_acceptsCompleteHexadecimalValues() throws Exception {
+        for (String value : List.of("00000000-0000-0000-0000-000000000000",
+                "ffffffff-ffff-ffff-ffff-ffffffffffff", "550E8400-E29B-41D4-A716-446655440000")) {
+            assertEquals(UUID.fromString(value), ParserUtil.parseUuid(" \t" + value + "\r\n"));
+        }
+    }
+
+    @Test
+    public void parseUuid_noncanonicalInputs_reportsValidationErrorBeforeConversion() {
+        String canonical = "550e8400-e29b-41d4-a716-446655440000";
+        for (String value : List.of("", "1-1-1-1-1", canonical.substring(1), canonical + "0",
+                canonical.replace('e', 'g'), canonical.replace('-', '_'), canonical + "\nextra")) {
+            ParseException failure = assertThrows(ParseException.class, () -> ParserUtil.parseUuid(value));
+            assertEquals("Invalid equipment UUID. Use the UUID shown by Laplace.", failure.getMessage());
+        }
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseUuid(null));
+    }
+
+    @Test
     public void firstError_reorderedFieldsAndStructuralErrors_followsReadingOrderBeforeMissingFields() {
         assertFirst("member add phone/123 nus/bad", Phone.MEMBER_MESSAGE_CONSTRAINTS);
         assertFirst("member add nus/bad phone/123", NusId.MESSAGE_CONSTRAINTS);

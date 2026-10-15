@@ -209,11 +209,7 @@ public class ParserUtil {
         if (!value.strip().matches("(?i)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
             throw new ParseException("Invalid equipment UUID. Use the UUID shown by Laplace.");
         }
-        try {
-            return UUID.fromString(value.strip());
-        } catch (IllegalArgumentException e) {
-            throw new ParseException("Invalid equipment UUID. Use the UUID shown by Laplace.", e);
-        }
+        return UUID.fromString(value.strip());
     }
 
     /**

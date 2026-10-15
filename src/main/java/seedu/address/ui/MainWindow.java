@@ -296,7 +296,7 @@ public class MainWindow extends UiPart<Stage> {
     private void handleActivationRelease(KeyEvent event) {
         if (event.getCode() == KeyCode.SPACE) {
             spacePressed = false;
-            if (focusAfterActivationKey && !disposed) {
+            if (focusAfterActivationKey) {
                 focusAfterActivationKey = false;
                 commandBox.requestFocus();
             }
