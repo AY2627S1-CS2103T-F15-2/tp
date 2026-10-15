@@ -17,9 +17,9 @@ with original causes retained for expected domain lookup failures.
 
 `MemberDetailsPanel` displays name, NUS ID, phone, email and the current held-item count.
 Each open holding shows equipment name, full UUID, category, condition, availability,
-assigned date and expected-return date. Holdings use the shared category/name/UUID order;
-closed loans do not count. An unresolved equipment reference remains an explicit error
-record with its UUID and dates instead of being silently dropped from the holdings count.
+assigned date and expected-return date. Holdings sort by expected return date, normalized
+equipment name and UUID; closed loans do not count. Unresolved equipment references produce
+an explicit error listing the missing UUIDs instead of rendering an incomplete holdings list.
 
 The panel keeps only the selected identity. `refresh()` resolves current contacts and loans,
 including changes caused only by assignment/return. No selection, no holdings and a deleted
@@ -28,11 +28,8 @@ the command nor panel modifies collections, persists selection or installs root 
 
 ## Integration status
 
-The individual command/parser and detail panel are implemented and independently tested in
-v1.3.2 (#92). Duy owns family-route activation (#73); Keith owns shell assembly, typed
-navigation and coordinated refresh (#91). Until those changes merge, the full command line
-still reports member view as not implemented. Component/persistence tests do not claim
-execution through the activated LogicManager route.
-
-When routed, the existing LogicManager save-after-success behavior still applies to views.
-Save errors remain visible; no alternate persistence or rollback mechanism is introduced.
+Merged #95 activates the real route; merged #93 mounts this existing detail panel and coordinates
+identity selection and refresh. Read-only view commands retain the existing LogicManager save behavior.
+Save errors remain visible. Laplace mutations use the staged/atomic boundary described in
+[MVP fields](MvpFields.md). Current combined acceptance is in
+[MvpCompletion.md](../gui/MvpCompletion.md).

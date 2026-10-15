@@ -3,8 +3,8 @@
 ## Integration status
 
 All ten routes dispatch to their concrete individual parsers. Command execution uses the
-existing LogicManager save pipeline. Application-shell integration and verification
-remain Keith's responsibility; working routes do not establish complete GUI acceptance.
+LogicManager persistence boundary. Merged #93 integrates the real shell and #95 activates all ten routes.
+Current MVP completion evidence is in [MvpCompletion.md](../gui/MvpCompletion.md); #75 remains the final gate.
 
 | Command | Syntax | Reference |
 | --- | --- | --- |
@@ -26,12 +26,14 @@ nonblank preamble. Optional notes may be empty. Markers matching the agreed
 start/whitespace-delimited `[A-Za-z][A-Za-z0-9_-]*/` grammar are reserved even inside free
 text; there is no quoting or escaping. Ordinary embedded slashes and URLs remain text.
 
-Commands retain the existing LogicManager save pipeline. Parser/business validation
-failures do not save or modify domain data. An I/O save failure is reported with its
-cause and does not promise rollback of a preceding in-memory mutation.
+The six Laplace mutation commands execute on an isolated snapshot. LogicManager atomically saves
+the candidate before publishing it through the existing live observable root. Parser/business
+rejection and save failures preserve all records; rejected operations do not save. Partial candidate
+writes and failed replacements preserve the prior data file and useful I/O causes. See
+[MVP fields and failure behavior](MvpFields.md) for normalization and ordered diagnostics.
 
 Existing AB3 person commands and data remain supported. No `loans list` CLI command is
-introduced; the Loans tab is a read-only presentation of open loans and history.
+introduced; the Loans tab is a read-only presentation of current open loans only. Closed records remain stored without a history presentation.
 
 ## Loan rules
 

@@ -1,3 +1,8 @@
+> v1.3.3 amendment: schema and existing constructor/getter contracts remain unchanged. New member
+> input uses member-specific value factories; saved legacy values remain readable without rewriting.
+> Model now supplies an isolated transaction snapshot; Logic commits its saved data through the existing
+> root. See [MVP fields and persistence](commands/MvpFields.md).
+
 # Laplace shared scaffold contract
 
 This document is the authoritative contract for the member, equipment, and loan scaffold. The baseline was created from PR #54 commit `d27afec19dfd2d4cb156e6dff2f93731ba7b0562`. Existing AddressBook Level 3 persons, commands, and persisted person data must continue to work.

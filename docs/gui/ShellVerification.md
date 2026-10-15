@@ -1,3 +1,7 @@
+> Historical #93/component evidence. The later v1.3.3 completion changes and current acceptance
+> results are recorded in [MvpCompletion.md](MvpCompletion.md). Earlier save-error, validation,
+> history-presentation and pending-route statements below describe their original baseline.
+
 # Laplace shell verification
 
 This implements [issue #91](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/91) around the

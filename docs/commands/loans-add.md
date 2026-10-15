@@ -40,3 +40,7 @@ parameter markers.
 
 The existing command pipeline saves successful mutations. If saving fails, the application reports
 the error; it does not promise to undo an already completed change in memory.
+
+Assignment is staged and atomically persisted before live publication. A failed save leaves all
+collections and saved bytes unchanged. See [MVP fields](MvpFields.md) for canonical UUIDs, exact
+conditions/dates and supplied-field error ordering. Loans presents open assignments only.

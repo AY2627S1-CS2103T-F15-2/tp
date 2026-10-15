@@ -9,9 +9,9 @@ current holder. Equal names do not make equipment interchangeable. Feedback incl
 requested UUID and a typed `DisplayRequest.equipmentDetails(uuid)`; it is not a serialization
 of the detail panel.
 
-Only one required `uuid/` parameter is accepted. Values are trimmed and use the existing
-Java UUID parser (including abbreviated forms accepted by `UUID.fromString`). Output uses
-the canonical full UUID. Spaces and tabs are accepted. Missing, blank, repeated, unknown or
+Only one required `uuid/` parameter is accepted. Values must use canonical 8-4-4-4-12
+hexadecimal UUID syntax, ignoring case and surrounding whitespace. Abbreviated Java forms
+are rejected. Output uses the canonical full UUID. Spaces and tabs are accepted. Missing, blank, repeated, unknown or
 malformed parameters and preamble text produce a parse error with command usage. Parameter
 markers are reserved tokens; there is no quoting or escaping.
 
@@ -27,12 +27,8 @@ not an unassigned item. Notes wrap; vertical scrolling keeps long content access
 
 ## Integration status
 
-The individual command/parser and detail panel are implemented and independently tested in
-v1.3.2 (#92). The team family router still needs Duy's view-route activation (#73), and Keith's
-shell must consume the typed display request and coordinate selection/refresh (#91). Until
-then, the full command line still reports the route as not implemented. Panel previews are
-component evidence, not full application navigation acceptance.
-
-The existing LogicManager saves after every successful routed command, including views.
-That pipeline can report an I/O save failure; it does not guarantee in-memory rollback.
-No alternate save mechanism or persisted UI selection is introduced here.
+Merged #95 activates the real route, and merged #93 mounts the existing details panel and
+coordinates exact selection and refresh. View commands do not mutate records. LogicManager retains
+the existing read-command save behavior; Laplace mutations use the new staged/atomic boundary.
+No alternate panel persistence or stored UI selection is introduced. See [MVP fields](MvpFields.md)
+and [completion evidence](../gui/MvpCompletion.md).
