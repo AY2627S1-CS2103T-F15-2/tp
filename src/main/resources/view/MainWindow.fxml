@@ -35,8 +35,6 @@
           <Button fx:id="loansNavigation" text="Loans" onAction="#handleLoans" styleClass="laplace-navigation" />
         </HBox>
         <VBox styleClass="laplace-content" spacing="8" VBox.vgrow="ALWAYS">
-          <Label fx:id="featureNotice" wrapText="true" visible="false" managed="false"
-                 styleClass="laplace-muted" />
           <StackPane VBox.vgrow="ALWAYS" minHeight="0">
             <SplitPane fx:id="directory" dividerPositions="0.28" styleClass="laplace-directory" minHeight="0">
               <StackPane fx:id="directoryListPlaceholder" minWidth="180" minHeight="0" />

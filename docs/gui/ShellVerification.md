@@ -1,16 +1,17 @@
 # Laplace shell verification
 
 This implements [issue #91](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/91) around the
-components now available on team master `bb996649` (merged detail-component PR #94).
+components now available on team master `0efb388f8a0daa180481dc6f049705bbd9a93add` (merged details, loans and all ten routes).
 The window mounts the real member/equipment lists, cards, summaries, MemberDetailsPanel,
 EquipmentDetailsPanel, Loans panel and legacy Persons list. The shell does not modify those owned
-components or activate their command routes. [ReviewResponse.md](ReviewResponse.md) records all
+components or change their command routers; it consumes the merged implementations. [ReviewResponse.md](ReviewResponse.md) records all
 six review items and the open [final acceptance tracker #75](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/75).
 
 ## Behavior and ownership
 
 The first screen is Members with the first sorted identity selected and the summary visible.
-The header has Members, Equipment and Loans buttons. Directory columns start at 28%/72% and
+The header has Members, Equipment and Loans buttons. Production startup now measures mounted panels
+before restoring the divider, matching UiManager's show-before-fill order. Directory columns start at 28%/72% and
 retain that proportion on resize. Feedback and command input remain below the scrollable content.
 The Menu exposes Help, legacy Persons and Exit; F1 opens Help even from command input.
 Saved window geometry is retained within the current screen's usable bounds.
@@ -18,7 +19,9 @@ Saved window geometry is retained within the current screen's usable bounds.
 Members and Equipment dispatch `member list` and `equipment list` through the same command pipeline
 as input. Loans opens its read-only panel directly. A row or loan identity link dispatches exactly
 `member view nus/NUS_ID` or `equipment view uuid/UUID`, once per explicit activation.
-Programmatic startup selection, selection restoration and refresh never dispatch commands.
+Programmatic startup selection, selection restoration and refresh never dispatch commands. Row/link
+activation preserves its focus until its key finishes; shifting focus during Space previously inserted
+a stray space into command input. Navigation tabs still return focus to command input.
 
 Navigation uses `DisplayRequest`, not feedback text. Help and Exit take precedence. An unchanged
 request retains the screen. Legacy commands still have their own Persons screen. Blank input is
@@ -36,28 +39,24 @@ Removed detail identities leave stale detail mode and return to the correspondin
 A save failure does **not** imply rollback: the existing pipeline can mutate memory before saving.
 The shell shows the actual error, retains navigation/input and refreshes actual in-memory state.
 
-## Current integration limits
+## Real routed integration
 
-Only member/equipment **list** family routes are active on this baseline. Other family routes
-return `NotImplementedCommand`. That placeholder returns a *successful* `CommandResult` with
-`LEGACY_PERSONS` and not-implemented feedback, and the pipeline attempts to save unchanged data.
-The shell cannot claim that those operations executed their intended business behavior.
+All ten family routes are active on this baseline. The transitional unavailable-view branch and its
+notice have been removed. Input, row activation and loan links now follow the same real typed results.
+Controlled results are retained only to test the display contract and an impossible/stale target.
 
-For explicit row/loan-link activation, a generic legacy result cannot fulfill the requested detail
-navigation. The shell retains the current screen, displays the original feedback as unavailable,
-and shows a notice. This guard checks the typed result and the known activation source; it does
-not parse command feedback. Typed console commands continue to honor their actual display requests.
+The full real-command lifecycle adds two same-name members and two otherwise identical items with
+separate generated UUIDs, lists/views them, assigns both, verifies real holder/contact/notes/date and
+holdings fields, reloads a fresh model/logic/window from saved JSON, returns items, rejects repeated
+returns and open-loan deletion, deletes permitted identities, verifies deterministic selection/stale-detail
+cleanup, reloads again and repeats views. Every successful submitted command dispatches/saves exactly once.
 
-Typed member/equipment detail requests now select the exact identity in the left list and mount
-the real right-hand details panel using `showMember`/`showEquipment`. Directory requests mount the
-summaries. Tests include actual component view-command results and assert contacts, notes,
-holdings, holder identity/contact information, availability and dates. Result delivery to the
-shell remains controlled while the actual family routers are placeholders; no routed success or
-automatic save is claimed for those tests. No replacement parser or mock detail panel is shipped.
-
-Assignment/return and deletion refresh tests mutate the real model on the FX thread because those
-family routes are still pending. Actual routed writes and complete milestone acceptance remain
-under the owners' integration work and the final gate in [Verification.md](Verification.md).
+Rejection cases interleave valid commands with duplicate/unknown identities, missing/repeated/unknown
+parameters, malformed dates/UUIDs, assigned/damaged/under-repair items, future assignment/return,
+expected-before-assigned, return-before-assigned and no-open-loan return. Each snapshots all four
+collections, current displayed panel, selected row and saved JSON bytes; failure preserves these,
+retains correction input/focus and never saves. Separate real-route external-update tests verify the
+coalesced refresh while member details, equipment details and Loans remain active without callback dispatches.
 
 The supplied [MVP document](https://docs.google.com/document/d/1XzYR2IpGc__mSZEy5GKMmVK8809j3Ln42VA8_9-va48/edit)
 was checked against its "Laplace MVP Feature Specification" section. Its save-failure guarantee
@@ -88,30 +87,48 @@ The generated session record is `build/reports/laplace/shell-session.txt`. It re
 feedback, retained input, dispatched commands and save counts. Generated screenshots include
 normal/small Members, Equipment, both real details, Loans and legacy Persons, plus error, empty, missing and long-text states
 under `build/reports/laplace/`. These are snapshots of the actual mounted shell, rather than the
-earlier component preview fixture. The retained example session is [ShellSession.txt](ShellSession.txt).
+earlier component preview fixture. The retained sessions are [ShellSession.txt](ShellSession.txt) and [RoutedShellSession.txt](RoutedShellSession.txt).
 
 ## Local evidence
 
-Java 25 validation passed on ARM macOS with 638 tests and zero failures, errors or skips.
+Java 25 validation passed on ARM macOS with 692 tests and zero failures, errors or skips.
 Checkstyle, coverage and the packaged `shadowJar` build passed. Repository-wide checks passed with
 the existing trailing-whitespace warning in `docs/AboutUs.md:61`, outside this change's ownership.
 
 A separate temporary Gradle verification task removed exploded main classes/resources from its
-classpath and loaded the shell from `build/libs/addressbook.jar`. All 24 shell/input/feedback tests
+classpath and loaded the shell from `build/libs/addressbook.jar`. All 27 shell/input/feedback tests
 passed. The startup test asserted that MainWindow's code source was that JAR and all shell and
 mounted-panel FXML plus the shared stylesheet used `jar:` classpath resources. This starts real
-MainWindow stages from the packaged code; it does not establish complete command/detail integration
-or a standalone production launch on every OS. The temporary task is not a build-system change.
-MainWindow has 221/221 JaCoCo lines and 91/94 branches covered; tests now exercise the legacy menu,
+MainWindow stages from the packaged code and includes the real routed lifecycle. It does not establish
+standalone interactive acceptance or a production launch on every OS. The temporary task is not a build-system change.
+MainWindow has 215/215 JaCoCo lines and 87/90 branches covered; tests now exercise the legacy menu,
 equipment Space activation, selection event handlers and hidden-window disposal identified by
 coverage review. No tests were skipped and no coverage exclusions were added.
 
-A standalone `seedu.address.Main` launch from the packaged code and matching native runtime reached
-normal MainApp/UiManager startup in a fresh temporary data directory without a loader/resource
-error. The desktop tool could not bind the unbundled Java window, and a temporary native launcher
-also timed out. Those attempts do not establish inspected interactive typing/navigation/reload;
-only the packaged shell test suite establishes its explicitly described controlled scenario.
-The test-only processes were closed and no launcher/runtime changes are shipped.
+A standalone `seedu.address.Main` launch of this packaged JAR now exposes a real "Laplace" window to
+the desktop tool through a temporary native app launcher. Environment: ARM macOS, Zulu Java
+25.0.3, matching JavaFX 17.0.7 ARM native jars, temporary data directory
+`/private/tmp/laplace-interactive-review`. The temporary launcher's classpath puts the matching native
+jars before the existing shaded JAR. An initial reversed order loaded x86 native resources and failed;
+that launcher-only mistake was corrected. No launcher/runtime changes are shipped.
+
+The final JAR's observed startup showed three sample members, first sorted selection, real summary,
+ready feedback, focused command input and the expected temporary data path. The corrected directory
+proportion was inspected in the native screenshot. Tab traversal to the selected member followed by
+Space and Enter opened real details, holder/date fields and left row focus intact with empty command
+input. The Equipment tab showed its real directory/counts. See [StandaloneAcceptance.md](StandaloneAcceptance.md)
+for exact completed steps and limitations.
+
+Native pointer targeting subsequently returned `noWindowsAvailable`; the desktop tool then reported
+the Mac locked again. Full final-build mouse/link, Help/F1, Exit, small/long/empty interaction and
+standalone write/reload acceptance therefore remain uncompleted. Earlier-build typing/error/Exit
+observations and passing packaged FX tests are recorded separately, without treating them as complete
+final-build standalone acceptance.
+
+The local changes sit on integration merge `d5bd893701b8384db331e4f78a108387fd333490`, which incorporates
+team master `0efb388f8a0daa180481dc6f049705bbd9a93add`. After publishing, record the exact final head and
+fresh Linux/macOS/Windows team CI. Earlier fork checks for `a69514c9` are historical, not validation of
+this revision. Final tracker #75 stays open for interactive acceptance, CI and the separate newer-MVP work.
 
 The screenshots below were visually checked against `docs/images/Ui.png`. Their data and long-text
 fixtures are supplied by tests; the window, cards, lists, summaries, details and Loans panel are production
@@ -126,7 +143,7 @@ values outside the newer MVP's typed-input limits. Normal content size is 1100x7
 
 ![Equipment application shell](images/shell-equipment-1100x700.png)
 
-### Real details (controlled typed/component-result delivery while routes remain pending)
+### Real details (actual routed view commands)
 
 ![Member details in the actual shell](images/shell-member-details-1100x700.png)
 
@@ -156,10 +173,10 @@ values outside the newer MVP's typed-input limits. Normal content size is 1100x7
 | Ignore empty input | Enter with spaces/tabs | No command/save; input remains available |
 | List/navigation | `member list`, Equipment tab, Members tab | Correct real summary; one command/save each |
 | Rejection and recovery | `equipment list extra`, then `equipment list` | Error retains input/view/data; valid input clears and navigates |
-| Current pending view route | Activate selected row; activate a loan identity link | Exact prefixed identity command once; retain screen with unavailable notice |
-| Real details | Deliver the actual component view result by controlled Logic fixture | Exact identity and contacts/notes/holder/dates; matching left row; no automatic save claim |
-| Loan refresh | Assign/return through the model with member details, equipment details or Loans active | Real details, holdings, holder, availability and loan rows refresh; no activation command |
-| Selection after deletion | Delete selected identity through the model | Deterministic surviving selection or empty directory; no callback |
+| Real view routes | Click/Enter/Space on selected row; activate loan identity links | Exact prefixed command once; real details and matching identity |
+| Real details | Type real member/equipment add/view commands | Exact identity, contacts/notes/holder/dates; matching left row; one save per success |
+| Loan refresh | Assign/return through real routes with each detail/Loans view active | Real fields/counts refresh; no activation callback; typed commands honor their display request |
+| Selection after deletion | Type permitted delete for selected identity | Deterministic surviving selection or empty directory; no callback |
 | Root reset | Replace root data with an empty book | Empty lists/counts and no stale detail target |
 | Save error (current behavior, MVP prerequisite pending) | Inject disk failure during a real legacy add | Error/retained input; actual in-memory person exists; no false save or rollback claim |
 | Keyboard/lifecycle | F1 from input; `help`; `exit`; reopen from saved JSON | Help without navigation; both stages close; reload preserves records |

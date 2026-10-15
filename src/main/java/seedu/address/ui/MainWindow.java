@@ -13,7 +13,6 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.input.KeyCode;
@@ -89,8 +88,6 @@ public class MainWindow extends UiPart<Stage> {
     @FXML
     private StackPane singlePanelPlaceholder;
     @FXML
-    private Label featureNotice;
-    @FXML
     private Button membersNavigation;
     @FXML
     private Button equipmentNavigation;
@@ -126,15 +123,15 @@ public class MainWindow extends UiPart<Stage> {
         personListPanel = new PersonListPanel(logic.getFilteredPersonList());
         personListPanel.getRoot().getStyleClass().add("laplace-legacy");
         personListPanel.getRoot().getStylesheets().add(getClass().getResource("/view/DarkTheme.css").toExternalForm());
-        members = new MemberListPanel(data, id -> activate("member view nus/" + id.value, true));
+        members = new MemberListPanel(data, id -> activate("member view nus/" + id.value));
         equipment = new EquipmentListPanel(data, logic::getAvailability,
-                id -> activate("equipment view uuid/" + id, true));
+                id -> activate("equipment view uuid/" + id));
         memberSummary = new MemberDirectorySummary(data);
         equipmentSummary = new EquipmentDirectorySummary(data, logic::getAvailability);
         memberDetails = new MemberDetailsPanel(data, logic::getAvailability);
         equipmentDetails = new EquipmentDetailsPanel(data, logic::getAvailability);
-        loans = new LoanPanel(data, id -> activate("equipment view uuid/" + id, true),
-                id -> activate("member view nus/" + id.value, true));
+        loans = new LoanPanel(data, id -> activate("equipment view uuid/" + id),
+                id -> activate("member view nus/" + id.value));
         resultDisplay = new ResultDisplay();
         commandBox = new CommandBox(this::executeCommand);
         commandBoxPlaceholder.getChildren().setAll(commandBox.getRoot());
@@ -151,6 +148,10 @@ public class MainWindow extends UiPart<Stage> {
         initialized = true;
         refreshViews();
         display(DisplayRequest.members());
+        // UiManager shows the stage before mounting panels; measure their minimum widths before restoring the split.
+        primaryStage.getScene().getRoot().applyCss();
+        primaryStage.getScene().getRoot().layout();
+        directory.setDividerPositions(0.28);
         resultDisplay.setFeedbackToUser("Ready. Use member list, equipment list, or the navigation buttons.");
         commandBox.requestFocus();
     }
@@ -246,9 +247,6 @@ public class MainWindow extends UiPart<Stage> {
         }
         request.getMemberNusId().ifPresent(id -> members.select(Optional.of(id)));
         request.getEquipmentUuid().ifPresent(id -> equipment.select(Optional.of(id)));
-        featureNotice.setText("");
-        featureNotice.setVisible(false);
-        featureNotice.setManaged(false);
         setActive(membersNavigation, memberView);
         setActive(equipmentNavigation, equipmentView);
         setActive(loansNavigation, request.getType() == DisplayRequest.Type.LOANS);
@@ -266,11 +264,13 @@ public class MainWindow extends UiPart<Stage> {
     @FXML
     private void handleMembers() {
         activate("member list");
+        commandBox.requestFocus();
     }
 
     @FXML
     private void handleEquipment() {
         activate("equipment list");
+        commandBox.requestFocus();
     }
 
     @FXML
@@ -282,29 +282,20 @@ public class MainWindow extends UiPart<Stage> {
     @FXML
     private void handleLegacyPersons() {
         activate("list");
+        commandBox.requestFocus();
     }
 
     /** Routes explicit UI activation through exactly the same pipeline as command input. */
     private void activate(String commandText) {
-        activate(commandText, false);
-    }
-
-    /** Keeps an unfinished view route from accidentally opening the unrelated legacy screen. */
-    private void activate(String commandText, boolean detailActivation) {
         try {
-            executeCommand(commandText, detailActivation);
+            executeCommand(commandText);
         } catch (CommandException | ParseException e) {
             // executeCommand has already displayed the actual parser, command, or storage failure.
         }
-        commandBox.requestFocus();
+        // Keep row/link focus until its key finishes; moving it here leaks Space into command input.
     }
 
     private CommandResult executeCommand(String commandText) throws CommandException, ParseException {
-        return executeCommand(commandText, false);
-    }
-
-    private CommandResult executeCommand(String commandText, boolean detailActivation)
-            throws CommandException, ParseException {
         try {
             CommandResult result = logic.execute(commandText);
             resultDisplay.setFeedbackToUser(result.getFeedbackToUser());
@@ -315,15 +306,7 @@ public class MainWindow extends UiPart<Stage> {
             if (result.isExit()) {
                 handleExit();
             } else if (!result.isShowHelp()) {
-                if (detailActivation && result.getDisplayRequest().getType() == DisplayRequest.Type.LEGACY_PERSONS) {
-                    resultDisplay.setFeedbackToUser(result.getFeedbackToUser(), true);
-                    featureNotice.setText("The view command is not available yet. "
-                            + "The current screen has been kept open.");
-                    featureNotice.setVisible(true);
-                    featureNotice.setManaged(true);
-                } else {
-                    display(result.getDisplayRequest());
-                }
+                display(result.getDisplayRequest());
             }
             return result;
         } catch (CommandException | ParseException e) {

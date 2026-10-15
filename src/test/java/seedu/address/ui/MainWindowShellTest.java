@@ -46,8 +46,6 @@ import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DisplayRequest;
-import seedu.address.logic.commands.EquipmentViewCommand;
-import seedu.address.logic.commands.MemberViewCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
@@ -69,7 +67,7 @@ import seedu.address.storage.StorageManager;
 import seedu.address.testutil.FxTestUtil;
 import seedu.address.testutil.PersonBuilder;
 
-/** Real shell tests. Future typed results are explicitly injected only where production routes are still pending. */
+/** Real routed shell/storage tests; controlled results separately exercise the typed display contract. */
 public class MainWindowShellTest {
     @TempDir
     public Path temporaryDirectory;
@@ -87,8 +85,9 @@ public class MainWindowShellTest {
             storage = new RecordingStorage(temporaryDirectory);
             logic = new RecordingLogic(new LogicManager(model, storage));
             window = new MainWindow(new Stage(), logic, temporaryDirectory.resolve("laplace.json"));
-            window.fillInnerParts();
+            // UiManager shows the stage before mounting components; preserve that production order.
             window.show();
+            window.fillInnerParts();
             layout();
         });
     }
@@ -189,8 +188,8 @@ public class MainWindowShellTest {
                     false, false, false, false, false, false, false, false, false, true, null));
             rows().fireEvent(key(KeyCode.ENTER));
             assertEquals(List.of("member view nus/A0000001X", "member view nus/A0000001X"), logic.commands);
-            assertEquals("Error", label("feedbackStatus"));
-            assertTrue(feedback().contains("not implemented"));
+            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("A0000001X", detailLabel("memberNusId"));
             assertTrue(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
             button("loansNavigation").fire();
             List<Button> links = node("openLoans").lookupAll(".button").stream()
@@ -201,8 +200,9 @@ public class MainWindowShellTest {
             }
             assertEquals(4, logic.commands.size());
             assertTrue(logic.commands.contains("equipment view uuid/" + new UUID(0, 1)));
-            assertEquals("Error", label("feedbackStatus"));
-            assertTrue(node("openLoans") != null);
+            assertEquals("Success", label("feedbackStatus"));
+            assertTrue(node("detailsTitle") != null);
+            assertEquals(4, storage.saves);
         });
     }
 
@@ -215,13 +215,12 @@ public class MainWindowShellTest {
                     false, false, false, false));
             assertTrue(label("selection").contains(new UUID(0, 2).toString()));
             assertEquals(List.of("equipment list"), logic.commands);
-            assertDoesNotThrow(() -> {
-                logic.nextResult = new EquipmentViewCommand(new UUID(0, 2)).execute(model);
-            });
+            rows().requestFocus();
             rows().fireEvent(key(KeyCode.SPACE));
+            assertEquals(rows(), window.getPrimaryStage().getScene().getFocusOwner());
+            assertEquals("", field().getText());
             assertEquals(List.of("equipment list", "equipment view uuid/" + new UUID(0, 2)), logic.commands);
             assertEquals(new UUID(0, 2).toString(), detailLabel("equipmentUuid"));
-            assertFalse(node("featureNotice").isVisible());
             button("membersNavigation").fire();
             rows().getSelectionModel().select(1);
             Region directoryList = (Region) node("directoryListPlaceholder");
@@ -249,17 +248,14 @@ public class MainWindowShellTest {
             submit("controlled detail result");
             assertEquals("A0000002X", label("memberNusId"));
             assertEquals(id(2), ((Member) rows().getSelectionModel().getSelectedItem()).getNusId());
-            assertFalse(node("featureNotice").isVisible());
             logic.nextResult = new CommandResult("Requested equipment",
                     DisplayRequest.equipmentDetails(new UUID(0, 2)));
             submit("controlled equipment detail result");
             assertEquals(new UUID(0, 2).toString(), label("equipmentUuid"));
             assertEquals(new UUID(0, 2), ((Equipment) rows().getSelectionModel().getSelectedItem()).getUuid());
-            assertFalse(node("featureNotice").isVisible());
             logic.nextResult = new CommandResult("Requested loans", DisplayRequest.loans());
             submit("controlled loans result");
             assertTrue(node("openLoans") != null);
-            assertFalse(node("featureNotice").isVisible());
         });
     }
 
@@ -322,7 +318,6 @@ public class MainWindowShellTest {
         });
         FxTestUtil.runAndWait(() -> {
             assertTrue(label("selection").contains("A0000003X"));
-            assertFalse(node("featureNotice").isVisible());
             model.setAddressBook(new AddressBook());
         });
         FxTestUtil.runAndWait(() -> {
@@ -346,11 +341,9 @@ public class MainWindowShellTest {
         FxTestUtil.runAndWait(() -> {
             assertEquals("Renamed Camera", label("equipmentName"));
             assertEquals(new UUID(0, 2).toString(), label("equipmentUuid"));
-            assertFalse(node("featureNotice").isVisible());
             model.deleteEquipment(model.findEquipment(new UUID(0, 2)).orElseThrow());
         });
         FxTestUtil.runAndWait(() -> {
-            assertFalse(node("featureNotice").isVisible());
             assertFalse(label("selection").contains(new UUID(0, 2).toString()));
             assertEquals(1, logic.commands.size());
         });
@@ -392,7 +385,7 @@ public class MainWindowShellTest {
             showEquipmentDetails(new UUID(0, 1));
             assertEquals(new UUID(0, 1).toString(), detailLabel("equipmentUuid"));
             assertEquals("2026-01-02", detailLabel("expectedReturnDate"));
-            assertEquals(0, storage.saves);
+            assertEquals(4, storage.saves);
         });
     }
 
@@ -545,12 +538,9 @@ public class MainWindowShellTest {
                 render("members", size[0], size[1]);
                 button("equipmentNavigation").fire();
                 render("equipment", size[0], size[1]);
-                logic.nextResult = new CommandResult("Controlled equipment details",
-                        DisplayRequest.equipmentDetails(new UUID(0, 1)));
-                submit("controlled equipment details");
+                showEquipmentDetails(new UUID(0, 1));
                 render("equipment-details", size[0], size[1]);
-                logic.nextResult = new CommandResult("Controlled member details", DisplayRequest.memberDetails(id(1)));
-                submit("controlled member details");
+                showMemberDetails(id(1));
                 render("member-details", size[0], size[1]);
                 button("loansNavigation").fire();
                 render("loans", size[0], size[1]);
@@ -573,12 +563,9 @@ public class MainWindowShellTest {
             render("members-long", 760, 500);
             button("equipmentNavigation").fire();
             render("equipment-long", 760, 500);
-            logic.nextResult = new CommandResult("Controlled long equipment details",
-                    DisplayRequest.equipmentDetails(new UUID(0, 1)));
-            submit("controlled equipment details");
+            showEquipmentDetails(new UUID(0, 1));
             render("equipment-details-long", 760, 500);
-            logic.nextResult = new CommandResult("Controlled long member details", DisplayRequest.memberDetails(id(1)));
-            submit("controlled member details");
+            showMemberDetails(id(1));
             render("member-details-long", 760, 500);
             logic.nextResult = new CommandResult("Controlled missing details", DisplayRequest.memberDetails(id(9)));
             submit("controlled missing details");
@@ -609,6 +596,8 @@ public class MainWindowShellTest {
     public void reload_savedData_rebuildsInitialSelectionFromRealJson() throws Exception {
         FxTestUtil.runAndWait(() -> submit("member list"));
         ReadOnlyAddressBook restored = storage.readAddressBook().orElseThrow();
+        assertEquals(model.getAddressBook(), restored);
+        session.add("RELOAD: all collections equal saved JSON; fresh ModelManager, LogicManager and MainWindow.");
         FxTestUtil.runAndWait(() -> {
             window.dispose();
             window.getPrimaryStage().hide();
@@ -648,24 +637,267 @@ public class MainWindowShellTest {
         Files.write(path, session);
     }
 
-    /** Exercises the real component command/result without claiming an activated family route or autosave. */
-    private void showMemberDetails(NusId identity) {
-        try {
-            logic.nextResult = new MemberViewCommand(identity).execute(model);
-            submit("member view nus/" + identity.value);
-        } catch (CommandException e) {
-            throw new AssertionError("Fixture member must resolve through the actual view command", e);
+    @Test
+    public void routedLifecycle_sameNamesAndDescriptions_persistsDetailsAndPermittedDeletion() throws Exception {
+        UUID[] items = new UUID[2];
+        LocalDate assigned = LocalDate.now().minusDays(2);
+        LocalDate expected = assigned.plusDays(5);
+        FxTestUtil.runAndWait(() -> {
+            model.setAddressBook(new AddressBook());
+            succeed("member add nus/A0000001X name/Alex Tan phone/91234567 email/alex@example.com");
+            succeed("member add nus/A0000002X name/Alex Tan phone/98765432 email/other@example.com");
+            assertEquals("A0000002X", detailLabel("memberNusId"));
+            for (int index = 0; index < items.length; index++) {
+                succeed("equipment add name/Camera category/Photography condition/GOOD notes/Keep lens cap on");
+                items[index] = UUID.fromString(detailLabel("equipmentUuid"));
+                assertEquals("Keep lens cap on", detailLabel("notes"));
+            }
+            assertFalse(items[0].equals(items[1]));
+            succeed("member list");
+            assertEquals(2, rows().getItems().size());
+            succeed("equipment list");
+            assertEquals(2, rows().getItems().size());
+            for (UUID item : items) {
+                succeed(assign(item, id(1), assigned, expected));
+                assertEquals("ASSIGNED", detailLabel("availability"));
+                assertEquals("A0000001X", detailLabel("holderNusId"));
+                assertEquals("91234567", detailLabel("holderPhone"));
+                assertEquals("alex@example.com", detailLabel("holderEmail"));
+                assertEquals(assigned.toString(), detailLabel("assignedDate"));
+                assertEquals(expected.toString(), detailLabel("expectedReturnDate"));
+                assertEquals(item, ((Equipment) rows().getSelectionModel().getSelectedItem()).getUuid());
+            }
+            succeed("member view nus/A0000001X");
+            assertEquals("2 item(s) held", detailLabel("heldCount"));
+            assertEquals(2, node("directorySummaryPlaceholder").lookupAll("#equipmentUuid").size());
+            succeed("member view nus/A0000002X");
+            assertEquals("Alex Tan", detailLabel("memberName"));
+            assertEquals("98765432", detailLabel("phone"));
+            assertEquals("other@example.com", detailLabel("email"));
+            assertEquals("0 item(s) held", detailLabel("heldCount"));
+        });
+        reloadFreshShell();
+        FxTestUtil.runAndWait(() -> {
+            assertEquals(2, model.getMemberList().size());
+            assertEquals(2, model.getEquipmentList().size());
+            assertEquals(2, model.getLoanList().size());
+            succeed("member view nus/A0000001X");
+            assertEquals("2 item(s) held", detailLabel("heldCount"));
+            succeed("equipment view uuid/" + items[0]);
+            assertEquals(expected.toString(), detailLabel("expectedReturnDate"));
+            assertEquals("Keep lens cap on", detailLabel("notes"));
+            reject("member delete nus/A0000001X");
+            reject("equipment delete uuid/" + items[0]);
+            for (UUID item : items) {
+                succeed("loans return uuid/" + item + " returned/" + LocalDate.now());
+                assertEquals("AVAILABLE", detailLabel("availability"));
+                assertEquals("No current holder", detailLabel("holder"));
+                assertEquals(null, node("directorySummaryPlaceholder").lookup("#assignedDate"));
+                reject("loans return uuid/" + item + " returned/" + LocalDate.now());
+            }
+            succeed("member view nus/A0000001X");
+            assertEquals("0 item(s) held", detailLabel("heldCount"));
+        });
+        reloadFreshShell();
+        FxTestUtil.runAndWait(() -> {
+            assertEquals(2, model.getLoanList().size());
+            assertTrue(model.getLoanList().stream().allMatch(loan ->
+                    loan.getReturnedDate().orElseThrow().equals(LocalDate.now())));
+            succeed("member view nus/A0000001X");
+            assertEquals("0 item(s) held", detailLabel("heldCount"));
+            succeed("member delete nus/A0000001X");
+            assertEquals(id(2), ((Member) rows().getSelectionModel().getSelectedItem()).getNusId());
+            assertEquals(null, node("detailsTitle"));
+            succeed("equipment view uuid/" + items[0]);
+            succeed("equipment delete uuid/" + items[0]);
+            assertEquals(items[1], ((Equipment) rows().getSelectionModel().getSelectedItem()).getUuid());
+            assertEquals(null, node("detailsTitle"));
+            button("loansNavigation").fire();
+            assertEquals("0", label("openCount"));
+            assertEquals("0", label("historyCount"));
+            assertTrue(model.getLoanList().isEmpty());
+        });
+        reloadFreshShell();
+        FxTestUtil.runAndWait(() -> {
+            assertEquals(1, model.getMemberList().size());
+            assertEquals(1, model.getEquipmentList().size());
+            assertTrue(model.getLoanList().isEmpty());
+            succeed("member list");
+            succeed("member view nus/A0000002X");
+            assertEquals("other@example.com", detailLabel("email"));
+            succeed("equipment list");
+            succeed("equipment view uuid/" + items[1]);
+            assertEquals("AVAILABLE", detailLabel("availability"));
+        });
+        Path transcript = Path.of("build", "reports", "laplace", "routed-shell-session.txt");
+        Files.createDirectories(transcript.getParent());
+        Files.write(transcript, session);
+    }
+
+    @Test
+    public void routedRejections_parametersAndBusinessRules_preserveAllStateAndSavedBytes() {
+        FxTestUtil.runAndWait(() -> {
+            succeed("equipment add name/Repair item category/Test condition/UNDER_REPAIR");
+            UUID repair = UUID.fromString(detailLabel("equipmentUuid"));
+            succeed("member view nus/A0000001X");
+            LocalDate past = LocalDate.now().minusDays(2);
+            String available = assign(new UUID(0, 2), id(1), past, past.plusDays(5));
+            for (String command : List.of(
+                    "member add nus/A0000001X name/Duplicate phone/91234567 email/duplicate@example.com",
+                    "member add nus/A0000004X name/Missing email/new@example.com",
+                    "member view nus/A9999999X", "equipment view uuid/" + new UUID(0, 99),
+                    "member delete nus/A9999999X", "equipment delete uuid/" + new UUID(0, 99),
+                    "member view", "member view nus/A0000001X nus/A0000002X",
+                    "member list unknown/value", "equipment list extra",
+                    "equipment add name/Incomplete category/Test", "equipment view uuid/not-a-uuid",
+                    available + " nus/A0000002X", available + " unknown/value",
+                    available.replace(" assigned/" + past, ""),
+                    available.replace("assigned/" + past, "assigned/2026-02-30"),
+                    assign(new UUID(0, 99), id(1), past, past),
+                    assign(new UUID(0, 2), id(9), past, past),
+                    assign(new UUID(0, 1), id(2), past, past),
+                    assign(new UUID(0, 3), id(1), past, past), assign(repair, id(1), past, past),
+                    assign(new UUID(0, 2), id(1), LocalDate.now().plusDays(1), LocalDate.now().plusDays(2)),
+                    assign(new UUID(0, 2), id(1), past, past.minusDays(1)),
+                    "loans return uuid/" + new UUID(0, 1) + " returned/2025-12-31",
+                    "loans return uuid/" + new UUID(0, 1) + " returned/" + LocalDate.now().plusDays(1),
+                    "loans return uuid/" + new UUID(0, 2) + " returned/" + past,
+                    "loans return uuid/" + new UUID(0, 1),
+                    "loans return uuid/" + new UUID(0, 1) + " returned/" + past + " returned/" + past,
+                    "member delete nus/A0000001X", "equipment delete uuid/" + new UUID(0, 1))) {
+                reject(command);
+                succeed("member view nus/A0000001X");
+            }
+            succeed(available);
+            succeed("loans return uuid/" + new UUID(0, 2) + " returned/" + past);
+            reject("loans return uuid/" + new UUID(0, 2) + " returned/" + past);
+            assertEquals(Availability.AVAILABLE, model.getAvailability(new UUID(0, 2)));
+        });
+    }
+
+    @Test
+    public void routedLoanChanges_eachActiveTab_refreshesRealPanelsWithoutActivationCallbacks() {
+        for (DisplayRequest.Type active : List.of(DisplayRequest.Type.MEMBER_DETAILS,
+                DisplayRequest.Type.EQUIPMENT_DETAILS, DisplayRequest.Type.LOANS)) {
+            FxTestUtil.runAndWait(() -> {
+                model.setAddressBook(sample().getAddressBook());
+                if (active == DisplayRequest.Type.MEMBER_DETAILS) {
+                    showMemberDetails(id(1));
+                } else if (active == DisplayRequest.Type.EQUIPMENT_DETAILS) {
+                    showEquipmentDetails(new UUID(0, 2));
+                } else {
+                    button("loansNavigation").fire();
+                }
+                assertDoesNotThrow(() -> logic.execute(assign(new UUID(0, 2), id(1),
+                        LocalDate.now(), LocalDate.now())));
+            });
+            int count = logic.commands.size();
+            FxTestUtil.runAndWait(() -> {
+                if (active == DisplayRequest.Type.MEMBER_DETAILS) {
+                    assertEquals("2 item(s) held", detailLabel("heldCount"));
+                    assertTrue(label("itemsHeld").contains("2"));
+                } else if (active == DisplayRequest.Type.EQUIPMENT_DETAILS) {
+                    assertEquals("ASSIGNED", detailLabel("availability"));
+                    assertEquals("A0000001X", detailLabel("holderNusId"));
+                } else {
+                    assertEquals("2", label("openCount"));
+                }
+                assertEquals(count, logic.commands.size());
+                assertDoesNotThrow(() -> logic.execute("loans return uuid/" + new UUID(0, 2)
+                        + " returned/" + LocalDate.now()));
+            });
+            FxTestUtil.runAndWait(() -> {
+                if (active == DisplayRequest.Type.MEMBER_DETAILS) {
+                    assertEquals("1 item(s) held", detailLabel("heldCount"));
+                } else if (active == DisplayRequest.Type.EQUIPMENT_DETAILS) {
+                    assertEquals("AVAILABLE", detailLabel("availability"));
+                    assertEquals("No current holder", detailLabel("holder"));
+                } else {
+                    assertEquals("1", label("openCount"));
+                    assertEquals("1", label("historyCount"));
+                }
+                assertEquals(count + 1, logic.commands.size());
+            });
         }
     }
 
-    /** Exercises the actual equipment view command before giving its result to the shell boundary. */
-    private void showEquipmentDetails(UUID identity) {
+    /** Checks one real successful dispatch and one successful JSON save. */
+    private void succeed(String command) {
+        int saves = storage.saves;
+        int dispatched = logic.commands.size();
+        submit(command);
+        assertEquals("Success", label("feedbackStatus"), command + ": " + feedback());
+        assertEquals("", field().getText(), command);
+        assertEquals(saves + 1, storage.saves, command);
+        assertEquals(dispatched + 1, logic.commands.size(), command);
+        recordOutcome(command);
+    }
+
+    /** Snapshots all collections, the displayed node, selection and bytes before a real rejected command. */
+    private void reject(String command) {
+        AddressBook before = new AddressBook(model.getAddressBook());
+        Object selected = rows().getSelectionModel().getSelectedItem();
+        Node displayed = ((javafx.scene.layout.StackPane) node("directorySummaryPlaceholder"))
+                .getChildren().getFirst();
+        int saves = storage.saves;
         try {
-            logic.nextResult = new EquipmentViewCommand(identity).execute(model);
-            submit("equipment view uuid/" + identity);
-        } catch (CommandException e) {
-            throw new AssertionError("Fixture equipment must resolve through the actual view command", e);
+            String json = Files.readString(storage.getAddressBookFilePath());
+            submit(command);
+            assertEquals("Error", label("feedbackStatus"), command);
+            assertEquals(command, field().getText(), command);
+            assertEquals(field(), window.getPrimaryStage().getScene().getFocusOwner(), command);
+            assertEquals(before, model.getAddressBook(), command);
+            assertEquals(saves, storage.saves, command);
+            assertEquals(json, Files.readString(storage.getAddressBookFilePath()), command);
+            assertEquals(selected, rows().getSelectionModel().getSelectedItem(), command);
+            assertEquals(displayed, ((javafx.scene.layout.StackPane) node("directorySummaryPlaceholder"))
+                    .getChildren().getFirst(), command);
+            recordOutcome(command);
+        } catch (IOException e) {
+            throw new AssertionError("Rejection snapshot requires real saved JSON", e);
         }
+    }
+
+    /** Records actual pipeline outcomes for the checked lifecycle transcript. */
+    private void recordOutcome(String command) {
+        session.add("INPUT: " + command);
+        session.add("STATUS: " + label("feedbackStatus"));
+        session.add("OUTPUT: " + feedback());
+        session.add("RETAINED INPUT: " + field().getText());
+        session.add("SUCCESSFUL SAVES: " + storage.saves);
+    }
+
+    /** Reconstructs model, logic and window from disk; no previous live root is reused. */
+    private void reloadFreshShell() throws Exception {
+        ReadOnlyAddressBook restored = storage.readAddressBook().orElseThrow();
+        assertEquals(model.getAddressBook(), restored);
+        session.add("RELOAD: all collections equal saved JSON; fresh ModelManager, LogicManager and MainWindow.");
+        FxTestUtil.runAndWait(() -> {
+            window.dispose();
+            window.getPrimaryStage().hide();
+            model = new ModelManager(restored, new seedu.address.model.UserPrefs());
+            logic = new RecordingLogic(new LogicManager(model, storage));
+            window = new MainWindow(new Stage(), logic, temporaryDirectory.resolve("laplace.json"));
+            window.fillInnerParts();
+            window.show();
+            assertTrue(logic.commands.isEmpty());
+        });
+    }
+
+    private static String assign(UUID item, NusId member, LocalDate assigned, LocalDate expected) {
+        return "loans add uuid/" + item + " nus/" + member + " assigned/" + assigned + " expected/" + expected;
+    }
+
+    /** Uses the same real family route and autosave as command input. */
+    private void showMemberDetails(NusId identity) {
+        submit("member view nus/" + identity.value);
+        assertEquals("Success", label("feedbackStatus"));
+    }
+
+    /** Uses the actual equipment parser, command, model and storage pipeline. */
+    private void showEquipmentDetails(UUID identity) {
+        submit("equipment view uuid/" + identity);
+        assertEquals("Success", label("feedbackStatus"));
     }
 
     private String detailLabel(String id) {

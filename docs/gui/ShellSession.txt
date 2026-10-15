@@ -19,7 +19,7 @@ OUTPUT: Listed 3 equipment items.
 RETAINED INPUT: <empty>
 INPUT: member view nus/A0000001X
 STATUS: Success
-OUTPUT: The member view command is not implemented yet.
+OUTPUT: Viewing member: Alex Tan (A0000001X). Currently holds 1 item(s).
 RETAINED INPUT: <empty>
 INPUT: list
 STATUS: Success

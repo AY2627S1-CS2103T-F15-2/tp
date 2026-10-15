@@ -102,18 +102,18 @@ The style probes explicitly identify themselves as previews and contain test lab
 They are not screenshots of a working Members directory. Compare their palette and shared
 states with `docs/images/Ui.png`; assess the real directory layout only after shell integration.
 
-## Final shell gate (pending dependencies)
+## Final shell gate (routed tests complete; interactive and CI pending)
 
-Once all required components and routes are merged, record the exact combined SHA and test
-actual typing, row activation (including an already selected row), Members/Equipment/Loans
-navigation, summaries, both detail views, assignment/return refresh, deletion selection recovery,
-empty/missing states, long identifiers, errors, resizing, keyboard focus and persistence reload.
-Check Help/Exit and legacy persons. Inspect the Members directory against `docs/images/Ui.png`
-and capture every additional view, small-window and error state. Build `shadowJar` and launch
-the packaged application from a temporary data directory to verify classpath resources.
+All required original-scope components and routes are now merged. The current shell incorporates
+team master `0efb388f8a0daa180481dc6f049705bbd9a93add`; the real ten-route FX/JSON lifecycle,
+rejection snapshots, refresh and fresh-model reload pass. See [ShellVerification.md](ShellVerification.md),
+[ReviewResponse.md](ReviewResponse.md) and [RoutedShellSession.txt](RoutedShellSession.txt).
 
-Keep the integration issue open until this evidence exists. Do not report the foundation's
-passing tests, stylesheet probes or JAR build as completed command/GUI milestone acceptance.
+Local Java 25 checks: 692 tests plus 27 packaged-shell tests, zero failures/errors/skips; check,
+coverage, shadowJar and repository checks pass. Actual mounted normal/small/detail/error/empty/long
+screenshots were inspected against the Members reference. Standalone startup was observed, but the
+Mac locked before interactive typing/navigation/reload could be completed. Final published-head
+team CI is also pending. Keep #75 open, preserve these limits and the separate newer-MVP owner work.
 
 ## Stage B deletion handoff
 
