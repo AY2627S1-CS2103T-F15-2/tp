@@ -23,9 +23,9 @@ deletion only when the item has no open loan and removes that item's closed hist
 Other items, members, legacy persons and unrelated loans remain intact. Items with
 identical descriptions but different UUIDs remain independent.
 
-Success produces `Deleted equipment: UUID` with the actual UUID and
+Success produces `Deleted equipment UUID: EQUIPMENT_NAME.` with the stored name/actual UUID and
 `DisplayRequest.equipment()`. Unknown UUIDs and open-loan references produce CommandException
-with an identity-specific message and the domain cause. Rejection preserves all model data.
+with an identity-specific message and the domain cause. Blocked deletion includes the current holder NUS ID. Rejection preserves all model data.
 Record the item's return before retrying a blocked deletion.
 
 ## Command contract

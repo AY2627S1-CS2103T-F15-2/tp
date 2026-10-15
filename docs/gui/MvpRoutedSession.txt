@@ -11,12 +11,12 @@ RETAINED INPUT: <empty>
 SUCCESSFUL SAVES: 2
 INPUT: equipment add name/Camera category/Photography condition/GOOD notes/Keep lens cap on
 STATUS: Success
-OUTPUT: New equipment added: Camera (ffd7b479-acdd-4710-a46c-977774743c3b), availability: AVAILABLE
+OUTPUT: New equipment added: Camera (5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c), availability: AVAILABLE
 RETAINED INPUT: <empty>
 SUCCESSFUL SAVES: 3
 INPUT: equipment add name/Camera category/Photography condition/GOOD notes/Keep lens cap on
 STATUS: Success
-OUTPUT: New equipment added: Camera (d8dfb74d-c657-42a7-a612-056740dedaa5), availability: AVAILABLE
+OUTPUT: New equipment added: Camera (2ec27125-1373-4cc8-ad16-3aac91e98a83), availability: AVAILABLE
 RETAINED INPUT: <empty>
 SUCCESSFUL SAVES: 4
 INPUT: member list
@@ -29,14 +29,14 @@ STATUS: Success
 OUTPUT: Listed 2 equipment items.
 RETAINED INPUT: <empty>
 SUCCESSFUL SAVES: 6
-INPUT: loans add uuid/ffd7b479-acdd-4710-a46c-977774743c3b nus/A0000001X assigned/2026-10-13 expected/2026-10-18
+INPUT: loans add uuid/5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c nus/A0000001X assigned/2026-10-13 expected/2026-10-18
 STATUS: Success
-OUTPUT: Assigned Camera (ffd7b479-acdd-4710-a46c-977774743c3b) to Alex Tan (A0000001X) on 2026-10-13; expected return: 2026-10-18.
+OUTPUT: Assigned Camera (5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c) to Alex Tan (A0000001X) on 2026-10-13; expected return: 2026-10-18.
 RETAINED INPUT: <empty>
 SUCCESSFUL SAVES: 7
-INPUT: loans add uuid/d8dfb74d-c657-42a7-a612-056740dedaa5 nus/A0000001X assigned/2026-10-13 expected/2026-10-18
+INPUT: loans add uuid/2ec27125-1373-4cc8-ad16-3aac91e98a83 nus/A0000001X assigned/2026-10-13 expected/2026-10-18
 STATUS: Success
-OUTPUT: Assigned Camera (d8dfb74d-c657-42a7-a612-056740dedaa5) to Alex Tan (A0000001X) on 2026-10-13; expected return: 2026-10-18.
+OUTPUT: Assigned Camera (2ec27125-1373-4cc8-ad16-3aac91e98a83) to Alex Tan (A0000001X) on 2026-10-13; expected return: 2026-10-18.
 RETAINED INPUT: <empty>
 SUCCESSFUL SAVES: 8
 INPUT: member view nus/A0000001X
@@ -55,40 +55,40 @@ STATUS: Success
 OUTPUT: Viewing member: Alex Tan (A0000001X). Currently holds 2 item(s).
 RETAINED INPUT: <empty>
 SUCCESSFUL SAVES: 11
-INPUT: equipment view uuid/ffd7b479-acdd-4710-a46c-977774743c3b
+INPUT: equipment view uuid/5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c
 STATUS: Success
-OUTPUT: Viewing equipment: Camera (ffd7b479-acdd-4710-a46c-977774743c3b). Availability: ASSIGNED.
+OUTPUT: Viewing equipment: Camera (5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c). Availability: ASSIGNED.
 RETAINED INPUT: <empty>
 SUCCESSFUL SAVES: 12
 INPUT: member delete nus/A0000001X
 STATUS: Error
-OUTPUT: Cannot delete member A0000001X with open loans. Return their outstanding equipment first.
+OUTPUT: Cannot delete A0000001X because the member holds 2 item(s). Return the items first.
 RETAINED INPUT: member delete nus/A0000001X
 SUCCESSFUL SAVES: 12
-INPUT: equipment delete uuid/ffd7b479-acdd-4710-a46c-977774743c3b
+INPUT: equipment delete uuid/5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c
 STATUS: Error
-OUTPUT: Cannot delete equipment ffd7b479-acdd-4710-a46c-977774743c3b with an open loan. Record its return first.
-RETAINED INPUT: equipment delete uuid/ffd7b479-acdd-4710-a46c-977774743c3b
+OUTPUT: Cannot delete 5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c because it is assigned to A0000001X. Return the item first.
+RETAINED INPUT: equipment delete uuid/5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c
 SUCCESSFUL SAVES: 12
-INPUT: loans return uuid/ffd7b479-acdd-4710-a46c-977774743c3b returned/2026-10-15
+INPUT: loans return uuid/5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c returned/2026-10-15
 STATUS: Success
-OUTPUT: Returned Camera (ffd7b479-acdd-4710-a46c-977774743c3b) from Alex Tan (A0000001X) on 2026-10-15.
+OUTPUT: Returned Camera (5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c) from Alex Tan (A0000001X) on 2026-10-15.
 RETAINED INPUT: <empty>
 SUCCESSFUL SAVES: 13
-INPUT: loans return uuid/ffd7b479-acdd-4710-a46c-977774743c3b returned/2026-10-15
+INPUT: loans return uuid/5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c returned/2026-10-15
 STATUS: Error
-OUTPUT: Equipment ffd7b479-acdd-4710-a46c-977774743c3b has no open loan to return.
-RETAINED INPUT: loans return uuid/ffd7b479-acdd-4710-a46c-977774743c3b returned/2026-10-15
+OUTPUT: Equipment 5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c has no open loan to return.
+RETAINED INPUT: loans return uuid/5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c returned/2026-10-15
 SUCCESSFUL SAVES: 13
-INPUT: loans return uuid/d8dfb74d-c657-42a7-a612-056740dedaa5 returned/2026-10-15
+INPUT: loans return uuid/2ec27125-1373-4cc8-ad16-3aac91e98a83 returned/2026-10-15
 STATUS: Success
-OUTPUT: Returned Camera (d8dfb74d-c657-42a7-a612-056740dedaa5) from Alex Tan (A0000001X) on 2026-10-15.
+OUTPUT: Returned Camera (2ec27125-1373-4cc8-ad16-3aac91e98a83) from Alex Tan (A0000001X) on 2026-10-15.
 RETAINED INPUT: <empty>
 SUCCESSFUL SAVES: 14
-INPUT: loans return uuid/d8dfb74d-c657-42a7-a612-056740dedaa5 returned/2026-10-15
+INPUT: loans return uuid/2ec27125-1373-4cc8-ad16-3aac91e98a83 returned/2026-10-15
 STATUS: Error
-OUTPUT: Equipment d8dfb74d-c657-42a7-a612-056740dedaa5 has no open loan to return.
-RETAINED INPUT: loans return uuid/d8dfb74d-c657-42a7-a612-056740dedaa5 returned/2026-10-15
+OUTPUT: Equipment 2ec27125-1373-4cc8-ad16-3aac91e98a83 has no open loan to return.
+RETAINED INPUT: loans return uuid/2ec27125-1373-4cc8-ad16-3aac91e98a83 returned/2026-10-15
 SUCCESSFUL SAVES: 14
 INPUT: member view nus/A0000001X
 STATUS: Success
@@ -103,17 +103,17 @@ RETAINED INPUT: <empty>
 SUCCESSFUL SAVES: 16
 INPUT: member delete nus/A0000001X
 STATUS: Success
-OUTPUT: Deleted member: A0000001X
+OUTPUT: Deleted member A0000001X: Alex Tan.
 RETAINED INPUT: <empty>
 SUCCESSFUL SAVES: 17
-INPUT: equipment view uuid/ffd7b479-acdd-4710-a46c-977774743c3b
+INPUT: equipment view uuid/5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c
 STATUS: Success
-OUTPUT: Viewing equipment: Camera (ffd7b479-acdd-4710-a46c-977774743c3b). Availability: AVAILABLE.
+OUTPUT: Viewing equipment: Camera (5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c). Availability: AVAILABLE.
 RETAINED INPUT: <empty>
 SUCCESSFUL SAVES: 18
-INPUT: equipment delete uuid/ffd7b479-acdd-4710-a46c-977774743c3b
+INPUT: equipment delete uuid/5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c
 STATUS: Success
-OUTPUT: Deleted equipment: ffd7b479-acdd-4710-a46c-977774743c3b
+OUTPUT: Deleted equipment 5ead64e0-bee8-42b5-8dfc-dadf9cff8d6c: Camera.
 RETAINED INPUT: <empty>
 SUCCESSFUL SAVES: 19
 RELOAD: all collections equal saved JSON; fresh ModelManager, LogicManager and MainWindow.
@@ -132,8 +132,8 @@ STATUS: Success
 OUTPUT: Listed 1 equipment items.
 RETAINED INPUT: <empty>
 SUCCESSFUL SAVES: 22
-INPUT: equipment view uuid/d8dfb74d-c657-42a7-a612-056740dedaa5
+INPUT: equipment view uuid/2ec27125-1373-4cc8-ad16-3aac91e98a83
 STATUS: Success
-OUTPUT: Viewing equipment: Camera (d8dfb74d-c657-42a7-a612-056740dedaa5). Availability: AVAILABLE.
+OUTPUT: Viewing equipment: Camera (2ec27125-1373-4cc8-ad16-3aac91e98a83). Availability: AVAILABLE.
 RETAINED INPUT: <empty>
 SUCCESSFUL SAVES: 23

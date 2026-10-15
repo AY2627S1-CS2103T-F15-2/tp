@@ -30,7 +30,7 @@ public class LoanAddCommand extends Command {
     public static final String MESSAGE_EQUIPMENT_NOT_FOUND = "No equipment with UUID %1$s exists.";
     public static final String MESSAGE_MEMBER_NOT_FOUND = "No member with NUS ID %1$s exists.";
     public static final String MESSAGE_ASSIGNED =
-            "Equipment %1$s already has an open loan. Return it before assigning.";
+            "Equipment %1$s is unavailable because it is assigned to %2$s.";
     public static final String MESSAGE_UNAVAILABLE = "Equipment %1$s is unavailable (condition: %2$s).";
     public static final String MESSAGE_FUTURE_ASSIGNMENT = "Assigned date cannot be after today (%1$s).";
 
@@ -67,9 +67,12 @@ public class LoanAddCommand extends Command {
         try {
             Equipment equipment = model.findEquipment(equipmentUuid).orElseThrow(EquipmentNotFoundException::new);
             Member member = model.findMember(memberNusId).orElseThrow(MemberNotFoundException::new);
+            String assignedMessage = model.findOpenLoan(equipmentUuid)
+                    .map(loan -> String.format(MESSAGE_ASSIGNED, equipmentUuid, loan.getMemberNusId()))
+                    .orElse("Equipment " + equipmentUuid + " has an inconsistent open-loan state.");
             Availability availability = model.getAvailability(equipmentUuid);
             if (availability == Availability.ASSIGNED) {
-                throw new CommandException(String.format(MESSAGE_ASSIGNED, equipmentUuid));
+                throw new CommandException(assignedMessage);
             }
             if (availability != Availability.AVAILABLE) {
                 throw new CommandException(String.format(MESSAGE_UNAVAILABLE, equipmentUuid, equipment.getCondition()));
@@ -81,7 +84,11 @@ public class LoanAddCommand extends Command {
             if (expectedReturnDate.isBefore(assignedDate)) {
                 throw new CommandException(Loan.MESSAGE_EXPECTED_DATE_CONSTRAINTS);
             }
-            model.addLoan(new Loan(equipmentUuid, memberNusId, assignedDate, expectedReturnDate, null));
+            try {
+                model.addLoan(new Loan(equipmentUuid, memberNusId, assignedDate, expectedReturnDate, null));
+            } catch (DuplicateOpenLoanException e) {
+                throw new CommandException(assignedMessage, e);
+            }
             return new CommandResult(String.format(MESSAGE_SUCCESS, equipment.getName(), equipmentUuid,
                     member.getName(), memberNusId, assignedDate, expectedReturnDate),
                     DisplayRequest.equipmentDetails(equipmentUuid));
@@ -89,8 +96,6 @@ public class LoanAddCommand extends Command {
             throw new CommandException(String.format(MESSAGE_EQUIPMENT_NOT_FOUND, equipmentUuid), e);
         } catch (MemberNotFoundException e) {
             throw new CommandException(String.format(MESSAGE_MEMBER_NOT_FOUND, memberNusId), e);
-        } catch (DuplicateOpenLoanException e) {
-            throw new CommandException(String.format(MESSAGE_ASSIGNED, equipmentUuid), e);
         } catch (IllegalArgumentException e) {
             throw new CommandException("Could not assign equipment " + equipmentUuid + ": " + e.getMessage(), e);
         }

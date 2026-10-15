@@ -44,3 +44,6 @@ the error; it does not promise to undo an already completed change in memory.
 Assignment is staged and atomically persisted before live publication. A failed save leaves all
 collections and saved bytes unchanged. See [MVP fields](MvpFields.md) for canonical UUIDs, exact
 conditions/dates and supplied-field error ordering. Loans presents open assignments only.
+
+Assignment refusal for an existing open loan names its current holder NUS ID, including when
+the requested new holder differs. The current loan is read before attempting any mutation.

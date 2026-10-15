@@ -11,7 +11,7 @@ or rewritten merely by loading the file.
 | Email | 3-254 ASCII characters; exactly one `@`; nonempty local part and dotted domain; local characters are letters/digits/`.`/`_`/`%`/`+`/`-`; domain labels cannot begin/end with `-`. Stored lowercase. |
 | Equipment name | 1-100 printable Unicode characters after normalization. |
 | Category | 1-50 printable Unicode characters after normalization. |
-| Notes | Optional, including explicit empty `notes/`; at most 300 printable Unicode characters. Line breaks become spaces. |
+| Notes | Optional, including explicit empty `notes/`; at most 300 printable Unicode characters. Line breaks become spaces through both full-command parsing and pasted command input. |
 | NUS ID | One ASCII letter, seven digits and an optional final ASCII letter. Stored uppercase; exact normalized lookup. |
 | Equipment UUID | Exactly 8-4-4-4-12 hexadecimal characters with hyphens. Case-insensitive input; lowercase output. Abbreviated Java UUID forms are rejected. |
 | Condition | Exactly `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`, ignoring case. Space/hyphen aliases are rejected. |
@@ -57,3 +57,10 @@ instead of an incomplete holdings list.
 
 Loans shows current open assignments only, with exact member/equipment navigation and dates. Closed records
 remain in the model/JSON for return integrity and existing deletion cleanup; there is no history presentation.
+
+The command input replaces pasted tabs and line-break characters with spaces before JavaFX
+can strip them. CRLF occupies two input spaces to preserve edit offsets; text value normalization
+collapses those spaces before validation/storage. Full-command parsing also accepts raw multiline
+arguments, preserving field boundaries and reserved-marker errors. Rejected pasted input stays
+available for correction. Deletion refusal reports the actual open-item count/current holder;
+reassignment names the current holder, and successful deletion includes the stored record name.

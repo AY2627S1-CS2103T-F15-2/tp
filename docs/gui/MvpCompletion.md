@@ -1,10 +1,14 @@
+> Initial delivery evidence through `29e77e303b62cbb27e891ff9bd08792fb91970c1`.
+> [PR review follow-up](MvpReviewFollowUp.md) records the later multiline-input/feedback fixes,
+> current test totals and updated packaged acceptance. Earlier artifact hashes below remain historical evidence.
+
 # v1.3.3 MVP completion and acceptance
 
 ## Revision and scope
 
 Baseline: team master `3cd3947146bcda9976c2e4f8b2e24c00e79c3671`, after shell #93 merged.
 Implementation source: `a2c349b9d627e368ff664cde7a6b9071c7237f59`, branch `v1.3.3`, authored/published by
-`wtvlol`. Later commits in this branch record documentation/evidence only. The PR description records
+`wtvlol`. Commits after that source through `29e77e30` record documentation/evidence only; later review fixes are linked above. The PR description records
 its final published head and current CI links. Tracking: [#96](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/96)
 for these implementation changes; [#75](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/75) remains the final gate.
 

@@ -38,7 +38,7 @@ public class EquipmentDeleteCommandTest {
         assertEquals(List.of(FIRST_MEMBER, SECOND_MEMBER), model.getMemberList());
         assertEquals(List.of(LEGACY_PERSON), model.getFilteredPersonList());
         assertEquals(DisplayRequest.equipment(), result.getDisplayRequest());
-        assertEquals("Deleted equipment: " + FIRST_EQUIPMENT.getUuid(), result.getFeedbackToUser());
+        assertEquals("Deleted equipment " + FIRST_EQUIPMENT.getUuid() + ": Camera.", result.getFeedbackToUser());
         assertFalse(result.isShowHelp());
         assertFalse(result.isExit());
     }
@@ -79,7 +79,8 @@ public class EquipmentDeleteCommandTest {
         CommandException error = assertThrows(
                 CommandException.class, () -> new EquipmentDeleteCommand(FIRST_EQUIPMENT.getUuid()).execute(model));
         assertInstanceOf(IllegalStateException.class, error.getCause());
-        assertEquals(String.format(EquipmentDeleteCommand.MESSAGE_OPEN_LOAN, FIRST_EQUIPMENT.getUuid()),
+        assertEquals("Cannot delete " + FIRST_EQUIPMENT.getUuid()
+                + " because it is assigned to A0234567R. Return the item first.",
                 error.getMessage());
         assertEquals(before, model.getAddressBook());
     }
@@ -133,7 +134,8 @@ public class EquipmentDeleteCommandTest {
         CommandException error = assertThrows(
                 CommandException.class, () -> new EquipmentDeleteCommand(FIRST_EQUIPMENT.getUuid()).execute(model));
         assertSame(failure, error.getCause());
-        assertEquals(String.format(EquipmentDeleteCommand.MESSAGE_OPEN_LOAN, FIRST_EQUIPMENT.getUuid()),
+        assertEquals("Cannot delete " + FIRST_EQUIPMENT.getUuid()
+                + " because it is assigned to A0123456X. Return the item first.",
                 error.getMessage());
         assertEquals(before, model.getAddressBook());
     }

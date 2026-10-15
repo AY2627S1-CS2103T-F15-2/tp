@@ -22,9 +22,10 @@ deletion only when the member has no open loans and removes that member's closed
 Other members, equipment, legacy persons and unrelated loans remain intact. Equal names
 with distinct NUS IDs remain independent.
 
-Success produces `Deleted member: A0123456X` and `DisplayRequest.members()`. Unknown IDs and
+Success produces `Deleted member A0123456X: Alex Tan.` and `DisplayRequest.members()`. Unknown IDs and
 open-loan references produce `CommandException` with an identity-specific message and the
-domain cause. Rejection preserves all model data. Return outstanding equipment before
+domain cause. Blocked deletion includes the current open-item count, excluding closed loans.
+Rejection preserves all model data. Return outstanding equipment before
 retrying a blocked deletion.
 
 ## Command contract

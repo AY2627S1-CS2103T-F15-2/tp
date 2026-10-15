@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import javax.imageio.ImageIO;
@@ -33,6 +34,9 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -97,6 +101,53 @@ public class MainWindowShellTest {
         FxTestUtil.runAndWait(() -> {
             window.dispose();
             window.getPrimaryStage().hide();
+        });
+    }
+
+    @Test
+    public void pastedMultilineNotes_realInput_preservesSeparatorsPersistsAndRetainsRejectedCorrection() {
+        FxTestUtil.runAndWait(() -> {
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            var previous = new HashMap<DataFormat, Object>();
+            for (DataFormat format : clipboard.getContentTypes()) {
+                Object value = clipboard.getContent(format);
+                if (value != null) {
+                    previous.put(format, value);
+                }
+            }
+            try {
+                for (String separator : List.of("\n", "\r\n", "\r", "\t", "\u000b", "\f",
+                        "\u0085", "\u2028", "\u2029")) {
+                    ClipboardContent content = new ClipboardContent();
+                    String command = "equipment add name/Camera category/Test condition/GOOD notes/First line"
+                            + separator + "Second line";
+                    content.putString(command);
+                    assertTrue(clipboard.setContent(content));
+                    field().selectAll();
+                    field().paste();
+                    assertTrue(field().getText().contains("First line Second line")
+                            || field().getText().contains("First line  Second line"));
+                    int saves = storage.saves;
+                    int dispatches = logic.commands.size();
+                    field().fireEvent(new ActionEvent());
+                    assertEquals("Success", label("feedbackStatus"), feedback());
+                    assertEquals("First line Second line", detailLabel("notes"));
+                    assertEquals(saves + 1, storage.saves);
+                    assertEquals(dispatches + 1, logic.commands.size());
+                    assertEquals(model.getAddressBook(), assertDoesNotThrow(() -> storage.readAddressBook())
+                            .orElseThrow());
+                }
+                ClipboardContent invalid = new ClipboardContent();
+                invalid.putString("equipment add name/Camera category/Test condition/GOOD notes/First\nunknown/value");
+                clipboard.setContent(invalid);
+                field().paste();
+                String correction = field().getText();
+                reject(correction);
+                assertTrue(feedback().startsWith("Unknown parameter: unknown/"));
+                assertEquals(field(), window.getPrimaryStage().getScene().getFocusOwner());
+            } finally {
+                clipboard.setContent(previous);
+            }
         });
     }
 

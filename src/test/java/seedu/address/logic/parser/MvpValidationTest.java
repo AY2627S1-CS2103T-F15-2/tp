@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.LogicManager;
+import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.ModelManager;
 import seedu.address.model.equipment.Condition;
@@ -86,6 +87,65 @@ public class MvpValidationTest {
         assertThrows(ParseException.class, () -> ParserUtil.parseNotes("note\u0000"));
         assertThrows(ParseException.class, () -> new EquipmentAddCommandParser()
                 .parse("name/Camera category/Test condition/GOOD notes/" + "n".repeat(301)));
+    }
+
+    @Test
+    public void equipmentNotes_fullCommandWithLineBreaks_normalizesAndPersistsWithoutJoiningWords() throws Exception {
+        ModelManager model = new ModelManager();
+        JsonAddressBookStorage disk = new JsonAddressBookStorage(directory.resolve("data.json"));
+        LogicManager logic = new LogicManager(model,
+                new StorageManager(disk, new JsonUserPrefsStorage(directory.resolve("prefs.json"))));
+        for (String separator : List.of("\n", "\r\n", "\r", "\t", "\u000b", "\f", "\u0085", "\u2028", "\u2029")) {
+            logic.execute("equipment add name/Camera category/Test condition/GOOD notes/First line"
+                    + separator + "Second line");
+            assertEquals("First line Second line", model.getEquipmentList().getLast().getNotes());
+        }
+        assertEquals(model.getAddressBook(), disk.readAddressBook().orElseThrow());
+        String saved = Files.readString(disk.getAddressBookFilePath());
+        assertThrows(ParseException.class, () -> logic.execute(
+                "equipment add name/Camera category/Test condition/GOOD notes/First line\nunknown/value"));
+        assertEquals(saved, Files.readString(disk.getAddressBookFilePath()));
+    }
+
+    @Test
+    public void feedback_realRoutes_reportsCurrentCountHolderAndDeletedNames() throws Exception {
+        ModelManager model = new ModelManager();
+        JsonAddressBookStorage disk = new JsonAddressBookStorage(directory.resolve("data.json"));
+        LogicManager logic = new LogicManager(model,
+                new StorageManager(disk, new JsonUserPrefsStorage(directory.resolve("prefs.json"))));
+        logic.execute("member add nus/A0000001X name/Alice Tan phone/91234567 email/alice@example.com");
+        logic.execute("member add nus/A0000002X name/Bob Tan phone/98765432 email/bob@example.com");
+        for (int item = 0; item < 3; item++) {
+            logic.execute("equipment add name/Camera " + item + " category/Test condition/GOOD");
+            UUID uuid = model.getEquipmentList().getLast().getUuid();
+            logic.execute("loans add uuid/" + uuid
+                    + " nus/A0000001X assigned/2026-01-01 expected/2026-01-02");
+        }
+        UUID first = model.getEquipmentList().getFirst().getUuid();
+        UUID second = model.getEquipmentList().get(1).getUuid();
+        UUID closed = model.getEquipmentList().getLast().getUuid();
+        logic.execute("loans return uuid/" + closed + " returned/2026-01-02");
+        String saved = Files.readString(disk.getAddressBookFilePath());
+        assertEquals("Cannot delete A0000001X because the member holds 2 item(s). Return the items first.",
+                assertThrows(CommandException.class, () -> logic.execute("member delete nus/A0000001X")).getMessage());
+        assertEquals("Cannot delete " + first + " because it is assigned to A0000001X. Return the item first.",
+                assertThrows(CommandException.class, () -> logic.execute("equipment delete uuid/" + first))
+                        .getMessage());
+        assertEquals("Equipment " + first + " is unavailable because it is assigned to A0000001X.",
+                assertThrows(CommandException.class, () -> logic.execute("loans add uuid/" + first
+                        + " nus/A0000002X assigned/2026-01-01 expected/2026-01-02")).getMessage());
+        assertEquals(saved, Files.readString(disk.getAddressBookFilePath()));
+        assertEquals(model.getAddressBook(), disk.readAddressBook().orElseThrow());
+        logic.execute("loans return uuid/" + first + " returned/2026-01-02");
+        assertEquals("Cannot delete A0000001X because the member holds 1 item(s). Return the items first.",
+                assertThrows(CommandException.class, () -> logic.execute("member delete nus/A0000001X")).getMessage());
+        logic.execute("loans return uuid/" + second + " returned/2026-01-02");
+        assertEquals("Deleted member A0000001X: Alice Tan.",
+                logic.execute("member delete nus/A0000001X").getFeedbackToUser());
+        assertEquals("Deleted equipment " + first + ": Camera 0.",
+                logic.execute("equipment delete uuid/" + first).getFeedbackToUser());
+        assertTrue(model.hasMember(new NusId("A0000002X")));
+        assertEquals(model.getAddressBook(), disk.readAddressBook().orElseThrow());
     }
 
     @Test

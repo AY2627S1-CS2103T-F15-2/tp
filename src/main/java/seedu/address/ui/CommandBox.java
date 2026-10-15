@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.Region;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -29,6 +30,12 @@ public class CommandBox extends UiPart<Region> {
     public CommandBox(CommandExecutor commandExecutor) {
         super(FXML);
         this.commandExecutor = requireNonNull(commandExecutor);
+        // TextField otherwise removes pasted line breaks and joins adjacent words. Replacing each
+        // character separately preserves edit offsets; field parsers collapse runs where appropriate.
+        commandTextField.setTextFormatter(new TextFormatter<>(change -> {
+            change.setText(change.getText().replaceAll("[\\t\\v]", " "));
+            return change;
+        }));
         // calls #setStyleToDefault() whenever there is a change to the text of the command box.
         commandTextField.textProperty().addListener((unused1, unused2, unused3) -> setStyleToDefault());
     }
