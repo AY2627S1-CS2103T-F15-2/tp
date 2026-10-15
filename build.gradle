@@ -94,7 +94,7 @@ dependencies {
 }
 
 shadowJar {
-    archiveFileName = 'addressbook.jar'
+    archiveFileName = 'Laplace.jar'
 }
 
 defaultTasks 'clean', 'test'

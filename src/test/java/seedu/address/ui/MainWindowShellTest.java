@@ -158,7 +158,7 @@ public class MainWindowShellTest {
             assertEquals("Laplace", window.getPrimaryStage().getTitle());
             if (Boolean.getBoolean("laplace.packagedShell")) {
                 assertTrue(MainWindow.class.getProtectionDomain().getCodeSource().getLocation().getPath()
-                        .endsWith("addressbook.jar"));
+                        .endsWith("Laplace.jar"));
                 for (String resource : List.of("MainWindow.fxml", "CommandBox.fxml", "ResultDisplay.fxml",
                         "LaplaceTheme.css", "MemberListPanel.fxml", "EquipmentListPanel.fxml", "LoanPanel.fxml",
                         "MemberDetailsPanel.fxml", "EquipmentDetailsPanel.fxml", "DetailsPanel.css")) {
@@ -176,7 +176,7 @@ public class MainWindowShellTest {
     }
 
     @Test
-    public void navigation_tabsAndLegacy_useRealRoutesExceptReadOnlyLoans() {
+    public void navigation_tabsAndMenu_exposesHelpExitAndPreservesLegacyTypedRoute() {
         FxTestUtil.runAndWait(() -> {
             model.addPerson(new PersonBuilder().withName("Legacy Person").build());
             AddressBook before = new AddressBook(model.getAddressBook());
@@ -189,8 +189,8 @@ public class MainWindowShellTest {
             assertEquals("1", label("openCount"));
             button("membersNavigation").fire();
             MenuButton menu = (MenuButton) window.getPrimaryStage().getScene().getRoot().lookup(".menu-button");
-            menu.getItems().stream().filter(item -> item.getText().equals("Legacy persons"))
-                    .findFirst().orElseThrow().fire();
+            assertEquals(List.of("Help", "Exit"), menu.getItems().stream().map(item -> item.getText()).toList());
+            submit("list");
             assertTrue(window.getPersonListPanel().getRoot().getParent() != null);
             layout();
             assertEquals(1, ((ListView<?>) node("personListView")).getItems().size());

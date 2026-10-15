@@ -22,7 +22,7 @@ earlier builds may not support every behavior described here. Laplace is a local
 2. Obtain the Laplace MVP JAR supplied by the team. Published builds are listed on the
    [team Releases page](https://github.com/AY2627S1-CS2103T-F15-2/tp/releases).
 3. Put the JAR in a folder you can write to. Keep the application and its data in this folder.
-4. Open a terminal in that folder and run `java -jar addressbook.jar`. Substitute the actual filename
+4. Open a terminal in that folder and run `java -jar Laplace.jar`. Substitute the actual filename
    if your supplied JAR has a different name. Keep the terminal open while using the application.
 5. On the first launch without a saved data file, Laplace provides sample records. Existing saved data
    takes precedence; restarting does not add another set of samples.
@@ -490,6 +490,10 @@ backup until you have checked members, equipment and current loans on the other 
 **Where is Help?** Enter `help` or press F1. Use `exit` for normal shutdown; saved window preferences are
 reused within usable screen bounds. These utilities are separate from the eleven member, equipment
 and loan commands, including `loans list`.
+
+The **Menu** contains **Help** and **Exit**. Help displays the address of the
+[Laplace User Guide](https://ay2627s1-cs2103t-f15-2.github.io/tp/UserGuide.html);
+use **Copy URL** to copy its address and open it in your browser.
 
 ## MVP limits
 
