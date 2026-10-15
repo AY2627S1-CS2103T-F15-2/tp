@@ -44,7 +44,7 @@ another owner's implementation.
 | --- | --- | --- |
 | Failed saves leave records unchanged | LogicManager executes against live Model before saving; current save-failure test observes in-memory mutation. | Separate Logic/storage/model transaction change, coordinated with the storage owner. |
 | Completed history excluded | LoanPanel still displays returned history. | Isaac's LoanPanel scope change; shell then verifies the real presentation. |
-| Updated value validation/normalization | Shared AB3 Name/Phone/Email and existing equipment parsers do not implement the new punctuation, length, international-phone, lowercase-email and whitespace rules. | Shared/model and parser owners must coordinate; retain legacy compatibility. |
+| Updated value validation/normalization | Shared person Name/Phone/Email and existing equipment parsers do not implement the new punctuation, length, international-phone, lowercase-email and whitespace rules. | Shared/model and parser owners must coordinate; retain legacy compatibility. |
 | UUID collision retry | EquipmentAddCommand currently rejects the first collision. | Arjo's command change, followed by routing/acceptance tests. |
 | Held-equipment ordering | MemberDetailsPanel currently uses the shared equipment category/name/UUID order; the MVP specifies expected return, name, then UUID. | Nicholas's detail-panel change; shell then verifies the merged order. |
 | Full typed-command scenario | All ten merged routes now pass the real shell lifecycle and fresh JSON reload tests. | Standalone interactive inspection and final-head team CI remain in Keith's #75 acceptance. |

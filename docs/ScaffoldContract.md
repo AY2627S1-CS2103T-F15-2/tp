@@ -5,7 +5,7 @@
 
 # Laplace shared scaffold contract
 
-This document is the authoritative contract for the member, equipment, and loan scaffold. The baseline was created from PR #54 commit `d27afec19dfd2d4cb156e6dff2f93731ba7b0562`. Existing AddressBook Level 3 persons, commands, and persisted person data must continue to work.
+This document is the authoritative contract for the member, equipment, and loan scaffold. The baseline was created from PR #54 commit `d27afec19dfd2d4cb156e6dff2f93731ba7b0562`. Existing person records, commands, and persisted person data must continue to work.
 
 Implementation status on the v1.3.2 branch, based on team master `900cee6fe5ce3aadbf3fba3be5dbff346d481409` (PR #85): domain collections, root integrity, command-facing Model operations and JSON persistence are implemented. Top-level Laplace family routing is connected; member/equipment list routes are active, while the other family routes still return explicit `NotImplementedCommand` results. Concrete add/delete commands and the v1.3.2 view commands/panels are implemented independently; route activation and shell integration remain separate work. The new v1.3 display and GUI contracts are documented separately in [GuiCommandContract.md](GuiCommandContract.md).
 
@@ -15,7 +15,7 @@ Implementation status on the v1.3.2 branch, based on team master `900cee6fe5ce3a
 - An `Equipment` item is identified by its `UUID`. Names do not establish identity.
 - Identity comparison and full-value equality remain separate operations.
 - Required constructor arguments reject `null`.
-- Member name, phone, and email continue to use the existing AB3 value objects and validation.
+- Member name, phone, and email continue to use the existing person value objects and validation.
 - Equipment `name` and `category` are required command inputs. Their parsers trim surrounding whitespace and reject a blank result. `notes` is optional; an omitted value becomes `""`. Domain constructors do not trim text.
 - A loan is open when `returnedDate` is absent. The Java representation of an absent return date is `null`, exposed through `Optional`.
 - `expectedReturnDate` must be on or after `assignedDate`. A present `returnedDate` must be on or after `assignedDate`. Same-day, early, and late returns are valid. `Loan` owns these intrinsic ordering rules. Whether a date is in the future relative to today is a command-level rule.
@@ -69,7 +69,7 @@ Failed writes leave the collection unchanged. Bulk setters validate the complete
 
 The implemented root model enforces the following contracts:
 
-- Preserve the legacy persons collection and all working AB3 paths.
+- Preserve the legacy persons collection and all working person-command paths.
 - Reject a loan whose member or equipment identity does not exist.
 - Block deletion only while the member or equipment is referenced by an open loan.
 - Remove related closed loans after a permitted member or equipment deletion.
@@ -114,7 +114,7 @@ Existing `persons` data remains supported. A missing or null new root array mean
 
 ## Parser contracts
 
-The shared Laplace prefixes are fixed as follows. Legacy AB3 prefixes keep their existing tokens.
+The shared Laplace prefixes are fixed as follows. Existing person-command prefixes keep their existing tokens.
 
 | Constant | Token |
 | --- | --- |
@@ -147,7 +147,7 @@ The table below records ownership of the completed scaffold foundation. For the 
 | Nicholas Vun (`kimjunkuno`) | `Model.java`, `ModelManager.java`, model tests and affected `Model` test doubles | Delegation tests using a controlled root model | Real root and calculator behavior is needed for final integration tests |
 | Nguyen Anh Duy (`duynguyen21007`) | `CliSyntax.java`, `ParserUtil.java`, `AddressBookParser.java`, three family parsers, `NotImplementedCommand.java`, focused tests | Parser utilities, routing, and non-mutation tests | Real commands replace placeholders later |
 
-Each owner should avoid editing another row's files without coordinating first. Test data should live in the owner's package-specific test utility instead of one shared fixture that all contributors must edit. Existing AB3 test doubles should gain only the methods needed by the interface compiler. No dependency-injection framework or mocking library is required.
+Each owner should avoid editing another row's files without coordinating first. Test data should live in the owner's package-specific test utility instead of one shared fixture that all contributors must edit. Existing compatibility test doubles should gain only the methods needed by the interface compiler. No dependency-injection framework or mocking library is required.
 
 ## Completion milestones
 

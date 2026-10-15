@@ -133,7 +133,7 @@ Optional<UUID> getEquipmentUuid();
 
 Methods above are public. Factories taking an identity reject null. Detail requests carry exactly their relevant identity; other requests carry neither. Implement value equality/hashCode and useful string output. Do not expose invalid combinations through a public raw constructor.
 
-Extend `CommandResult` with `CommandResult(String feedbackToUser, DisplayRequest displayRequest)` and non-null `getDisplayRequest()`. Preserve the existing one-argument and three-argument constructors and their feedback/help/exit behavior. For existing constructors use `legacyPersons()` as the display target so unchanged AB3 commands still show the legacy person list. Help/exit handling takes precedence and does not unnecessarily navigate. Include the new value in equality/hashCode; update owned tests deliberately. Laplace commands use the explicit display-request constructor.
+Extend `CommandResult` with `CommandResult(String feedbackToUser, DisplayRequest displayRequest)` and non-null `getDisplayRequest()`. Preserve the existing one-argument and three-argument constructors and their feedback/help/exit behavior. For existing constructors use `legacyPersons()` as the display target so existing person commands still show the legacy person list. Help/exit handling takes precedence and does not unnecessarily navigate. Include the new value in equality/hashCode; update owned tests deliberately. Laplace commands use the explicit display-request constructor.
 
 Add only these read-only methods to `Logic`, delegated by `LogicManager`:
 
@@ -167,7 +167,7 @@ public static ArgumentMultimap parse(String args, Set<Prefix> required,
         Set<Prefix> optional) throws ParseException;
 ```
 
-Use the prefix grammar and validation rules above, trim field values, reject null arguments, and reject overlapping required/optional sets as programmer misuse. Return the existing `ArgumentMultimap` so feature parsers reuse existing value parsers. Calling with both sets empty implements no-argument list parsing. This helper is Laplace-specific and must not change legacy AB3 parsing.
+Use the prefix grammar and validation rules above, trim field values, reject null arguments, and reject overlapping required/optional sets as programmer misuse. Return the existing `ArgumentMultimap` so feature parsers reuse existing value parsers. Calling with both sets empty implements no-argument list parsing. This helper is Laplace-specific and must not change existing person-command parsing.
 
 Add `CliSyntax.PREFIX_EQUIPMENT_NAME` as an alias of the existing `PREFIX_MEMBER_NAME` token (`name/`), preserving all existing constants. Do not use both aliases as different parameters in one parser.
 
@@ -206,7 +206,7 @@ Keith is the sole owner of minimal build/CI runtime adjustments required by the 
 
 Keith also supplies the shared test utility `seedu.address.testutil.FxTestUtil.runAndWait(Runnable action)` in his setup PR. It initializes the JavaFX toolkit once, executes on the FX thread, propagates assertions/exceptions, and does not shut down the toolkit between tests. Do not create six conflicting toolkit helpers. Headless/native-runtime failures must be reported, not silently converted into passing/skipped acceptance tests.
 
-The shell registers listeners once on members, equipment, loans and the existing filtered person list. Coalesce refreshes onto the JavaFX thread after the current mutation finishes, for example with one queued `Platform.runLater` refresh, so intermediate multi-list updates do not render inconsistent state. Detach listeners on disposal. Refresh the visible panel and related counts without duplicate callbacks or losing selection. Preserve a legacy person-list screen for existing AB3 commands; maintain existing public UI hooks unless a coordinated change is necessary.
+The shell registers listeners once on members, equipment, loans and the existing filtered person list. Coalesce refreshes onto the JavaFX thread after the current mutation finishes, for example with one queued `Platform.runLater` refresh, so intermediate multi-list updates do not render inconsistent state. Detach listeners on disposal. Refresh the visible panel and related counts without duplicate callbacks or losing selection. Preserve a legacy person-list screen for existing person commands; maintain existing public UI hooks unless a coordinated change is necessary.
 
 ## Ownership of shared files
 

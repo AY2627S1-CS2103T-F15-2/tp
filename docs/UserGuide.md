@@ -4,201 +4,459 @@
   pageNav: 3
 ---
 
-# AB-3 User Guide
+# Laplace User Guide
 
-AddressBook Level 3 (AB3) is a **desktop application for managing contacts, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). If you type quickly, AB3 can help you manage contacts faster than traditional GUI applications.
+Laplace helps a CCA EXCO member manage **members, equipment and equipment loans** on one computer.
+Type commands to register records, find an exact member or item, issue equipment, record returns and
+remove erroneous records. Lists and details show who holds each item and what each member holds.
 
-<!-- * Table of Contents -->
+This guide describes the **MVP release**. Use it with the matching release supplied by the team;
+earlier builds may not support every behavior described here. Laplace is a local, single-user application.
+
 <page-nav-print />
-
---------------------------------------------------------------------------------------------------------------------
 
 ## Quick start
 
-1. Ensure that Java `25` or later is installed on your computer.<br>
-   **Mac users:** Ensure you have the precise JDK version prescribed [here](https://se-education.org/guides/tutorials/javaInstallationMac.html).
+1. Install Java **25** for your operating system and processor architecture.
+2. Obtain the Laplace MVP JAR supplied by the team. Published builds are listed on the
+   [team Releases page](https://github.com/AY2627S1-CS2103T-F15-2/tp/releases).
+3. Put the JAR in a folder you can write to. Keep the application and its data in this folder.
+4. Open a terminal in that folder and run `java -jar addressbook.jar`. Substitute the actual filename
+   if your supplied JAR has a different name. Keep the terminal open while using the application.
+5. On the first launch without a saved data file, Laplace provides sample records. Existing saved data
+   takes precedence; restarting does not add another set of samples.
+6. Type `member list` in the command box and press **Enter**. Try `equipment list` next.
+7. Use `help` or **F1** to open Help, and `exit` to close the application normally.
 
-1. Download the latest `.jar` file from [here](https://github.com/se-edu/addressbook-level3/releases).
+![Laplace directory layout reference](images/Ui.png)
 
-1. Copy the file to the folder you want to use as the _home folder_ for your AddressBook.
+The image is a layout reference. Your rows, counts and selected record depend on your data.
+If startup fails, check the JAR filename and Java version and keep the terminal error for the team.
+Do not delete your data file to troubleshoot startup.
 
-1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
-   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
-   ![Ui](images/Ui.png)
+## Using the window
 
-1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
-   Some example commands you can try:
+- **Members** opens the member directory. **Equipment** opens the equipment directory.
+- The left panel contains selectable records. The right panel shows a directory summary or record
+  details. Startup selects the first member, when present, while leaving the summary visible.
+- Click a record, or focus its row and press **Enter** or **Space**, to open its details.
+  Identically named records remain distinguishable by NUS ID or equipment UUID.
+- The **Loans** tab shows current open assignments and links to their member and equipment.
+  Completed loan history is not a user-facing MVP feature. There is no `loans list` command.
+- The feedback area reports the last command's result. The command box and Enter hint appear below it.
+- At smaller sizes, use the list/detail scrollbars to reach long identifiers, notes and holdings.
 
-   * `list` : Lists all contacts.
+## Command format and feedback
 
-   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a contact named `John Doe` to the Address Book.
+Commands and prefixes are **lowercase and case-sensitive**. Use `member add`, not `Member Add`.
 
-   * `delete 3` : Deletes the 3rd contact shown in the current list.
+- Replace uppercase placeholders with your values: replace `NUS_ID` with `A0123456X`, for example.
+- Square brackets mean an optional parameter; do not type them. Only equipment notes are optional.
+- Put spaces between command words and parameters. Parameters may appear in any order; tabs also separate fields.
+- Each prefix may appear **at most once**, including `notes/`.
+- Leading/trailing whitespace is ignored. Runs of whitespace in text values become one ordinary space.
+- A value continues to the next parameter marker. A start-of-value or whitespace-delimited token such as
+  `notes/` or `unknown/` is reserved as a marker. Unknown markers are errors, even inside free text.
+  There is no quoting or escaping. An ordinary URL such as `https://example.com` is not a marker.
+- Use the full field names: `nus/`, `name/`, `phone/` and `email/`. Short alternatives are not accepted.
+- `member list` and `equipment list` take no arguments. Additional text or prefixes are rejected.
+- An empty or whitespace-only submission does nothing.
 
-   * `clear` : Deletes all contacts.
+On success, the input clears and the requested list/details view appears. Newly added records are selected
+and open in details. On failure, the command stays in the input box, focus returns there, and the current
+view and selection remain unchanged. Correct it and press Enter again. Only the first detected error is
+shown; another error may appear after correction. Rejected commands do not change records.
 
-   * `exit` : Exits the app.
+In feedback examples, `N` is the current count and uppercase placeholders such as `UUID`, `NUS_ID`
+and `EQUIPMENT_NAME` stand for the actual record values. `TODAY` is the computer's local date.
 
-1. Refer to the [Features](#features) section below for details of each command.
+### Shared field rules
 
---------------------------------------------------------------------------------------------------------------------
+| Field | Accepted input and stored form |
+| --- | --- |
+| NUS ID `nus/` | One ASCII letter, exactly seven digits, and an optional final ASCII letter. Case-insensitive; stored/displayed uppercase, such as `A0123456X` or `E0123456`. |
+| Member name `name/` | 1–100 characters after normalization. Unicode letters, spaces, apostrophes, hyphens and periods only; must contain at least one letter. Example: `Anne-Marie O'Connor`. |
+| Phone `phone/` | Optional leading `+`, then 8–15 digits. Spaces and hyphens are removed: `+65 9123-4567` becomes `+6591234567`. |
+| Email `email/` | 3–254 ASCII characters, one `@`, no spaces and at least one domain dot. Local-part characters: letters, digits, `.`, `_`, `%`, `+`, `-`. Domain labels contain letters/digits/hyphens and cannot begin/end with a hyphen. Stored lowercase. |
+| Equipment UUID `uuid/` | Full `8-4-4-4-12` hexadecimal form, such as `550e8400-e29b-41d4-a716-446655440000`. Case-insensitive input; lowercase display. Shortened UUIDs are rejected. |
+| Equipment name `name/` | 1–100 printable Unicode characters after whitespace normalization. Punctuation and model numbers are allowed; control characters are rejected. |
+| Category `category/` | 1–50 printable Unicode characters after normalization. Free text; control characters are rejected. |
+| Condition `condition/` | Exactly `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`, ignoring case. Stored uppercase. Use the underscore in `UNDER_REPAIR`. |
+| Notes `notes/` | Optional, at most 300 printable Unicode characters after trimming. Line breaks become spaces. Omitted or empty notes mean no notes. |
+| Dates | Exactly `yyyy-MM-dd` and a real Gregorian calendar date, such as `2026-10-15`. Assignment/actual-return dates cannot be later than the computer's local date. Expected return may be in the future. |
+
+Copy the actual UUID displayed by Laplace when issuing, viewing, returning or deleting equipment.
+The UUID in this guide is an example; it does not identify every newly added item.
+
+### Availability
+
+| Item state | Displayed availability | Can be assigned? |
+| --- | --- | --- |
+| Has an open loan, regardless of condition | `ASSIGNED` | No |
+| No open loan and condition `GOOD` or `FAIR` | `AVAILABLE` | Yes |
+| No open loan and condition `DAMAGED` or `UNDER_REPAIR` | `UNAVAILABLE` | No |
+
+You do not enter availability or a holder manually. Laplace derives both from the item and its open loan.
+A member can hold multiple different items; one physical item can have only one open loan.
+
+### Correcting common errors
+
+| Problem | What to do |
+| --- | --- |
+| Missing or blank required field | Supply a nonempty value for every required prefix shown in the command's usage. |
+| Repeated prefix | Keep one occurrence of that prefix, including optional notes. |
+| Unknown parameter or unexpected text | Remove the unrecognized marker or text before the first parameter. Check the full prefix names. |
+| Invalid field | Follow the field rule above and the displayed field-specific explanation. |
+| Unknown identity | Copy the full NUS ID or UUID from its list. Names and row numbers are not identifiers. |
+| Command rejected by a loan rule | Return an assigned item before deleting its member/item or assigning that item again. |
+| Data cannot be saved | Check that the application folder/data file are writable, correct the file-access problem, then retry. Failed MVP mutations leave records unchanged. |
 
 ## Features
 
-<box type="info" seamless>
+### Add a member: `member add`
 
-**Notes about the command format:**<br>
+Create one active member with a unique, immutable NUS ID.
 
-* Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
-  For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
+```text
+member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL
+```
 
-* Items in square brackets are optional.<br>
-  For example, `n/NAME [t/TAG]` can be used as `n/John Doe t/friend` or as `n/John Doe`.
-
-* Items followed by `...` can appear zero or more times.<br>
-  For example, `[t/TAG]... ` may be omitted, or written as `t/friend` or `t/friend t/family`.
-
-* Parameters can be in any order.<br>
-  For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
-
-* Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
-  For example, `help 123` is interpreted as `help`.
-
-* If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
-</box>
-
-### Viewing help: `help`
-
-Shows a message explaining how to access the help page.
-
-![help message](images/helpMessage.png)
-
-Format: `help`
-
-
-### Adding a person: `add`
-
-Adds a person to the address book.
-
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... `
-
-<box type="tip" seamless>
-
-**Tip:** A person can have any number of tags, including zero.
-</box>
+All four parameters are required and follow the shared field rules. No address is required.
 
 Examples:
-* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
-* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
 
-### Listing all persons: `list`
+```text
+member add nus/A0123456X name/Alex Tan phone/91234567 email/alex.tan@u.nus.edu
+member add email/siti@u.nus.edu name/Siti Nur phone/+65 8123-4567 nus/E0123456
+```
 
-Shows a list of all persons in the address book.
+Success adds the member, selects the new row and opens details showing the normalized values.
+For the first example, the result is `New member added: Alex Tan (A0123456X)`.
 
-Format: `list`
+Two members are duplicates **only when their normalized NUS IDs are equal**. Different IDs can share
+a name, phone or email. A duplicate is rejected with a message such as:
+`A member with NUS ID A0123456X already exists.`
 
-### Editing a person: `edit`
+Missing, blank, malformed, repeated or unknown parameters are rejected. Failure creates no member and
+preserves the current view/selection. If saving fails, correct file access and retry the retained command.
 
-Edits an existing person in the address book.
+### List members: `member list`
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]... `
+```text
+member list
+```
 
-* Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
-* At least one of the optional fields must be provided.
-* Existing values will be updated to the input values.
-* When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
-* To remove all of a person's tags, enter `t/` without a tag after it.
+Show every active member, ordered by normalized name and then NUS ID. Each row shows the member's name,
+NUS ID, phone, email and **Items Held** count. All stored members are active; archiving is not supported.
+The directory summary shows the active/displayed counts, sorting and selection.
+
+The result is `Listed N active members.` If there are no records, the list displays:
+`No members yet. Use member add to get started.`
+
+This command takes no parameters. For example, `member list nus/A0123456X` is rejected; use
+`member view nus/A0123456X` for an exact lookup. A syntax failure leaves the current screen unchanged.
+Inconsistent stored data produces an error rather than a partial list.
+
+### View a member and their equipment: `member view`
+
+```text
+member view nus/NUS_ID
+```
+
+Example: `member view nus/a0123456x` finds the same identity as `member view nus/A0123456X`.
+
+Details show the NUS ID, name, phone, email and current held-item count. The **Held Equipment** section
+shows each open loan's full equipment UUID, name, assignment date and expected return date. Items are
+ordered by **expected return date, equipment name, then UUID**. Returned items are not current holdings.
+The matching member row is selected when the member list is visible.
+
+Example feedback: `Viewing member: Alex Tan (A0123456X). Currently holds N item(s).`
+With no current loans, the holdings section says `This member currently holds no equipment.`
+
+| Situation | Result or correction |
+| --- | --- |
+| ID exists | Open that exact member's details; equal names do not affect lookup. |
+| ID is well formed but does not exist | `No member with NUS ID NUS_ID exists.` Copy an existing ID from `member list`. |
+| ID is incomplete or malformed | Correct it using the shared NUS ID rule. A well-formed shorter ID is still an exact identity, not a partial-name or partial-ID search. |
+| Required parameter is missing, repeated or unknown | Correct the command to `member view nus/NUS_ID`. |
+| A current loan refers to missing equipment | Report inconsistent stored loan data; do not show an incomplete holdings list. |
+
+Failed viewing preserves the previous details and selection. This command covers both exact-ID lookup
+and viewing a member's equipment; no separate member-find or member-loans command is needed.
+
+### Delete a member: `member delete`
+
+```text
+member delete nus/NUS_ID
+```
+
+Example: `member delete nus/A0123456X`.
+
+Delete one exact member **only if they currently hold no equipment**. Equal-name members with other
+IDs remain. Success removes the member from lists/details and permanently removes closed loans that
+refer to that member. Unrelated members, equipment and loans are preserved.
+
+Example feedback: `Deleted member A0123456X: Alex Tan.` The directory appears with a surviving selection,
+or an empty state when no members remain. Stale details for the deleted member are removed.
+
+| Situation | Result or correction |
+| --- | --- |
+| Member holds equipment | `Cannot delete NUS_ID because the member holds N item(s). Return the items first.` Use `member view` to identify them. |
+| Member does not exist | `No member with NUS ID NUS_ID exists.` Check `member list`. |
+| Malformed/missing/repeated/unknown parameter | Correct the identity or syntax and retry. |
+| Saving fails | No records change. Correct file access before retrying. |
+
+Deletion is permanent: the MVP has no undo, restore or archive operation. Return all outstanding items
+with `loans return` before retrying a blocked deletion. A failed deletion preserves the member and loans.
+
+### Add equipment: `equipment add`
+
+Register one physical item and let Laplace generate its immutable UUID.
+
+```text
+equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES]
+```
+
+`name/`, `category/` and `condition/` are required. Notes are optional; `notes/` with no value also means
+no notes. Do not supply `uuid/`, a holder or availability. Follow the shared text limits and condition rules.
 
 Examples:
-*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
 
-### Locating persons by name: `find`
+```text
+equipment add name/Canon EOS R50 category/Camera condition/GOOD notes/Includes battery and strap
+equipment add name/Tripod category/Camera Support condition/fair
+```
 
-Finds persons whose names contain any of the given keywords.
+Success creates one item, selects its row and opens its details. Feedback includes the generated UUID
+and name, for example:
+`New equipment added: Canon EOS R50 (550e8400-e29b-41d4-a716-446655440000), availability: AVAILABLE`.
+Copy the **actual generated UUID**, which will normally differ from that example, for later commands.
 
-Format: `find KEYWORD [MORE_KEYWORDS]`
+GOOD/FAIR items start as AVAILABLE. DAMAGED/UNDER_REPAIR items can be registered but start UNAVAILABLE.
+Otherwise identical items are allowed: two cameras with the same description are separate physical units
+with different UUIDs. Laplace silently retries a generated UUID collision; if it cannot obtain a unique
+identifier, it reports an error without adding an item. A save failure also commits no new item.
 
-* The search is case-insensitive; for example, `hans` matches `Hans`.
-* Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
-* The search considers only names.
-* Only full words match; for example, `Han` does not match `Hans`.
-* Persons matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
+### List equipment: `equipment list`
 
-Examples:
-* `find John` returns `john` and `John Doe`
-* `find alex david` returns `Alex Yeoh`, `David Li`<br>
-  ![result for 'find alex david'](images/findAlexDavidResult.png)
+```text
+equipment list
+```
 
-### Deleting a person: `delete`
+Show every equipment item, ordered by normalized **category, name, then UUID**. Rows expose the UUID,
+name, category, condition, derived availability and current holder when assigned. An unassigned item has
+no current holder. Identical descriptions remain separate rows.
 
-Deletes the specified person from the address book.
+Feedback is `Listed N equipment items.` An empty list displays:
+`No equipment yet. Use equipment add to get started.`
 
-Format: `delete INDEX`
+No parameters are accepted. Use `equipment view uuid/UUID` to look up one item. Syntax errors preserve
+the current view. Inconsistent loan references produce an error rather than a partial or misleading
+availability list.
 
-* Deletes the person at the specified `INDEX`.
-* The index refers to the index number shown in the displayed person list.
-* The index **must be a positive integer** 1, 2, 3, ...
+### View equipment and its holder: `equipment view`
 
-Examples:
-* `list` followed by `delete 2` deletes the 2nd person in the address book.
-* `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+```text
+equipment view uuid/UUID
+```
 
-### Clearing all entries: `clear`
+Example: `equipment view uuid/550e8400-e29b-41d4-a716-446655440000`.
+Uppercase hexadecimal letters identify the same UUID. You must use the complete UUID; shortened forms
+and partial matching are not supported.
 
-Clears all entries from the address book.
+Details show the full UUID, name, category, condition, notes and derived availability. An open loan also
+shows the holder's NUS ID, name, phone and email, plus assignment and expected return dates. The matching
+equipment row is selected when its list is visible. Long notes wrap and scroll with the details.
 
-Format: `clear`
+| Item state | Example feedback |
+| --- | --- |
+| Has an open loan | `Viewing equipment: EQUIPMENT_NAME (UUID). Availability: ASSIGNED.` |
+| Has no open loan and condition is GOOD/FAIR | `Viewing equipment: EQUIPMENT_NAME (UUID). Availability: AVAILABLE.` |
+| Has no open loan and condition is DAMAGED/UNDER_REPAIR | `Viewing equipment: EQUIPMENT_NAME (UUID). Availability: UNAVAILABLE.` |
 
-### Exiting the program: `exit`
+With no open loan, there is no holder and no current loan dates; old holder details are cleared after
+return. A missing UUID produces `No equipment with UUID UUID exists.` Malformed UUIDs show the shared
+validation error. Missing/repeated/unknown parameters are rejected. An open loan referring to a missing
+member produces an inconsistent-data error instead of incomplete holder information. Failure leaves the
+previous view and selection unchanged.
 
-Exits the program.
+### Delete equipment: `equipment delete`
 
-Format: `exit`
+```text
+equipment delete uuid/UUID
+```
 
-### Saving the data
+Example: `equipment delete uuid/550e8400-e29b-41d4-a716-446655440000`.
 
-AddressBook automatically saves data after every command. You do not need to save manually.
+Permanently delete one exact item **only when it has no open loan**. Its condition does not prevent
+deletion. Success removes the item and its associated closed loans, leaving unrelated records intact.
+Feedback includes the identity and name: `Deleted equipment UUID: EQUIPMENT_NAME.` The equipment
+directory appears with a surviving selection or an empty state; deleted-item details disappear.
 
-### Editing the data file
+| Situation | Result or correction |
+| --- | --- |
+| Item is on loan | `Cannot delete UUID because it is assigned to NUS_ID. Return the item first.` View it to confirm the holder. |
+| UUID does not exist | `No equipment with UUID UUID exists.` Copy an existing UUID from `equipment list`. |
+| UUID or syntax is invalid | Correct the full UUID/required prefix and retry. |
+| Saving fails | The item and loan records remain unchanged. Correct file access and retry. |
 
-AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+Deleting one UUID never deletes other items with the same description. Deletion cannot be undone.
 
-<box type="warning" seamless>
+### Assign equipment: `loans add`
 
-**Caution:**
-If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command (AddressBook saves after every command). Still, we recommend backing up the file before editing it.<br>
-Furthermore, certain edits can cause the AddressBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
-</box>
+Assign one AVAILABLE physical item to an existing member.
 
-### Archiving data files `[coming in v2.0]`
+```text
+loans add uuid/UUID nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE
+```
 
-_Details coming soon ..._
+All four parameters are required. Use the actual UUID from `equipment list` and the NUS ID from
+`member list`. Both identities must exist. Assignment must be on or before the computer's local date;
+expected return must be on or after assignment. Expected return may be in the future.
 
---------------------------------------------------------------------------------------------------------------------
+Example, assuming these identities exist and the assignment date is not in the future:
+
+```text
+loans add uuid/550e8400-e29b-41d4-a716-446655440000 nus/A0123456X assigned/2026-09-14 expected/2026-09-21
+```
+
+Success creates an open loan and immediately changes availability to ASSIGNED. Equipment details show
+the holder/dates; the member's current holdings and item count update. Feedback is:
+`Assigned EQUIPMENT_NAME (UUID) to MEMBER_NAME (NUS_ID) on ASSIGNMENT_DATE; expected return: EXPECTED_RETURN_DATE.`
+
+A member may hold several different items. Assigning an already assigned item is rejected, even if the
+new loan names the same member. Reaching the expected return date does not automatically return an item.
+
+| Situation | Result or correction |
+| --- | --- |
+| Equipment/member does not exist | `No equipment with UUID UUID exists.` or `No member with NUS ID NUS_ID exists.` Check the corresponding list. |
+| Item already has an open loan | `Equipment UUID is unavailable because it is assigned to CURRENT_NUS_ID.` Return it before assigning it again. |
+| Condition is DAMAGED/UNDER_REPAIR | `Equipment UUID is unavailable (condition: CONDITION).` Choose an AVAILABLE item. |
+| Expected date precedes assignment | `Expected return date cannot be before assigned date` |
+| Assignment is in the future | `Assigned date cannot be after today (TODAY).` Check your entry and the computer's date. |
+| Field syntax/date is invalid | Correct the first reported parameter and retry; use a real `yyyy-MM-dd` date. |
+| Saving fails | No loan is recorded and no records change; correct file access before retrying. |
+
+On failure, no loan is created. Availability, holder, holdings, view and selection stay unchanged.
+
+### Return equipment: `loans return`
+
+```text
+loans return uuid/UUID returned/ACTUAL_RETURN_DATE
+```
+
+Both parameters are required. The equipment must exist and have an open loan. Its referenced member
+must also exist. The return date must be **from the assignment date through the computer's local date**,
+inclusive. Same-day, early and late returns are valid; the expected return date does not limit returns.
+
+Example, for the assignment above and a computer date on or after 20 September 2026:
+
+```text
+loans return uuid/550e8400-e29b-41d4-a716-446655440000 returned/2026-09-20
+```
+
+Success records the actual return date and closes that item's open loan. Equipment details clear its
+holder/loan dates, the item leaves the member's current holdings, and open-loan counts refresh.
+Availability becomes AVAILABLE for GOOD/FAIR, or UNAVAILABLE for DAMAGED/UNDER_REPAIR.
+Feedback is `Returned EQUIPMENT_NAME (UUID) from MEMBER_NAME (NUS_ID) on ACTUAL_RETURN_DATE.`
+
+| Situation | Result or correction |
+| --- | --- |
+| Equipment does not exist | `No equipment with UUID UUID exists.` Check the full UUID. |
+| No open loan, including an already returned item | `Equipment UUID has no open loan to return.` A repeated return is rejected. |
+| Return is before assignment | `Returned date cannot be before assigned date` |
+| Return is in the future | `Returned date cannot be after today (TODAY).` |
+| Missing/repeated/unknown field or invalid date | Correct the reported parameter and use the full command syntax. |
+| Open loan refers to a missing member | `Cannot return equipment UUID: its open loan refers to a missing member.` Preserve the data and report the error to the team. |
+| Saving fails | No return is recorded and no records change; correct file access and retry. |
+
+A rejected return leaves the loan, return date, holder and availability unchanged. Closing a loan retains
+its record internally; the MVP does not provide a completed-history screen.
+
+## A complete issue-and-return workflow
+
+Use a new member ID if the example ID already exists. The dates below are examples for a computer date
+on or after 20 September 2026; choose valid actual dates for your own operation.
+
+1. Register the member:
+   `member add nus/A0456789B name/Mei Tan phone/91234567 email/mei@example.com`.
+2. Register an item:
+   `equipment add name/Camera Kit category/Photography condition/GOOD notes/Includes strap`.
+3. Copy the UUID generated in step 2. **Replace `UUID` in the remaining steps with that value.**
+4. Assign it:
+   `loans add uuid/UUID nus/A0456789B assigned/2026-09-14 expected/2026-09-21`.
+5. Run `member view nus/A0456789B` and `equipment view uuid/UUID`. Check the holdings, holder and dates.
+6. Return it: `loans return uuid/UUID returned/2026-09-20`.
+7. View both records again. The member has no current holding for this item; the GOOD item is AVAILABLE.
+8. If these were erroneous/test records, remove them with `equipment delete uuid/UUID` and
+   `member delete nus/A0456789B`. Delete only records you intend to remove permanently.
+
+## Saving, file access and recovery
+
+Successful changes save automatically; there is no manual-save command. By default, data is stored in
+`data/addressbook.json` under the folder from which Laplace is launched. Keep launching from the same
+folder to use the same data. The window's status area identifies its configured data-file path.
+
+For the six MVP mutation commands, a failed save leaves the live records and previously saved data
+unchanged. An error is not a successful addition, deletion, assignment or return. The command remains
+available for correction. Fix the folder/file access problem, then retry. Do not repeatedly resubmit a
+successful command: duplicate members, already-assigned items and repeated returns are rejected.
+
+Data includes members, equipment and open/closed loan records. Availability and holders are derived;
+do not try to maintain separate holder/availability fields. Deleting a permitted member/item also
+permanently deletes its related closed loans. There is no recovery feature for that deletion.
+
+Back up the data file while Laplace is closed. Do not edit it while the app is running or run multiple
+instances against the same file. Manual data editing is not an MVP operation. If startup or a view
+reports invalid/inconsistent data, preserve the original file and report the message; do not overwrite
+it with an empty file or assume that an incomplete view is safe to use.
 
 ## FAQ
 
-**Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous AddressBook home folder.
+**Why are two identical equipment items shown?** Each physical unit has its own UUID. Equal names,
+categories, conditions and notes are allowed. Use the UUID to choose the unit you mean.
 
---------------------------------------------------------------------------------------------------------------------
+**How do I find a member or current holder?** Use `member view nus/NUS_ID` for exact member details and
+holdings, or `equipment view uuid/UUID` for an exact item and its current holder. Partial/fuzzy searches
+and separate member-find/holder commands are outside the MVP.
 
-## Known issues
+**Why can I not delete a record?** A member with an open loan or equipment currently on loan cannot be
+deleted. Return the relevant items first. Closed loans do not block deletion and are cleaned up with it.
 
-1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+**Can I register broken equipment?** Yes. DAMAGED/UNDER_REPAIR records are UNAVAILABLE and cannot be
+assigned. The MVP does not include editing condition or other existing record fields.
 
---------------------------------------------------------------------------------------------------------------------
+**Does an overdue loan close itself?** No. Record an actual return using `loans return`. A return later
+than expected is valid if it is no earlier than assignment and no later than the computer's local date.
+
+**How do I move my data?** Close Laplace, back up the data file, copy it to the other computer's chosen
+Laplace folder at the configured data path, and launch the matching release there. Keep the original
+backup until you have checked members, equipment and current loans on the other computer.
+
+**Where is Help?** Enter `help` or press F1. Use `exit` for normal shutdown; saved window preferences are
+reused within usable screen bounds. These are application utilities, separate from the ten MVP commands.
+
+## MVP limits
+
+The MVP excludes record editing, archiving/restoring deleted records, separate find/member-loans/holder
+commands, completed loan-history viewing, import/export, undo/redo, batch operations, fuzzy search,
+filters, user-selected sorting and automatic overdue notifications. Copying a backup file while the app
+is closed is a file-management task, not an import/export command. Data is local to one operator;
+authentication and concurrent multi-user operation are not provided.
 
 ## Command summary
 
-Action     | Format, Examples
------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
-**Clear**  | `clear`
-**Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
-**Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
-**List**   | `list`
-**Help**   | `help`
+| Task | Format |
+| --- | --- |
+| Add member | `member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL` |
+| List members | `member list` |
+| View member and current holdings | `member view nus/NUS_ID` |
+| Delete member | `member delete nus/NUS_ID` |
+| Add equipment | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES]` |
+| List equipment | `equipment list` |
+| View equipment and current holder | `equipment view uuid/UUID` |
+| Delete equipment | `equipment delete uuid/UUID` |
+| Assign equipment | `loans add uuid/UUID nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |
+| Return equipment | `loans return uuid/UUID returned/ACTUAL_RETURN_DATE` |
+
+Application utilities: `help` (or F1) opens Help; `exit` closes Laplace.

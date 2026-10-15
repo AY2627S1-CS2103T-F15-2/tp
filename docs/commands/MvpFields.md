@@ -1,6 +1,6 @@
 # MVP fields and failure behavior
 
-These rules apply to newly entered Laplace commands. Existing AB3 person commands retain their
+These rules apply to newly entered Laplace commands. Existing person commands retain their
 original rules. Previously saved member/equipment values remain readable and are not normalized
 or rewritten merely by loading the file.
 

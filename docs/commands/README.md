@@ -32,7 +32,7 @@ rejection and save failures preserve all records; rejected operations do not sav
 writes and failed replacements preserve the prior data file and useful I/O causes. See
 [MVP fields and failure behavior](MvpFields.md) for normalization and ordered diagnostics.
 
-Existing AB3 person commands and data remain supported. No `loans list` CLI command is
+Existing person commands and data remain supported. No `loans list` CLI command is
 introduced; the Loans tab is a read-only presentation of current open loans only. Closed records remain stored without a history presentation.
 
 ## Loan rules
@@ -54,5 +54,5 @@ history. Open loans block deletion; permitted deletion removes associated closed
 ModelManager and temporary-file JSON storage. It checks automatic saving/reload, distinct
 same-name identities, loan lifecycle/holdings/availability, invalid parameter and business
 rejection without writes, and save-error propagation. The member/equipment routing and
-legacy AB3 compatibility scenarios are also retained. Full GUI navigation, refresh and
+legacy person-command compatibility scenarios are also retained. Full GUI navigation, refresh and
 packaged-window acceptance remain tracked separately in milestone integration issue #75.

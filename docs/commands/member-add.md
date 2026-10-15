@@ -14,7 +14,7 @@ ASCII syntax and are stored lowercase. Text whitespace is collapsed. See [MVP fi
 Different NUS IDs may share names and contacts. A duplicate normalized ID is rejected. Supplied fields
 are validated in reading order; unknown/repeated markers, blank required values and unexpected preamble
 are rejected. Missing fields are reported afterward in lexicographic prefix order. Legacy `n/`, `p/`
-and `e/` are not member aliases; their separate AB3 commands and saved values remain compatible.
+and `e/` are not member aliases; their separate person commands and saved values remain compatible.
 
 Success selects the new identity and opens real member details. LogicManager stages the addition,
 atomically saves the candidate, then publishes it through the existing live root. A failed save leaves
