@@ -1,6 +1,7 @@
 package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -60,36 +61,32 @@ public class LoanPanelTest {
     public void constructor_emptyBook_showsZeroCountsAndMeaningfulEmptySections() {
         FxTestUtil.runAndWait(() -> {
             LoanPanel panel = panel(new AddressBook());
-            assertCounts(panel, 0, 0);
+            assertOpenCount(panel, 0);
             Label openEmpty = (Label) section(panel, "openLoans").getChildren().get(0);
-            Label historyEmpty = (Label) section(panel, "loanHistory").getChildren().get(0);
             assertEquals("No open loans. Available equipment is ready to assign.",
                     openEmpty.getText());
-            assertEquals("No returned loans yet. Completed loans will appear here.",
-                    historyEmpty.getText());
+            assertEquals(null, panel.getRoot().lookup("#loanHistory"));
         });
     }
 
     @Test
-    public void constructor_mixedLoans_rendersStoredIdentitiesDatesAndStatusInSeparateSections() {
+    public void constructor_mixedLoans_showsOnlyOpenIdentitiesDatesAndPreservesStoredHistory() {
         FxTestUtil.runAndWait(() -> {
             AddressBook data = mixedBook();
             AddressBook before = new AddressBook(data);
             LoanPanel panel = panel(data);
-            assertCounts(panel, 2, 3);
+            assertOpenCount(panel, 2);
             VBox openRow = row(panel, "openLoans", 0);
             assertEquals("Camera\nUUID: " + FIRST_UUID, equipmentButton(openRow).getText());
             assertEquals("Alex Tan\nNUS ID: " + FIRST_MEMBER.getNusId(), memberButton(openRow).getText());
-            assertEquals(List.of("Assigned: 2026-10-01", "Expected return: 2026-10-08",
-                    "Returned: Not yet returned"), dates(openRow));
+            assertEquals(List.of("Assigned: 2026-10-01", "Expected return: 2026-10-08"), dates(openRow));
             assertEquals("Open loan", ((Label) openRow.lookup(".loan-status")).getText());
             assertTrue(openRow.lookup(".loan-status").getStyleClass().contains("loan-open-status"));
 
-            VBox historyRow = row(panel, "loanHistory", 0);
-            assertEquals("Returned", ((Label) historyRow.lookup(".loan-status")).getText());
-            assertTrue(historyRow.lookup(".loan-status").getStyleClass().contains("loan-returned-status"));
-            assertEquals(List.of("Assigned: 2026-09-21", "Expected return: 2026-09-26",
-                    "Returned: 2026-09-29"), dates(historyRow));
+            assertEquals(3, data.getLoanList().stream().filter(loan -> !loan.isOpen()).count());
+            assertEquals(2, panel.getRoot().lookupAll(".loan-row").size());
+            assertFalse(panel.getRoot().lookupAll(".label").stream().map(node -> ((Label) node).getText())
+                    .anyMatch(text -> text.contains("Returned")));
             assertEquals(before, data);
         });
     }
@@ -99,7 +96,7 @@ public class LoanPanelTest {
         FxTestUtil.runAndWait(() -> {
             LoanPanel panel = panel(mixedBook());
             assertEquals(List.of(FIRST_UUID, SECOND_UUID), equipmentIds(panel, "openLoans"));
-            assertEquals(List.of(FIRST_UUID, SECOND_UUID, FIRST_UUID), equipmentIds(panel, "loanHistory"));
+            assertEquals(null, panel.getRoot().lookup("#loanHistory"));
             assertEquals("Alex Tan\nNUS ID: " + SECOND_MEMBER.getNusId(),
                     memberButton(row(panel, "openLoans", 1)).getText());
             assertEquals("Camera\nUUID: " + SECOND_UUID, equipmentButton(row(panel, "openLoans", 1)).getText());
@@ -119,7 +116,7 @@ public class LoanPanelTest {
             equipmentButton(row(panel, "openLoans", 1)).fire();
             assertEquals(List.of(SECOND_UUID), equipmentSelections);
             assertTrue(memberSelections.isEmpty());
-            memberButton(row(panel, "loanHistory", 0)).fire();
+            memberButton(row(panel, "openLoans", 0)).fire();
             assertEquals(List.of(FIRST_MEMBER.getNusId()), memberSelections);
             panel.refresh();
             panel.refresh();
@@ -139,15 +136,15 @@ public class LoanPanelTest {
             Loan original = model.findOpenLoan(FIRST_UUID).orElseThrow();
             model.closeLoan(FIRST_UUID, ASSIGNED.plusDays(2));
             panel.refresh();
-            assertCounts(panel, 1, 4);
+            assertOpenCount(panel, 1);
             assertEquals(List.of(SECOND_UUID), equipmentIds(panel, "openLoans"));
-            assertEquals("Returned: 2026-10-03", dates(row(panel, "loanHistory", 0)).get(2));
+            assertEquals(4, model.getLoanList().stream().filter(loan -> !loan.isOpen()).count());
             assertTrue(original.isOpen());
 
             model.addLoan(new Loan(FIRST_UUID, SECOND_MEMBER.getNusId(), ASSIGNED.plusDays(3),
                     ASSIGNED.plusDays(9), null));
             panel.refresh();
-            assertCounts(panel, 2, 4);
+            assertOpenCount(panel, 2);
             assertEquals(List.of(SECOND_UUID, FIRST_UUID), equipmentIds(panel, "openLoans"));
             assertEquals("Alex Tan\nNUS ID: " + SECOND_MEMBER.getNusId(),
                     memberButton(row(panel, "openLoans", 1)).getText());
@@ -164,9 +161,9 @@ public class LoanPanelTest {
             model.closeLoan(FIRST_UUID, ASSIGNED);
             model.deleteEquipment(FIRST_ITEM);
             panel.refresh();
-            assertCounts(panel, 1, 1);
+            assertOpenCount(panel, 1);
             assertEquals(List.of(SECOND_UUID), equipmentIds(panel, "openLoans"));
-            assertEquals(List.of(SECOND_UUID), equipmentIds(panel, "loanHistory"));
+            assertEquals(1, model.getLoanList().stream().filter(loan -> !loan.isOpen()).count());
         });
     }
 
@@ -182,15 +179,15 @@ public class LoanPanelTest {
             replacement.addLoan(openLoan(FIRST_UUID, FIRST_MEMBER));
             data.resetData(replacement);
             panel.refresh();
-            assertCounts(panel, 1, 0);
+            assertOpenCount(panel, 1);
             assertEquals("Updated Camera\nUUID: " + FIRST_UUID, equipmentButton(row(panel, "openLoans", 0)).getText());
             assertEquals("Jamie Lim\nNUS ID: " + FIRST_MEMBER.getNusId(),
                     memberButton(row(panel, "openLoans", 0)).getText());
             data.resetData(new AddressBook());
             panel.refresh();
-            assertCounts(panel, 0, 0);
+            assertOpenCount(panel, 0);
             assertTrue(section(panel, "openLoans").getChildren().get(0) instanceof Label);
-            assertTrue(section(panel, "loanHistory").getChildren().get(0) instanceof Label);
+            assertEquals(null, panel.getRoot().lookup("#loanHistory"));
         });
     }
 
@@ -202,9 +199,12 @@ public class LoanPanelTest {
             data.addEquipment(FIRST_ITEM);
             data.addLoan(new Loan(FIRST_UUID, FIRST_MEMBER.getNusId(), ASSIGNED, ASSIGNED, ASSIGNED));
             LoanPanel panel = panel(data);
-            assertCounts(panel, 0, 1);
+            assertOpenCount(panel, 0);
             assertTrue(section(panel, "openLoans").getChildren().get(0) instanceof Label);
-            assertEquals("Returned: 2026-10-01", dates(row(panel, "loanHistory", 0)).get(2));
+            assertEquals(1, data.getLoanList().size());
+            assertFalse(data.getLoanList().getFirst().isOpen());
+            assertEquals(ASSIGNED, data.getLoanList().getFirst().getReturnedDate().orElseThrow());
+            assertTrue(panel.getRoot().lookupAll(".loan-row").isEmpty());
         });
     }
 
@@ -217,7 +217,7 @@ public class LoanPanelTest {
                     List<NusId> memberSelections = new ArrayList<>();
                     ReadOnlyAddressBook data = new InconsistentBook(missingMember, missingEquipment);
                     LoanPanel panel = panel(data, equipmentSelections::add, memberSelections::add);
-                    assertCounts(panel, 1, 0);
+                    assertOpenCount(panel, 1);
                     VBox openRow = row(panel, "openLoans", 0);
                     Button equipmentLink = equipmentButton(openRow);
                     Button memberLink = memberButton(openRow);
@@ -310,9 +310,10 @@ public class LoanPanelTest {
         return panel;
     }
 
-    private static void assertCounts(LoanPanel panel, int open, int history) {
+    private static void assertOpenCount(LoanPanel panel, int open) {
         assertEquals(Integer.toString(open), ((Label) panel.getRoot().lookup("#openCount")).getText());
-        assertEquals(Integer.toString(history), ((Label) panel.getRoot().lookup("#historyCount")).getText());
+        assertEquals(null, panel.getRoot().lookup("#historyCount"));
+        assertEquals(null, panel.getRoot().lookup("#loanHistory"));
     }
 
     private static VBox section(LoanPanel panel, String name) {

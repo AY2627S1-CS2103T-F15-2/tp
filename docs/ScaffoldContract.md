@@ -1,8 +1,13 @@
+> v1.3.3 amendment: schema and existing constructor/getter contracts remain unchanged. New member
+> input uses member-specific value factories; saved legacy values remain readable without rewriting.
+> Model now supplies an isolated transaction snapshot; Logic commits its saved data through the existing
+> root. See [MVP fields and persistence](commands/MvpFields.md).
+
 # Laplace shared scaffold contract
 
 This document is the authoritative contract for the member, equipment, and loan scaffold. The baseline was created from PR #54 commit `d27afec19dfd2d4cb156e6dff2f93731ba7b0562`. Existing person records, commands, and persisted person data must continue to work.
 
-Implementation status at team master `6b85337bce1664ec2774f0aca86b9d51a749019b` (PR #70): domain collections, root integrity, command-facing Model operations and JSON persistence are implemented. Top-level Laplace family routing is connected; individual business routes still return explicit `NotImplementedCommand` results. The new v1.3 display and GUI contracts are documented separately in [GuiCommandContract.md](GuiCommandContract.md).
+Implementation status on the v1.3.2 branch, based on team master `900cee6fe5ce3aadbf3fba3be5dbff346d481409` (PR #85): domain collections, root integrity, command-facing Model operations and JSON persistence are implemented. Top-level Laplace family routing is connected; member/equipment list routes are active, while the other family routes still return explicit `NotImplementedCommand` results. Concrete add/delete commands and the v1.3.2 view commands/panels are implemented independently; route activation and shell integration remain separate work. The new v1.3 display and GUI contracts are documented separately in [GuiCommandContract.md](GuiCommandContract.md).
 
 ## Domain rules
 
@@ -125,9 +130,9 @@ The shared Laplace prefixes are fixed as follows. Existing person-command prefix
 | `PREFIX_EXPECTED_RETURN_DATE` | `expected/` |
 | `PREFIX_RETURNED_DATE` | `returned/` |
 
-`ParserUtil` declares `parseNusId`, `parseUuid`, `parseDate`, and `parseCondition`. Each trims surrounding whitespace. NUS IDs retain their established validation and normalize to uppercase. UUID parsing accepts Java's standard UUID syntax. Dates accept ISO `uuuu-MM-dd`. Conditions are case-insensitive enum names; an implementation may convert spaces and hyphens to underscores. Malformed or blank values produce `ParseException` with a useful field-specific message.
+`ParserUtil` declares `parseNusId`, `parseUuid`, `parseDate`, and `parseCondition`. Each trims surrounding whitespace. NUS IDs retain their established validation and normalize to uppercase. UUID parsing accepts Java's standard UUID syntax. Dates accept ISO `yyyy-MM-dd`. Conditions are case-insensitive enum names; an implementation may convert spaces and hyphens to underscores. Malformed or blank values produce `ParseException` with a useful field-specific message.
 
-`MemberCommandParser`, `EquipmentCommandParser`, and `LoansCommandParser` implement the existing `Parser<Command>` interface. The routes are `member add`, `member list`, `member view`, `member delete`, `equipment add`, `equipment list`, `equipment view`, `equipment delete`, `loans add`, and `loans return`. Missing or unknown families and subcommands are rejected with `ParseException`. A recognized route awaiting its business command may return `NotImplementedCommand`, which reports the unfinished feature without mutating `Model`. Top-level routing is connected in `AddressBookParser`; the recognized individual routes currently return placeholders. Legacy parsing remains functional. Duy owns activation of the feature routes after their implementations merge.
+`MemberCommandParser`, `EquipmentCommandParser`, and `LoansCommandParser` implement the existing `Parser<Command>` interface. The routes are `member add`, `member list`, `member view`, `member delete`, `equipment add`, `equipment list`, `equipment view`, `equipment delete`, `loans add`, and `loans return`. Missing or unknown families and subcommands are rejected with `ParseException`. A recognized route awaiting its business command may return `NotImplementedCommand`, which reports the unfinished feature without mutating `Model`. Top-level routing is connected in `AddressBookParser`; member/equipment list routes are active, while the other recognized routes currently return placeholders. Legacy parsing remains functional. Duy owns activation of the feature routes after their implementations merge.
 
 ## Ownership and handoff
 

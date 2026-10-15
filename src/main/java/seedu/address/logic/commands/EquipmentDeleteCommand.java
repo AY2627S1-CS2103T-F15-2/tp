@@ -19,10 +19,10 @@ public class EquipmentDeleteCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Deletes equipment without an open loan. Parameters: uuid/UUID\n"
             + "Example: equipment delete uuid/550e8400-e29b-41d4-a716-446655440000";
-    public static final String MESSAGE_SUCCESS = "Deleted equipment: %1$s";
+    public static final String MESSAGE_SUCCESS = "Deleted equipment %1$s: %2$s.";
     public static final String MESSAGE_NOT_FOUND = "No equipment with UUID %1$s exists.";
     public static final String MESSAGE_OPEN_LOAN =
-            "Cannot delete equipment %1$s with an open loan. Record its return first.";
+            "Cannot delete %1$s because it is assigned to %2$s. Return the item first.";
 
     private final UUID targetUuid;
 
@@ -34,17 +34,28 @@ public class EquipmentDeleteCommand extends Command {
     }
 
     @Override
+    public boolean isTransactional() {
+        return true;
+    }
+
+    @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         try {
             Equipment equipment = model.findEquipment(targetUuid).orElseThrow(EquipmentNotFoundException::new);
-            model.deleteEquipment(equipment);
+            String blockedMessage = model.findOpenLoan(targetUuid)
+                    .map(loan -> String.format(MESSAGE_OPEN_LOAN, targetUuid, loan.getMemberNusId()))
+                    .orElse("Could not delete equipment " + targetUuid + ".");
+            try {
+                model.deleteEquipment(equipment);
+            } catch (IllegalStateException e) {
+                throw new CommandException(blockedMessage, e);
+            }
+            return new CommandResult(String.format(MESSAGE_SUCCESS, targetUuid, equipment.getName()),
+                    DisplayRequest.equipment());
         } catch (EquipmentNotFoundException e) {
             throw new CommandException(String.format(MESSAGE_NOT_FOUND, targetUuid), e);
-        } catch (IllegalStateException e) {
-            throw new CommandException(String.format(MESSAGE_OPEN_LOAN, targetUuid), e);
         }
-        return new CommandResult(String.format(MESSAGE_SUCCESS, targetUuid), DisplayRequest.equipment());
     }
 
     @Override

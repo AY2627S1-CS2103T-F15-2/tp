@@ -1,18 +1,22 @@
+> v1.3.3 amendment: [MVP fields](commands/MvpFields.md) and [completion evidence](gui/MvpCompletion.md)
+> supersede older component handoff assumptions below. #93/#95 are merged; validation, transactions,
+> holdings order and open-only Loans now follow the detailed MVP specification.
+
 # Laplace GUI and command integration contract
 
 ## Status and delivery
 
-These are v1.3 milestone additions, not declarations inherited from the original scaffold.
-The Stage A display setup implements `DisplayRequest`, the `CommandResult` extension and
-read-only `Logic` access. The remaining contracts below are implementation targets owned
-by the named contributors; their presence here does not imply working commands or panels.
-Baseline: team master `6b85337bce1664ec2774f0aca86b9d51a749019b` (PR #70).
+These are v1.3 milestone additions. The Stage A display setup was merged in #80;
+shared parsing/sorting in #83 and the theme/FX test helper in #81. The directory/list
+components, cards and Loans panel are also merged in the v1.3.2 baseline:
+team master `900cee6fe5ce3aadbf3fba3be5dbff346d481409` (PR #85).
 
-Nicholas's scope is tracked in [issue #72](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/72).
-Setup uses `v1.3`; after maintainers merge the shared setup,
-dependent views use `v1.3` from the recorded merged baseline.
-Duy supplies parsing/sorting and Keith supplies the theme/test helper separately.
-Do not copy unmerged dependencies or create competing implementations.
+Nicholas's remaining scope is tracked in [issue #92](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/92)
+on branch `v1.3.2`, following the setup tracked in #72. Both individual view commands/parsers
+and both detail panels are now implemented with tests and rendered component previews.
+List routes are active; view-route activation remains with Duy (#73), and application-shell
+assembly/navigation/refresh remains with Keith (#91). Independent components do not imply
+that the application already renders or navigates to these panels.
 
 ## Display and read-only interfaces
 
@@ -59,11 +63,12 @@ and adds only `ReadOnlyAddressBook getAddressBook()` and
 including null/unknown-UUID failures. Reading does not save. The root's observable lists
 are live and unmodifiable; panels must never cast the root to mutate it.
 
-`LogicManager.execute` retains its existing parse/execute/save sequence. A rejected command
-does not reach saving; a save failure is reported with its original cause. This pipeline
-provides no rollback of an in-memory mutation on an I/O failure. UI selection is not stored.
+`LogicManager.execute` stages the six Laplace mutations on an isolated Model snapshot. Atomic
+JSON replacement must succeed before `setAddressBook` publishes through the original observable root.
+Rejected parsing/business checks never save. A failed save preserves all records and the old file,
+with its original cause retained. Legacy person-command behavior remains compatible. UI selection is not stored.
 
-## View-feature handoff (pending)
+## View-feature handoff (components implemented; integration pending)
 
 Duy will route `MemberViewCommandParser` to `MemberViewCommand(NusId)` and
 `EquipmentViewCommandParser` to `EquipmentViewCommand(UUID)`. Parsers use
@@ -71,7 +76,10 @@ Duy will route `MemberViewCommandParser` to `MemberViewCommand(NusId)` and
 without mutation, then return the typed requests below. Panels perform read-only joins.
 Keith consumes the panel signatures below and calls show/refresh on the FX thread.
 Missing referenced data is an explicit inconsistency, never an invented holder or an
-unassigned item. Actual feature classes and GUI evidence follow after shared setup merges.
+unassigned item. The concrete parsers, commands and panels are present. `DetailsPanelTest` verifies fields
+and state changes; `DetailsPanelPreviewTest` renders normal, small, long-text, empty and
+missing-state previews under `build/reports/laplace/details-*.png`. These previews pair real
+directory/detail components without claiming the final shell or routed command execution.
 
 Laplace parameter markers are start-of-input or whitespace-delimited
 `[A-Za-z][A-Za-z0-9_-]*/` tokens, including in free text. Unknown markers are errors.
@@ -89,7 +97,7 @@ Reproduce `docs/images/Ui.png` as a working JavaFX layout, not a bitmap backgrou
 - Members mode: a count heading, selectable member rows, blue selected-row treatment, a small selection hint, and a Member Directory summary on the right. Include Active members, Displayed, Sort order and Selection rows, the count badge and a soft-green list-status panel shown in the reference.
 - Equipment mode: use the same layout language for item rows and an Equipment Directory summary. Display UUID, category, condition, derived availability and current holder. Identically named physical items remain separate rows.
 - Details mode keeps the corresponding list visible on the left and replaces the right summary with member/equipment details.
-- Loans mode is a functional read-only tab showing open loans and closed history with equipment/member identities and dates, using the same theme. The reference does not specify its exact interior; follow the shared style rather than inventing a new visual system.
+- Loans mode is a functional read-only tab showing open assignments only, with equipment/member identities and dates, using the same theme. The reference does not specify its exact interior; follow the shared style rather than inventing a new visual system.
 - A full-width feedback strip appears above the bottom command input. Successful commands use the reference's soft green treatment; failures use clearly readable error text and an error treatment. The command label, full-width input, and Press Enter to execute hint appear at the bottom.
 - Suggested theme palette: header `#263238`, background `#EEF1F3`, surfaces `#FFFFFF`, borders `#DCE3E8`, primary text `#37474F`, secondary text `#78909C`, accent `#1688E8`, selection `#E3F2FD`, success `#E8F5E9`, error `#FDECEC`. These are implementation targets approximating the reference, not measured pixel samples.
 - Use system fonts, consistent spacing and restrained borders. Do not add dependencies, web views or generated image assets for this design. Preserve useful existing help/exit behavior and accessibility through keyboard focus and readable contrast.
@@ -186,7 +194,7 @@ All new GUI classes below live under `seedu.address.ui` and extend the existing 
 | Duy | `EquipmentDirectorySummary(ReadOnlyAddressBook data, Function<UUID, Availability> availabilityLookup)` | Right equipment summary; `void refresh(Optional<UUID> selection)`. |
 | Nicholas | `MemberDetailsPanel(ReadOnlyAddressBook data, Function<UUID, Availability> availabilityLookup)` | `void showMember(NusId nusId)`, `void refresh()`; details and sorted held-equipment records. |
 | Nicholas | `EquipmentDetailsPanel(ReadOnlyAddressBook data, Function<UUID, Availability> availabilityLookup)` | `void showEquipment(UUID uuid)`, `void refresh()`; details, holder contacts and current loan dates. |
-| Isaac | `LoanPanel(ReadOnlyAddressBook data, Consumer<UUID> onEquipmentSelected, Consumer<NusId> onMemberSelected)` | `void refresh()`; open loans and history; callbacks navigate to existing detail commands. |
+| Isaac | `LoanPanel(ReadOnlyAddressBook data, Consumer<UUID> onEquipmentSelected, Consumer<NusId> onMemberSelected)` | `void refresh()`; open loans only; callbacks navigate to existing detail commands. |
 
 List panels consume the corresponding real card components. `select` and `refresh` must not invoke `onSelect`; only user activation invokes it, once. A present selection absent from the data is cleared. Parent orchestration selects the first valid row when needed. Panels without an entity render a useful empty/missing state. `refresh()` before the first details selection renders an empty state. Rebuilding immutable cards during refresh is acceptable at this project scale; no reactive framework is needed.
 

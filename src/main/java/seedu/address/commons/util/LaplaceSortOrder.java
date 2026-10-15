@@ -22,6 +22,6 @@ public final class LaplaceSortOrder {
     }
 
     private static String normalize(String value) {
-        return value.trim().toLowerCase(Locale.ROOT);
+        return LaplaceText.normalize(value).toLowerCase(Locale.ROOT);
     }
 }

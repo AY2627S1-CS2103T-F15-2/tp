@@ -1,0 +1,38 @@
+.laplace-root .details-scroll,
+.laplace-root .details-scroll > .viewport {
+    -fx-background-color: #FFFFFF;
+}
+
+.details-scroll {
+    -fx-padding: 0;
+}
+
+.details-content {
+    -fx-padding: 20;
+}
+
+.details-name {
+    -fx-font-size: 21px;
+    -fx-font-weight: bold;
+}
+
+.details-section-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.details-caption {
+    -fx-font-weight: bold;
+}
+
+.details-holding {
+    -fx-padding: 14;
+    -fx-background-color: #F8FAFB;
+    -fx-border-color: #DCE3E8;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+.details-status {
+    -fx-padding: 12;
+}

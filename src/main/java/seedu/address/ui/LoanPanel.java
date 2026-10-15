@@ -27,11 +27,6 @@ import seedu.address.model.member.NusId;
 public class LoanPanel extends UiPart<Region> {
     static final Comparator<Loan> OPEN_ORDER = Comparator.comparing(Loan::getExpectedReturnDate)
             .thenComparing(loan -> loan.getEquipmentUuid().toString());
-    static final Comparator<Loan> HISTORY_ORDER = Comparator
-            .comparing((Loan loan) -> loan.getReturnedDate().orElseThrow(), Comparator.reverseOrder())
-            .thenComparing(loan -> loan.getEquipmentUuid().toString())
-            .thenComparing(Loan::getAssignedDate)
-            .thenComparing(loan -> loan.getMemberNusId().value);
     private static final String FXML = "LoanPanel.fxml";
 
     private final ReadOnlyAddressBook data;
@@ -41,11 +36,7 @@ public class LoanPanel extends UiPart<Region> {
     @FXML
     private Label openCount;
     @FXML
-    private Label historyCount;
-    @FXML
     private VBox openLoans;
-    @FXML
-    private VBox loanHistory;
 
     /**
      * Creates a panel using current records and callbacks supplied by the application shell.
@@ -61,16 +52,12 @@ public class LoanPanel extends UiPart<Region> {
     }
 
     /**
-     * Rebuilds both sections from current data without invoking callbacks or installing listeners.
+     * Rebuilds current assignments from current data without invoking callbacks or installing listeners.
      */
     public void refresh() {
         List<Loan> open = data.getLoanList().stream().filter(Loan::isOpen).sorted(OPEN_ORDER).toList();
-        List<Loan> history = data.getLoanList().stream().filter(loan -> !loan.isOpen())
-                .sorted(HISTORY_ORDER).toList();
         openCount.setText(Integer.toString(open.size()));
-        historyCount.setText(Integer.toString(history.size()));
         refreshSection(openLoans, open, "No open loans. Available equipment is ready to assign.");
-        refreshSection(loanHistory, history, "No returned loans yet. Completed loans will appear here.");
     }
 
     private void refreshSection(VBox section, List<Loan> loans, String emptyMessage) {
@@ -99,13 +86,11 @@ public class LoanPanel extends UiPart<Region> {
         memberLink.setDisable(member.isEmpty());
         memberLink.setOnAction(event -> onMemberSelected.accept(loan.getMemberNusId()));
 
-        Label status = label(loan.isOpen() ? "Open loan" : "Returned", "loan-status");
-        status.getStyleClass().add(loan.isOpen() ? "loan-open-status" : "loan-returned-status");
+        Label status = label("Open loan", "loan-status");
+        status.getStyleClass().add("loan-open-status");
         VBox row = new VBox(6, status, equipmentLink, memberLink,
                 label("Assigned: " + loan.getAssignedDate(), "loan-date"),
-                label("Expected return: " + loan.getExpectedReturnDate(), "loan-date"),
-                label("Returned: " + loan.getReturnedDate().map(Object::toString).orElse("Not yet returned"),
-                        "loan-date"));
+                label("Expected return: " + loan.getExpectedReturnDate(), "loan-date"));
         row.getStyleClass().addAll("laplace-row", "loan-row");
         row.setMinWidth(0);
         row.setMaxWidth(Double.MAX_VALUE);

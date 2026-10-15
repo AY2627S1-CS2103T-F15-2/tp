@@ -3,9 +3,13 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.util.function.Predicate;
+
+import seedu.address.commons.util.LaplaceText;
+
 /**
  * Represents a Person's name in the address book.
- * Guarantees: immutable; is valid as declared in {@link #isValidName(String)}
+ * Guarantees: immutable; legacy construction and member factories apply their respective validation rules.
  */
 public class Name {
 
@@ -18,6 +22,9 @@ public class Name {
      */
     public static final String VALIDATION_REGEX = "[\\p{Alnum}][\\p{Alnum} ]*";
 
+    public static final String MEMBER_MESSAGE_CONSTRAINTS =
+            "Invalid member name. Use 1-100 letters with spaces, apostrophes, hyphens, or periods only.";
+
     public final String fullName;
 
     /**
@@ -26,9 +33,31 @@ public class Name {
      * @param name A valid name.
      */
     public Name(String name) {
-        requireNonNull(name);
-        checkArgument(isValidName(name), MESSAGE_CONSTRAINTS);
-        fullName = name;
+        this(name, Name::isValidName, MESSAGE_CONSTRAINTS);
+    }
+
+    private Name(String value, Predicate<String> validator, String message) {
+        requireNonNull(value);
+        checkArgument(validator.test(value), message);
+        fullName = value;
+    }
+
+    /** Validates a normalized MVP member name; legacy person names retain their original rules. */
+    public static boolean isValidMemberName(String value) {
+        return LaplaceText.isPrintable(value, 1, 100) && value.matches("[\\p{L} .'-]+")
+                && value.codePoints().anyMatch(Character::isLetter);
+    }
+
+    /** Normalizes and validates new Laplace member input without changing legacy AB3 parsing. */
+    public static Name forMember(String value) {
+        String normalized = LaplaceText.normalize(value);
+        return new Name(normalized, Name::isValidMemberName, MEMBER_MESSAGE_CONSTRAINTS);
+    }
+
+    /** Accepts either the former stored form or the MVP form, preserving the exact saved value. */
+    public static Name fromStoredMember(String value) {
+        return new Name(value, candidate -> isValidName(candidate) || isValidMemberName(candidate),
+                MESSAGE_CONSTRAINTS);
     }
 
     /**
@@ -37,7 +66,6 @@ public class Name {
     public static boolean isValidName(String test) {
         return test.matches(VALIDATION_REGEX);
     }
-
 
     @Override
     public String toString() {

@@ -1,7 +1,8 @@
 # Record a return: `loans return`
 
-Integration status: this command specification belongs to issue #76. The command implementation
-awaits the merged display and argument-parser setup; the current application route is a placeholder.
+Integration status: the return route dispatches to its real command parser through
+`LoansCommandParser`. Successful execution requests the affected equipment details.
+Keith's application-shell integration and final GUI acceptance are tracked separately in issue #75.
 
 Format:
 
@@ -11,7 +12,7 @@ loans return uuid/UUID returned/DATE
 
 Both parameters are required and may appear in either order. Family and subcommand names are
 lowercase and case-sensitive. Spaces and tabs separate parameters. Use the equipment UUID and
-a real calendar date in `uuuu-MM-dd` format.
+a real calendar date in `yyyy-MM-dd` format.
 
 Example for the sample camera already held by Alex Tan:
 
@@ -22,7 +23,7 @@ loans return uuid/550e8400-e29b-41d4-a716-446655440001 returned/2026-10-13
 Replace the example date with the actual return date, which must be on or after the loan's
 assignment date and no later than your computer's local date. Same-day, early and late returns
 relative to the expected return date are valid. Reaching the expected date never automatically
-closes a loan.
+closes a loan. Today is evaluated using your computer's local date when the command executes.
 
 The equipment, open loan and referenced member must exist. An unknown UUID, missing reference,
 item with no open loan, repeated return, or invalid date is rejected without changing any records.
@@ -34,8 +35,10 @@ Success closes the loan using an immutable replacement, preserves returned histo
 the affected equipment's details. The member no longer holds that item. Equipment in `GOOD` or
 `FAIR` condition becomes available; damaged or under-repair equipment stays unavailable.
 
-The read-only Loans tab shows open loans and returned history with identities and dates. Its
+The read-only Loans tab shows open assignments only, with identities and dates. Closed records
+remain in the model and JSON but have no history presentation. Its
 equipment/member links request their detail views. It has no loan-editing or deletion actions.
 
-The existing command pipeline saves successful mutations. A save error is reported and does not
-promise rollback of an already completed change in memory.
+LogicManager stages the return, atomically saves and then publishes the committed snapshot.
+A save failure preserves the open loan, holder, availability and prior saved bytes. See
+[MVP fields and failure behavior](MvpFields.md).

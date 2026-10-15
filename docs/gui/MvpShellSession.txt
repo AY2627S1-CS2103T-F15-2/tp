@@ -1,0 +1,35 @@
+Export notation: <empty> and <N spaces> preserve otherwise invisible retained-input state.
+JavaFX shell; actual LogicManager, ModelManager and JSON storage.
+Startup: Members, first sorted member selected; no command dispatched.
+INPUT: <whitespace only>
+STATUS: Success
+OUTPUT: Ready. Use member list, equipment list, or the navigation buttons.
+RETAINED INPUT: <3 spaces>
+INPUT: member list
+STATUS: Success
+OUTPUT: Listed 3 active members.
+RETAINED INPUT: <empty>
+INPUT: equipment list extra
+STATUS: Error
+OUTPUT: Unexpected text before parameters.
+equipment list: Lists all equipment items. Takes no arguments.
+RETAINED INPUT: equipment list extra
+INPUT: equipment list
+STATUS: Success
+OUTPUT: Listed 3 equipment items.
+RETAINED INPUT: <empty>
+INPUT: member view nus/A0000001X
+STATUS: Success
+OUTPUT: Viewing member: Alex Tan (A0000001X). Currently holds 1 item(s).
+RETAINED INPUT: <empty>
+INPUT: list
+STATUS: Success
+OUTPUT: Listed all persons.
+RETAINED INPUT: <empty>
+INPUT: member list
+STATUS: Success
+OUTPUT: Listed 3 active members.
+RETAINED INPUT: <empty>
+Loans tab: 1 open; closed history is not presented.
+Commands executed: [member list, equipment list extra, equipment list, member view nus/A0000001X, list, member list]
+Successful saves: 5
