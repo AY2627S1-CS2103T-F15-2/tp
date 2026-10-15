@@ -57,7 +57,7 @@ public class LaplaceParserUtilTest {
     public void parseDate_invalidValues_throwsFieldSpecificParseException() {
         for (String value : new String[] {"", " ", "2025-02-29", "2026-04-31", "2026-13-01",
             "2026-10-00", "2026-1-06", "06-10-2026", "2026/10/06", "2026-10-06T00:00:00", "today"}) {
-            assertThrows(ParseException.class, "Date must be a valid calendar date in uuuu-MM-dd format.", () ->
+            assertThrows(ParseException.class, "Date must be a valid calendar date in yyyy-MM-dd format.", () ->
                     ParserUtil.parseDate(value));
         }
     }

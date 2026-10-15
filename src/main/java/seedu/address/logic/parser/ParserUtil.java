@@ -213,7 +213,7 @@ public class ParserUtil {
     }
 
     /**
-     * Parses a calendar date in {@code uuuu-MM-dd} format after trimming surrounding whitespace.
+     * Parses a calendar date in {@code yyyy-MM-dd} format after trimming surrounding whitespace.
      * Date ordering and restrictions relative to today belong to the domain and business commands.
      *
      * @throws NullPointerException if {@code value} is null.
@@ -223,7 +223,7 @@ public class ParserUtil {
         requireNonNull(value);
         String trimmedValue = value.strip();
         if (!trimmedValue.matches("\\d{4}-\\d{2}-\\d{2}")) {
-            throw new ParseException("Date must be a valid calendar date in uuuu-MM-dd format.");
+            throw new ParseException("Date must be a valid calendar date in yyyy-MM-dd format.");
         }
         try {
             LocalDate date = LocalDate.parse(trimmedValue);
@@ -232,7 +232,7 @@ public class ParserUtil {
             }
             return date;
         } catch (DateTimeParseException e) {
-            throw new ParseException("Date must be a valid calendar date in uuuu-MM-dd format.", e);
+            throw new ParseException("Date must be a valid calendar date in yyyy-MM-dd format.", e);
         }
     }
 

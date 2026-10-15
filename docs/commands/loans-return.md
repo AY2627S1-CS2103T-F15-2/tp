@@ -12,7 +12,7 @@ loans return uuid/UUID returned/DATE
 
 Both parameters are required and may appear in either order. Family and subcommand names are
 lowercase and case-sensitive. Spaces and tabs separate parameters. Use the equipment UUID and
-a real calendar date in `uuuu-MM-dd` format.
+a real calendar date in `yyyy-MM-dd` format.
 
 Example for the sample camera already held by Alex Tan:
 

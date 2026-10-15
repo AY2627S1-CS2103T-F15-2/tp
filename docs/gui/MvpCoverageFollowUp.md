@@ -38,7 +38,7 @@ gradlew.bat check coverage --console=plain
 
 - 725 tests; zero failures, errors or skipped tests.
 - Main and test Checkstyle pass; changed-file readability reviewed.
-- 248 of 248 changed executable production lines fully covered.
+- 250 of 250 changed executable production lines fully covered, including the date-guidance update.
 - 92 of 92 branches on those changed lines covered.
 
 The patch calculation intersects added lines from `git diff --unified=0 BASE -- src/main/java`

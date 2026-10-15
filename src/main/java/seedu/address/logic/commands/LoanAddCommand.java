@@ -25,7 +25,7 @@ public class LoanAddCommand extends Command {
     public static final String COMMAND_WORD = "loans add";
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Assigns available equipment. Parameters: uuid/UUID nus/NUS_ID assigned/DATE expected/DATE\n"
-            + "Dates must use uuuu-MM-dd.";
+            + "Dates must use yyyy-MM-dd.";
     public static final String MESSAGE_SUCCESS = "Assigned %1$s (%2$s) to %3$s (%4$s) on %5$s; expected return: %6$s.";
     public static final String MESSAGE_EQUIPMENT_NOT_FOUND = "No equipment with UUID %1$s exists.";
     public static final String MESSAGE_MEMBER_NOT_FOUND = "No member with NUS ID %1$s exists.";
