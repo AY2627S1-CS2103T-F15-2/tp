@@ -6,7 +6,7 @@ Example: `member add nus/a0123456x name/Alex Tan phone/91234567 email/alex@examp
 
 All four fields are required and may appear in any order, separated by spaces or tabs.
 NUS IDs contain one letter, seven digits and an optional final letter, and are stored
-in uppercase. Names, phones and emails follow the existing AB3 field validation.
+in uppercase. Names, phones and emails follow the existing person field validation.
 Different NUS IDs may share a name. An existing NUS ID cannot be added again, even
 with different casing or contact details.
 

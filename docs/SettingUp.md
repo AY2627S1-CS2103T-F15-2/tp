@@ -22,7 +22,7 @@ First, **fork** this repo, and **clone** the fork into your computer.
 
 If you plan to use IntelliJ IDEA (highly recommended):
 
-1. **Configure the JDK**: Follow the guide [_[se-edu/guides] IDEA: Configuring the JDK_](https://se-education.org/guides/tutorials/intellijJdk.html) to ensure Intellij is configured to use **JDK 17**.
+1. **Configure the JDK**: Follow the guide [_[se-edu/guides] IDEA: Configuring the JDK_](https://se-education.org/guides/tutorials/intellijJdk.html) to ensure Intellij is configured to use **JDK 25**.
 1. **Import the project as a Gradle project**: Follow the guide [_[se-edu/guides] IDEA: Importing a Gradle project_](https://se-education.org/guides/tutorials/intellijImportGradleProject.html) to import the project into IDEA.
    <box type="warning" seamless>
    Note: Importing a Gradle project is slightly different from importing a normal Java project.
@@ -51,11 +51,11 @@ If you plan to use IntelliJ IDEA (highly recommended):
 
 1. **Learn the design**
 
-   When you are ready to start coding, we recommend that you get some sense of the overall design by reading about [AddressBook’s architecture](DeveloperGuide.md#architecture).
+   When you are ready to start coding, read about [Laplace’s architecture](DeveloperGuide.md#architecture).
 
-1. **Do the tutorials**
-   These tutorials will help you get acquainted with the codebase.
-
-   * [Tracing code](https://se-education.org/guides/tutorials/ab3TracingCode.html)
-   * [Adding a new command](https://se-education.org/guides/tutorials/ab3AddRemark.html)
-   * [Removing fields](https://se-education.org/guides/tutorials/ab3RemovingFields.html)
+1. **Trace a Laplace command**
+   Follow a command from `AddressBookParser` through its feature parser and command to the model and storage.
+   Read the [scaffold contract](ScaffoldContract.md) for shared interfaces and the
+   [GUI command contract](GuiCommandContract.md) for display behavior before changing a feature.
+   Compare the command with the [MVP User Guide](UserGuide.md), then run its focused parser and command tests
+   using the [testing instructions](Testing.md).
