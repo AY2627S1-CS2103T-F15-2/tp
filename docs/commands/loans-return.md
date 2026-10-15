@@ -1,7 +1,8 @@
 # Record a return: `loans return`
 
-Integration status: this command specification belongs to issue #76. The command implementation
-awaits the merged display and argument-parser setup; the current application route is a placeholder.
+Integration status: the return route dispatches to its real command parser through
+`LoansCommandParser`. Successful execution requests the affected equipment details.
+Keith's application-shell integration and final GUI acceptance are tracked separately in issue #75.
 
 Format:
 
@@ -22,7 +23,7 @@ loans return uuid/550e8400-e29b-41d4-a716-446655440001 returned/2026-10-13
 Replace the example date with the actual return date, which must be on or after the loan's
 assignment date and no later than your computer's local date. Same-day, early and late returns
 relative to the expected return date are valid. Reaching the expected date never automatically
-closes a loan.
+closes a loan. Today is evaluated using your computer's local date when the command executes.
 
 The equipment, open loan and referenced member must exist. An unknown UUID, missing reference,
 item with no open loan, repeated return, or invalid date is rejected without changing any records.
