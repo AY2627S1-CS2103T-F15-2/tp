@@ -175,3 +175,72 @@
     -fx-background-color: #B0BEC5;
     -fx-background-radius: 4;
 }
+
+/* Shell-only surfaces; component styles and legacy/help styles stay local. */
+.laplace-content {
+    -fx-padding: 16;
+}
+
+.laplace-directory {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.laplace-directory > .split-pane-divider {
+    -fx-background-color: #EEF1F3;
+    -fx-padding: 0 7;
+}
+
+.laplace-feedback .text-area,
+.laplace-feedback .text-area .content,
+.laplace-feedback .text-area .scroll-pane,
+.laplace-feedback .text-area .viewport {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.laplace-success .text-area {
+    -fx-text-fill: #285331;
+}
+
+.laplace-error .text-area {
+    -fx-text-fill: #A12626;
+}
+
+.laplace-command {
+    -fx-padding: 4 0 0 0;
+}
+
+.laplace-root .status-bar {
+    -fx-background-color: #EEF1F3;
+    -fx-padding: 0 16 8 16;
+}
+
+.laplace-header .menu-button > .label {
+    -fx-text-fill: #CFD8DC;
+}
+
+.laplace-header .context-menu .label {
+    -fx-text-fill: #37474F;
+}
+
+/* Restore the legacy list's contrast inside the surrounding light application shell. */
+.laplace-root .laplace-legacy .list-view,
+.laplace-root .laplace-legacy .list-cell:filled {
+    -fx-background-color: #3C3E3F;
+}
+
+.laplace-root .laplace-legacy .list-cell:filled:odd {
+    -fx-background-color: #515658;
+}
+
+.laplace-root .laplace-legacy .list-cell:filled:selected {
+    -fx-background-color: #424D5F;
+    -fx-border-color: transparent;
+}
+
+.laplace-root .laplace-legacy .list-cell .label,
+.laplace-root .laplace-legacy .list-cell:filled:selected .label {
+    -fx-text-fill: #FFFFFF;
+}
