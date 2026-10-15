@@ -1,7 +1,8 @@
 # Assign equipment: `loans add`
 
-Integration status: this command specification belongs to issue #76. The command implementation
-awaits the merged display and argument-parser setup; the current application route is a placeholder.
+Integration status: `LoanAddCommand` and its individual parser are implemented for issue #76.
+The current application route remains a placeholder until Duy connects `LoansCommandParser` to
+`LoanAddCommandParser`. Keith's shell integration handles the resulting equipment-details request.
 
 Format:
 
@@ -24,7 +25,8 @@ loans add uuid/550e8400-e29b-41d4-a716-446655440000 nus/A0234567R assigned/2026-
 The member and equipment must exist at execution time. Equipment must be `AVAILABLE`: it has no
 open loan and its condition is `GOOD` or `FAIR`. Already assigned, damaged and under-repair items
 cannot be issued. The assignment date must be no later than today, and the expected return date
-must be on or after assignment. An expected return date in the future is valid.
+must be on or after assignment. An expected return date in the future is valid. Today is evaluated
+using your computer's local date when the command executes.
 
 Success records an open loan and displays the affected equipment's details. Holder, member
 holdings and availability are derived from that loan. Invalid input or a failed validation leaves
