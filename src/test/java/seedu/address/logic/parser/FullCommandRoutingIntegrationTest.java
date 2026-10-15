@@ -27,6 +27,7 @@ import seedu.address.logic.commands.DisplayRequest;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
+import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
@@ -205,6 +206,16 @@ public class FullCommandRoutingIntegrationTest {
         execute(addLoan(firstItem, FIRST, date, date), DisplayRequest.equipmentDetails(firstItem));
         model = new ModelManager(model.getAddressBook(), new UserPrefs()) {
             @Override
+            public Model createTransactionSnapshot() {
+                return new ModelManager(getAddressBook(), getUserPrefs()) {
+                    @Override
+                    public Optional<Member> findMember(NusId nusId) {
+                        return nusId.equals(FIRST) ? Optional.empty() : super.findMember(nusId);
+                    }
+                };
+            }
+
+            @Override
             public Optional<Member> findMember(NusId nusId) {
                 return nusId.equals(FIRST) ? Optional.empty() : super.findMember(nusId);
             }
@@ -215,7 +226,7 @@ public class FullCommandRoutingIntegrationTest {
     }
 
     @Test
-    public void loanRoutes_saveErrorsPreserveCausesAndLastSavedFile_withoutRollbackClaim() throws Exception {
+    public void loanRoutes_saveErrors_preserveCausesMemoryAndLastSavedFile() throws Exception {
         LocalDate date = LocalDate.now().minusDays(3);
         IOException assignmentFailure = new IOException("assignment save failed");
         byte[] initialFile = Files.readAllBytes(storage.getAddressBookFilePath());
@@ -223,19 +234,19 @@ public class FullCommandRoutingIntegrationTest {
         CommandException assigned = assertThrows(CommandException.class, () ->
                 logic.execute(addLoan(firstItem, FIRST, date, date.plusDays(1))));
         assertSame(assignmentFailure, assigned.getCause());
-        assertTrue(model.findOpenLoan(firstItem).isPresent());
+        assertTrue(model.findOpenLoan(firstItem).isEmpty());
         assertArrayEquals(initialFile, Files.readAllBytes(storage.getAddressBookFilePath()));
         assertTrue(new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs())
                 .findOpenLoan(firstItem).isEmpty());
         storage.failure = null;
-        storage.saveAddressBook(model.getAddressBook());
+        logic.execute(addLoan(firstItem, FIRST, date, date.plusDays(1)));
         byte[] openFile = Files.readAllBytes(storage.getAddressBookFilePath());
         IOException returnFailure = new IOException("return save failed");
         storage.failure = returnFailure;
         CommandException returned = assertThrows(CommandException.class, () ->
                 logic.execute("loans return uuid/" + firstItem + " returned/" + date));
         assertSame(returnFailure, returned.getCause());
-        assertTrue(model.findOpenLoan(firstItem).isEmpty());
+        assertTrue(model.findOpenLoan(firstItem).isPresent());
         assertArrayEquals(openFile, Files.readAllBytes(storage.getAddressBookFilePath()));
         assertTrue(new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs())
                 .findOpenLoan(firstItem).isPresent());

@@ -47,18 +47,23 @@ public class LogicManager implements Logic {
     public CommandResult execute(String commandText) throws CommandException, ParseException {
         logger.info("----------------[USER COMMAND][" + commandText + "]");
 
-        CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
-        commandResult = command.execute(model);
+        Model executionModel = command.isTransactional() ? model.createTransactionSnapshot() : model;
+        CommandResult commandResult = command.execute(executionModel);
 
         try {
-            storage.saveAddressBook(model.getAddressBook());
+            storage.saveAddressBook(executionModel.getAddressBook());
         } catch (AccessDeniedException e) {
-            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
+            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT,
+                    storage.getAddressBookFilePath()), e);
         } catch (IOException ioe) {
             throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
         }
 
+        if (command.isTransactional()) {
+            // Preserve the existing observable root; publish the validated snapshot only after its atomic save.
+            model.setAddressBook(executionModel.getAddressBook());
+        }
         return commandResult;
     }
 

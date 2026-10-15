@@ -33,6 +33,11 @@ public class MemberDeleteCommand extends Command {
     }
 
     @Override
+    public boolean isTransactional() {
+        return true;
+    }
+
+    @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         try {

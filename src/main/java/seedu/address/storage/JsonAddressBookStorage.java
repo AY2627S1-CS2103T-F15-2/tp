@@ -3,6 +3,7 @@ package seedu.address.storage;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -10,7 +11,6 @@ import java.util.logging.Logger;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.exceptions.IllegalValueException;
-import seedu.address.commons.util.FileUtil;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.ReadOnlyAddressBook;
 
@@ -22,9 +22,16 @@ public class JsonAddressBookStorage {
     private static final Logger logger = LogsCenter.getLogger(JsonAddressBookStorage.class);
 
     private Path filePath;
+    private final AtomicFileWriter fileWriter;
 
     public JsonAddressBookStorage(Path filePath) {
-        this.filePath = filePath;
+        this(filePath, new AtomicFileWriter());
+    }
+
+    /** Supplies filesystem operations for deterministic partial-write and replacement-failure tests. */
+    JsonAddressBookStorage(Path filePath, AtomicFileWriter fileWriter) {
+        this.filePath = requireNonNull(filePath);
+        this.fileWriter = requireNonNull(fileWriter);
     }
 
     public Path getAddressBookFilePath() {
@@ -82,8 +89,9 @@ public class JsonAddressBookStorage {
         requireNonNull(addressBook);
         requireNonNull(filePath);
 
-        FileUtil.createIfMissing(filePath);
-        JsonUtil.saveJsonFile(new JsonSerializableAddressBook(addressBook), filePath);
+        // Serialize before touching the destination; partial writes can only affect a private sibling file.
+        String json = JsonUtil.toJsonString(new JsonSerializableAddressBook(addressBook));
+        fileWriter.write(filePath, json.getBytes(StandardCharsets.UTF_8));
     }
 
 }

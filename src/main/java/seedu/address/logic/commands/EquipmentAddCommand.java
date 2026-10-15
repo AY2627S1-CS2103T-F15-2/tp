@@ -49,6 +49,11 @@ public class EquipmentAddCommand extends Command {
     }
 
     @Override
+    public boolean isTransactional() {
+        return true;
+    }
+
+    @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         UUID uuid = requireNonNull(uuidSupplier.get());
