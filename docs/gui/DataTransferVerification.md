@@ -6,7 +6,7 @@ Environment: macOS ARM64, Java `25.0.3.fx-zulu`, project-declared JavaFX 17.0.7 
 
 ## Results
 
-- `./gradlew test`: 754 tests, zero failures/errors/skips.
+- `./gradlew test`: 755 tests, zero failures/errors/skips.
 - `./gradlew check coverage shadowJar`: passes, including both Checkstyle tasks.
 - `python3 scripts/check_transfer_coverage.py`: 142/142 changed executable lines and
   46/46 changed branches covered, **100% for both**, against the base above.
@@ -16,7 +16,7 @@ Environment: macOS ARM64, Java `25.0.3.fx-zulu`, project-declared JavaFX 17.0.7 
   real Confirm/Cancel button checks. Every transfer checks its exact save count;
   rejected inputs preserve the complete root and saved bytes.
 - `./gradlew --init-script scripts/packaged-transfer.gradle packagedTransferTest`:
-  2 additional tests, zero failures/errors/skips. Production classes and the preview
+  3 additional tests, zero failures/errors/skips. Production classes and the preview
   FXML are asserted to load from the actual `Laplace.jar`; matching JavaFX natives
   are selected using the existing test runtime. This is automated packaged UI
   evidence, not a claim of physical mouse testing on all operating systems.
@@ -24,6 +24,7 @@ Environment: macOS ARM64, Java `25.0.3.fx-zulu`, project-declared JavaFX 17.0.7 
   empty replacement clears the old identity selection.
 - Repository checks and diff whitespace checks pass. The existing
   `docs/AboutUs.md:61` trailing-whitespace warning remains outside this change.
+- The MarkBind documentation build passes for all 35 pages.
 
 ## Individual new-class coverage
 
@@ -54,7 +55,7 @@ new previews and successful mutations enforce the documented confirmation rules.
 ## Session and visual evidence
 
 [Complete normalized input/output session](DataTransferSession.txt) ·
-[Recorded test plan](../../test/ui-test-plan.md) ·
+[Recorded test plan](https://github.com/AY2627S1-CS2103T-F15-2/tp/blob/codex/106-data-transfer/test/ui-test-plan.md) ·
 [Format and integration contract](../DataTransferContract.md)
 
 Only temporary paths and generated backup filenames are normalized in the session.
@@ -65,3 +66,9 @@ The two screenshots were visually inspected for wrapping and usable controls.
 ![Small preview](DataTransferPreview-small.png)
 
 Hosted CI results are recorded separately in the PR for its exact published head.
+
+The first Windows run exposed CRLF checkout handling in the test-plan reader:
+the reader found zero cases instead of two and failed before executing a session.
+The reader now normalizes line endings before parsing. A regression compares all
+case names, inputs and expected outputs under LF and CRLF without changing the
+expected UI feedback or excluding any test.

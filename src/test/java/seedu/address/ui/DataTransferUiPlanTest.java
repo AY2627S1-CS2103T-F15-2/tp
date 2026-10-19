@@ -59,7 +59,7 @@ public class DataTransferUiPlanTest {
             assertEquals("jar", DataTransferPanel.class.getResource("/view/DataTransferPanel.fxml").getProtocol());
         }
         List<String> session = new ArrayList<>();
-        Matcher cases = CASE.matcher(Files.readString(Path.of("test/ui-test-plan.md")));
+        Matcher cases = casesIn(Files.readString(Path.of("test/ui-test-plan.md")));
         int count = 0;
         try {
             while (cases.find()) {
@@ -74,6 +74,27 @@ public class DataTransferUiPlanTest {
             Files.createDirectories(Path.of("_temp"));
             Files.write(Path.of("_temp/ui-test-session.txt"), session);
         }
+    }
+
+    @Test
+    public void recordedPlan_windowsAndUnixLineEndings_produceIdenticalCases() throws Exception {
+        String plan = Files.readString(Path.of("test/ui-test-plan.md")).replace("\r\n", "\n");
+        Matcher unix = casesIn(plan);
+        Matcher windows = casesIn(plan.replace("\n", "\r\n"));
+        int count = 0;
+        while (unix.find()) {
+            assertTrue(windows.find());
+            assertEquals(unix.group(1), windows.group(1));
+            assertEquals(unix.group(2), windows.group(2));
+            assertEquals(unix.group(3), windows.group(3));
+            count++;
+        }
+        assertFalse(windows.find());
+        assertEquals(2, count);
+    }
+
+    private Matcher casesIn(String plan) {
+        return CASE.matcher(plan.replace("\r\n", "\n").replace('\r', '\n'));
     }
 
     private void runCase(String name, String inputs, String expected, Path run, List<String> session) {
