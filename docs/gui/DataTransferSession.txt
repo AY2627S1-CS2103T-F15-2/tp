@@ -1,0 +1,32 @@
+TC1: Preview, strict parsing, cancellation and no implicit save
+INPUT: data confirm
+OUTPUT: Error: No pending preview. Use data import or data restore first.
+INPUT: data export file/{{DIR}}/export.json
+OUTPUT: Success: Snapshot exported to {{DIR}}/export.json
+INPUT: data import file/{{DIR}}/export.json
+OUTPUT: Success: Replace all data from {{DIR}}/export.json
+Persons: 1; members: 1; equipment: 1; loans (including history): 2.
+All current records will be replaced. A backup is required before applying.
+Use data confirm to apply or data cancel to discard.
+INPUT: data import file/{{DIR}}/export.json file/duplicate
+OUTPUT: Error: Repeated parameter: file/
+INPUT: data cancel
+OUTPUT: Success: Data transfer cancelled. Current data is unchanged.
+INPUT: data confirm
+OUTPUT: Error: No pending preview. Use data import or data restore first.
+PASS: rejected state preserved; fresh model/logic/window reload and selection verified.
+TC2: Backup, confirmed replacement, selection recovery and reload
+INPUT: data restore file/{{DIR}}/empty.json
+OUTPUT: Success: Replace all data from {{DIR}}/empty.json
+Persons: 0; members: 0; equipment: 0; loans (including history): 0.
+All current records will be replaced. A backup is required before applying.
+Use data confirm to apply or data cancel to discard.
+INPUT: data backup
+OUTPUT: Success: Backup saved to {{BACKUP}}
+INPUT: data confirm
+OUTPUT: Success: Snapshot applied. Previous data backed up to {{BACKUP}}
+INPUT: data confirm
+OUTPUT: Error: No pending preview. Use data import or data restore first.
+INPUT: member list
+OUTPUT: Success: Listed 0 active members.
+PASS: rejected state preserved; fresh model/logic/window reload and selection verified.

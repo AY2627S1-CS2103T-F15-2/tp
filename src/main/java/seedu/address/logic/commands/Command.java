@@ -1,12 +1,18 @@
 package seedu.address.logic.commands;
 
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.transfer.DataTransferService;
 import seedu.address.model.Model;
 
 /**
  * Represents a command with hidden internal logic and the ability to be executed.
  */
 public abstract class Command {
+
+    /** Returns whether LogicManager should persist the ordinary command's resulting application data. */
+    public boolean requiresPersistence() {
+        return true;
+    }
 
     /** Returns whether this command stages Laplace record changes until persistence succeeds. */
     public boolean isTransactional() {
@@ -21,5 +27,10 @@ public abstract class Command {
      * @throws CommandException If an error occurs during command execution.
      */
     public abstract CommandResult execute(Model model) throws CommandException;
+
+    /** Executes with session services; ordinary domain commands continue to depend only on Model. */
+    public CommandResult execute(Model model, DataTransferService transfers) throws CommandException {
+        return execute(model);
+    }
 
 }

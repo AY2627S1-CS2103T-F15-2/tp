@@ -10,8 +10,8 @@ Laplace helps a CCA EXCO member manage **members, equipment and equipment loans*
 Type commands to register records, find an exact member or item, issue equipment, record returns and
 remove erroneous records. Lists and details show who holds each item and what each member holds.
 
-This guide describes the **MVP release and the additional `loans list` navigation command**:
-eleven member, equipment and loan commands in total. Use it with the matching release supplied by the team;
+This guide describes the **MVP commands and v1.4 data-transfer features**:
+eleven member, equipment and loan commands, plus six data-transfer commands. Use the matching release supplied by the team;
 earlier builds may not support every behavior described here. Laplace is a local, single-user application.
 
 <page-nav-print />
@@ -489,9 +489,9 @@ than expected is valid if it is no earlier than assignment and no later than the
 to it, even if that file contains no records. To try the bundled examples, launch the JAR from a separate
 empty folder. Keep your existing data file and backup intact.
 
-**How do I move my data?** Close Laplace, back up the data file, copy it to the other computer's chosen
-Laplace folder at the configured data path, and launch the matching release there. Keep the original
-backup until you have checked members, equipment and current loans on the other computer.
+**How do I move my data?** Export a snapshot with `data export file/snapshot.json`, copy it to the other
+computer and use `data import file/snapshot.json`. Check the preview before confirming replacement.
+Keep the original snapshot until you have checked members, equipment and loans on the other computer.
 
 **Where is Help?** Enter `help` or press F1. Use `exit` for normal shutdown; saved window preferences are
 reused within usable screen bounds. These utilities are separate from the eleven member, equipment
@@ -503,10 +503,10 @@ use **Copy URL** to copy its address and open it in your browser.
 
 ## MVP limits
 
-The MVP excludes record editing, archiving/restoring deleted records, separate find/member-loans/holder
-commands, completed loan-history viewing, import/export, undo/redo, batch operations, fuzzy search,
-filters, user-selected sorting and automatic overdue notifications. Copying a backup file while the app
-is closed is a file-management task, not an import/export command. Data is local to one operator;
+This release excludes record editing, archiving/restoring individual deleted records, separate
+find/member-loans/holder commands, completed loan-history viewing, undo/redo, batch operations,
+fuzzy search, filters, user-selected sorting and automatic overdue notifications. Complete snapshot
+import/export, backup and restore are available as described below. Data is local to one operator;
 authentication and concurrent multi-user operation are not provided.
 
 ## Command summary
@@ -524,5 +524,32 @@ authentication and concurrent multi-user operation are not provided.
 | Open the Loans tab | `loans list` |
 | Assign equipment | `loans add uuid/UUID nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |
 | Return equipment | `loans return uuid/UUID returned/ACTUAL_RETURN_DATE` |
+| Export complete data | `data export file/PATH` |
+| Back up complete data | `data backup` |
+| Preview import or restore | `data import file/PATH` or `data restore file/PATH` |
+| Apply previewed replacement | `data confirm` |
+| Discard previewed replacement | `data cancel` |
 
 Application utilities: `help` (or F1) opens Help; `exit` closes Laplace.
+
+## Import, export, backup and restore
+
+Use `data export file/snapshot.json` to save a complete JSON snapshot, or
+`data backup` to create a uniquely named backup beside your active data file.
+Existing export files cannot be overwritten. Relative paths start in the Laplace
+JAR folder (the project folder for development runs).
+
+Use `data import file/snapshot.json` or `data restore file/snapshot.json` to validate
+and preview a replacement. Check the source and all collection counts, including
+completed loan history. **Confirmation replaces all current records.** Use
+`data confirm` or the Confirm replacement button to apply; Laplace first creates a
+backup and saves the replacement before updating the screen. Use `data cancel` or
+Cancel to discard it. If you change data, preview again before confirming.
+
+For folder names with spaces and slashes, quote the complete path:
+`data export file/"backup copies/October snapshot.json"`. Import and restore accept
+complete JSON snapshots, including existing unversioned save files. CSV is not
+supported. Invalid files are rejected without changing your current data.
+
+See [the data-transfer contract](DataTransferContract.md) for format compatibility,
+failure behavior and verification details.

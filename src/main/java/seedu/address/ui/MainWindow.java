@@ -28,6 +28,7 @@ import seedu.address.commons.util.LaplaceSortOrder;
 import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DisplayRequest;
+import seedu.address.logic.commands.TransferPreviewResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -324,6 +325,14 @@ public class MainWindow extends UiPart<Stage> {
                 handleExit();
             } else if (!result.isShowHelp()) {
                 display(result.getDisplayRequest());
+                if (result instanceof TransferPreviewResult preview) {
+                    directory.setVisible(false);
+                    directory.setManaged(false);
+                    singlePanelPlaceholder.setVisible(true);
+                    singlePanelPlaceholder.setManaged(true);
+                    singlePanelPlaceholder.getChildren().setAll(
+                            new DataTransferPanel(preview.getPreview(), this::activate).getRoot());
+                }
             }
             return result;
         } catch (CommandException | ParseException e) {

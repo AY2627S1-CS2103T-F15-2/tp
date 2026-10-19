@@ -13,6 +13,8 @@ import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.logic.transfer.DataTransferService;
+import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.equipment.Availability;
@@ -33,6 +35,7 @@ public class LogicManager implements Logic {
     private final Model model;
     private final Storage storage;
     private final AddressBookParser addressBookParser;
+    private final DataTransferService transfers;
 
     /**
      * Constructs a {@code LogicManager} with the given {@code Model} and {@code Storage}.
@@ -41,6 +44,7 @@ public class LogicManager implements Logic {
         this.model = model;
         this.storage = storage;
         addressBookParser = new AddressBookParser();
+        transfers = new DataTransferService(storage);
     }
 
     @Override
@@ -48,8 +52,13 @@ public class LogicManager implements Logic {
         logger.info("----------------[USER COMMAND][" + commandText + "]");
 
         Command command = addressBookParser.parseCommand(commandText);
+        AddressBook before = new AddressBook(model.getAddressBook());
         Model executionModel = command.isTransactional() ? model.createTransactionSnapshot() : model;
-        CommandResult commandResult = command.execute(executionModel);
+        CommandResult commandResult = command.execute(executionModel, transfers);
+
+        if (!command.requiresPersistence()) {
+            return commandResult;
+        }
 
         try {
             storage.saveAddressBook(executionModel.getAddressBook());
@@ -63,6 +72,9 @@ public class LogicManager implements Logic {
         if (command.isTransactional()) {
             // Preserve the existing observable root; publish the validated snapshot only after its atomic save.
             model.setAddressBook(executionModel.getAddressBook());
+        }
+        if (!before.equals(model.getAddressBook())) {
+            transfers.invalidate();
         }
         return commandResult;
     }

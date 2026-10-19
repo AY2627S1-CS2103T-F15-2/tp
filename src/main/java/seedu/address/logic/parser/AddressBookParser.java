@@ -53,6 +53,7 @@ public class AddressBookParser {
         logger.fine("Command word: " + commandWord + "; Arguments: " + arguments);
 
         return switch (commandWord) {
+            case "data" -> new DataCommandParser().parse(arguments);
             case "member" -> new MemberCommandParser().parse(arguments);
             case "equipment" -> new EquipmentCommandParser().parse(arguments);
             case "loans" -> new LoansCommandParser().parse(arguments);

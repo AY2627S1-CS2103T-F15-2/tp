@@ -1,0 +1,19 @@
+// Optional acceptance task: production classes and resources must come from the actual distribution JAR.
+allprojects {
+    afterEvaluate {
+        tasks.register('packagedTransferTest', Test) {
+            dependsOn tasks.named('shadowJar'), tasks.named('testClasses')
+            useJUnitPlatform()
+            testClassesDirs = sourceSets.test.output.classesDirs
+            def mainOutput = sourceSets.main.output.files
+            classpath = configurations.javafxTestRuntime + files(tasks.shadowJar.archiveFile) +
+                sourceSets.test.runtimeClasspath.filter {
+                    !it.name.startsWith('javafx-') && !mainOutput.contains(it)
+                }
+            jvmArgs '--limit-modules=java.se,jdk.unsupported', '--enable-native-access=ALL-UNNAMED'
+            systemProperty 'laplace.packagedTransfer', 'true'
+            filter { includeTestsMatching '*DataTransferUiPlanTest' }
+            failFast = true
+        }
+    }
+}
