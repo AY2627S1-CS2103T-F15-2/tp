@@ -104,6 +104,13 @@ public interface Model {
     void addMember(Member member);
 
     /**
+     * Replaces a stored member's details without changing their NUS ID or loan references.
+     * @throws seedu.address.model.member.exceptions.MemberNotFoundException if the identity is unknown.
+     * @throws IllegalArgumentException if the replacement has a different NUS ID.
+     */
+    void setMember(Member target, Member editedMember);
+
+    /**
      * Deletes a member by identity and removes their closed loan history.
      * @throws seedu.address.model.member.exceptions.MemberNotFoundException if the identity is unknown.
      * @throws IllegalStateException if the member has an open loan.

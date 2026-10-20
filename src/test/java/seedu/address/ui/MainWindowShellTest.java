@@ -1062,6 +1062,32 @@ public class MainWindowShellTest {
         }
     }
 
+    @Test
+    public void memberEdit_routedCommand_refreshesDetailsSortingSelectionAndSavedData() throws Exception {
+        FxTestUtil.runAndWait(() -> {
+            showMemberDetails(id(1));
+            submit("member edit nus/" + id(1) + " name/Zelda Updated phone/98765432 email/zelda@example.com");
+            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Zelda Updated", detailLabel("memberName"));
+            assertEquals(id(1), ((Member) rows().getSelectionModel().getSelectedItem()).getNusId());
+            assertEquals(id(1), ((Member) rows().getItems().getLast()).getNusId());
+            assertTrue(node("directoryListPlaceholder").lookupAll(".member-name").stream()
+                    .map(node -> ((Label) node).getText()).anyMatch("Zelda Updated"::equals));
+            render("member-edit", 1100, 700);
+        });
+        Member persisted = storage.readAddressBook().orElseThrow().getMemberList().stream()
+                .filter(member -> member.getNusId().equals(id(1))).findFirst().orElseThrow();
+        assertEquals("Zelda Updated", persisted.getName().fullName);
+        assertEquals("98765432", persisted.getPhone().value);
+        assertEquals("zelda@example.com", persisted.getEmail().value);
+        reloadFreshShell();
+        FxTestUtil.runAndWait(() -> {
+            showMemberDetails(id(1));
+            assertEquals("Zelda Updated", detailLabel("memberName"));
+            assertEquals(id(1), ((Member) rows().getItems().getLast()).getNusId());
+        });
+    }
+
     /** Checks one real successful dispatch and one successful JSON save. */
     private void succeed(String command) {
         int saves = storage.saves;
