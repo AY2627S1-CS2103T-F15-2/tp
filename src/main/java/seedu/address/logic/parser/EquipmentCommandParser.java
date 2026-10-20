@@ -20,11 +20,12 @@ public class EquipmentCommandParser implements Parser<Command> {
         String subcommand = parts[0];
         String arguments = parts.length == 2 ? parts[1] : "";
         return switch (subcommand) {
+            case "search" -> new DirectorySearchCommandParser(false).parse(arguments);
             case "list" -> new EquipmentListCommandParser().parse(arguments);
             case "add" -> new EquipmentAddCommandParser().parse(arguments);
             case "view" -> new EquipmentViewCommandParser().parse(arguments);
             case "delete" -> new EquipmentDeleteCommandParser().parse(arguments);
-            default -> throw new ParseException("Expected equipment subcommand: add, list, view, delete.");
+            default -> throw new ParseException("Expected equipment subcommand: add, list, search, view, delete.");
         };
     }
 }

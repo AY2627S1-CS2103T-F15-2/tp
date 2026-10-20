@@ -10,11 +10,18 @@ import javafx.scene.layout.Region;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
+import seedu.address.model.query.DirectoryQuery;
 
 /** Read-only member directory summary. The shell owns listeners and calls refresh on the FX thread. */
 public class MemberDirectorySummary extends UiPart<Region> {
 
     private final ReadOnlyAddressBook data;
+    private DirectoryQuery query = DirectoryQuery.all();
+
+    @FXML
+    private Label sortOrder;
+    @FXML
+    private Label criteria;
 
     @FXML
     private Label countBadge;
@@ -37,19 +44,30 @@ public class MemberDirectorySummary extends UiPart<Region> {
         refresh(Optional.empty());
     }
 
+    /** Sets transient criteria; the parent refreshes once after coordinating both directory components. */
+    public void setQuery(DirectoryQuery query) {
+        this.query = requireNonNull(query);
+    }
+
     /** Refreshes current counts and selection without executing commands or retaining entity snapshots. */
     public void refresh(Optional<NusId> selected) {
         requireNonNull(selected);
         int count = data.getMemberList().size();
         countBadge.setText(count + " ACTIVE");
         activeCount.setText(Integer.toString(count));
-        displayedCount.setText(Integer.toString(count));
+        int displayed = query.members(data).size();
+        displayedCount.setText(Integer.toString(displayed));
+        sortOrder.setText(query.sortDescription(true));
+        criteria.setText(query.description());
         Optional<Member> member = selected.flatMap(nusId -> data.getMemberList().stream()
                 .filter(candidate -> candidate.getNusId().equals(nusId)).findFirst());
         selection.setText(selected.isEmpty() ? "No member selected"
                 : member.map(value -> value.getName() + " - " + value.getNusId())
                         .orElse("Member no longer exists: " + selected.orElseThrow()));
         statusTitle.setText(count == 0 ? "No members yet" : "All active members displayed");
+        if (displayed != count) {
+            statusTitle.setText("Showing " + displayed + " matching members");
+        }
         statusMessage.setText(count == 0
                 ? "Add a member with member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL."
                 : "The member directory is ready for selection or another typed command.");

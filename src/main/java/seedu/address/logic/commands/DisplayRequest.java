@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.member.NusId;
+import seedu.address.model.query.DirectoryQuery;
 
 /**
  * Immutable navigation intent, independent of JavaFX and persisted application data.
@@ -22,11 +23,21 @@ public final class DisplayRequest {
     private final Type type;
     private final NusId memberNusId;
     private final UUID equipmentUuid;
+    private final DirectoryQuery query;
 
     private DisplayRequest(Type type, NusId memberNusId, UUID equipmentUuid) {
+        this(type, memberNusId, equipmentUuid, null);
+    }
+
+    private DisplayRequest(Type type, NusId memberNusId, UUID equipmentUuid, DirectoryQuery query) {
         this.type = type;
         this.memberNusId = memberNusId;
         this.equipmentUuid = equipmentUuid;
+        this.query = query;
+    }
+
+    public Optional<DirectoryQuery> getQuery() {
+        return Optional.ofNullable(query);
     }
 
     public static DisplayRequest unchanged() {
@@ -41,12 +52,20 @@ public final class DisplayRequest {
         return new DisplayRequest(Type.MEMBERS, null, null);
     }
 
+    public static DisplayRequest members(DirectoryQuery query) {
+        return new DisplayRequest(Type.MEMBERS, null, null, requireNonNull(query));
+    }
+
     public static DisplayRequest memberDetails(NusId nusId) {
         return new DisplayRequest(Type.MEMBER_DETAILS, requireNonNull(nusId), null);
     }
 
     public static DisplayRequest equipment() {
         return new DisplayRequest(Type.EQUIPMENT, null, null);
+    }
+
+    public static DisplayRequest equipment(DirectoryQuery query) {
+        return new DisplayRequest(Type.EQUIPMENT, null, null, requireNonNull(query));
     }
 
     public static DisplayRequest equipmentDetails(UUID uuid) {
@@ -79,12 +98,13 @@ public final class DisplayRequest {
         }
         return type == otherRequest.type
                 && Objects.equals(memberNusId, otherRequest.memberNusId)
-                && Objects.equals(equipmentUuid, otherRequest.equipmentUuid);
+                && Objects.equals(equipmentUuid, otherRequest.equipmentUuid)
+                && Objects.equals(query, otherRequest.query);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, memberNusId, equipmentUuid);
+        return Objects.hash(type, memberNusId, equipmentUuid, query);
     }
 
     @Override
@@ -93,6 +113,7 @@ public final class DisplayRequest {
                 .add("type", type)
                 .add("memberNusId", memberNusId)
                 .add("equipmentUuid", equipmentUuid)
+                .add("query", query)
                 .toString();
     }
 }

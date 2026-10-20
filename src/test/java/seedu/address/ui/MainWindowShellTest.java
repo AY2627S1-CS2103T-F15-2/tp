@@ -105,6 +105,66 @@ public class MainWindowShellTest {
     }
 
     @Test
+    public void search_realCommandInput_filtersSortsRetainsCriteriaAndResetsWithList() {
+        FxTestUtil.runAndWait(() -> {
+            int saves = storage.saves;
+            submit("member search q/alex holding/yes sort/id order/desc");
+            assertEquals("Success", label("feedbackStatus"));
+            assertEquals(1, rows().getItems().size());
+            assertEquals("1", detailLabel("displayedCount"));
+            assertTrue(detailLabel("criteria").contains("alex"));
+            assertTrue(detailLabel("sortOrder").contains("descending"));
+            assertEquals(saves, storage.saves);
+            submit("member view nus/A0000001X");
+            assertEquals(1, rows().getItems().size());
+            submit("member search q/no matches");
+            assertTrue(rows().getItems().isEmpty());
+            assertEquals("0", detailLabel("displayedCount"));
+            assertTrue(((Label) rows().getPlaceholder()).getText().contains("member list"));
+            render("search-empty", 760, 500);
+            submit("member list");
+            assertEquals(3, rows().getItems().size());
+            assertEquals("3", detailLabel("displayedCount"));
+            submit("equipment search category/photo availability/available sort/id order/desc");
+            assertEquals(1, rows().getItems().size());
+            assertEquals(new UUID(0, 2), ((Equipment) rows().getItems().getFirst()).getUuid());
+            assertEquals("1", detailLabel("displayedCount"));
+            assertTrue(detailLabel("inventoryGroups").contains("photography / camera 1"));
+            render("search-equipment", 1100, 700);
+            render("search-equipment", 760, 500);
+            int dispatches = logic.commands.size();
+            rows().fireEvent(key(KeyCode.ENTER));
+            assertEquals(dispatches + 1, logic.commands.size());
+            assertEquals(new UUID(0, 2).toString(), detailLabel("equipmentUuid"));
+            assertEquals(1, rows().getItems().size());
+            submit("equipment search sort/id order/desc");
+            assertEquals(new UUID(0, 3), ((Equipment) rows().getItems().getFirst()).getUuid());
+            submit("equipment list");
+            assertEquals(new UUID(0, 1), ((Equipment) rows().getItems().getFirst()).getUuid());
+        });
+    }
+
+    @Test
+    public void search_loanMutationRefreshAndInvalidInput_preserveQueryAndCorrection() {
+        FxTestUtil.runAndWait(() -> {
+            submit("equipment search availability/available");
+            assertEquals(1, rows().getItems().size());
+            String criteria = detailLabel("criteria");
+            submit("equipment search availability/not-valid");
+            assertEquals("Error", label("feedbackStatus"));
+            assertEquals("equipment search availability/not-valid", field().getText());
+            assertEquals(criteria, detailLabel("criteria"));
+            submit("loans return uuid/" + new UUID(0, 1) + " returned/2026-01-02");
+            assertEquals("Success", label("feedbackStatus"));
+            assertEquals(2, rows().getItems().size());
+            assertEquals(new UUID(0, 1).toString(), detailLabel("equipmentUuid"));
+            submit("equipment search availability/available");
+            assertEquals("2", detailLabel("displayedCount"));
+            assertTrue(detailLabel("inventoryGroups").contains("camera 1: 1 available"));
+        });
+    }
+
+    @Test
     public void pastedMultilineNotes_realInput_preservesSeparatorsPersistsAndRetainsRejectedCorrection() {
         FxTestUtil.runAndWait(() -> {
             Clipboard clipboard = Clipboard.getSystemClipboard();

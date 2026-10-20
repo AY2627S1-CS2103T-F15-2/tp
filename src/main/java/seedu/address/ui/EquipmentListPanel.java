@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -16,13 +17,13 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
-import seedu.address.commons.util.LaplaceSortOrder;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.equipment.exceptions.EquipmentNotFoundException;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.member.Member;
+import seedu.address.model.query.DirectoryQuery;
 
 /** Sorted read-only equipment rows. Only explicit user activation invokes the callback. */
 public class EquipmentListPanel extends UiPart<Region> {
@@ -30,6 +31,7 @@ public class EquipmentListPanel extends UiPart<Region> {
     private final ReadOnlyAddressBook data;
     private final Consumer<UUID> onSelect;
     private final Function<UUID, Availability> availabilityLookup;
+    private DirectoryQuery query = DirectoryQuery.all();
 
     @FXML
     private Label countLabel;
@@ -53,12 +55,25 @@ public class EquipmentListPanel extends UiPart<Region> {
         refresh();
     }
 
+    /** Sets transient criteria; the parent refreshes once after coordinating both directory components. */
+    public void setQuery(DirectoryQuery query) {
+        this.query = requireNonNull(query);
+    }
+
+    /** Returns a fresh sorted query snapshot for identity-preserving shell selection recovery. */
+    public List<Equipment> getDisplayedItems() {
+        return query.equipment(data, availabilityLookup);
+    }
+
     /** Rebuilds real card snapshots, preserving an existing identity without invoking the callback. */
     public void refresh() {
         Optional<UUID> selected = getSelection();
-        rows.getItems().setAll(data.getEquipmentList().stream().sorted(LaplaceSortOrder.EQUIPMENT).toList());
-        countLabel.setText(rows.getItems().size() + " items");
-        Label emptyState = new Label("No equipment yet. Use equipment add to get started.");
+        rows.getItems().setAll(getDisplayedItems());
+        countLabel.setText(query.equals(DirectoryQuery.all()) ? rows.getItems().size() + " items"
+                : rows.getItems().size() + " of " + data.getEquipmentList().size() + " shown");
+        Label emptyState = new Label(data.getEquipmentList().isEmpty()
+                ? "No equipment yet. Use equipment add to get started."
+                : "No matching equipment. Use equipment list to reset the search.");
         emptyState.setWrapText(true);
         emptyState.setMaxWidth(Double.MAX_VALUE);
         emptyState.setMinWidth(0);

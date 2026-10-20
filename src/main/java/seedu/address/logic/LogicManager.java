@@ -51,6 +51,10 @@ public class LogicManager implements Logic {
         Model executionModel = command.isTransactional() ? model.createTransactionSnapshot() : model;
         CommandResult commandResult = command.execute(executionModel);
 
+        if (command.isReadOnly()) {
+            return commandResult;
+        }
+
         try {
             storage.saveAddressBook(executionModel.getAddressBook());
         } catch (AccessDeniedException e) {

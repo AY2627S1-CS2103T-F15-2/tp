@@ -13,6 +13,7 @@ import seedu.address.model.Model;
 import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.equipment.exceptions.DuplicateEquipmentException;
+import seedu.address.model.query.DuplicateWarnings;
 
 /** Adds a physical item with a newly generated identity. */
 public class EquipmentAddCommand extends Command {
@@ -66,13 +67,14 @@ public class EquipmentAddCommand extends Command {
                 continue;
             }
             Equipment equipment = new Equipment(uuid, name, category, condition, notes);
+            String warning = DuplicateWarnings.equipment(model.getAddressBook(), equipment);
             try {
                 model.addEquipment(equipment);
             } catch (DuplicateEquipmentException e) {
                 lastCollision = e;
                 continue;
             }
-            return new CommandResult(String.format(MESSAGE_SUCCESS, name, uuid, model.getAvailability(uuid)),
+            return new CommandResult(String.format(MESSAGE_SUCCESS, name, uuid, model.getAvailability(uuid)) + warning,
                     DisplayRequest.equipmentDetails(uuid));
         }
         if (lastCollision != null) {
