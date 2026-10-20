@@ -1,5 +1,13 @@
 # Record a return: `loans return`
 
+Version 1.4 accepts `uuid/UUID1,UUID2` and an optional `condition/CONDITION`.
+The supplied condition applies to every returned unit and updates each unit's
+current condition. Use separate requests when units have different conditions.
+The whole return batch succeeds or fails together. Omitting `condition/` keeps
+the existing equipment condition and records the return condition as unknown.
+Closed loans, their issue conditions, and their return conditions appear in
+the Loans panel and member/equipment details.
+
 Integration status: the return route dispatches to its real command parser through
 `LoansCommandParser`. Successful execution requests the affected equipment details.
 Keith's application-shell integration and final GUI acceptance are tracked separately in issue #75.
@@ -35,8 +43,8 @@ Success closes the loan using an immutable replacement, preserves returned histo
 the affected equipment's details. The member no longer holds that item. Equipment in `GOOD` or
 `FAIR` condition becomes available; damaged or under-repair equipment stays unavailable.
 
-The read-only Loans tab shows open assignments only, with identities and dates. Closed records
-remain in the model and JSON but have no history presentation. Its
+The read-only Loans tab shows open assignments and completed history, with identities, dates,
+and recorded conditions. Its
 equipment/member links request their detail views. It has no loan-editing or deletion actions.
 
 LogicManager stages the return, atomically saves and then publishes the committed snapshot.

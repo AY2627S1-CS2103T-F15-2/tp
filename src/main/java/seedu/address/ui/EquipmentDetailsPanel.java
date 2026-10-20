@@ -107,5 +107,7 @@ public class EquipmentDetailsPanel extends UiPart<Region> {
         if (availability == null) {
             status(content, "Inconsistent data: availability could not be determined for " + selectedUuid + ".", true);
         }
+        LoanHistoryContent.add(content, data.getLoanList().stream()
+                .filter(loan -> loan.getEquipmentUuid().equals(selectedUuid)).toList());
     }
 }

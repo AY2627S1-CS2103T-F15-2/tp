@@ -344,9 +344,9 @@ Deleting one UUID never deletes other items with the same description. Deletion 
 loans list
 ```
 
-Open the existing Loans tab, just as clicking **Loans** does. It shows current open loans and links
-to the corresponding member and equipment details. If there are no open loans, the tab shows its
-empty state. Closed loan history is not displayed.
+Open the existing Loans tab, just as clicking **Loans** does. It shows current and completed loans,
+with links to the corresponding member and equipment details. Use the NUS ID and UUID fields to
+filter both sections. Each section has its own count and empty state.
 
 Feedback is `Showing current loans.` This command does not create, return, delete or change any
 member, equipment or loan records. It uses the same save/error handling as the other list commands.
@@ -354,10 +354,10 @@ Extra text or parameters, such as `loans list uuid/UUID`, are rejected and leave
 
 ### Assign equipment: `loans add`
 
-Assign one AVAILABLE physical item to an existing member.
+Assign one or more AVAILABLE physical items to an existing member.
 
 ```text
-loans add uuid/UUID nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE
+loans add uuid/UUID[,UUID...] nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE
 ```
 
 All four parameters are required. Use the actual UUID from `equipment list` and the NUS ID from
@@ -374,8 +374,10 @@ Success creates an open loan and immediately changes availability to ASSIGNED. E
 the holder/dates; the member's current holdings and item count update. Feedback is:
 `Assigned EQUIPMENT_NAME (UUID) to MEMBER_NAME (NUS_ID) on ASSIGNMENT_DATE; expected return: EXPECTED_RETURN_DATE.`
 
-A member may hold several different items. Assigning an already assigned item is rejected, even if the
-new loan names the same member. Reaching the expected return date does not automatically return an item.
+A member may hold several different items. Separate multiple UUIDs with commas; every item shares the
+member and dates, and the request succeeds or fails as a whole. The condition of each item at issue is
+recorded in its loan history. Assigning an already assigned item is rejected, even if the new loan names
+the same member. Reaching the expected return date does not automatically return an item.
 
 | Situation | Result or correction |
 | --- | --- |
@@ -392,10 +394,10 @@ On failure, no loan is created. Availability, holder, holdings, view and selecti
 ### Return equipment: `loans return`
 
 ```text
-loans return uuid/UUID returned/ACTUAL_RETURN_DATE
+loans return uuid/UUID[,UUID...] returned/ACTUAL_RETURN_DATE [condition/CONDITION]
 ```
 
-Both parameters are required. The equipment must exist and have an open loan. Its referenced member
+UUID and date are required. Equipment must exist and have open loans. Referenced members
 must also exist. The return date must be **from the assignment date through the computer's local date**,
 inclusive. Same-day, early and late returns are valid; the expected return date does not limit returns.
 
@@ -410,6 +412,11 @@ holder/loan dates, the item leaves the member's current holdings, and open-loan 
 Availability becomes AVAILABLE for GOOD/FAIR, or UNAVAILABLE for DAMAGED/UNDER_REPAIR.
 Feedback is `Returned EQUIPMENT_NAME (UUID) from MEMBER_NAME (NUS_ID) on ACTUAL_RETURN_DATE.`
 
+Multiple UUIDs return in one request. If `condition/` is supplied, it is recorded for every item
+and updates each item's current condition. Use separate commands for different observed conditions.
+If omitted, the current equipment condition stays unchanged and history shows the return condition
+as "Not recorded". A failed item prevents the entire batch from being returned.
+
 | Situation | Result or correction |
 | --- | --- |
 | Equipment does not exist | `No equipment with UUID UUID exists.` Check the full UUID. |
@@ -420,8 +427,8 @@ Feedback is `Returned EQUIPMENT_NAME (UUID) from MEMBER_NAME (NUS_ID) on ACTUAL_
 | Open loan refers to a missing member | `Cannot return equipment UUID: its open loan refers to a missing member.` Preserve the data and report the error to the team. |
 | Saving fails | No return is recorded and no records change; correct file access and retry. |
 
-A rejected return leaves the loan, return date, holder and availability unchanged. Closing a loan retains
-its record internally; the MVP does not provide a completed-history screen.
+A rejected return leaves the loan, return date, holder and availability unchanged. Completed loans
+appear in the Loans tab and in member and equipment details.
 
 ## A complete issue-and-return workflow
 
@@ -504,8 +511,8 @@ use **Copy URL** to copy its address and open it in your browser.
 ## MVP limits
 
 The MVP excludes record editing, archiving/restoring deleted records, separate find/member-loans/holder
-commands, completed loan-history viewing, import/export, undo/redo, batch operations, fuzzy search,
-filters, user-selected sorting and automatic overdue notifications. Copying a backup file while the app
+commands, import/export, undo/redo, fuzzy search, user-selected sorting and automatic overdue notifications.
+Copying a backup file while the app
 is closed is a file-management task, not an import/export command. Data is local to one operator;
 authentication and concurrent multi-user operation are not provided.
 
@@ -522,7 +529,7 @@ authentication and concurrent multi-user operation are not provided.
 | View equipment and current holder | `equipment view uuid/UUID` |
 | Delete equipment | `equipment delete uuid/UUID` |
 | Open the Loans tab | `loans list` |
-| Assign equipment | `loans add uuid/UUID nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |
-| Return equipment | `loans return uuid/UUID returned/ACTUAL_RETURN_DATE` |
+| Assign equipment | `loans add uuid/UUID[,UUID...] nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |
+| Return equipment | `loans return uuid/UUID[,UUID...] returned/ACTUAL_RETURN_DATE [condition/CONDITION]` |
 
 Application utilities: `help` (or F1) opens Help; `exit` closes Laplace.

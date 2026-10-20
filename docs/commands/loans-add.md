@@ -1,5 +1,11 @@
 # Assign equipment: `loans add`
 
+Version 1.4 accepts a comma-separated list of equipment UUIDs in `uuid/`. For example,
+`uuid/UUID1,UUID2` assigns two physical units to the same member with the same dates.
+Each UUID must be unique and available. The whole request succeeds or fails together.
+The condition of each unit at assignment is recorded in its loan history. The
+existing single-UUID form continues to work.
+
 Integration status: the assignment route dispatches to its real command parser through
 `LoansCommandParser`. Successful execution requests the affected equipment details.
 Keith's application-shell integration and final GUI acceptance are tracked separately in issue #75.
@@ -43,7 +49,7 @@ the error; it does not promise to undo an already completed change in memory.
 
 Assignment is staged and atomically persisted before live publication. A failed save leaves all
 collections and saved bytes unchanged. See [MVP fields](MvpFields.md) for canonical UUIDs, exact
-conditions/dates and supplied-field error ordering. Loans presents open assignments only.
+conditions/dates and supplied-field error ordering. Loans presents open assignments and completed history.
 
 Assignment refusal for an existing open loan names its current holder NUS ID, including when
 the requested new holder differs. The current loan is read before attempting any mutation.

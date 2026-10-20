@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -37,6 +38,14 @@ public class LoanPanel extends UiPart<Region> {
     private Label openCount;
     @FXML
     private VBox openLoans;
+    @FXML
+    private Label closedCount;
+    @FXML
+    private VBox closedLoans;
+    @FXML
+    private TextField memberFilter;
+    @FXML
+    private TextField equipmentFilter;
 
     /**
      * Creates a panel using current records and callbacks supplied by the application shell.
@@ -48,6 +57,8 @@ public class LoanPanel extends UiPart<Region> {
         this.data = data;
         this.onEquipmentSelected = onEquipmentSelected;
         this.onMemberSelected = onMemberSelected;
+        memberFilter.textProperty().addListener((observable, oldValue, newValue) -> refresh());
+        equipmentFilter.textProperty().addListener((observable, oldValue, newValue) -> refresh());
         refresh();
     }
 
@@ -55,9 +66,24 @@ public class LoanPanel extends UiPart<Region> {
      * Rebuilds current assignments from current data without invoking callbacks or installing listeners.
      */
     public void refresh() {
-        List<Loan> open = data.getLoanList().stream().filter(Loan::isOpen).sorted(OPEN_ORDER).toList();
+        List<Loan> open = data.getLoanList().stream().filter(Loan::isOpen).filter(this::matchesFilters)
+                .sorted(OPEN_ORDER).toList();
+        List<Loan> closed = data.getLoanList().stream().filter(loan -> !loan.isOpen())
+                .filter(this::matchesFilters).sorted(Comparator
+                        .comparing((Loan loan) -> loan.getReturnedDate().orElseThrow()).reversed()
+                        .thenComparing(Loan::getAssignedDate).thenComparing(loan -> loan.getEquipmentUuid().toString()))
+                .toList();
         openCount.setText(Integer.toString(open.size()));
         refreshSection(openLoans, open, "No open loans. Available equipment is ready to assign.");
+        closedCount.setText(Integer.toString(closed.size()));
+        refreshSection(closedLoans, closed, "No completed loans match these filters.");
+    }
+
+    private boolean matchesFilters(Loan loan) {
+        return loan.getMemberNusId().toString().toLowerCase(java.util.Locale.ROOT)
+                .contains(memberFilter.getText().strip().toLowerCase(java.util.Locale.ROOT))
+                && loan.getEquipmentUuid().toString().toLowerCase(java.util.Locale.ROOT)
+                .contains(equipmentFilter.getText().strip().toLowerCase(java.util.Locale.ROOT));
     }
 
     private void refreshSection(VBox section, List<Loan> loans, String emptyMessage) {
@@ -86,11 +112,18 @@ public class LoanPanel extends UiPart<Region> {
         memberLink.setDisable(member.isEmpty());
         memberLink.setOnAction(event -> onMemberSelected.accept(loan.getMemberNusId()));
 
-        Label status = label("Open loan", "loan-status");
-        status.getStyleClass().add("loan-open-status");
+        Label status = label(loan.isOpen() ? "Open loan" : "Completed loan", "loan-status");
+        status.getStyleClass().add(loan.isOpen() ? "loan-open-status" : "loan-closed-status");
         VBox row = new VBox(6, status, equipmentLink, memberLink,
                 label("Assigned: " + loan.getAssignedDate(), "loan-date"),
-                label("Expected return: " + loan.getExpectedReturnDate(), "loan-date"));
+                label("Expected return: " + loan.getExpectedReturnDate(), "loan-date"),
+                label("Issue condition: " + loan.getIssueCondition().map(Enum::name).orElse("Not recorded"),
+                        "loan-date"));
+        if (!loan.isOpen()) {
+            row.getChildren().add(label("Returned: " + loan.getReturnedDate().orElseThrow(), "loan-date"));
+            row.getChildren().add(label("Return condition: "
+                    + loan.getReturnCondition().map(Enum::name).orElse("Not recorded"), "loan-date"));
+        }
         row.getStyleClass().addAll("laplace-row", "loan-row");
         row.setMinWidth(0);
         row.setMaxWidth(Double.MAX_VALUE);

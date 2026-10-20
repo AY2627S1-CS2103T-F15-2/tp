@@ -127,7 +127,7 @@ public class LoanTest {
         Loan loan = new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE, RETURNED_DATE);
         String expected = Loan.class.getCanonicalName() + "{equipmentUuid=" + UUID_ONE
                 + ", memberNusId=A0123456X, assignedDate=2026-10-01, expectedReturnDate=2026-10-15"
-                + ", returnedDate=2026-10-12}";
+                + ", returnedDate=2026-10-12, issueCondition=null, returnCondition=null}";
 
         assertEquals(expected, loan.toString());
     }
