@@ -17,11 +17,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.CommittedReplacementResult;
 import seedu.address.logic.commands.DataCommand;
 import seedu.address.logic.commands.DataCommand.Action;
 import seedu.address.logic.commands.DisplayRequest;
 import seedu.address.logic.commands.TransferPreviewResult;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.commands.exceptions.DataTransferException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -70,7 +72,8 @@ public class DataTransferServiceTest {
         assertTrue(java.util.Arrays.equals(beforeBytes, Files.readAllBytes(storage.getAddressBookFilePath())));
         // Confirmation must not reread an edited or removed source file.
         Files.delete(directory.resolve("incoming.json"));
-        CommandResult confirmed = execute(Action.CONFIRM, null);
+        CommittedReplacementResult confirmed = assertInstanceOf(CommittedReplacementResult.class,
+                execute(Action.CONFIRM, null));
         assertSame(observableRoot, model.getAddressBook());
         assertEquals(new AddressBook(), model.getAddressBook());
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
@@ -80,17 +83,28 @@ public class DataTransferServiceTest {
         assertEquals(original, snapshots.read(backup));
         assertTrue(confirmed.getFeedbackToUser().contains(backup.toString()));
         assertThrows(CommandException.class, () -> execute(Action.CONFIRM, null));
+        assertEquals(original, confirmed.getBefore());
+        assertEquals(new AddressBook(), confirmed.getAfter());
+        // Neither callers nor later model changes may alter the history payload already returned.
+        AddressBook returnedBefore = (AddressBook) confirmed.getBefore();
+        AddressBook returnedAfter = (AddressBook) confirmed.getAfter();
+        returnedBefore.resetData(new AddressBook());
+        returnedAfter.resetData(original);
+        model.setAddressBook(original);
+        assertEquals(original, confirmed.getBefore());
+        assertEquals(new AddressBook(), confirmed.getAfter());
     }
 
     @Test
     public void exportAndBackup_doNotSaveMutateOrInvalidatePreviewAndNeverOverwrite() throws Exception {
-        execute(Action.RESTORE, "incoming.json");
+        assertFalse(execute(Action.RESTORE, "incoming.json") instanceof CommittedReplacementResult);
         CommandResult exported = execute(Action.EXPORT, "a folder/export.json");
+        assertFalse(exported instanceof CommittedReplacementResult);
         assertTrue(exported.getFeedbackToUser().contains("a folder"));
         assertEquals(original, snapshots.read(directory.resolve("a folder/export.json")));
         assertThrows(CommandException.class, () -> execute(Action.EXPORT, "a folder/export.json"));
         assertThrows(CommandException.class, () -> execute(Action.EXPORT, "live.json"));
-        execute(Action.BACKUP, null);
+        assertFalse(execute(Action.BACKUP, null) instanceof CommittedReplacementResult);
         execute(Action.BACKUP, null);
         assertEquals(2, backups().size());
         for (Path path : backups()) {
@@ -110,7 +124,7 @@ public class DataTransferServiceTest {
         execute(Action.CONFIRM, null);
         assertEquals(original, model.getAddressBook());
         execute(Action.IMPORT, "incoming.json");
-        execute(Action.CANCEL, null);
+        assertFalse(execute(Action.CANCEL, null) instanceof CommittedReplacementResult);
         assertThrows(CommandException.class, () -> execute(Action.CONFIRM, null));
         execute(Action.CANCEL, null);
         execute(Action.IMPORT, "incoming.json");
@@ -118,8 +132,9 @@ public class DataTransferServiceTest {
         assertThrows(CommandException.class, () -> execute(Action.CONFIRM, null));
         execute(Action.IMPORT, "incoming.json");
         model.setAddressBook(new AddressBook());
-        assertTrue(assertThrows(CommandException.class, () -> execute(Action.CONFIRM, null))
-                .getMessage().contains("Data changed"));
+        DataTransferException stale = assertThrows(DataTransferException.class, () -> execute(Action.CONFIRM, null));
+        assertTrue(stale.getMessage().contains("Data changed"));
+        assertTrue(stale.isPreviewInvalidated());
         assertThrows(CommandException.class, () -> execute(Action.CONFIRM, null));
         assertEquals(1, backups().size());
     }
@@ -128,6 +143,7 @@ public class DataTransferServiceTest {
     public void failedPreview_discardsOlderRequestAndPreservesLiveData() throws Exception {
         execute(Action.IMPORT, "incoming.json");
         CommandException failure = assertThrows(CommandException.class, () -> execute(Action.IMPORT, "missing.json"));
+        assertTrue(assertInstanceOf(DataTransferException.class, failure).isPreviewInvalidated());
         assertInstanceOf(IOException.class, failure.getCause());
         assertThrows(CommandException.class, () -> execute(Action.CONFIRM, null));
         Files.writeString(directory.resolve("invalid.json"), "{}");
@@ -157,6 +173,7 @@ public class DataTransferServiceTest {
         storage.failure = new IOException("controlled replacement failure");
         String saved = Files.readString(storage.getAddressBookFilePath());
         CommandException failure = assertThrows(CommandException.class, () -> execute(Action.CONFIRM, null));
+        assertFalse(assertInstanceOf(DataTransferException.class, failure).isPreviewInvalidated());
         assertSame(storage.failure, failure.getCause());
         assertEquals(original, model.getAddressBook());
         assertEquals(saved, Files.readString(storage.getAddressBookFilePath()));

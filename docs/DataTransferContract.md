@@ -52,6 +52,35 @@ including references in closed history. Unknown fields are rejected rather than
 silently discarded. When domain owners introduce lifecycle or loan-condition
 fields, their adapter changes must be included before transferring those fields.
 
+### v1.4 domain migration acceptance gate
+
+The current round-trip fixture proves the existing fields only. It does not prove
+preservation of future archive/deletion/restoration metadata or issue/return
+conditions. [Issue #110](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/110)
+tracks this gate separately from delivery of the transfer commands.
+
+The proposed integration contract below requires review by Keegan, Arjo and Nick;
+it is not an agreement already made with those owners:
+
+- Introduce snapshot version 2 when those persisted fields land. Ship root-version
+  handling, domain adapters and migration tests together. Continue reading version 1
+  and unversioned legacy saves; older applications reject version 2 explicitly.
+  Do not silently remove the new fields to create a version-1 export.
+- For legacy records, propose active/not-deleted lifecycle defaults and no invented
+  deletion/restoration timestamps. Missing historical issue/return conditions mean
+  unknown/unrecorded; never infer past conditions from today's equipment condition.
+  The domain owners must approve exact field names, defaults and eligibility rules.
+- Use an integrated fixture containing active, archived and soft-deleted members,
+  retained equipment, restoration cases on both sides of and exactly at the agreed
+  30-day boundary, issue/return conditions, open loans and completed history.
+- Verify export, preview, confirmation and fresh model/storage reload preserve every
+  field and cross-reference, including deleted records. Verify legacy defaults,
+  unsupported versions, unknown fields and invalid combinations. Run the full
+  mounted-shell and 100% changed-code coverage checks at the integrated revision.
+
+Keith coordinates the snapshot format; the domain owners supply their adapters.
+Full v1.4 field compatibility remains pending this acceptance and owner agreement.
+
 ## Execution and integration API
 
 - `Command.requiresPersistence()` defaults to true. Data commands return false;
@@ -69,8 +98,16 @@ fields, their adapter changes must be included before transferring those fields.
   confirmation also compares the complete current root against its baseline.
 - Queries, exports, backups, cancellation, previews and failed requests do not
   become replacement transactions. No undo/audit storage is introduced. Isaac can
-  integrate one committed replacement at the existing persist-before-publish
-  boundary; preview/export operations must remain outside undo history.
+  recognize `CommittedReplacementResult` returned by `LogicManager.execute` as one
+  committed replacement. It is constructed only after backup, atomic persistence
+  and publication succeed. `getBefore()` and `getAfter()` return defensive copies
+  of all collections; later model changes cannot alter the history payload.
+  All other transfer results are ordinary `CommandResult`/`TransferPreviewResult`
+  objects; failures throw without returning a commit signal. Repeated confirmation
+  fails. No second save is needed to consume this signal.
+- Isaac's common mutation/history boundary can consume that result exactly once.
+  Its integration and owner review remain tracked in #110; this PR supplies the
+  explicit handoff and regressions, without introducing an undo/audit stack.
 
 ## Failure and UI behavior
 
@@ -84,6 +121,14 @@ After success, the existing observable root is preserved, directories refresh an
 the Members directory is displayed. Missing selections are recovered by the
 existing identity-based shell logic. Cancellation returns to Members. Preview
 buttons and typed confirmation have the same state and validation rules.
+
+When a failed new import/restore discards an older candidate,
+`DataTransferException.isPreviewInvalidated()` tells the shell to remove the old
+preview and show Members while retaining the rejected command for correction.
+The flag is also true when confirmation detects a changed baseline. It is false
+for retryable backup/save failures and unrelated export failures, so the exact
+pending preview and its controls remain available. The shell does not infer
+pending state from error-message text.
 
 ## Verification
 

@@ -1,6 +1,8 @@
 package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.LogicManager;
+import seedu.address.logic.commands.CommittedReplacementResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
@@ -42,7 +45,7 @@ public class DataTransferTransactionTest {
             Path incoming = run.resolve("empty.json");
             new TransferSnapshotStorage().writeNew(incoming, new AddressBook());
             LogicManager logic = new LogicManager(model, storage);
-            logic.execute("data import file/" + incoming);
+            assertFalse(logic.execute("data import file/" + incoming) instanceof CommittedReplacementResult);
             writer.fail = true;
             CommandException failure = assertThrows(CommandException.class, () -> logic.execute("data confirm"));
             assertSame(writer.failure, failure.getCause());
@@ -55,11 +58,44 @@ public class DataTransferTransactionTest {
                 assertTrue(children.noneMatch(path -> path.getFileName().toString().startsWith(".laplace-")));
             }
             writer.fail = false;
-            logic.execute("data confirm");
+            CommittedReplacementResult result = assertInstanceOf(CommittedReplacementResult.class,
+                    logic.execute("data confirm"));
+            assertEquals(original, result.getBefore());
+            assertEquals(new AddressBook(), result.getAfter());
             assertEquals(new AddressBook(), model.getAddressBook());
             assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
             assertThrows(CommandException.class, () -> logic.execute("data confirm"));
         }
+    }
+
+    @Test
+    public void execute_onlySuccessfulConfirmationReturnsOnePersistedHistoryHandoff() throws Exception {
+        TransferSnapshotStorage snapshots = new TransferSnapshotStorage();
+        ReadOnlyAddressBook original = snapshots.read(
+                Path.of("src/test/data/JsonSerializableAddressBookTest/fullAddressBook.json"));
+        ModelManager model = new ModelManager(original, new UserPrefs());
+        StorageManager storage = new StorageManager(new JsonAddressBookStorage(directory.resolve("live.json")),
+                new JsonUserPrefsStorage(directory.resolve("prefs.json")));
+        storage.saveAddressBook(original);
+        Path incoming = directory.resolve("incoming.json");
+        snapshots.writeNew(incoming, new AddressBook());
+        LogicManager logic = new LogicManager(model, storage);
+        for (String input : List.of("data import file/" + incoming, "data backup",
+                "data export file/" + directory.resolve("export.json"), "data cancel",
+                "data restore file/" + incoming, "member list")) {
+            assertFalse(logic.execute(input) instanceof CommittedReplacementResult, input);
+            assertEquals(original, model.getAddressBook());
+            assertEquals(original, storage.readAddressBook().orElseThrow());
+        }
+        assertThrows(CommandException.class, () -> logic.execute("data export file/" + incoming));
+        assertThrows(ParseException.class, () -> logic.execute("data confirm file/extra.json"));
+        CommittedReplacementResult committed = assertInstanceOf(CommittedReplacementResult.class,
+                logic.execute("data confirm"));
+        assertEquals(original, committed.getBefore());
+        assertEquals(new AddressBook(), committed.getAfter());
+        assertEquals(committed.getAfter(), model.getAddressBook());
+        assertEquals(committed.getAfter(), storage.readAddressBook().orElseThrow());
+        assertThrows(CommandException.class, () -> logic.execute("data confirm"));
     }
 
     @Test

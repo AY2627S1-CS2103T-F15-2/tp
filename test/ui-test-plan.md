@@ -73,3 +73,40 @@ Success: Snapshot applied. Previous data backed up to {{BACKUP}}
 Error: No pending preview. Use data import or data restore first.
 Success: Listed 0 active members.
 ```
+
+## TC3: A failed replacement preview clears obsolete confirmation controls
+
+**Aim:** Interleave valid import/restore previews with unsupported files. Each
+rejection preserves all records and saved bytes, removes the obsolete Confirm
+control, retains correction input and prevents confirmation until a new valid preview.
+`unsupported.json` is prepared as `{"schemaVersion":2,"persons":[]}`.
+
+### Input
+
+```text
+data import file/{{DIR}}/empty.json
+data import file/{{DIR}}/unsupported.json
+data confirm
+data restore file/{{DIR}}/empty.json
+data restore file/{{DIR}}/unsupported.json
+data confirm
+member list
+```
+
+### Expected output
+
+```text
+Success: Replace all data from {{DIR}}/empty.json
+Persons: 0; members: 0; equipment: 0; loans (including history): 0.
+All current records will be replaced. A backup is required before applying.
+Use data confirm to apply or data cancel to discard.
+Error: Data transfer failed: Unsupported snapshot schemaVersion; expected integer 1.
+Error: No pending preview. Use data import or data restore first.
+Success: Replace all data from {{DIR}}/empty.json
+Persons: 0; members: 0; equipment: 0; loans (including history): 0.
+All current records will be replaced. A backup is required before applying.
+Use data confirm to apply or data cancel to discard.
+Error: Data transfer failed: Unsupported snapshot schemaVersion; expected integer 1.
+Error: No pending preview. Use data import or data restore first.
+Success: Listed 1 active members.
+```

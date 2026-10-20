@@ -559,6 +559,12 @@ completed loan history. **Confirmation replaces all current records.** Use
 backup and saves the replacement before updating the screen. Use `data cancel` or
 Cancel to discard it. If you change data, preview again before confirming.
 
+A new import or restore replaces the previous preview. If the new file is missing
+or invalid, Laplace removes the old preview and returns to Members; correct the
+command and preview again. If backup creation or saving fails during confirmation,
+your data stays unchanged and the same preview remains available. Correct the
+file-access problem, then confirm again.
+
 Use transfers for your own backups or migration between your own installations.
 Shared datasets, shared-computer operator rotation and routine file handoffs between
 different operators are outside the supported single-user workflow.

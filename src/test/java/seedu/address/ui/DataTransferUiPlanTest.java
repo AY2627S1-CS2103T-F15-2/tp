@@ -3,6 +3,8 @@ package seedu.address.ui;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.image.BufferedImage;
@@ -69,7 +71,7 @@ public class DataTransferUiPlanTest {
                 Path run = Files.createDirectory(directory.resolve("case" + ++count));
                 FxTestUtil.runAndWait(() -> runCase(name, inputs, expected, run, session));
             }
-            assertEquals(2, count);
+            assertEquals(3, count);
         } finally {
             Files.createDirectories(Path.of("_temp"));
             Files.write(Path.of("_temp/ui-test-session.txt"), session);
@@ -90,7 +92,7 @@ public class DataTransferUiPlanTest {
             count++;
         }
         assertFalse(windows.find());
-        assertEquals(2, count);
+        assertEquals(3, count);
     }
 
     private Matcher casesIn(String plan) {
@@ -107,6 +109,7 @@ public class DataTransferUiPlanTest {
             RecordingStorage storage = new RecordingStorage(run);
             storage.saveAddressBook(original);
             snapshots.writeNew(run.resolve("empty.json"), new AddressBook());
+            Files.writeString(run.resolve("unsupported.json"), "{\"schemaVersion\":2,\"persons\":[]}");
             window = new MainWindow(new Stage(), new LogicManager(model, storage), run.resolve("live.json"));
             window.show();
             window.fillInnerParts();
@@ -135,6 +138,10 @@ public class DataTransferUiPlanTest {
                     assertEquals(before, model.getAddressBook());
                     assertArrayEquals(bytes, Files.readAllBytes(run.resolve("live.json")));
                     assertEquals(input.replace("{{DIR}}", run.toString()), field.getText());
+                    if (input.contains("unsupported.json")) {
+                        assertNull(node(window, "confirmTransfer"), "Invalidated preview must remove Confirm");
+                        assertFalse(node(window, "singlePanelPlaceholder").isVisible());
+                    }
                 }
                 if (input.startsWith("data import") && status.equals("Success")) {
                     assertEquals(before, model.getAddressBook());
@@ -175,6 +182,104 @@ public class DataTransferUiPlanTest {
                 window.getPrimaryStage().hide();
             }
         }
+    }
+
+    @Test
+    public void failedReplacementPreview_clearsOldControlsWithoutChangingData() throws Exception {
+        Path source = directory.resolve("incoming.json");
+        TransferSnapshotStorage snapshots = new TransferSnapshotStorage();
+        snapshots.writeNew(source, new AddressBook());
+        Path invalid = directory.resolve("invalid.json");
+        Files.writeString(invalid, "{");
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = new ModelManager();
+            RecordingStorage storage = new RecordingStorage(directory);
+            MainWindow window = new MainWindow(new Stage(), new LogicManager(model, storage),
+                    directory.resolve("live.json"));
+            try {
+                storage.saveAddressBook(model.getAddressBook());
+                String saved = Files.readString(storage.getAddressBookFilePath());
+                window.show();
+                window.fillInnerParts();
+                for (String verb : List.of("import", "restore")) {
+                    for (Path rejected : List.of(directory.resolve("missing.json"), invalid)) {
+                        submit(window, "data import file/" + source);
+                        assertTrue(node(window, "confirmTransfer").isVisible());
+                        String command = "data " + verb + " file/" + rejected;
+                        submit(window, command);
+                        assertEquals("Error", ((Label) node(window, "feedbackStatus")).getText());
+                        assertEquals(command, ((TextField) node(window, "commandTextField")).getText());
+                        assertEquals(new AddressBook(), model.getAddressBook());
+                        assertEquals(saved, Files.readString(storage.getAddressBookFilePath()));
+                        assertEquals(1, storage.saves);
+                        assertNull(node(window, "confirmTransfer"), "Expected no obsolete Confirm control");
+                        assertFalse(node(window, "singlePanelPlaceholder").isVisible());
+                        submit(window, "data confirm");
+                        assertEquals("Error", ((Label) node(window, "feedbackStatus")).getText());
+                    }
+                }
+            } catch (IOException exception) {
+                throw new AssertionError(exception);
+            } finally {
+                window.dispose();
+                window.getPrimaryStage().hide();
+            }
+        });
+    }
+
+    @Test
+    public void failedConfirmation_keepsExactPreviewRetryableForBackupAndSaveFailures() throws Exception {
+        Path source = directory.resolve("incoming.json");
+        TransferSnapshotStorage snapshots = new TransferSnapshotStorage();
+        snapshots.writeNew(source, new AddressBook());
+        ReadOnlyAddressBook original = snapshots.read(
+                Path.of("src/test/data/JsonSerializableAddressBookTest/fullAddressBook.json"));
+        FxTestUtil.runAndWait(() -> {
+            for (boolean blockBackup : List.of(true, false)) {
+                Path run = directory.resolve(Boolean.toString(blockBackup));
+                ModelManager model = new ModelManager(original, new UserPrefs());
+                RecordingStorage storage = new RecordingStorage(run);
+                MainWindow window = new MainWindow(new Stage(), new LogicManager(model, storage),
+                        run.resolve("live.json"));
+                try {
+                    storage.saveAddressBook(original);
+                    String saved = Files.readString(storage.getAddressBookFilePath());
+                    window.show();
+                    window.fillInnerParts();
+                    submit(window, "data import file/" + source);
+                    Button confirm = (Button) node(window, "confirmTransfer");
+                    // An unrelated export failure must also leave the pending replacement usable.
+                    submit(window, "data export file/" + storage.getAddressBookFilePath());
+                    assertSame(confirm, node(window, "confirmTransfer"));
+                    if (blockBackup) {
+                        Files.writeString(run.resolve("backups"), "blocked backup directory");
+                    } else {
+                        storage.failure = new IOException("controlled save failure");
+                    }
+                    confirm.fire();
+                    assertEquals("Error", ((Label) node(window, "feedbackStatus")).getText());
+                    assertSame(confirm, node(window, "confirmTransfer"));
+                    assertTrue(node(window, "singlePanelPlaceholder").isVisible());
+                    assertEquals(original, model.getAddressBook());
+                    assertEquals(saved, Files.readString(storage.getAddressBookFilePath()));
+                    assertEquals(1, storage.saves);
+                    if (blockBackup) {
+                        Files.delete(run.resolve("backups"));
+                    }
+                    storage.failure = null;
+                    confirm.fire();
+                    assertEquals("Success", ((Label) node(window, "feedbackStatus")).getText());
+                    assertEquals(new AddressBook(), model.getAddressBook());
+                    assertNull(node(window, "confirmTransfer"));
+                    assertEquals(2, storage.saves);
+                } catch (IOException exception) {
+                    throw new AssertionError(exception);
+                } finally {
+                    window.dispose();
+                    window.getPrimaryStage().hide();
+                }
+            }
+        });
     }
 
     @Test
@@ -249,6 +354,7 @@ public class DataTransferUiPlanTest {
     /** Counts only completed writes through the real JSON storage implementation. */
     private static class RecordingStorage extends StorageManager {
         private int saves;
+        private IOException failure;
 
         RecordingStorage(Path directory) {
             super(new JsonAddressBookStorage(directory.resolve("live.json")),
@@ -257,6 +363,9 @@ public class DataTransferUiPlanTest {
 
         @Override
         public void saveAddressBook(ReadOnlyAddressBook data) throws IOException {
+            if (failure != null) {
+                throw failure;
+            }
             super.saveAddressBook(data);
             saves++;
         }

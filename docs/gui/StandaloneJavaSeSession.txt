@@ -1,57 +1,57 @@
 macOS ARM64; Java 25.0.3; only Java SE/JDK support modules enabled.
 Only the disposable home path is normalized to {{HOME}}.
 
-Oct 20, 2026 11:36:41 AM com.sun.javafx.application.PlatformImpl startup
+Oct 20, 2026 1:53:53 PM com.sun.javafx.application.PlatformImpl startup
 WARNING: Unsupported JavaFX configuration: classes were loaded from 'unnamed module @40b8bcdf'
-Oct 20, 2026 11:36:47 AM com.sun.glass.ui.mac.MacApplication lambda$waitForReactivation$6
+Oct 20, 2026 1:53:59 PM com.sun.glass.ui.mac.MacApplication lambda$waitForReactivation$6
 WARNING: Timeout while waiting for app reactivation
-Oct 20, 2026 11:36:47 AM seedu.address.MainApp init
+Oct 20, 2026 1:53:59 PM seedu.address.MainApp init
 INFO: =============================[ Initializing AddressBook ]===========================
-Oct 20, 2026 11:36:47 AM seedu.address.MainApp initPrefs
+Oct 20, 2026 1:53:59 PM seedu.address.MainApp initPrefs
 INFO: Using preference file : {{HOME}}/preferences.json
-Oct 20, 2026 11:36:47 AM seedu.address.MainApp initPrefs
+Oct 20, 2026 1:53:59 PM seedu.address.MainApp initPrefs
 INFO: Creating new preference file {{HOME}}/preferences.json
-Oct 20, 2026 11:36:47 AM seedu.address.MainApp initModelManager
+Oct 20, 2026 1:53:59 PM seedu.address.MainApp initModelManager
 INFO: Using data file : {{HOME}}/data/addressbook.json
-Oct 20, 2026 11:36:47 AM seedu.address.MainApp initModelManager
+Oct 20, 2026 1:53:59 PM seedu.address.MainApp initModelManager
 INFO: Creating a new data file {{HOME}}/data/addressbook.json populated with a sample AddressBook.
-Oct 20, 2026 11:36:47 AM seedu.address.MainApp start
+Oct 20, 2026 1:53:59 PM seedu.address.MainApp start
 INFO: Starting AddressBook 1.0
-Oct 20, 2026 11:36:47 AM seedu.address.ui.UiManager start
+Oct 20, 2026 1:53:59 PM seedu.address.ui.UiManager start
 INFO: Starting UI...
-Oct 20, 2026 11:36:48 AM seedu.address.logic.LogicManager execute
+Oct 20, 2026 1:54:00 PM seedu.address.logic.LogicManager execute
 INFO: ----------------[USER COMMAND][data export file/{{HOME}}/manual snapshot.json]
-WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
-WARNING: sun.misc.Unsafe::allocateMemory has been called by com.sun.marlin.OffHeapArray (file:{{HOME}}/Laplace.jar)
-WARNING: Please consider reporting this to the maintainers of class com.sun.marlin.OffHeapArray
-WARNING: sun.misc.Unsafe::allocateMemory will be removed in a future release
 INPUT: data export file/{{HOME}}/manual snapshot.json
 OUTPUT: Success: Snapshot exported to {{HOME}}/manual snapshot.json
-Oct 20, 2026 11:36:48 AM seedu.address.logic.LogicManager execute
+Oct 20, 2026 1:54:00 PM seedu.address.logic.LogicManager execute
 INFO: ----------------[USER COMMAND][data import file/{{HOME}}/manual snapshot.json]
 INPUT: data import file/{{HOME}}/manual snapshot.json
 OUTPUT: Success: Replace all data from {{HOME}}/manual snapshot.json
 Persons: 6; members: 5; equipment: 7; loans (including history): 4.
 All current records will be replaced. A backup is required before applying.
 Use data confirm to apply or data cancel to discard.
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::allocateMemory has been called by com.sun.marlin.OffHeapArray (file:{{HOME}}/Laplace.jar)
+WARNING: Please consider reporting this to the maintainers of class com.sun.marlin.OffHeapArray
+WARNING: sun.misc.Unsafe::allocateMemory will be removed in a future release
 PASS: viewport 1920x1080 at 100%
 PASS: viewport 1920x1080 at 125%
 PASS: viewport 1280x720 at 150%
-Oct 20, 2026 11:36:48 AM seedu.address.logic.LogicManager execute
+Oct 20, 2026 1:54:02 PM seedu.address.logic.LogicManager execute
 INFO: ----------------[USER COMMAND][data cancel]
-Oct 20, 2026 11:36:48 AM seedu.address.logic.LogicManager execute
+Oct 20, 2026 1:54:02 PM seedu.address.logic.LogicManager execute
 INFO: ----------------[USER COMMAND][data restore file/{{HOME}}/manual snapshot.json]
 INPUT: data restore file/{{HOME}}/manual snapshot.json
 OUTPUT: Success: Replace all data from {{HOME}}/manual snapshot.json
 Persons: 6; members: 5; equipment: 7; loans (including history): 4.
 All current records will be replaced. A backup is required before applying.
 Use data confirm to apply or data cancel to discard.
-Oct 20, 2026 11:36:48 AM seedu.address.logic.LogicManager execute
+Oct 20, 2026 1:54:02 PM seedu.address.logic.LogicManager execute
 INFO: ----------------[USER COMMAND][data confirm]
-Oct 20, 2026 11:36:48 AM seedu.address.logic.LogicManager execute
+Oct 20, 2026 1:54:02 PM seedu.address.logic.LogicManager execute
 INFO: ----------------[USER COMMAND][member list]
 INPUT: member list
 OUTPUT: Success: Listed 5 active members.
 PASS: standalone Java SE transfers and scaled viewports
-Oct 20, 2026 11:36:48 AM seedu.address.MainApp stop
+Oct 20, 2026 1:54:02 PM seedu.address.MainApp stop
 INFO: ============================ [ Stopping AddressBook ] =============================

@@ -30,3 +30,25 @@ OUTPUT: Error: No pending preview. Use data import or data restore first.
 INPUT: member list
 OUTPUT: Success: Listed 0 active members.
 PASS: rejected state preserved; fresh model/logic/window reload and selection verified.
+TC3: A failed replacement preview clears obsolete confirmation controls
+INPUT: data import file/{{DIR}}/empty.json
+OUTPUT: Success: Replace all data from {{DIR}}/empty.json
+Persons: 0; members: 0; equipment: 0; loans (including history): 0.
+All current records will be replaced. A backup is required before applying.
+Use data confirm to apply or data cancel to discard.
+INPUT: data import file/{{DIR}}/unsupported.json
+OUTPUT: Error: Data transfer failed: Unsupported snapshot schemaVersion; expected integer 1.
+INPUT: data confirm
+OUTPUT: Error: No pending preview. Use data import or data restore first.
+INPUT: data restore file/{{DIR}}/empty.json
+OUTPUT: Success: Replace all data from {{DIR}}/empty.json
+Persons: 0; members: 0; equipment: 0; loans (including history): 0.
+All current records will be replaced. A backup is required before applying.
+Use data confirm to apply or data cancel to discard.
+INPUT: data restore file/{{DIR}}/unsupported.json
+OUTPUT: Error: Data transfer failed: Unsupported snapshot schemaVersion; expected integer 1.
+INPUT: data confirm
+OUTPUT: Error: No pending preview. Use data import or data restore first.
+INPUT: member list
+OUTPUT: Success: Listed 1 active members.
+PASS: rejected state preserved; fresh model/logic/window reload and selection verified.

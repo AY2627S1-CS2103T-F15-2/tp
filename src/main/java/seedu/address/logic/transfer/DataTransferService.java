@@ -9,10 +9,12 @@ import java.util.UUID;
 import seedu.address.commons.core.AppPaths;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.CommittedReplacementResult;
 import seedu.address.logic.commands.DataCommand;
 import seedu.address.logic.commands.DisplayRequest;
 import seedu.address.logic.commands.TransferPreviewResult;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.commands.exceptions.DataTransferException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -41,6 +43,7 @@ public class DataTransferService {
 
     /** Executes a transfer without an unrelated application save or history entry. */
     public CommandResult execute(DataCommand command, Model model) throws CommandException {
+        boolean hadPreview = pending != null;
         try {
             return switch (command.getAction()) {
                 case IMPORT, RESTORE -> preview(command.getPath(), model);
@@ -51,7 +54,8 @@ public class DataTransferService {
                 case CANCEL -> cancel();
             };
         } catch (IOException | IllegalValueException exception) {
-            throw new CommandException("Data transfer failed: " + exception.getMessage(), exception);
+            throw new DataTransferException("Data transfer failed: " + exception.getMessage(), exception,
+                    hadPreview && pending == null);
         }
     }
 
@@ -93,15 +97,17 @@ public class DataTransferService {
         }
         if (!baseline.equals(model.getAddressBook())) {
             invalidate();
-            throw new CommandException("Data changed after the preview. Preview the snapshot again.");
+            throw new DataTransferException("Data changed after the preview. Preview the snapshot again.", null, true);
         }
-        Path backupPath = backup(model.getAddressBook());
+        AddressBook before = new AddressBook(model.getAddressBook());
+        Path backupPath = backup(before);
         // The normal atomic persistence boundary is reused, with no extra save by LogicManager.
         storage.saveAddressBook(pending);
         model.setAddressBook(pending);
+        CommandResult result = new CommittedReplacementResult(
+                "Snapshot applied. Previous data backed up to " + backupPath, before, model.getAddressBook());
         invalidate();
-        return new CommandResult("Snapshot applied. Previous data backed up to " + backupPath,
-                DisplayRequest.members());
+        return result;
     }
 
     private CommandResult cancel() {

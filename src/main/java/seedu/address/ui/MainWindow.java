@@ -30,6 +30,7 @@ import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DisplayRequest;
 import seedu.address.logic.commands.TransferPreviewResult;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.commands.exceptions.DataTransferException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.equipment.Equipment;
@@ -238,6 +239,7 @@ public class MainWindow extends UiPart<Stage> {
         singlePanelPlaceholder.setVisible(!directoryView);
         singlePanelPlaceholder.setManaged(!directoryView);
         if (directoryView) {
+            singlePanelPlaceholder.getChildren().clear();
             directoryListPlaceholder.getChildren().setAll(memberView ? members.getRoot() : equipment.getRoot());
             if (request.getType() == DisplayRequest.Type.MEMBER_DETAILS) {
                 memberDetails.showMember(request.getMemberNusId().orElseThrow());
@@ -336,6 +338,9 @@ public class MainWindow extends UiPart<Stage> {
             }
             return result;
         } catch (CommandException | ParseException e) {
+            if (e instanceof DataTransferException failure && failure.isPreviewInvalidated()) {
+                display(DisplayRequest.members());
+            }
             resultDisplay.setFeedbackToUser(e.getMessage(), true);
             queueRefresh();
             throw e;
