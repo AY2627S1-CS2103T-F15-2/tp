@@ -133,6 +133,11 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public void restoreMember(Member member) {
+        addressBook.restoreMember(member);
+    }
+
+    @Override
     public ObservableList<Member> getMemberList() {
         return addressBook.getMemberList();
     }

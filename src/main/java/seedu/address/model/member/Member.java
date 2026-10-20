@@ -19,16 +19,29 @@ public class Member {
     private final Name name;
     private final Phone phone;
     private final Email email;
+    private final boolean deleted;
 
     /**
      * Constructs a {@code Member} with the given details.
      */
     public Member(NusId nusId, Name name, Phone phone, Email email) {
+        this(nusId, name, phone, email, false);
+    }
+
+    /**
+     * Constructs a retained member, including their persisted deletion state.
+     */
+    public Member(NusId nusId, Name name, Phone phone, Email email, boolean isDeleted) {
         requireAllNonNull(nusId, name, phone, email);
         this.nusId = nusId;
         this.name = name;
         this.phone = phone;
         this.email = email;
+        deleted = isDeleted;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
     }
 
     public NusId getNusId() {
@@ -68,12 +81,13 @@ public class Member {
         return nusId.equals(otherMember.nusId)
                 && name.equals(otherMember.name)
                 && phone.equals(otherMember.phone)
-                && email.equals(otherMember.email);
+                && email.equals(otherMember.email)
+                && deleted == otherMember.deleted;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(nusId, name, phone, email);
+        return Objects.hash(nusId, name, phone, email, deleted);
     }
 
     @Override
@@ -83,6 +97,7 @@ public class Member {
                 .add("name", name)
                 .add("phone", phone)
                 .add("email", email)
+                .add("deleted", deleted)
                 .toString();
     }
 }

@@ -171,6 +171,11 @@ public class AddCommandTest {
         }
 
         @Override
+        public void restoreMember(Member member) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
         public ObservableList<Member> getMemberList() {
             throw new AssertionError("This method should not be called.");
         }

@@ -43,6 +43,17 @@ public class UniqueMemberList {
         internalList.add(member);
     }
 
+    /**
+     * Replaces only deletion state, retaining identity, details and collection position.
+     */
+    public void setDeleted(NusId nusId, boolean isDeleted) {
+        requireNonNull(nusId);
+        Member stored = findByNusId(nusId).orElseThrow(MemberNotFoundException::new);
+        Member replacement = new Member(stored.getNusId(), stored.getName(), stored.getPhone(),
+                stored.getEmail(), isDeleted);
+        internalList.set(internalList.indexOf(stored), replacement);
+    }
+
     /** Removes the member with the same identity as {@code member}. */
     public void remove(Member member) {
         requireNonNull(member);

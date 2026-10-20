@@ -104,11 +104,18 @@ public interface Model {
     void addMember(Member member);
 
     /**
-     * Deletes a member by identity and removes their closed loan history.
+     * Soft-deletes a member by identity while retaining their details and loan history.
      * @throws seedu.address.model.member.exceptions.MemberNotFoundException if the identity is unknown.
-     * @throws IllegalStateException if the member has an open loan.
+     * @throws IllegalStateException if the member is already deleted or has an open loan.
      */
     void deleteMember(Member member);
+
+    /**
+     * Restores a deleted member without a recovery deadline.
+     * @throws seedu.address.model.member.exceptions.MemberNotFoundException if the identity is unknown.
+     * @throws IllegalStateException if the member is already active.
+     */
+    void restoreMember(Member member);
 
     /**
      * Returns an unmodifiable live view of all members.
