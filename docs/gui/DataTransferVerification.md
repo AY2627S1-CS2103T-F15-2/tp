@@ -6,7 +6,7 @@ Environment: macOS ARM64, Java `25.0.3.fx-zulu`, project-declared JavaFX 17.0.7 
 
 ## Results
 
-- `./gradlew test`: 755 tests, zero failures/errors/skips.
+- `./gradlew test`: 758 tests, zero failures/errors/skips.
 - `./gradlew check coverage shadowJar`: passes, including both Checkstyle tasks.
 - `python3 scripts/check_transfer_coverage.py`: 142/142 changed executable lines and
   46/46 changed branches covered, **100% for both**, against the base above.
@@ -24,7 +24,24 @@ Environment: macOS ARM64, Java `25.0.3.fx-zulu`, project-declared JavaFX 17.0.7 
   empty replacement clears the old identity selection.
 - Repository checks and diff whitespace checks pass. The existing
   `docs/AboutUs.md:61` trailing-whitespace warning remains outside this change.
-- The MarkBind documentation build passes for all 35 pages.
+- The MarkBind documentation build passes for all 36 pages.
+
+## Course-constraint follow-up
+
+The delivered JAR now includes universal Intel/ARM64 macOS JavaFX natives.
+`StandaloneJarTest` verifies every native's architecture headers, the product-size
+limit and a separate Java-SE-only launch using no external JavaFX dependencies.
+The real application exports/imports/restores data, executes both preview buttons
+and persists successfully. Automated render checks cover 1920x1080 at 100%/125%
+and 1280x720 at 150%, with space reserved for desktop decorations.
+
+The User Guide now explicitly supports valid manual edits while closed, explains
+identity/reference constraints and documents invalid-file recovery. A regression
+reloads a valid contact edit and confirms an invalid edit leaves the file bytes intact.
+
+[Course-constraint evidence and remaining manual checks](../CourseCompliance.md)
+distinguishes these automated results from physical desktop-scaling acceptance,
+dependency approval and semester-long delivery evidence.
 
 ## Individual new-class coverage
 

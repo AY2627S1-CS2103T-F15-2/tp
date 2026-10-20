@@ -7,17 +7,17 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<ScrollPane fitToWidth="true" hbarPolicy="NEVER" xmlns="http://javafx.com/javafx/17"
-            xmlns:fx="http://javafx.com/fxml/1" styleClass="laplace-surface">
-  <content>
-    <VBox spacing="20.0" minWidth="0.0">
-      <padding><Insets top="24.0" right="24.0" bottom="24.0" left="24.0" /></padding>
-      <Label text="Confirm data replacement" styleClass="laplace-title" wrapText="true" />
+<VBox spacing="16.0" minWidth="0.0" xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1" styleClass="laplace-surface">
+  <padding><Insets top="24.0" right="24.0" bottom="24.0" left="24.0" /></padding>
+  <Label text="Confirm data replacement" styleClass="laplace-title" wrapText="true" />
+  <ScrollPane fitToWidth="true" hbarPolicy="NEVER" minHeight="0.0" VBox.vgrow="ALWAYS">
+    <content>
       <Label fx:id="previewSummary" wrapText="true" minWidth="0.0" />
-      <HBox spacing="12.0">
-        <Button fx:id="confirmTransfer" text="Confirm replacement" />
-        <Button fx:id="cancelTransfer" text="Cancel" />
-      </HBox>
-    </VBox>
-  </content>
-</ScrollPane>
+    </content>
+  </ScrollPane>
+  <HBox spacing="12.0">
+    <Button fx:id="confirmTransfer" text="Confirm replacement" />
+    <Button fx:id="cancelTransfer" text="Cancel" />
+  </HBox>
+</VBox>

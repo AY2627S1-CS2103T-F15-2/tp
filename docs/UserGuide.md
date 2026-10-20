@@ -19,6 +19,8 @@ earlier builds may not support every behavior described here. Laplace is a local
 ## Quick start
 
 1. Install Java **25** for your operating system and processor architecture.
+   The release JAR includes JavaFX; you do not need a separate JavaFX installation.
+   The packaged native libraries support Windows/Linux x64 and both Intel and Apple Silicon macOS.
 2. Obtain the Laplace MVP JAR supplied by the team. Published builds are listed on the
    [team Releases page](https://github.com/AY2627S1-CS2103T-F15-2/tp/releases).
 3. Put the JAR in a folder you can write to. Keep the application and its data in this folder.
@@ -46,8 +48,8 @@ multiple items. One closed loan is retained internally and is hidden from the Lo
 Dates are relative to the day of first launch. Try `member list`, `equipment list` and `loans list`,
 then copy displayed identities to view details or try a return. These are ordinary records:
 additions, returns and deletions are saved normally. Existing saved data always takes precedence;
-samples are not appended to it. To explore a fresh sample set, run the JAR from a separate empty folder
-instead of removing your existing data file.
+samples are not appended to it. To explore a fresh sample set, copy `Laplace.jar` into a separate empty
+folder and launch that copy instead of removing your existing data file.
 
 The equipment identities below are stable in a fresh sample set. The states and holders change as you
 issue, return or delete records.
@@ -462,10 +464,21 @@ Data includes members, equipment and open/closed loan records. Availability and 
 do not try to maintain separate holder/availability fields. Deleting a permitted member/item also
 permanently deletes its related closed loans. There is no recovery feature for that deletion.
 
-Back up the data file while Laplace is closed. Do not edit it while the app is running or run multiple
-instances against the same file. Manual data editing is not an MVP operation. If startup or a view
-reports invalid/inconsistent data, preserve the original file and report the message; do not overwrite
-it with an empty file or assume that an incomplete view is safe to use.
+### Editing the data file
+
+Advanced users may edit `data/addressbook.json` directly in a text editor while Laplace is closed.
+Keep a backup first, preserve valid JSON syntax and follow the field rules in this guide. Keep member
+NUS IDs and equipment UUIDs unchanged unless you also update every referencing loan. Do not add
+derived availability or holder fields. Use one application instance and one operator for each dataset.
+
+If an edit makes the live file invalid, the next launch starts with an empty dataset and logs the
+loading error. The invalid file stays on disk until a command saves application data. Close Laplace
+without entering commands, preserve the invalid file for diagnosis and restore your backup before
+restarting. Never assume an empty or incomplete view means the original records were safely deleted.
+
+A safer workflow is to export a snapshot, edit that copy and use `data import file/PATH` to validate
+it before confirming replacement. Import rejects invalid records and unknown fields without changing
+the live dataset. This also lets you inspect counts and creates a backup before applying valid edits.
 
 ## FAQ
 
@@ -486,8 +499,8 @@ assigned. The MVP does not include editing condition or other existing record fi
 than expected is valid if it is no earlier than assignment and no later than the computer's local date.
 
 **Why do I not see the sample records?** Laplace loads your existing saved file instead of adding samples
-to it, even if that file contains no records. To try the bundled examples, launch the JAR from a separate
-empty folder. Keep your existing data file and backup intact.
+to it, even if that file contains no records. To try the bundled examples, copy `Laplace.jar` into a
+separate empty folder and launch that copy. Keep your existing data file and backup intact.
 
 **How do I move my data?** Export a snapshot with `data export file/snapshot.json`, copy it to the other
 computer and use `data import file/snapshot.json`. Check the preview before confirming replacement.
@@ -545,6 +558,10 @@ completed loan history. **Confirmation replaces all current records.** Use
 `data confirm` or the Confirm replacement button to apply; Laplace first creates a
 backup and saves the replacement before updating the screen. Use `data cancel` or
 Cancel to discard it. If you change data, preview again before confirming.
+
+Use transfers for your own backups or migration between your own installations.
+Shared datasets, shared-computer operator rotation and routine file handoffs between
+different operators are outside the supported single-user workflow.
 
 For folder names with spaces and slashes, quote the complete path:
 `data export file/"backup copies/October snapshot.json"`. Import and restore accept

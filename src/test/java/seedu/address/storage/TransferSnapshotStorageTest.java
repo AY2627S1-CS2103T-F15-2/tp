@@ -12,6 +12,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 
@@ -74,6 +75,24 @@ public class TransferSnapshotStorageTest {
         String full = Files.readString(Path.of("src/test/data/JsonSerializableAddressBookTest/fullAddressBook.json"));
         Files.writeString(source, full.replace("\"friends\"", "null"));
         assertThrows(IOException.class, () -> snapshots.read(source));
+    }
+
+    @Test
+    public void manuallyEditedLiveFile_validContactReloadsAndInvalidContactLeavesOriginalBytes() throws Exception {
+        Path live = directory.resolve("addressbook.json");
+        String source = Files.readString(Path.of("src/test/data/JsonSerializableAddressBookTest/fullAddressBook.json"));
+        String edited = source.replace("Alex Tan", "Alex Tan Edited");
+        Files.writeString(live, edited);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(live);
+        ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
+        assertEquals("Alex Tan Edited", loaded.getMemberList().getFirst().getName().fullName);
+        assertEquals(1, loaded.getPersonList().size());
+        assertEquals(1, loaded.getEquipmentList().size());
+        assertEquals(2, loaded.getLoanList().size());
+        String invalid = edited.replace("91234567", "invalid phone");
+        Files.writeString(live, invalid);
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+        assertEquals(invalid, Files.readString(live));
     }
 
     @Test

@@ -26,6 +26,8 @@ checkstyle {
 
 configurations {
     javafxTestRuntime
+    javafxMacIntelNatives
+    javafxMacArmNatives
 }
 
 // Test with one matching native platform, while preserving the existing distributable dependencies.
@@ -37,6 +39,7 @@ String javaFxTestPlatform = operatingSystem.contains('mac') ? (isArm ? 'mac-aarc
         : operatingSystem.contains('win') ? 'win' : (isArm ? 'linux-aarch64' : 'linux')
 
 test {
+    dependsOn tasks.named('shadowJar')
     useJUnitPlatform()
     // A JDK with bundled JavaFX must not silently replace the declared test runtime.
     jvmArgs '--limit-modules=java.se,jdk.unsupported', '--enable-native-access=ALL-UNNAMED'
@@ -64,6 +67,9 @@ task coverage(type: JacocoReport) {
 
 dependencies {
     String jUnitVersion = '5.14.4'
+
+    javafxMacIntelNatives("org.openjfx:javafx-graphics:${javaFxVersion}:mac") { transitive = false }
+    javafxMacArmNatives("org.openjfx:javafx-graphics:${javaFxVersion}:mac-aarch64") { transitive = false }
 
     ['base', 'controls', 'fxml', 'graphics'].each { module ->
         javafxTestRuntime("org.openjfx:javafx-${module}:${javaFxVersion}:${javaFxTestPlatform}") {
@@ -93,8 +99,61 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.14.4'
 }
 
+// Both macOS architectures use the same native resource names. A universal Mach-O wrapper preserves
+// the original signed slices and lets macOS select its architecture without a custom runtime loader.
+// Header layout: https://github.com/apple-oss-distributions/cctools/blob/main/include/mach-o/fat.h
+def universalMacDirectory = layout.buildDirectory.dir('universal-mac-natives')
+def universalMacNatives = tasks.register('universalMacNatives') {
+    inputs.files(configurations.javafxMacIntelNatives, configurations.javafxMacArmNatives)
+    outputs.dir(universalMacDirectory)
+    doLast {
+        File destination = universalMacDirectory.get().asFile
+        destination.mkdirs()
+        new java.util.zip.ZipFile(configurations.javafxMacIntelNatives.singleFile).withCloseable { intel ->
+            new java.util.zip.ZipFile(configurations.javafxMacArmNatives.singleFile).withCloseable { arm ->
+                intel.entries().toList().findAll { it.name.endsWith('.dylib') }.each { entry ->
+                    def slices = [intel.getInputStream(entry).withCloseable { it.readAllBytes() },
+                        arm.getInputStream(arm.getEntry(entry.name)).withCloseable { it.readAllBytes() }]
+                    int alignment = 16384
+                    def offsets = [alignment, ((alignment + slices[0].length + alignment - 1)
+                        .intdiv(alignment)) * alignment]
+                    new RandomAccessFile(new File(destination, entry.name), 'rw').withCloseable { output ->
+                        output.setLength(offsets[1] + slices[1].length)
+                        output.seek(0)
+                        output.writeInt((int) 0xcafebabe)
+                        output.writeInt(2)
+                        slices.eachWithIndex { bytes, index ->
+                            def header = java.nio.ByteBuffer.wrap(bytes).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+                            if (header.getInt(0) != (int) 0xfeedfacf) {
+                                throw new GradleException("Expected a 64-bit Mach-O native: ${entry.name}")
+                            }
+                            output.writeInt(header.getInt(4))
+                            output.writeInt(header.getInt(8))
+                            output.writeInt(offsets[index])
+                            output.writeInt(bytes.length)
+                            output.writeInt(14)
+                        }
+                        slices.eachWithIndex { bytes, index ->
+                            output.seek(offsets[index])
+                            output.write(bytes)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 shadowJar {
+    dependsOn universalMacNatives
     archiveFileName = 'Laplace.jar'
+    from(universalMacDirectory)
+    eachFile { entry ->
+        if (entry.path.endsWith('.dylib') &&
+            !entry.file.toPath().startsWith(universalMacDirectory.get().asFile.toPath())) {
+            entry.exclude()
+        }
+    }
 }
 
 defaultTasks 'clean', 'test'

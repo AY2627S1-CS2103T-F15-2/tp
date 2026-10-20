@@ -35,6 +35,11 @@ Current member NUS IDs, physical equipment UUIDs, exact stored fields, open loan
 and completed loan history survive round trips. Derived availability is not stored.
 Preferences, logs and audit/undo state are not part of a data snapshot.
 
+Advanced users can edit the live JSON while the application is closed, or edit an
+exported snapshot and validate it through the import preview. This supports the
+manual-data-file workflow described in the User Guide; schema validation does not
+prohibit valid manual edits. Back up first and preserve cross-collection identities.
+
 Unversioned existing save files are accepted. As with existing startup loading,
 `persons` is required and missing newer arrays mean empty collections; the preview
 makes their zero counts explicit. Explicit null/non-array collections are rejected.

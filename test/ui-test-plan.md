@@ -9,10 +9,17 @@ LogicManager. The runner stops at the first mismatch and records actual UI feedb
 path. These are the only normalization rules. Error steps also assert unchanged
 collections and saved bytes. The session is written even if an assertion fails.
 
+The command behavior below remains unchanged by the packaging correction.
+`StandaloneJarTest` additionally runs the real packaged application on Java SE
+without external JavaFX files and checks the required scaled preview viewports;
+see `docs/CourseCompliance.md`. Manual JSON-edit/reload validation is covered by
+`TransferSnapshotStorageTest` alongside the recorded transfer cases.
+
 ## TC1: Preview, strict parsing, cancellation and no implicit save
 
 **Aim:** Interleave valid requests and errors; ensure rejected inputs and previews
-preserve every collection and saved byte, and cancellation prevents confirmation.
+preserve every collection and saved byte, cancellation prevents confirmation and
+preview actions remain visible below the scrollable text at the tested sizes.
 
 ### Input
 
