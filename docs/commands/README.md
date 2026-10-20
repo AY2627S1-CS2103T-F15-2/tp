@@ -2,7 +2,7 @@
 
 ## Integration status
 
-The ten MVP routes and the additional `loans list` navigation command dispatch to concrete parsers.
+The ten MVP routes, `loans list` navigation and `member restore` dispatch to concrete parsers.
 Command execution uses the
 LogicManager persistence boundary. Merged #93 integrates the real shell and #95 activates all ten routes.
 Current MVP completion evidence is in [MvpCompletion.md](../gui/MvpCompletion.md); #75 remains the final gate.
@@ -10,6 +10,7 @@ Current MVP completion evidence is in [MvpCompletion.md](../gui/MvpCompletion.md
 | Command | Syntax | Reference |
 | --- | --- | --- |
 | member add | `member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL` | [Add member](member-add.md) |
+| member restore | `member restore nus/NUS_ID` | [Restore member](member-restore.md) |
 | member delete | `member delete nus/NUS_ID` | [Delete member](member-delete.md) |
 | member view | `member view nus/NUS_ID` | [View member](member-view.md) |
 | member list | `member list` | [List members](member-list.md) |
@@ -28,7 +29,7 @@ nonblank preamble. Optional notes may be empty. Markers matching the agreed
 start/whitespace-delimited `[A-Za-z][A-Za-z0-9_-]*/` grammar are reserved even inside free
 text; there is no quoting or escaping. Ordinary embedded slashes and URLs remain text.
 
-The six Laplace mutation commands execute on an isolated snapshot. LogicManager atomically saves
+The seven Laplace mutation commands execute on an isolated snapshot. LogicManager atomically saves
 the candidate before publishing it through the existing live observable root. Parser/business
 rejection and save failures preserve all records; rejected operations do not save. Partial candidate
 writes and failed replacements preserve the prior data file and useful I/O causes. See
@@ -58,3 +59,6 @@ same-name identities, loan lifecycle/holdings/availability, invalid parameter an
 rejection without writes, and save-error propagation. The member/equipment routing and
 legacy person-command compatibility scenarios are also retained. Full GUI navigation, refresh and
 packaged-window acceptance remain tracked separately in milestone integration issue #75.
+
+Member deletion now retains records and history. See [Restore member](member-restore.md) for lifecycle,
+persistence and feature-integration guarantees. Equipment deletion remains unchanged.
