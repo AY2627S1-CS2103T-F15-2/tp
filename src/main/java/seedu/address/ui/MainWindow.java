@@ -33,7 +33,6 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
-import seedu.address.model.query.DirectoryQuery;
 
 /** Application shell. Owns navigation and refresh subscriptions, while panels remain read-only views. */
 public class MainWindow extends UiPart<Stage> {
@@ -230,14 +229,16 @@ public class MainWindow extends UiPart<Stage> {
         }
         currentDisplay = request;
         if (request.getType() == DisplayRequest.Type.MEMBERS) {
-            DirectoryQuery query = request.getQuery().orElseGet(DirectoryQuery::all);
-            members.setQuery(query);
-            memberSummary.setQuery(query);
+            request.getQuery().ifPresent(query -> {
+                members.setQuery(query);
+                memberSummary.setQuery(query);
+            });
             refreshViews();
         } else if (request.getType() == DisplayRequest.Type.EQUIPMENT) {
-            DirectoryQuery query = request.getQuery().orElseGet(DirectoryQuery::all);
-            equipment.setQuery(query);
-            equipmentSummary.setQuery(query);
+            request.getQuery().ifPresent(query -> {
+                equipment.setQuery(query);
+                equipmentSummary.setQuery(query);
+            });
             refreshViews();
         }
         boolean memberView = request.getType() == DisplayRequest.Type.MEMBERS

@@ -13,6 +13,8 @@ import seedu.address.model.query.DirectoryQuery;
 /**
  * Immutable navigation intent, independent of JavaFX and persisted application data.
  * Only detail targets carry an identity; factories prevent invalid combinations.
+ * Directory requests with a query replace the active criteria; requests without one preserve them.
+ * Explicit list commands supply {@code DirectoryQuery.all()} to reset filters and sorting.
  */
 public final class DisplayRequest {
     /** Supported display targets. Help and exit take precedence over navigation. */

@@ -1,8 +1,10 @@
 # Week 10 search and inventory planning verification
 
 Issue: [#108](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/108).
-Baseline: team master `c4e2001de6ec09389d827260d1a985093aa64bc0`.
-Fork branch: `duynguyen21007:search-and-planning`. No merge performed.
+Initial baseline: team master `c4e2001de6ec09389d827260d1a985093aa64bc0`.
+Review integration baseline: `9885bb1e`, including the merged member-edit feature.
+Fork branch: `duynguyen21007:search-and-planning`. No PR merge performed.
+Latest [review fixes, integrated checks and commit audit](SearchPlanningReview.md).
 
 ## Implemented behavior
 
@@ -18,7 +20,7 @@ Real temporary JSON tests compare records, collection order, saved bytes and fre
 Successful additions still use the existing transaction/persistence pipeline and retain every identity.
 No new domain schema, lifecycle state, undo history, transfer service or shared CSS was introduced.
 
-## Checks on Windows, Java 25.0.4
+## Initial feature checks on Windows, Java 25.0.4
 
 - Final focused run:
   `gradlew.bat --no-daemon test --tests '*DirectoryQueryTest' --tests '*DirectorySearchIntegrationTest' --tests '*MainWindowShellTest.search*' --tests '*DirectorySummaryTest' checkstyleMain checkstyleTest coverage shadowJar`
@@ -31,7 +33,7 @@ No new domain schema, lifecycle state, undo history, transfer service or shared 
   **750 tests, 749 passed, one failure, zero errors/skips**. The failing test is the unchanged
   `MainWindowShellTest.pastedMultilineNotes_realInput_preservesSeparatorsPersistsAndRetainsRejectedCorrection`:
   Windows clipboard paste does not preserve the expected separator before command execution.
-  Both production and test style checks passed in the final full run.
+  Both production and test style checks passed in that initial full run.
 - Confirmed baseline independently: detached clean checkout at `c4e2001d`, running only
   `gradlew.bat --no-daemon test --tests '*MainWindowShellTest.pastedMultilineNotes*'`, fails at the same
   paste assertion (baseline line 128). No test was disabled, excluded from the full run, or weakened.
@@ -68,7 +70,7 @@ Lifecycle metadata is absent from the verified team baseline. Query/count helper
 predicates, tested to exclude records before availability lookup. Actual soft-deletion eligibility
 must be wired after Keegan/Arjo's domain changes merge; it is not simulated or claimed complete here.
 Isaac's later history pipeline must exclude `isReadOnly()` queries. Transfer PR #107 was closed without
-merging; team master is still `c4e2001d`. Later shared Command/LogicManager/MainWindow integrations must
+merging; the review branch integrates member-edit baseline `9885bb1e`. Later shared integrations must
 retain the query payload, filtered selection recovery and no-save query boundary.
 See [search contract and usage](../commands/search-and-planning.md).
 

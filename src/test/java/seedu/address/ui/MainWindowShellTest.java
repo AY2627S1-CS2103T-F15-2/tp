@@ -165,6 +165,71 @@ public class MainWindowShellTest {
     }
 
     @Test
+    public void search_memberDeletion_preservesFiltersSortAndSelectionUntilExplicitListReset() {
+        FxTestUtil.runAndWait(() -> {
+            submit("member search q/member holding/no sort/id order/desc");
+            assertEquals(List.of(id(3), id(2)), rows().getItems().stream()
+                    .map(item -> ((Member) item).getNusId()).toList());
+            String criteria = detailLabel("criteria");
+            String sort = detailLabel("sortOrder");
+            submit("member view nus/" + id(2));
+            int saves = storage.saves;
+            int dispatches = logic.commands.size();
+            submit("member delete nus/" + id(2));
+            assertEquals("Success", label("feedbackStatus"));
+            assertEquals(saves + 1, storage.saves);
+            assertEquals(dispatches + 1, logic.commands.size());
+            assertEquals(List.of(id(3)), rows().getItems().stream()
+                    .map(item -> ((Member) item).getNusId()).toList());
+            assertEquals(criteria, detailLabel("criteria"));
+            assertEquals(sort, detailLabel("sortOrder"));
+            assertEquals("1", detailLabel("displayedCount"));
+            assertTrue(detailLabel("selection").contains(id(3).value));
+            submit("member delete nus/" + id(3));
+            assertEquals("Success", label("feedbackStatus"));
+            assertTrue(rows().getItems().isEmpty());
+            assertEquals(criteria, detailLabel("criteria"));
+            assertEquals(sort, detailLabel("sortOrder"));
+            assertEquals("0", detailLabel("displayedCount"));
+            assertEquals("No member selected", detailLabel("selection"));
+            assertEquals(model.getAddressBook(), assertDoesNotThrow(() -> storage.readAddressBook()).orElseThrow());
+            submit("member list");
+            assertEquals(1, rows().getItems().size());
+            assertEquals("All records", detailLabel("criteria"));
+            assertEquals("Name (A-Z), then NUS ID", detailLabel("sortOrder"));
+        });
+    }
+
+    @Test
+    public void search_equipmentDeletion_preservesAllCriteriaAndZeroMatchesUntilExplicitListReset() {
+        FxTestUtil.runAndWait(() -> {
+            UUID target = new UUID(0, 2);
+            submit("equipment search q/camera category/photo condition/good availability/available"
+                    + " sort/id order/desc");
+            assertEquals(1, rows().getItems().size());
+            String criteria = detailLabel("criteria");
+            String sort = detailLabel("sortOrder");
+            submit("equipment view uuid/" + target);
+            int saves = storage.saves;
+            int dispatches = logic.commands.size();
+            submit("equipment delete uuid/" + target);
+            assertEquals("Success", label("feedbackStatus"));
+            assertEquals(saves + 1, storage.saves);
+            assertEquals(dispatches + 1, logic.commands.size());
+            assertTrue(rows().getItems().isEmpty());
+            assertEquals(criteria, detailLabel("criteria"));
+            assertEquals(sort, detailLabel("sortOrder"));
+            assertEquals("0", detailLabel("displayedCount"));
+            assertEquals("No equipment selected", detailLabel("selection"));
+            assertEquals(model.getAddressBook(), assertDoesNotThrow(() -> storage.readAddressBook()).orElseThrow());
+            submit("equipment list");
+            assertEquals(2, rows().getItems().size());
+            assertEquals("All records", detailLabel("criteria"));
+            assertEquals("Category, name, then UUID", detailLabel("sortOrder"));
+        });
+    }
+
+    @Test
     public void pastedMultilineNotes_realInput_preservesSeparatorsPersistsAndRetainsRejectedCorrection() {
         FxTestUtil.runAndWait(() -> {
             Clipboard clipboard = Clipboard.getSystemClipboard();

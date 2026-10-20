@@ -34,6 +34,7 @@ import seedu.address.model.member.NusId;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.query.DirectoryQuery;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -70,9 +71,9 @@ public class LaplaceListIntegrationTest {
     @Test
     public void execute_listRoutes_preservesAndReloadsAllDataThroughRealStorage() throws Exception {
         AddressBook before = new AddressBook(model.getAddressBook());
-        assertEquals(new CommandResult("Listed 2 active members.", DisplayRequest.members()),
+        assertEquals(new CommandResult("Listed 2 active members.", DisplayRequest.members(DirectoryQuery.all())),
                 logic.execute("member\tlist \t"));
-        assertEquals(new CommandResult("Listed 2 equipment items.", DisplayRequest.equipment()),
+        assertEquals(new CommandResult("Listed 2 equipment items.", DisplayRequest.equipment(DirectoryQuery.all())),
                 logic.execute("equipment list"));
         assertEquals(new CommandResult("Showing current loans.", DisplayRequest.loans()),
                 logic.execute("loans list"));

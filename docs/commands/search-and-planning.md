@@ -60,6 +60,8 @@ groups describe all inventory. Criteria and order are visible in the summary. Ze
 reset hint. Opening details retains the filtered list. Refresh reevaluates queries against current
 data, including loan-only changes, without executing row callbacks. Errors retain criteria and input
 for correction. List commands clear filters.
+Deleting a result keeps the active filter and sort, including when no matches remain. Only an explicit
+list/reset command clears them; returning to a directory after a mutation does not reset the query.
 
 ## Inventory groups and duplicates
 
@@ -77,7 +79,8 @@ physical units can still be added. Existing identity-duplicate rejection is unch
 
 ## Integration contract
 
-Baseline: team `c4e2001de6ec09389d827260d1a985093aa64bc0`. This baseline has no soft-deletion
+Initial baseline: team `c4e2001de6ec09389d827260d1a985093aa64bc0`, with member-edit baseline `9885bb1e`
+integrated during review. These baselines have no soft-deletion
 metadata, so all stored entities are currently eligible. Never guess lifecycle flags from names.
 `DirectoryQuery.members(data, eligible)`, `DirectoryQuery.equipment(data, lookup, eligible)` and
 `InventoryGroups.summarize(data, lookup, eligible)` accept lifecycle predicates. Eligibility is applied
@@ -88,8 +91,11 @@ No competing domain schema or reflection is introduced. The revised Week 10 dele
 archive/unarchive work and the 30-day restoration limit from the member/equipment assignment rows;
 this feature does not assume either rule.
 
-DisplayRequest optionally carries an immutable DirectoryQuery for MEMBERS/EQUIPMENT. Existing
-factories/targets retain their behavior. Minimal MainWindow integration sets query criteria on lists
+DisplayRequest optionally carries an immutable DirectoryQuery for MEMBERS/EQUIPMENT. A plain directory
+request preserves existing criteria; a request carrying a query replaces them. MemberListCommand and
+EquipmentListCommand explicitly carry DirectoryQuery.all() to reset filters/sorting. Search commands
+carry their supplied query; deletion and stale-detail fallback use plain navigation requests.
+MainWindow integration sets query criteria on lists
 and summaries, recovers selection using displayed order, and retains criteria during details mode.
 Keith remains the shell integrator; no shared theme/main FXML changes are needed.
 
@@ -98,5 +104,7 @@ bypasses saving for these commands. Isaac's history pipeline must likewise exclu
 Existing list/legacy save behavior remains unchanged. Transfer PR #107 was closed without merging;
 team master still has the verified baseline contracts. When later transfer/history changes touch
 Command/LogicManager/MainWindow, retain query dispatch and the no-save/no-history query boundary.
-No unmerged transfer/history/lifecycle implementation is copied into this branch. Those features'
+Team baseline `9885bb1e` adds member editing; both `member edit` and `member search` are retained in the
+integrated family parser and its diagnostic. No unmerged transfer/history/lifecycle implementation is
+copied into this branch. Those features'
 acceptance remains separate from this independently tested search/planning PR.

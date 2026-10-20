@@ -18,15 +18,16 @@ import seedu.address.model.member.NusId;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.query.DirectoryQuery;
 
 public class LaplaceListCommandTest {
 
     @Test
     public void execute_emptyModel_reportsZeroAndDirectoryTarget() throws Exception {
         ModelManager model = new ModelManager();
-        assertEquals(new CommandResult("Listed 0 active members.", DisplayRequest.members()),
+        assertEquals(new CommandResult("Listed 0 active members.", DisplayRequest.members(DirectoryQuery.all())),
                 new MemberListCommand().execute(model));
-        assertEquals(new CommandResult("Listed 0 equipment items.", DisplayRequest.equipment()),
+        assertEquals(new CommandResult("Listed 0 equipment items.", DisplayRequest.equipment(DirectoryQuery.all())),
                 new EquipmentListCommand().execute(model));
     }
 
@@ -46,9 +47,9 @@ public class LaplaceListCommandTest {
         CommandResult members = new MemberListCommand().execute(model);
         CommandResult equipment = new EquipmentListCommand().execute(model);
         assertEquals("Listed 2 active members.", members.getFeedbackToUser());
-        assertEquals(DisplayRequest.members(), members.getDisplayRequest());
+        assertEquals(DisplayRequest.members(DirectoryQuery.all()), members.getDisplayRequest());
         assertEquals("Listed 2 equipment items.", equipment.getFeedbackToUser());
-        assertEquals(DisplayRequest.equipment(), equipment.getDisplayRequest());
+        assertEquals(DisplayRequest.equipment(DirectoryQuery.all()), equipment.getDisplayRequest());
         assertFalse(members.isExit());
         assertFalse(members.isShowHelp());
         assertFalse(equipment.isExit());
