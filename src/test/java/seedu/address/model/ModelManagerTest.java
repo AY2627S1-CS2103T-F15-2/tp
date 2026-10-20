@@ -295,8 +295,8 @@ public class ModelManagerTest {
         assertEquals(List.of(LOAN), snapshot);
         assertEquals(Availability.AVAILABLE, modelManager.getAvailability(EQUIPMENT_ID));
         modelManager.deleteMember(MEMBER);
-        assertTrue(members.isEmpty());
-        assertTrue(loans.isEmpty());
+        assertTrue(modelManager.findMember(MEMBER_ID).orElseThrow().isDeleted());
+        assertEquals(List.of(LOAN.withReturnedDate(RETURNED_DATE)), loans);
         modelManager.deleteEquipment(EQUIPMENT);
         assertTrue(equipment.isEmpty());
     }

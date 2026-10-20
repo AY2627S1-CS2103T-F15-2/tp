@@ -70,7 +70,7 @@ public class FullCommandRoutingIntegrationTest {
     }
 
     @Test
-    public void allTenRoutes_completeLifecycleRetainsHistoryUntilPermittedDeletion() throws Exception {
+    public void allTenRoutes_memberDeletionRetainsHistoryAndEquipmentDeletionRemovesIt() throws Exception {
         LocalDate assigned = LocalDate.now().minusDays(3);
         LocalDate expected = assigned.plusDays(10);
         LocalDate returned = assigned.plusDays(1);
@@ -114,7 +114,7 @@ public class FullCommandRoutingIntegrationTest {
         assertEquals(2, model.getLoanList().size());
         assertTrue(model.getLoanList().stream().noneMatch(loan -> loan.isOpen()));
         execute("member delete nus/" + FIRST, DisplayRequest.members());
-        assertEquals(1, model.getLoanList().size());
+        assertEquals(2, model.getLoanList().size());
         execute("equipment delete uuid/" + firstItem, DisplayRequest.equipment());
         assertTrue(model.getLoanList().isEmpty());
         assertTrue(model.hasMember(SECOND));

@@ -10,7 +10,8 @@ Supply an exact NUS ID and at least one field to change. The ID is normalized to
 cannot be changed. Omitted details retain their stored values, including legacy saved values.
 Supplied fields follow the same validation and normalization as [member add](member-add.md).
 Unknown/repeated prefixes, blank values, legacy aliases and unexpected preamble are rejected.
-An edit that leaves all values unchanged is rejected without saving.
+An edit that leaves all values unchanged is rejected without saving. Deleted members cannot be edited,
+even when the supplied values are unchanged; run `member restore nus/NUS_ID` first.
 
 Editing is allowed while a member holds equipment. Open and completed loans retain their existing
 NUS-ID references, and no equipment, other member or legacy person record is changed. Different IDs
@@ -28,9 +29,9 @@ edits do not save. A failed save preserves live records, loan history and the pr
 `Model.setMember(Member target, Member editedMember)` replaces details by normalized NUS ID.
 The collection rejects an identity change and a missing target. It retains collection order and
 the exposed observable view; the shell owns sorted presentation. An older target snapshot resolves
-the current stored identity. The JSON member format is unchanged and needs no migration.
+the current stored identity. Replacements preserve the deletion flag; changing lifecycle state
+requires the dedicated delete/restore operations.
 
-Member soft-delete, restore and archival are deferred. Their later implementation must preserve
-lifecycle metadata during edits and reject editing a deleted member until restoration. This branch
-does not change deletion behavior or implement transfer/history services. Isaac's history work can
+Member soft-delete and unlimited restore are integrated; archival remains outside scope.
+Editing never restores a deleted member. Isaac's history work can
 use the same successful transactional save/publish boundary as the existing member-add operation.

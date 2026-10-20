@@ -1,4 +1,4 @@
-# Delete a member
+# Soft-delete a member
 
 `member delete nus/NUS_ID`
 
@@ -18,7 +18,8 @@ escaping are unsupported, following the shared Laplace grammar.
 
 The command resolves the actual stored member through Model, then calls `deleteMember`.
 It does not scan or mutate collection views or clean up loans itself. The root permits
-deletion only when the member has no open loans and removes that member's closed history.
+deletion only when the member has no open loans. It sets `deleted = true` and retains the
+member's details, NUS ID and every loan record, including completed history.
 Other members, equipment, legacy persons and unrelated loans remain intact. Equal names
 with distinct NUS IDs remain independent.
 
@@ -34,7 +35,10 @@ retrying a blocked deletion.
 - Parser: `MemberDeleteCommandParser implements Parser<MemberDeleteCommand>`; pass the
   argument remainder only, such as `nus/A0123456X`.
 - Shared dependencies are merged: display/Logic #80, parsing/sorting #83 and UI foundation #81.
-- The shell consumes the typed directory request and recovers selection by identity after deletion.
+- The shell consumes the directory request and keeps the same retained identity selected.
+- Deleted cards are grey, names are italic and struck through, and `(deleted)` is shown separately.
+- Repeat deletion is rejected. `member restore nus/NUS_ID` restores the member at any time.
+- Deleted IDs remain reserved and cannot receive new loans. No timestamp or purge is used.
 
 Command classes never save. LogicManager owns persistence: it executes the deletion on a snapshot,
 atomically saves it and only then publishes through the existing live root. Parsing/business rejection
@@ -45,7 +49,7 @@ failure and fresh-reload evidence is in [MvpCompletion.md](../gui/MvpCompletion.
 
 Tests cover normalized IDs, same-name records, actual stored-entity delegation, null misuse,
 unknown/deleted identities, blocked open loans with existing closed history, permitted
-deletion and removal of only related history, and preservation after JSON reload. Invalid
+deletion with retained history, unlimited restoration, and preservation after JSON reload. Invalid
 inputs are interleaved with a return and valid deletions to check subsequent state. Legacy
 persons and unrelated open loans are retained. No saved user data is read or overwritten.
 

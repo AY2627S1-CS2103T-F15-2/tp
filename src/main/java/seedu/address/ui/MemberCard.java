@@ -32,7 +32,10 @@ public class MemberCard extends UiPart<Region> {
      */
     public MemberCard(Member member, int itemsHeld) {
         super(validateInput(member, itemsHeld));
-        name.setText(member.getName().fullName);
+        MemberNameStyle.apply(name, member);
+        if (member.isDeleted()) {
+            getRoot().getStyleClass().add("deleted-member");
+        }
         identityAndPhone.setText(member.getNusId() + " · " + member.getPhone().value);
         email.setText(member.getEmail().value);
         this.itemsHeld.setText(itemsHeld + (itemsHeld == 1 ? " item held" : " items held"));

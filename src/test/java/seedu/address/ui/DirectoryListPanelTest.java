@@ -142,7 +142,7 @@ public class DirectoryListPanelTest {
     }
 
     @Test
-    public void removedSelections_clearEvenBeforeRefreshAndNeverActivate() {
+    public void deletedSelections_retainsMembersClearsEquipmentAndNeverActivates() {
         FxTestUtil.runAndWait(() -> {
             ModelManager model = model();
             List<NusId> memberCallbacks = new ArrayList<>();
@@ -158,13 +158,13 @@ public class DirectoryListPanelTest {
             model.deleteEquipment(model.findEquipment(uuid).orElseThrow());
             members.select(Optional.of(nusId));
             equipment.select(Optional.of(uuid));
-            assertTrue(members.getSelection().isEmpty());
+            assertEquals(Optional.of(nusId), members.getSelection());
             assertTrue(equipment.getSelection().isEmpty());
             members.refresh();
             equipment.refresh();
             assertTrue(memberCallbacks.isEmpty());
             assertTrue(equipmentCallbacks.isEmpty());
-            assertEquals(2, rows(members).getItems().size());
+            assertEquals(3, rows(members).getItems().size());
             assertEquals(2, rows(equipment).getItems().size());
         });
     }

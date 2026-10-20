@@ -10,8 +10,9 @@ Laplace helps a CCA EXCO member manage **members, equipment and equipment loans*
 Type commands to register records, find an exact member or item, issue equipment, record returns and
 remove erroneous records. Lists and details show who holds each item and what each member holds.
 
-This guide describes the **MVP release, member editing, `loans list` navigation, and Tab autocomplete**:
-twelve member, equipment and loan commands in total. Use it with the matching release supplied by the team;
+This guide describes the **MVP release plus member editing, soft-delete, restoration,
+`loans list` navigation, and Tab autocomplete**: thirteen member, equipment and loan commands in total.
+Use it with the matching release supplied by the team;
 earlier builds may not support every behavior described here. Laplace is a local, single-user application.
 
 <page-nav-print />
@@ -211,11 +212,13 @@ preserves the current view/selection. If saving fails, correct file access and r
 member list
 ```
 
-Show every active member, ordered by normalized name and then NUS ID. Each row shows the member's name,
-NUS ID, phone, email and **Items Held** count. All stored members are active; archiving is not supported.
-The directory summary shows the active/displayed counts, sorting and selection.
+Show active and deleted members together, ordered by normalized name and then NUS ID. Each row shows
+name, NUS ID, phone, email and **Items Held** count. Deleted cards are grey, with an italic,
+struck-through name and a separate `(deleted)` suffix. They remain selectable. The summary shows
+active, deleted and displayed counts. Archival is not supported.
 
-The result is `Listed N active members.` If there are no records, the list displays:
+The result is `Listed N active members.` Deleted records are counted separately when present.
+If there are no records, the list displays:
 `No members yet. Use member add to get started.`
 
 This command takes no parameters. For example, `member list nus/A0123456X` is rejected; use
@@ -270,6 +273,7 @@ re-sorts by name and NUS ID while keeping the edited member selected. Changes su
 | --- | --- |
 | No editable fields supplied | Supply at least one of `name/`, `phone/` or `email/`. |
 | Supplied values make no change | `The supplied details do not change this member.` No save occurs. |
+| Member is deleted | Run `member restore nus/NUS_ID` before editing. |
 | Member does not exist | `No member with NUS ID NUS_ID exists.` Check `member list`. |
 | Blank, invalid, repeated or unknown field | Correct the field using the `member add` rules. |
 | Saving fails | The previous details, loan history and saved file remain unchanged. |
@@ -283,21 +287,37 @@ member delete nus/NUS_ID
 Example: `member delete nus/A0123456X`.
 
 Delete one exact member **only if they currently hold no equipment**. Equal-name members with other
-IDs remain. Success removes the member from lists/details and permanently removes closed loans that
-refer to that member. Unrelated members, equipment and loans are preserved.
+IDs remain. Success marks the member deleted, preserving their details, reserved NUS ID and all loan
+history. They remain visible and selected in the directory with a grey card, italic struck-through
+name and `(deleted)` suffix. A deleted member cannot receive new loans; restore them first.
 
-Example feedback: `Deleted member A0123456X: Alex Tan.` The directory appears with a surviving selection,
-or an empty state when no members remain. Stale details for the deleted member are removed.
+Example feedback: `Deleted member A0123456X: Alex Tan.` The directory keeps the same member selected.
+Viewing deleted details shows restore guidance. Repeating deletion is rejected without saving.
 
 | Situation | Result or correction |
 | --- | --- |
 | Member holds equipment | `Cannot delete NUS_ID because the member holds N item(s). Return the items first.` Use `member view` to identify them. |
+| Member is already deleted | Restore them first; repeated deletion is rejected without saving. |
 | Member does not exist | `No member with NUS ID NUS_ID exists.` Check `member list`. |
 | Malformed/missing/repeated/unknown parameter | Correct the identity or syntax and retry. |
 | Saving fails | No records change. Correct file access before retrying. |
 
-Deletion is permanent: the MVP has no undo, restore or archive operation. Return all outstanding items
-with `loans return` before retrying a blocked deletion. A failed deletion preserves the member and loans.
+Deletion has no expiry and never clears a member record automatically. Return all outstanding items
+with `loans return` before retrying blocked deletion. A failed save changes neither records nor saved bytes.
+
+### Restore a member: `member restore`
+
+```text
+member restore nus/NUS_ID
+```
+
+Example: `member restore nus/a0123456x`.
+
+Restore any deleted member at any time. There is no time limit, timestamp check, purge or separate
+archive state. The same NUS ID, details and loan history are retained. Success reports
+`Restored member NUS_ID: NAME.`, opens their details and removes the deleted styling. New loans
+can then be assigned normally. An unknown identity, an already-active member or invalid arguments
+are rejected without saving. A failed save leaves the member deleted and permits a later retry.
 
 ### Add equipment: `equipment add`
 
@@ -493,7 +513,7 @@ on or after 20 September 2026; choose valid actual dates for your own operation.
 6. Return it: `loans return uuid/UUID returned/2026-09-20`.
 7. View both records again. The member has no current holding for this item; the GOOD item is AVAILABLE.
 8. If these were erroneous/test records, remove them with `equipment delete uuid/UUID` and
-   `member delete nus/E0678901C`. Delete only records you intend to remove permanently.
+   `member delete nus/E0678901C`. Equipment deletion is permanent; member deletion is recoverable with `member restore`.
 
 ## Saving, file access and recovery
 
@@ -507,14 +527,17 @@ before copying them into the matching locations beside the JAR. Data is not auto
 from the old working folder. Moving only the JAR to a new empty folder starts a separate sample dataset.
 When running development classes with Gradle, runtime files remain relative to the project working folder.
 
-For the six MVP mutation commands, a failed save leaves the live records and previously saved data
+For the seven Laplace mutation commands, a failed save leaves the live records and previously saved data
 unchanged. An error is not a successful addition, deletion, assignment or return. The command remains
 available for correction. Fix the folder/file access problem, then retry. Do not repeatedly resubmit a
 successful command: duplicate members, already-assigned items and repeated returns are rejected.
 
 Data includes members, equipment and open/closed loan records. Availability and holders are derived;
-do not try to maintain separate holder/availability fields. Deleting a permitted member/item also
-permanently deletes its related closed loans. There is no recovery feature for that deletion.
+do not try to maintain separate holder/availability fields. Member deletion retains the record,
+its `deleted` boolean and closed loans for unlimited restoration. Equipment deletion remains permanent
+and removes that equipment's closed loans. Older saves without a member `deleted` field load as active;
+explicit null or non-boolean values are invalid. Do not open lifecycle-aware data in an older release
+that may discard deletion state.
 
 Back up the data file while Laplace is closed. Do not edit it while the app is running or run multiple
 instances against the same file. Manual data editing is not an MVP operation. If startup or a view
@@ -531,7 +554,8 @@ holdings, or `equipment view uuid/UUID` for an exact item and its current holder
 and separate member-find/holder commands are outside the MVP.
 
 **Why can I not delete a record?** A member with an open loan or equipment currently on loan cannot be
-deleted. Return the relevant items first. Closed loans do not block deletion and are cleaned up with it.
+deleted. Return the relevant items first. Closed loans do not block deletion. They are retained for
+soft-deleted members; equipment deletion still removes that equipment's closed loans.
 
 **Can I register broken equipment?** Yes. DAMAGED/UNDER_REPAIR records are UNAVAILABLE and cannot be
 assigned. Equipment editing is not included. Member contact details can be changed with `member edit`.
@@ -548,7 +572,7 @@ Laplace folder at the configured data path, and launch the matching release ther
 backup until you have checked members, equipment and current loans on the other computer.
 
 **Where is Help?** Enter `help` or press F1. Use `exit` for normal shutdown; saved window preferences are
-reused within usable screen bounds. These utilities are separate from the twelve member, equipment
+reused within usable screen bounds. These utilities are separate from the thirteen member, equipment
 and loan commands, including `loans list`.
 
 The **Menu** contains **Help** and **Exit**. Help displays the address of the
@@ -557,7 +581,7 @@ use **Copy URL** to copy its address and open it in your browser.
 
 ## MVP limits
 
-The MVP excludes equipment editing, archiving/restoring deleted records, separate find/member-loans/holder
+The MVP excludes equipment editing, archival, equipment restoration, separate find/member-loans/holder
 commands, completed loan-history viewing, import/export, undo/redo, batch operations, fuzzy search,
 filters, user-selected sorting and automatic overdue notifications. Copying a backup file while the app
 is closed is a file-management task, not an import/export command. Data is local to one operator;
@@ -571,7 +595,8 @@ authentication and concurrent multi-user operation are not provided.
 | Edit member | `member edit nus/NUS_ID [name/NAME] [phone/PHONE] [email/EMAIL]` |
 | List members | `member list` |
 | View member and current holdings | `member view nus/NUS_ID` |
-| Delete member | `member delete nus/NUS_ID` |
+| Soft-delete member | `member delete nus/NUS_ID` |
+| Restore member | `member restore nus/NUS_ID` |
 | Add equipment | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES]` |
 | List equipment | `equipment list` |
 | View equipment and current holder | `equipment view uuid/UUID` |

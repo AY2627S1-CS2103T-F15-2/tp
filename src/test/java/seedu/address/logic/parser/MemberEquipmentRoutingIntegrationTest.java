@@ -81,7 +81,7 @@ public class MemberEquipmentRoutingIntegrationTest {
         assertReloadMatches();
         assertDisplay("member delete nus/a0000001x", DisplayRequest.members());
         assertDisplay("equipment delete\tuuid/" + first, DisplayRequest.equipment());
-        assertFalse(model.hasMember(FIRST_MEMBER));
+        assertTrue(model.findMember(FIRST_MEMBER).orElseThrow().isDeleted());
         assertTrue(model.hasMember(SECOND_MEMBER));
         assertFalse(model.hasEquipment(first));
         assertTrue(model.hasEquipment(second));
@@ -142,7 +142,7 @@ public class MemberEquipmentRoutingIntegrationTest {
     }
 
     @Test
-    public void routes_viewsTrackRealLoanFixturesAndPermittedDeletionRemovesClosedHistory() throws Exception {
+    public void routes_viewsTrackRealLoanFixturesAndMemberDeletionRetainsClosedHistory() throws Exception {
         addMembers();
         UUID first = addEquipment();
         UUID second = addEquipment();
@@ -159,14 +159,14 @@ public class MemberEquipmentRoutingIntegrationTest {
         assertEquals(SECOND_MEMBER, model.findOpenLoan(second).orElseThrow().getMemberNusId());
         assertEquals(beforeViews, model.getAddressBook());
         assertDisplay("member delete nus/A0000001X", DisplayRequest.members());
-        assertEquals(1, model.getLoanList().size());
+        assertEquals(2, model.getLoanList().size());
         assertTrue(model.hasEquipment(first));
         model.closeLoan(second, ASSIGNED.plusDays(2));
         storage.saveAddressBook(model.getAddressBook());
         assertTrue(logic.execute("member view nus/A0000002X").getFeedbackToUser().contains("0 item(s)"));
         assertTrue(logic.execute("equipment view uuid/" + second).getFeedbackToUser().contains("AVAILABLE"));
         assertDisplay("equipment delete uuid/" + second, DisplayRequest.equipment());
-        assertTrue(model.getLoanList().isEmpty());
+        assertEquals(1, model.getLoanList().size());
         assertTrue(model.hasMember(SECOND_MEMBER));
         assertReloadMatches();
     }

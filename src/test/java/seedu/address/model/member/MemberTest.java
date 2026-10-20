@@ -68,7 +68,7 @@ public class MemberTest {
     public void toStringMethod() {
         Member member = new Member(NUS_ID, NAME, PHONE, EMAIL);
         String expected = Member.class.getCanonicalName()
-                + "{nusId=A0123456X, name=Alex Tan, phone=91234567, email=alex@example.com}";
+                + "{nusId=A0123456X, name=Alex Tan, phone=91234567, email=alex@example.com, deleted=false}";
 
         assertEquals(expected, member.toString());
     }

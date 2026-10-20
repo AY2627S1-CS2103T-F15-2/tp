@@ -18,6 +18,7 @@ import seedu.address.model.loan.Loan;
 import seedu.address.model.loan.exceptions.DuplicateOpenLoanException;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
+import seedu.address.model.member.exceptions.MemberDeletedException;
 import seedu.address.model.member.exceptions.MemberNotFoundException;
 
 /** Assigns available equipment to a member using execution-time identity, availability and date checks. */
@@ -67,6 +68,9 @@ public class LoanAddCommand extends Command {
         try {
             Equipment equipment = model.findEquipment(equipmentUuid).orElseThrow(EquipmentNotFoundException::new);
             Member member = model.findMember(memberNusId).orElseThrow(MemberNotFoundException::new);
+            if (member.isDeleted()) {
+                throw new MemberDeletedException();
+            }
             String assignedMessage = model.findOpenLoan(equipmentUuid)
                     .map(loan -> String.format(MESSAGE_ASSIGNED, equipmentUuid, loan.getMemberNusId()))
                     .orElse("Equipment " + equipmentUuid + " has an inconsistent open-loan state.");
@@ -94,6 +98,9 @@ public class LoanAddCommand extends Command {
                     DisplayRequest.equipmentDetails(equipmentUuid));
         } catch (EquipmentNotFoundException e) {
             throw new CommandException(String.format(MESSAGE_EQUIPMENT_NOT_FOUND, equipmentUuid), e);
+        } catch (MemberDeletedException e) {
+            throw new CommandException("Cannot assign equipment to deleted member " + memberNusId
+                    + ". Use member restore nus/" + memberNusId + " first.", e);
         } catch (MemberNotFoundException e) {
             throw new CommandException(String.format(MESSAGE_MEMBER_NOT_FOUND, memberNusId), e);
         } catch (IllegalArgumentException e) {
