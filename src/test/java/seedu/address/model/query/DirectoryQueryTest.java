@@ -84,16 +84,31 @@ public class DirectoryQueryTest {
                     assertEquals(new UUID(0, 2), id);
                     return Availability.AVAILABLE;
                 }, item -> item.getUuid().equals(new UUID(0, 2))));
-        assertEquals(List.of("photography / camera: 1 available, 1 assigned, 1 unavailable"),
+        assertEquals(List.of("\"photography\" / \"camera\": 1 available, 1 assigned, 1 unavailable"),
                 InventoryGroups.summarize(model.getAddressBook(), model::getAvailability, item -> true));
-        assertEquals(List.of("photography / camera: 1 available, 0 assigned, 0 unavailable"),
+        assertEquals(List.of("\"photography\" / \"camera\": 1 available, 0 assigned, 0 unavailable"),
                 InventoryGroups.summarize(model.getAddressBook(), model::getAvailability,
                         item -> item.getUuid().equals(new UUID(0, 2))));
         model.closeLoan(new UUID(0, 1), LocalDate.of(2026, 1, 2));
         assertEquals(0, DirectoryQuery.holdings(model.getAddressBook(), member(1)));
-        assertEquals(List.of("photography / camera: 2 available, 0 assigned, 1 unavailable"),
+        assertEquals(List.of("\"photography\" / \"camera\": 2 available, 0 assigned, 1 unavailable"),
                 InventoryGroups.summarize(model.getAddressBook(), model::getAvailability, item -> true));
         assertTrue(InventoryGroups.summarize(model.getAddressBook(), model::getAvailability, item -> false).isEmpty());
+    }
+
+    @Test
+    public void inventoryGroups_separatorAndQuoteCharacters_doNotMergeDistinctCategoryTypePairs() {
+        ModelManager model = new ModelManager();
+        model.addEquipment(new Equipment(new UUID(0, 1), "c", "a / b", Condition.GOOD, ""));
+        model.addEquipment(new Equipment(new UUID(0, 2), "b / c", "a", Condition.DAMAGED, ""));
+        model.addEquipment(new Equipment(new UUID(0, 3), " C ", " A / B ", Condition.FAIR, ""));
+        model.addEquipment(new Equipment(new UUID(0, 4), "\"Camera\"", "Quotes", Condition.GOOD, ""));
+        AddressBook before = new AddressBook(model.getAddressBook());
+        assertEquals(List.of("\"a\" / \"b / c\": 0 available, 0 assigned, 1 unavailable",
+                "\"a / b\" / \"c\": 2 available, 0 assigned, 0 unavailable",
+                "\"quotes\" / \"\"\"camera\"\"\": 1 available, 0 assigned, 0 unavailable"),
+                InventoryGroups.summarize(model.getAddressBook(), model::getAvailability, item -> true));
+        assertEquals(before, model.getAddressBook());
     }
 
     @Test

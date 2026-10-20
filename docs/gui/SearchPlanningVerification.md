@@ -22,22 +22,22 @@ No new domain schema, lifecycle state, undo history, transfer service or shared 
 
 - Final focused run:
   `gradlew.bat --no-daemon test --tests '*DirectoryQueryTest' --tests '*DirectorySearchIntegrationTest' --tests '*MainWindowShellTest.search*' --tests '*DirectorySummaryTest' checkstyleMain checkstyleTest coverage shadowJar`
-  **PASS: 18 tests, zero failures/errors/skips**, both Checkstyle checks, coverage and packaging.
+  **PASS: 19 tests, zero failures/errors/skips**, both Checkstyle checks, coverage and packaging.
 - New core classes DirectoryQuery, DirectorySearchCommand, DirectorySearchCommandParser,
   DuplicateWarnings and InventoryGroups: **100% line and branch coverage** in that focused run
-  (153 covered lines including enum declarations; 106 covered branches; none missed).
+  (156 covered lines including enum/group declarations; 106 covered branches; none missed).
   This claim does not describe every changed line in existing shell/add-command classes.
 - Full local `gradlew.bat --no-daemon check coverage shadowJar --continue`:
-  **749 tests, 748 passed, one failure, zero errors/skips**. The failing test is the unchanged
+  **750 tests, 749 passed, one failure, zero errors/skips**. The failing test is the unchanged
   `MainWindowShellTest.pastedMultilineNotes_realInput_preservesSeparatorsPersistsAndRetainsRejectedCorrection`:
   Windows clipboard paste does not preserve the expected separator before command execution.
-  The final test-only formatting issues from that run were corrected; both style checks subsequently passed.
+  Both production and test style checks passed in the final full run.
 - Confirmed baseline independently: detached clean checkout at `c4e2001d`, running only
   `gradlew.bat --no-daemon test --tests '*MainWindowShellTest.pastedMultilineNotes*'`, fails at the same
   paste assertion (baseline line 128). No test was disabled, excluded from the full run, or weakened.
 - `gradlew.bat --no-daemon checkstyleMain checkstyleTest coverage shadowJar -x test` passed after the
   full-run failure, generating coverage from its execution data. This is a build/report operation,
-  not a claim that the full suite passed. The later 18-test run above is separately identified.
+  not a claim that the full suite passed. The later 19-test run above is separately identified.
 - Packaged source-mode Java probe passed with only `build/libs/Laplace.jar` on the application classpath:
   actual AddressBookParser/search execution, real ModelManager, query result identity, list/summary
   construction and FXML/CSS layout. It asserts production classes originate from Laplace.jar, uses only
@@ -62,14 +62,18 @@ The summaries scroll to expose remaining totals, selection and inventory groups 
 labels wrap instead of truncating the directory name. Tests regenerate original snapshots under
 `build/reports/laplace/shell-search-*.png`.
 
-## Remaining shared integration
+## Scope and later shared integration
 
 Lifecycle metadata is absent from the verified team baseline. Query/count helpers accept eligibility
-predicates, tested to exclude records before availability lookup. Actual archive/deletion eligibility
+predicates, tested to exclude records before availability lookup. Actual soft-deletion eligibility
 must be wired after Keegan/Arjo's domain changes merge; it is not simulated or claimed complete here.
-Isaac's history pipeline must exclude `isReadOnly()` queries. Keith's in-flight transfer work touches
-the same small Command/LogicManager/MainWindow integration points and requires deliberate reconciliation.
+Isaac's later history pipeline must exclude `isReadOnly()` queries. Transfer PR #107 was closed without
+merging; team master is still `c4e2001d`. Later shared Command/LogicManager/MainWindow integrations must
+retain the query payload, filtered selection recovery and no-save query boundary.
 See [search contract and usage](../commands/search-and-planning.md).
 
-The PR remains draft for those shared contracts and the baseline clipboard regression. This report
-does not assert complete Week 10 lifecycle/transfer/undo integration or manual desktop acceptance.
+The search/planning scope is independently complete on this baseline and can be reviewed now. Later
+lifecycle/history/transfer work does not require copying unmerged implementations into this branch.
+The local baseline clipboard failure is reported separately from hosted CI, which passed all three
+platforms on the original feature commit. Final-head hosted results are linked in the PR body.
+This report does not assert complete Week 10 lifecycle/transfer/undo integration or manual desktop acceptance.

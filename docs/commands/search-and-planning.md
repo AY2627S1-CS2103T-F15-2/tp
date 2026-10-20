@@ -64,6 +64,8 @@ for correction. List commands clear filters.
 ## Inventory groups and duplicates
 
 Equipment summaries group all inventory by normalized **category / equipment name** (equipment type).
+Category and type are separate keys; separator characters never merge distinct pairs. Labels quote
+each value and double embedded quotes so names containing `/` or quotation marks remain distinguishable.
 Each group shows available, assigned and unavailable physical units. Open loans mean assigned;
 otherwise GOOD/FAIR is available and DAMAGED/UNDER_REPAIR unavailable. Groups are independent of the
 current filter, so narrowing a directory does not silently reduce planning totals.
@@ -75,13 +77,16 @@ physical units can still be added. Existing identity-duplicate rejection is unch
 
 ## Integration contract
 
-Baseline: team `c4e2001de6ec09389d827260d1a985093aa64bc0`. This baseline has no archive/deletion
+Baseline: team `c4e2001de6ec09389d827260d1a985093aa64bc0`. This baseline has no soft-deletion
 metadata, so all stored entities are currently eligible. Never guess lifecycle flags from names.
 `DirectoryQuery.members(data, eligible)`, `DirectoryQuery.equipment(data, lookup, eligible)` and
 `InventoryGroups.summarize(data, lookup, eligible)` accept lifecycle predicates. Eligibility is applied
 before availability lookup. When domain lifecycle changes merge, wire their actual active/eligible
-predicates consistently into commands, panels, summaries and duplicate checks. This remains an
-explicit cross-workstream dependency; no competing domain schema or reflection is introduced.
+predicates consistently into commands, panels, summaries and duplicate checks. This is a follow-up
+integration after the domain changes merge; current-baseline search/planning is independently usable.
+No competing domain schema or reflection is introduced. The revised Week 10 delegation removes the
+archive/unarchive work and the 30-day restoration limit from the member/equipment assignment rows;
+this feature does not assume either rule.
 
 DisplayRequest optionally carries an immutable DirectoryQuery for MEMBERS/EQUIPMENT. Existing
 factories/targets retain their behavior. Minimal MainWindow integration sets query criteria on lists
@@ -90,6 +95,8 @@ Keith remains the shell integrator; no shared theme/main FXML changes are needed
 
 Command.isReadOnly() defaults to false for compatibility and is true for searches. LogicManager
 bypasses saving for these commands. Isaac's history pipeline must likewise exclude queries.
-Existing list/legacy save behavior remains unchanged. Keith's in-flight transfer work also touches
-Command/LogicManager/MainWindow: retain both transfer dispatch and query handling when merging.
-No unmerged transfer/history/lifecycle implementation is copied into this branch.
+Existing list/legacy save behavior remains unchanged. Transfer PR #107 was closed without merging;
+team master still has the verified baseline contracts. When later transfer/history changes touch
+Command/LogicManager/MainWindow, retain query dispatch and the no-save/no-history query boundary.
+No unmerged transfer/history/lifecycle implementation is copied into this branch. Those features'
+acceptance remains separate from this independently tested search/planning PR.
