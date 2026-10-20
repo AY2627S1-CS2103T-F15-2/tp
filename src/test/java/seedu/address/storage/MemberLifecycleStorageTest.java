@@ -18,12 +18,14 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.logic.LogicManager;
+import seedu.address.logic.commands.MemberEditCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.member.NusId;
+import seedu.address.model.person.Name;
 
 /**
  * Exercises deletion metadata and real persistence failures without changing the live dataset.
@@ -33,6 +35,35 @@ public class MemberLifecycleStorageTest {
 
     @TempDir
     public Path directory;
+
+    @Test
+    public void commands_deleteEditRestoreEdit_rejectsDeletedEditsWithoutSaving() throws Exception {
+        ModelManager model = fullModel();
+        Path file = directory.resolve("edit-lifecycle.json");
+        JsonAddressBookStorage disk = new JsonAddressBookStorage(file);
+        StorageManager storage = new StorageManager(disk, new JsonUserPrefsStorage(directory.resolve("prefs.json")));
+        LogicManager logic = new LogicManager(model, storage);
+        String originalName = model.findMember(ID).orElseThrow().getName().fullName;
+        logic.execute("member delete nus/" + ID);
+        byte[] deletedBytes = Files.readAllBytes(file);
+        AddressBook deletedState = new AddressBook(model.getAddressBook());
+
+        for (String name : List.of("Updated Name", originalName)) {
+            CommandException error = assertThrows(CommandException.class, () ->
+                    logic.execute("member edit nus/" + ID + " name/" + name));
+            assertEquals(String.format(MemberEditCommand.MESSAGE_DELETED, ID), error.getMessage());
+            assertTrue(model.findMember(ID).orElseThrow().isDeleted());
+            assertEquals(deletedState, model.getAddressBook());
+            assertArrayEquals(deletedBytes, Files.readAllBytes(file));
+        }
+
+        logic.execute("member restore nus/" + ID);
+        logic.execute("member edit nus/" + ID + " name/Updated Name");
+        assertFalse(model.findMember(ID).orElseThrow().isDeleted());
+        assertEquals(Name.forMember("Updated Name"), model.findMember(ID).orElseThrow().getName());
+        assertEquals(deletedState.getLoanList(), model.getLoanList());
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
 
     @Test
     public void read_legacyAndBooleanFlags_defaultsToActiveAndRejectsInvalidExplicitValues() throws Exception {
