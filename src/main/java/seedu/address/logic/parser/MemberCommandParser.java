@@ -22,9 +22,10 @@ public class MemberCommandParser implements Parser<Command> {
         return switch (subcommand) {
             case "list" -> new MemberListCommandParser().parse(arguments);
             case "add" -> new MemberAddCommandParser().parse(arguments);
+            case "edit" -> new MemberEditCommandParser().parse(arguments);
             case "view" -> new MemberViewCommandParser().parse(arguments);
             case "delete" -> new MemberDeleteCommandParser().parse(arguments);
-            default -> throw new ParseException("Expected member subcommand: add, list, view, delete.");
+            default -> throw new ParseException("Expected member subcommand: add, edit, list, view, delete.");
         };
     }
 }
