@@ -185,7 +185,7 @@ public class AddressBookTest {
         assertEquals(before, addressBook);
         addressBook.removeMember(sameMember);
         addressBook.removeEquipment(sameEquipment);
-        assertTrue(addressBook.getMemberList().isEmpty());
+        assertTrue(addressBook.findMember(MEMBER_ID).orElseThrow().isDeleted());
         assertTrue(addressBook.getEquipmentList().isEmpty());
     }
 
@@ -257,7 +257,7 @@ public class AddressBookTest {
     }
 
     @Test
-    public void deletion_closedReferences_removesOnlyRelatedHistoryAsContractRequires() {
+    public void deletion_closedReferences_retainsMemberHistoryAndRemovesEquipmentHistory() {
         populateReferences(addressBook);
         Loan unrelated = new Loan(OTHER_EQUIPMENT.getUuid(), OTHER_MEMBER.getNusId(),
                 ASSIGNED_DATE, RETURN_DATE, RETURN_DATE);
@@ -266,7 +266,7 @@ public class AddressBookTest {
         AddressBook equipmentDeletion = controlledCopy(addressBook);
         addressBook.removeMember(MEMBER);
         equipmentDeletion.removeEquipment(EQUIPMENT);
-        assertEquals(List.of(unrelated), addressBook.getLoanList());
+        assertEquals(List.of(CLOSED_LOAN, unrelated), addressBook.getLoanList());
         assertEquals(List.of(unrelated), equipmentDeletion.getLoanList());
         assertTrue(addressBook.hasEquipment(EQUIPMENT_ID));
         assertTrue(equipmentDeletion.hasMember(MEMBER_ID));
@@ -292,7 +292,7 @@ public class AddressBookTest {
         assertFalse(equipmentObservations.isEmpty());
         assertTrue(memberObservations.stream().allMatch(Boolean::booleanValue));
         assertTrue(equipmentObservations.stream().allMatch(Boolean::booleanValue));
-        assertEquals(1, addressBook.getLoanList().size());
+        assertEquals(2, addressBook.getLoanList().size());
         assertEquals(1, equipmentDeletion.getLoanList().size());
     }
 
@@ -635,7 +635,7 @@ public class AddressBookTest {
         real.removeEquipment(EQUIPMENT);
         assertTrue(real.getLoanList().isEmpty());
         real.removeMember(MEMBER);
-        assertFalse(real.hasMember(MEMBER_ID));
+        assertTrue(real.findMember(MEMBER_ID).orElseThrow().isDeleted());
     }
 
     /**
@@ -773,6 +773,13 @@ public class AddressBookTest {
         public void remove(Member member) {
             Member stored = findByNusId(member.getNusId()).orElseThrow(MemberNotFoundException::new);
             values.remove(stored);
+        }
+
+        @Override
+        public void setDeleted(NusId nusId, boolean isDeleted) {
+            Member stored = findByNusId(nusId).orElseThrow(MemberNotFoundException::new);
+            values.set(values.indexOf(stored), new Member(nusId, stored.getName(), stored.getPhone(),
+                    stored.getEmail(), isDeleted));
         }
 
         @Override

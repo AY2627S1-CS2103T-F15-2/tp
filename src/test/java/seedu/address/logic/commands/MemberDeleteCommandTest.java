@@ -35,7 +35,9 @@ public class MemberDeleteCommandTest {
         ModelManager model = DeletionTestData.model();
         var equipment = List.copyOf(model.getEquipmentList());
         CommandResult result = new MemberDeleteCommand(new NusId("a0123456x")).execute(model);
-        assertEquals(List.of(SECOND_MEMBER), model.getMemberList());
+        assertEquals(2, model.getMemberList().size());
+        assertTrue(model.findMember(FIRST_MEMBER.getNusId()).orElseThrow().isDeleted());
+        assertEquals(SECOND_MEMBER, model.findMember(SECOND_MEMBER.getNusId()).orElseThrow());
         assertEquals(equipment, model.getEquipmentList());
         assertEquals(List.of(LEGACY_PERSON), model.getFilteredPersonList());
         assertEquals(DisplayRequest.members(), result.getDisplayRequest());
@@ -55,7 +57,7 @@ public class MemberDeleteCommandTest {
         };
         model.addMember(FIRST_MEMBER);
         new MemberDeleteCommand(new NusId("a0123456x")).execute(model);
-        assertTrue(model.getMemberList().isEmpty());
+        assertTrue(model.findMember(FIRST_MEMBER.getNusId()).orElseThrow().isDeleted());
     }
 
     @Test
@@ -86,7 +88,7 @@ public class MemberDeleteCommandTest {
     }
 
     @Test
-    public void execute_closedHistory_removesOnlyDeletedMembersLoans() throws Exception {
+    public void execute_closedHistory_retainsDeletedMemberAndAllLoans() throws Exception {
         ModelManager model = DeletionTestData.model();
         model.addLoan(DeletionTestData.loan(FIRST_EQUIPMENT, FIRST_MEMBER, false));
         model.addLoan(DeletionTestData.loan(SECOND_EQUIPMENT, FIRST_MEMBER, false));
@@ -94,9 +96,11 @@ public class MemberDeleteCommandTest {
         Loan retainedOpen = DeletionTestData.loan(SECOND_EQUIPMENT, SECOND_MEMBER, true);
         model.addLoan(retainedHistory);
         model.addLoan(retainedOpen);
+        List<Loan> history = List.copyOf(model.getLoanList());
         new MemberDeleteCommand(FIRST_MEMBER.getNusId()).execute(model);
-        assertEquals(List.of(SECOND_MEMBER), model.getMemberList());
-        assertEquals(List.of(retainedHistory, retainedOpen), model.getLoanList());
+        assertEquals(2, model.getMemberList().size());
+        assertTrue(model.findMember(FIRST_MEMBER.getNusId()).orElseThrow().isDeleted());
+        assertEquals(history, model.getLoanList());
         assertEquals(List.of(FIRST_EQUIPMENT, SECOND_EQUIPMENT), model.getEquipmentList());
         assertEquals(List.of(LEGACY_PERSON), model.getAddressBook().getPersonList());
     }
