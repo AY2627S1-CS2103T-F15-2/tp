@@ -1,11 +1,16 @@
 package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.storage.JsonAdaptedMember.MISSING_FIELD_MESSAGE_FORMAT;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalMembers.ALEX;
 
 import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.member.NusId;
@@ -19,6 +24,36 @@ public class JsonAdaptedMemberTest {
     private static final String VALID_NAME = ALEX.getName().toString();
     private static final String VALID_PHONE = ALEX.getPhone().toString();
     private static final String VALID_EMAIL = ALEX.getEmail().toString();
+
+    @Test
+    public void setDeleted_nullValue_throwsIllegalArgumentException() throws Exception {
+        JsonAdaptedMember adaptedMember = new JsonAdaptedMember(ALEX);
+
+        assertThrows(IllegalArgumentException.class,
+                "Member deleted must be a boolean.", () -> adaptedMember.setDeleted(null));
+        assertEquals(ALEX, adaptedMember.toModelType());
+    }
+
+    @Test
+    public void setDeleted_nonBooleanValue_throwsIllegalArgumentException() throws Exception {
+        JsonAdaptedMember adaptedMember = new JsonAdaptedMember(ALEX);
+
+        assertThrows(IllegalArgumentException.class,
+                "Member deleted must be a boolean.", () -> adaptedMember.setDeleted(NullNode.getInstance()));
+        assertThrows(IllegalArgumentException.class,
+                "Member deleted must be a boolean.", () -> adaptedMember.setDeleted(TextNode.valueOf("true")));
+        assertEquals(ALEX, adaptedMember.toModelType());
+    }
+
+    @Test
+    public void setDeleted_booleanValue_updatesDeletionState() throws Exception {
+        JsonAdaptedMember adaptedMember = new JsonAdaptedMember(ALEX);
+
+        adaptedMember.setDeleted(BooleanNode.TRUE);
+        assertTrue(adaptedMember.toModelType().isDeleted());
+        adaptedMember.setDeleted(BooleanNode.FALSE);
+        assertEquals(ALEX, adaptedMember.toModelType());
+    }
 
     @Test
     public void toModelType_validMember_returnsMember() throws Exception {
