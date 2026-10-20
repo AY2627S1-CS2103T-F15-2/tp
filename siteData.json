@@ -149,6 +149,7 @@
         "add-a-member-member-add": "Add a member: member add",
         "list-members-member-list": "List members: member list",
         "view-a-member-and-their-equipment-member-view": "View a member and their equipment: member view",
+        "edit-a-member-member-edit": "Edit a member: member edit",
         "delete-a-member-member-delete": "Delete a member: member delete",
         "add-equipment-equipment-add": "Add equipment: equipment add",
         "list-equipment-equipment-list": "List equipment: equipment list",
@@ -251,6 +252,14 @@
         "input-and-behavior": "Input and behavior",
         "command-contract": "Command contract",
         "verification": "Verification"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "commands/member-edit.md",
+      "headings": {
+        "edit-a-member": "Edit a member",
+        "integration-contract": "Integration contract"
       },
       "headingKeywords": {}
     },
