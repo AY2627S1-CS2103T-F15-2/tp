@@ -1,0 +1,37 @@
+Autocomplete local verification - 20 October 2026
+Base: c4e2001de6ec09389d827260d1a985093aa64bc0
+Platform: Darwin arm64
+openjdk version "25.0.3" 2026-04-21 LTS
+OpenJDK Runtime Environment Zulu25.34+17-CA (build 25.0.3+9-LTS)
+OpenJDK 64-Bit Server VM Zulu25.34+17-CA (build 25.0.3+9-LTS, mixed mode, sharing)
+
+Command: ./gradlew clean test check coverage shadowJar --console plain
+Result: PASS
+JUnit: 748 tests, 0 failures, 0 errors, 0 skipped
+
+Feature coverage (not whole-repository coverage):
+seedu/address/ui/CommandBox
+  INSTRUCTION: 95 covered; 0 missed
+  BRANCH: 4 covered; 0 missed
+  LINE: 29 covered; 0 missed
+seedu/address/ui/CompletionController
+  INSTRUCTION: 212 covered; 0 missed
+  BRANCH: 26 covered; 0 missed
+  LINE: 45 covered; 0 missed
+seedu/address/ui/MainWindow.fillInnerParts
+  INSTRUCTION: 270 covered; 0 missed
+  BRANCH: 4 covered; 0 missed
+  LINE: 34 covered; 0 missed
+seedu/address/logic/completion/CompletionService
+  INSTRUCTION: 678 covered; 0 missed
+  BRANCH: 74 covered; 0 missed
+  LINE: 110 covered; 0 missed
+seedu/address/logic/completion/Completion
+  INSTRUCTION: 15 covered; 0 missed
+  LINE: 3 covered; 0 missed
+
+Mounted-shell keyboard session: PASS; no dispatch, save, or model mutation on Tab.
+Packaged-JAR keyboard session: PASS; production classes loaded from build/libs/Laplace.jar.
+Native foreground focus notifications are tested with a deterministic JavaFX test double.
+Repository checks: PASS, with existing docs/AboutUs.md trailing-whitespace warning.
+Hosted CI: not claimed by this local record.

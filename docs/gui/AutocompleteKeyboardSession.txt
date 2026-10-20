@@ -1,0 +1,95 @@
+Mounted JavaFX shell, real LogicManager/ModelManager/JSON storage. Java 25.
+INPUT: mem [Tab]
+EXPECTED: member
+ACTUAL: member
+CHECK: no command execution, save, or model mutation.
+INPUT: member ad [Tab]
+EXPECTED: member add
+ACTUAL: member add
+CHECK: no command execution, save, or model mutation.
+INPUT: member add na [Tab]
+EXPECTED: member add name/
+ACTUAL: member add name/
+CHECK: no command execution, save, or model mutation.
+INPUT: member add name/al [Tab]
+EXPECTED: member add name/Alex Tan
+ACTUAL: member add name/Alex Tan
+CHECK: no command execution, save, or model mutation.
+INPUT: member add phone/91 [Tab]
+EXPECTED: member add phone/91234567
+ACTUAL: member add phone/91234567
+CHECK: no command execution, save, or model mutation.
+INPUT: member add email/member1 [Tab]
+EXPECTED: member add email/member1@example.com
+ACTUAL: member add email/member1@example.com
+CHECK: no command execution, save, or model mutation.
+INPUT: equipment add name/cam [Tab]
+EXPECTED: equipment add name/Camera 1
+ACTUAL: equipment add name/Camera 1
+CHECK: no command execution, save, or model mutation.
+INPUT: equipment add category/pho [Tab]
+EXPECTED: equipment add category/Photography
+ACTUAL: equipment add category/Photography
+CHECK: no command execution, save, or model mutation.
+INPUT: equipment add condition/g [Tab]
+EXPECTED: equipment add condition/GOOD
+ACTUAL: equipment add condition/GOOD
+CHECK: no command execution, save, or model mutation.
+INPUT: member view nus/A000000 [Tab]
+EXPECTED: member view nus/A0000001X
+ACTUAL: member view nus/A0000001X
+CHECK: no command execution, save, or model mutation.
+INPUT: equipment view uuid/00000000-0000-0000-0000-000000000001 [Tab]
+EXPECTED: equipment view uuid/00000000-0000-0000-0000-000000000001
+ACTUAL: equipment view uuid/00000000-0000-0000-0000-000000000001
+CHECK: no command execution, save, or model mutation.
+INPUT: member add unknown/value [Tab]
+EXPECTED: member add unknown/value
+ACTUAL: member add unknown/value
+CHECK: no command execution, save, or model mutation.
+INPUT: member add nus/A [Tab]
+EXPECTED: member add nus/A
+ACTUAL: member add nus/A
+CHECK: no command execution, save, or model mutation.
+INPUT: loans add assigned/2026 [Tab]
+EXPECTED: loans add assigned/2026
+ACTUAL: loans add assigned/2026
+CHECK: no command execution, save, or model mutation.
+INPUT: member  [Tab]
+EXPECTED: member add
+ACTUAL: member add
+CHECK: no command execution, save, or model mutation.
+INPUT: member add [Tab]
+EXPECTED: member delete
+ACTUAL: member delete
+CHECK: no command execution, save, or model mutation.
+INPUT: member delete [Shift+Tab]
+EXPECTED: member add
+ACTUAL: member add
+CHECK: no command execution, save, or model mutation.
+INPUT: member add name/alex xx   phone/91234567 [Tab]
+EXPECTED: member add name/Alex Tan   phone/91234567
+ACTUAL: member add name/Alex Tan   phone/91234567
+CHECK: no command execution, save, or model mutation.
+INPUT: member view nus/A0000001 [Tab]
+EXPECTED: member view nus/A0000001X
+ACTUAL: member view nus/A0000001X
+CHECK: no command execution, save, or model mutation.
+INPUT: member view nus/A0000001X [Enter]
+STATUS: Success
+OUTPUT: Viewing member: Alex Tan (A0000001X). Currently holds 1 item(s).
+RETAINED INPUT:
+SUCCESSFUL SAVES: 1
+INPUT: member view nus/invalid
+STATUS: Error
+OUTPUT: NUS IDs should contain one letter, seven digits, and an optional final letter
+member view: Shows member details and current holdings. Parameters: nus/NUS_ID
+Example: member view nus/A0123456X
+RETAINED INPUT: member view nus/invalid
+SUCCESSFUL SAVES: 1
+INPUT: member list
+STATUS: Success
+OUTPUT: Listed 3 active members.
+RETAINED INPUT:
+SUCCESSFUL SAVES: 2
+PASS: rejected input preserved state; later valid command succeeded.

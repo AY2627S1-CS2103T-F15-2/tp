@@ -140,7 +140,7 @@ public class MainWindow extends UiPart<Stage> {
         loans = new LoanPanel(data, id -> activate("equipment view uuid/" + id),
                 id -> activate("member view nus/" + id.value));
         resultDisplay = new ResultDisplay();
-        commandBox = new CommandBox(this::executeCommand);
+        commandBox = new CommandBox(this::executeCommand, logic::getAddressBook);
         commandBoxPlaceholder.getChildren().setAll(commandBox.getRoot());
         resultDisplayPlaceholder.getChildren().setAll(resultDisplay.getRoot());
         statusbarPlaceholder.getChildren().setAll(new StatusBarFooter(dataFilePath).getRoot());

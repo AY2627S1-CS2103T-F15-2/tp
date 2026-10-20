@@ -2,6 +2,8 @@ package seedu.address.ui;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.function.Supplier;
+
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
@@ -10,6 +12,8 @@ import javafx.scene.layout.Region;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.AddressBook;
+import seedu.address.model.ReadOnlyAddressBook;
 
 /**
  * The UI component that is responsible for receiving user command inputs.
@@ -28,6 +32,11 @@ public class CommandBox extends UiPart<Region> {
      * Creates a {@code CommandBox} with the given {@code CommandExecutor}.
      */
     public CommandBox(CommandExecutor commandExecutor) {
+        this(commandExecutor, AddressBook::new);
+    }
+
+    /** Creates command input with a live read-only source for field-value completion. */
+    public CommandBox(CommandExecutor commandExecutor, Supplier<ReadOnlyAddressBook> completionData) {
         super(FXML);
         this.commandExecutor = requireNonNull(commandExecutor);
         // TextField otherwise removes pasted line breaks and joins adjacent words. Replacing each
@@ -36,6 +45,7 @@ public class CommandBox extends UiPart<Region> {
             change.setText(change.getText().replaceAll("[\\t\\v]", " "));
             return change;
         }));
+        new CompletionController(commandTextField, completionData);
         // calls #setStyleToDefault() whenever there is a change to the text of the command box.
         commandTextField.textProperty().addListener((unused1, unused2, unused3) -> setStyleToDefault());
     }

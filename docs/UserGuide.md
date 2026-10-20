@@ -10,7 +10,7 @@ Laplace helps a CCA EXCO member manage **members, equipment and equipment loans*
 Type commands to register records, find an exact member or item, issue equipment, record returns and
 remove erroneous records. Lists and details show who holds each item and what each member holds.
 
-This guide describes the **MVP release and the additional `loans list` navigation command**:
+This guide describes the **MVP release, `loans list` navigation, and Tab autocomplete**:
 eleven member, equipment and loan commands in total. Use it with the matching release supplied by the team;
 earlier builds may not support every behavior described here. Laplace is a local, single-user application.
 
@@ -35,6 +35,32 @@ earlier builds may not support every behavior described here. Laplace is a local
 The image is a layout reference. Your rows, counts and selected record depend on your data.
 If startup fails, check the JAR filename and Java version and keep the terminal error for the team.
 Do not delete your data file to troubleshoot startup.
+
+### Completing commands and fields with Tab
+
+Type part of a command in the command box and press **Tab** to complete it. For example,
+`mem` becomes `member`, `member ad` becomes `member add`, and `member add na` becomes
+`member add name/`. Press Space yourself to begin the next word or field.
+
+When several suggestions match, press Tab repeatedly to cycle through them in alphabetical order.
+During that cycle, **Shift+Tab** selects the previous suggestion. Editing the input, moving the caret,
+submitting a command, leaving the input, or changing the records starts a fresh cycle.
+
+Laplace also completes existing field values: member names, phone numbers and emails; member IDs in
+reference fields; equipment UUIDs, names and categories; and the four equipment conditions. For example,
+`equipment add condition/g` completes to `equipment add condition/GOOD`. Values match without regard
+to case and retain their stored spelling. Suggestions use the current records, including records added
+since startup. Identical values appear once.
+
+Command words and field prefixes are case-sensitive. Field suggestions depend on the command and omit
+non-repeatable prefixes already present. New member IDs, dates and notes remain manual. Existing legacy
+address-book commands have command-word completion only. Completion does not guarantee that a command
+can execute: ordinary validation still runs when you press Enter.
+
+Tab changes only the active token or field value and preserves later fields. It never executes a command
+or saves records. Press **Enter** to submit the completed input. With blank input, selected text, an
+unsupported context or no matching suggestion, normal Tab navigation remains available. Shift+Tab also
+keeps its normal navigation behavior outside an active completion cycle.
 
 ### Sample records on first launch
 

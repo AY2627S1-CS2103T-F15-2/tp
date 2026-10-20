@@ -1,0 +1,25 @@
+Production code source: /private/tmp/laplace-tab-autocomplete/build/libs/Laplace.jar
+INPUT: mem [Tab]
+EXPECTED: member
+ACTUAL: member
+INPUT: member ad [Tab]
+EXPECTED: member add
+ACTUAL: member add
+INPUT: member add na [Tab]
+EXPECTED: member add name/
+ACTUAL: member add name/
+INPUT: member add name/al [Tab]
+EXPECTED: member add name/Alex Tan
+ACTUAL: member add name/Alex Tan
+INPUT: equipment add category/pho [Tab]
+EXPECTED: equipment add category/Photography
+ACTUAL: equipment add category/Photography
+INPUT: equipment add condition/g [Tab]
+EXPECTED: equipment add condition/GOOD
+ACTUAL: equipment add condition/GOOD
+INPUT: member add nus/A [Tab]
+EXPECTED: member add nus/A
+ACTUAL: member add nus/A
+CYCLE: member add -> member delete -> [Shift+Tab] member add
+ENTER: member view nus/A0123456X; commands=1, saves=1, input cleared.
+PASS: packaged JAR keyboard session.
