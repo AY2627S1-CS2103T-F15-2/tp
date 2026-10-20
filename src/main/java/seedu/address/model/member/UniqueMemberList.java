@@ -1,6 +1,7 @@
 package seedu.address.model.member;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.List;
@@ -41,6 +42,17 @@ public class UniqueMemberList {
             throw new DuplicateMemberException();
         }
         internalList.add(member);
+    }
+
+    /**
+     * Replaces the stored identity's details without changing its NUS ID or list position.
+     * The target is resolved by identity, so an older snapshot of its details is accepted.
+     */
+    public void setMember(Member target, Member editedMember) {
+        requireAllNonNull(target, editedMember);
+        checkArgument(target.isSameMember(editedMember), "A member's NUS ID cannot be changed.");
+        Member stored = findByNusId(target.getNusId()).orElseThrow(MemberNotFoundException::new);
+        internalList.set(internalList.indexOf(stored), editedMember);
     }
 
     /** Removes the member with the same identity as {@code member}. */

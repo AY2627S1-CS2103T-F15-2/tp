@@ -166,6 +166,11 @@ public class AddCommandTest {
         }
 
         @Override
+        public void setMember(Member target, Member editedMember) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
         public void deleteMember(Member member) {
             throw new AssertionError("This method should not be called.");
         }
