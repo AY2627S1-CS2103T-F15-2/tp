@@ -10,8 +10,8 @@ Laplace helps a CCA EXCO member manage **members, equipment and equipment loans*
 Type commands to register records, find an exact member or item, issue equipment, record returns and
 remove erroneous records. Lists and details show who holds each item and what each member holds.
 
-This guide describes the **MVP release, `loans list` navigation, and Tab autocomplete**:
-eleven member, equipment and loan commands in total. Use it with the matching release supplied by the team;
+This guide describes the **MVP release, member editing, `loans list` navigation, and Tab autocomplete**:
+twelve member, equipment and loan commands in total. Use it with the matching release supplied by the team;
 earlier builds may not support every behavior described here. Laplace is a local, single-user application.
 
 <page-nav-print />
@@ -40,7 +40,9 @@ Do not delete your data file to troubleshoot startup.
 
 Type part of a command in the command box and press **Tab** to complete it. For example,
 `mem` becomes `member`, `member ad` becomes `member add`, and `member add na` becomes
-`member add name/`. Press Space yourself to begin the next word or field.
+`member add name/`. Member editing is supported too: `member ed` becomes `member edit`, with
+`nus/`, `name/`, `phone/` and `email/` field and value suggestions. Member names always come from the
+member directory, including during edits. Press Space yourself to begin the next word or field.
 
 When several suggestions match, press Tab repeatedly to cycle through them in alphabetical order.
 During that cycle, **Shift+Tab** selects the previous suggestion. Editing the input, moving the caret,
@@ -59,7 +61,8 @@ can execute: ordinary validation still runs when you press Enter.
 
 Tab changes only the active token or field value and preserves later fields. It never executes a command
 or saves records. Press **Enter** to submit the completed input. With blank input, selected text, an
-unsupported context or no matching suggestion, normal Tab navigation remains available. Shift+Tab also
+unsupported context, at the start of an existing field marker, or with no matching suggestion,
+normal Tab navigation remains available. An untouched following marker and its value are preserved. Shift+Tab also
 keeps its normal navigation behavior outside an active completion cycle.
 
 ### Sample records on first launch

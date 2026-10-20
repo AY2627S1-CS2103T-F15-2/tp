@@ -42,6 +42,7 @@ import seedu.address.logic.commands.LoanListCommand;
 import seedu.address.logic.commands.LoanReturnCommand;
 import seedu.address.logic.commands.MemberAddCommand;
 import seedu.address.logic.commands.MemberDeleteCommand;
+import seedu.address.logic.commands.MemberEditCommand;
 import seedu.address.logic.commands.MemberListCommand;
 import seedu.address.logic.commands.MemberViewCommand;
 import seedu.address.logic.parser.Prefix;
@@ -54,6 +55,8 @@ public final class CompletionService {
     private static final Pattern MARKER = Pattern.compile("(?<!\\S)[A-Za-z][A-Za-z0-9_-]*/");
     private static final Map<String, List<Prefix>> COMMANDS = Map.ofEntries(
             Map.entry(MemberAddCommand.COMMAND_WORD,
+                    List.of(PREFIX_NUS_ID, PREFIX_MEMBER_NAME, PREFIX_MEMBER_PHONE, PREFIX_MEMBER_EMAIL)),
+            Map.entry(MemberEditCommand.COMMAND_WORD,
                     List.of(PREFIX_NUS_ID, PREFIX_MEMBER_NAME, PREFIX_MEMBER_PHONE, PREFIX_MEMBER_EMAIL)),
             Map.entry(MemberViewCommand.COMMAND_WORD, List.of(PREFIX_NUS_ID)),
             Map.entry(MemberDeleteCommand.COMMAND_WORD, List.of(PREFIX_NUS_ID)),
@@ -130,6 +133,10 @@ public final class CompletionService {
             ends.add(matcher.end());
             markers.add(marker);
         }
+        // An empty fragment at a following marker must not replace that untouched field.
+        if (starts.contains(caret)) {
+            return Optional.empty();
+        }
         int tokenStart = caret;
         while (!Character.isWhitespace(text.charAt(tokenStart - 1))) {
             tokenStart--;
@@ -178,7 +185,7 @@ public final class CompletionService {
             case "uuid/":
                 return data.getEquipmentList().stream().map(equipment -> equipment.getUuid().toString());
             case "name/":
-                if (command.equals(MemberAddCommand.COMMAND_WORD)) {
+                if (command.startsWith("member ")) {
                     return data.getMemberList().stream().map(member -> member.getName().fullName);
                 }
                 return data.getEquipmentList().stream().map(equipment -> equipment.getName());

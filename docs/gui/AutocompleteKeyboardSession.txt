@@ -7,6 +7,30 @@ INPUT: member ad [Tab]
 EXPECTED: member add
 ACTUAL: member add
 CHECK: no command execution, save, or model mutation.
+INPUT: member ed [Tab]
+EXPECTED: member edit
+ACTUAL: member edit
+CHECK: no command execution, save, or model mutation.
+INPUT: member edit na [Tab]
+EXPECTED: member edit name/
+ACTUAL: member edit name/
+CHECK: no command execution, save, or model mutation.
+INPUT: member edit name/al [Tab]
+EXPECTED: member edit name/Alex Tan
+ACTUAL: member edit name/Alex Tan
+CHECK: no command execution, save, or model mutation.
+INPUT: member edit phone/91 [Tab]
+EXPECTED: member edit phone/91234567
+ACTUAL: member edit phone/91234567
+CHECK: no command execution, save, or model mutation.
+INPUT: member edit email/member1 [Tab]
+EXPECTED: member edit email/member1@example.com
+ACTUAL: member edit email/member1@example.com
+CHECK: no command execution, save, or model mutation.
+INPUT: member edit nus/a0000001 [Tab]
+EXPECTED: member edit nus/A0000001X
+ACTUAL: member edit nus/A0000001X
+CHECK: no command execution, save, or model mutation.
 INPUT: member add na [Tab]
 EXPECTED: member add name/
 ACTUAL: member add name/
@@ -71,6 +95,10 @@ INPUT: member add name/alex xx   phone/91234567 [Tab]
 EXPECTED: member add name/Alex Tan   phone/91234567
 ACTUAL: member add name/Alex Tan   phone/91234567
 CHECK: no command execution, save, or model mutation.
+INPUT: member add name/Alex phone/91234567 [Tab]
+EXPECTED: member add name/Alex phone/91234567
+ACTUAL: member add name/Alex phone/91234567
+CHECK: no command execution, save, or model mutation.
 INPUT: member view nus/A0000001 [Tab]
 EXPECTED: member view nus/A0000001X
 ACTUAL: member view nus/A0000001X
@@ -92,4 +120,17 @@ STATUS: Success
 OUTPUT: Listed 3 active members.
 RETAINED INPUT:
 SUCCESSFUL SAVES: 2
-PASS: rejected input preserved state; later valid command succeeded.
+INPUT: member ed [Tab]
+EXPECTED: member edit
+ACTUAL: member edit
+CHECK: no command execution, save, or model mutation.
+INPUT: member edit nus/A0000001X name/ja [Tab]
+EXPECTED: member edit nus/A0000001X name/Jamie Lim
+ACTUAL: member edit nus/A0000001X name/Jamie Lim
+CHECK: no command execution, save, or model mutation.
+INPUT: member edit nus/A0000001X name/Jamie Lim [Enter]
+STATUS: Success
+OUTPUT: Edited member A0000001X: Jamie Lim.
+RETAINED INPUT:
+SUCCESSFUL SAVES: 3
+PASS: boundary preserved; member editing completed and executed; later input usable.

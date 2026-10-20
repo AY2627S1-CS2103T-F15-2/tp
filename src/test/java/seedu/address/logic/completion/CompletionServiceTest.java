@@ -34,7 +34,7 @@ public class CompletionServiceTest {
     public void complete_commandWordsAndSubcommands_usesParserSpellingAndStableOrder() {
         assertCandidates("mem", "member");
         assertCandidates("member ad", "add");
-        assertCandidates("member ", "add", "delete", "list", "view");
+        assertCandidates("member ", "add", "delete", "edit", "list", "view");
         assertCandidates("equipment ", "add", "delete", "list", "view");
         assertCandidates("loans ", "add", "list", "return");
         for (String word : List.of("add", "edit", "delete", "clear", "find", "list", "exit", "help",
@@ -52,7 +52,7 @@ public class CompletionServiceTest {
         Completion gap = service.complete("member   list", 7, model.getAddressBook()).orElseThrow();
         assertEquals(7, gap.start());
         assertEquals(7, gap.end());
-        assertEquals(List.of("add", "delete", "list", "view"), gap.candidates());
+        assertEquals(List.of("add", "delete", "edit", "list", "view"), gap.candidates());
     }
 
     @Test
@@ -113,6 +113,28 @@ public class CompletionServiceTest {
         String beforeMarker = "member add name/Alex phone/9";
         assertTrue(service.complete(beforeMarker, beforeMarker.indexOf("phone/") + 3,
                 model.getAddressBook()).isPresent());
+    }
+
+    @Test
+    public void complete_caretAtExistingFieldStart_preservesFollowingMarkerAndValue() {
+        String text = "member add name/Alex phone/91234567";
+        int caret = text.indexOf("phone/");
+        var completion = service.complete(text, caret, model.getAddressBook());
+        String actual = completion.map(value -> apply(text, value)).orElse(text);
+        assertEquals(text, actual);
+        assertTrue(completion.isEmpty());
+    }
+
+    @Test
+    public void complete_memberEdit_usesMergedCommandFieldsAndMemberValues() {
+        assertCandidates("member ed", "edit");
+        assertCandidates("member edit ", "email/", "name/", "nus/", "phone/");
+        assertCandidates("member edit na", "name/");
+        assertCandidates("member edit nus/a012", "A0123456X");
+        assertCandidates("member edit name/al", "Alex Tan");
+        assertCandidates("member edit phone/91", "91234567");
+        assertCandidates("member edit email/ALEX", "alex@example.com");
+        assertTrue(service.complete("member edit name/Cam", 20, model.getAddressBook()).isEmpty());
     }
 
     @Test

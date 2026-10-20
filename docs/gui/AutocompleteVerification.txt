@@ -1,13 +1,26 @@
-Autocomplete local verification - 20 October 2026
-Base: c4e2001de6ec09389d827260d1a985093aa64bc0
+Autocomplete review-fix verification - 20 October 2026
+PR: https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/112
+Integrated team master: 9885bb1e9995a7a780b5de8b46e6dcf9649a4c9d (member editing)
+Working folder: /Users/keith/Desktop/CS2103T/tp
 Platform: Darwin arm64
 openjdk version "25.0.3" 2026-04-21 LTS
 OpenJDK Runtime Environment Zulu25.34+17-CA (build 25.0.3+9-LTS)
 OpenJDK 64-Bit Server VM Zulu25.34+17-CA (build 25.0.3+9-LTS, mixed mode, sharing)
 
+Review findings reproduced before production fixes:
+- Field boundary: expected member add name/Alex phone/91234567;
+  actual member add name/Alex email/91234567.
+- Member editing: member ed returned no completion (NoSuchElementException in the regression).
+
+Fixes:
+- Return no completion when the caret is at the start of an existing field marker.
+- Register member edit and its nus/, name/, phone/, email/ fields.
+- Use member names for both member add and member edit value suggestions.
+- Cover applied replacements and real key events; preserve original field values and model state.
+
 Command: ./gradlew clean test check coverage shadowJar --console plain
 Result: PASS
-JUnit: 748 tests, 0 failures, 0 errors, 0 skipped
+JUnit: 765 tests, 0 failures, 0 errors, 0 skipped
 
 Feature coverage (not whole-repository coverage):
 seedu/address/ui/CommandBox
@@ -23,15 +36,16 @@ seedu/address/ui/MainWindow.fillInnerParts
   BRANCH: 4 covered; 0 missed
   LINE: 34 covered; 0 missed
 seedu/address/logic/completion/CompletionService
-  INSTRUCTION: 678 covered; 0 missed
-  BRANCH: 74 covered; 0 missed
-  LINE: 110 covered; 0 missed
+  INSTRUCTION: 695 covered; 0 missed
+  BRANCH: 76 covered; 0 missed
+  LINE: 114 covered; 0 missed
 seedu/address/logic/completion/Completion
   INSTRUCTION: 15 covered; 0 missed
   LINE: 3 covered; 0 missed
 
-Mounted-shell keyboard session: PASS; no dispatch, save, or model mutation on Tab.
-Packaged-JAR keyboard session: PASS; production classes loaded from build/libs/Laplace.jar.
-Native foreground focus notifications are tested with a deterministic JavaFX test double.
+Mounted-shell keyboard session: PASS; boundary no-op and member-edit fields/values verified.
+Packaged-JAR session: PASS; actual member edit executed and saved exactly once on Enter.
+Tab does not dispatch, save, or mutate records.
+Native foreground focus notifications use a deterministic JavaFX test double.
 Repository checks: PASS, with existing docs/AboutUs.md trailing-whitespace warning.
-Hosted CI: not claimed by this local record.
+Hosted CI is separate from this local verification.

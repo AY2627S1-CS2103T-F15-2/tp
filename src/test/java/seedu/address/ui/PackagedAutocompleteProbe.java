@@ -62,6 +62,11 @@ public final class PackagedAutocompleteProbe {
             String[][] examples = {
                 {"mem", "member"}, {"member ad", "member add"}, {"member add na", "member add name/"},
                 {"member add name/al", "member add name/Alex Tan"},
+                {"member ed", "member edit"}, {"member edit na", "member edit name/"},
+                {"member edit name/al", "member edit name/Alex Tan"},
+                {"member edit nus/a012", "member edit nus/A0123456X"},
+                {"member edit phone/91", "member edit phone/91234567"},
+                {"member edit email/alex", "member edit email/alex@example.com"},
                 {"equipment add category/pho", "equipment add category/Photography"},
                 {"equipment add condition/g", "equipment add condition/GOOD"},
                 {"member add nus/A", "member add nus/A"}
@@ -78,6 +83,17 @@ public final class PackagedAutocompleteProbe {
                 check(before.equals(model.getAddressBook()), "Tab changed stored records");
                 check(logic.commands == 0 && storage.saves == 0, "Tab executed or saved a command");
             }
+            String untouched = "member add name/Alex phone/91234567";
+            field.setText(untouched);
+            field.positionCaret(untouched.indexOf("phone/"));
+            AddressBook beforeBoundary = new AddressBook(model.getAddressBook());
+            press(field, KeyCode.TAB, false);
+            session.add("BOUNDARY: member add name/Alex |phone/91234567 [Tab]");
+            session.add("EXPECTED: " + untouched);
+            session.add("ACTUAL: " + field.getText());
+            check(untouched.equals(field.getText()), "Tab must preserve an untouched following field");
+            check(beforeBoundary.equals(model.getAddressBook()), "Boundary completion changed records");
+            check(logic.commands == 0 && storage.saves == 0, "Boundary completion executed or saved a command");
             field.setText("member ");
             field.positionCaret(field.getLength());
             press(field, KeyCode.TAB, false);
@@ -96,6 +112,21 @@ public final class PackagedAutocompleteProbe {
             check(field.getText().isEmpty(), "Enter must submit successfully");
             check(logic.commands == 1 && storage.saves == 1, "Enter must execute and save exactly once");
             session.add("ENTER: member view nus/A0123456X; commands=1, saves=1, input cleared.");
+            field.setText("member ed");
+            field.positionCaret(field.getLength());
+            press(field, KeyCode.TAB, false);
+            field.appendText(" nus/A0123456X phone/98");
+            field.positionCaret(field.getLength());
+            press(field, KeyCode.TAB, false);
+            check(field.getText().equals("member edit nus/A0123456X phone/98765432"),
+                    "Member editing must complete a member phone value");
+            check(logic.commands == 1 && storage.saves == 1, "Edit completion must remain read-only");
+            press(field, KeyCode.ENTER, false);
+            check(field.getText().isEmpty(), "Completed member edit must submit successfully");
+            check(logic.commands == 2 && storage.saves == 2, "Member edit must execute and save exactly once");
+            check(model.findMember(ViewTestData.ALEX.getNusId()).orElseThrow().getPhone().value.equals("98765432"),
+                    "Member edit must update the selected member");
+            session.add("ENTER: member edit nus/A0123456X phone/98765432; commands=2, saves=2, input cleared.");
         } finally {
             window.dispose();
             window.getPrimaryStage().hide();

@@ -41,7 +41,7 @@ public class CompletionControllerTest {
             key(field, KeyCode.TAB, false, false, false, false);
             assertEquals("member add", field.getText());
             assertEquals(field.getText().length(), field.getCaretPosition());
-            for (String candidate : List.of("delete", "list", "view", "add")) {
+            for (String candidate : List.of("delete", "edit", "list", "view", "add")) {
                 key(field, KeyCode.TAB, false, false, false, false);
                 assertEquals("member " + candidate, field.getText());
             }
@@ -101,6 +101,34 @@ public class CompletionControllerTest {
             assertThrows(NullPointerException.class, () -> new CompletionController(null, model::getAddressBook));
             assertThrows(NullPointerException.class, () -> new CompletionController(field, null));
             assertThrows(NullPointerException.class, () -> new CommandBox(command -> new CommandResult("OK"), null));
+        });
+    }
+
+    @Test
+    public void tab_existingFieldBoundary_keepsMarkerValueAndModelUnchanged() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = ViewTestData.model();
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("OK");
+            }, model::getAddressBook);
+            new Scene(new VBox(box.getRoot()));
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            box.getRoot().applyCss();
+            String text = "member add name/Alex phone/91234567";
+            type(field, text);
+            field.positionCaret(text.indexOf("phone/"));
+            tab(field);
+            assertEquals(text, field.getText());
+            assertTrue(executed.isEmpty());
+            type(field, "member ed");
+            tab(field);
+            assertEquals("member edit", field.getText());
+            type(field, "member edit name/al");
+            tab(field);
+            assertEquals("member edit name/Alex Tan", field.getText());
+            assertTrue(executed.isEmpty());
         });
     }
 

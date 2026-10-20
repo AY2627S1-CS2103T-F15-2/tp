@@ -111,7 +111,12 @@ public class MainWindowShellTest {
             FxTestUtil.runAndWait(() -> {
                 session.add("Mounted JavaFX shell, real LogicManager/ModelManager/JSON storage. Java 25.");
                 String[][] examples = {
-                    {"mem", "member"}, {"member ad", "member add"},
+                    {"mem", "member"}, {"member ad", "member add"}, {"member ed", "member edit"},
+                    {"member edit na", "member edit name/"},
+                    {"member edit name/al", "member edit name/Alex Tan"},
+                    {"member edit phone/91", "member edit phone/91234567"},
+                    {"member edit email/member1", "member edit email/member1@example.com"},
+                    {"member edit nus/a0000001", "member edit nus/A0000001X"},
                     {"member add na", "member add name/"}, {"member add name/al", "member add name/Alex Tan"},
                     {"member add phone/91", "member add phone/91234567"},
                     {"member add email/member1", "member add email/member1@example.com"},
@@ -139,6 +144,10 @@ public class MainWindowShellTest {
                 field().setText("member add name/alex xx   phone/91234567");
                 field().positionCaret("member add name/alex".length());
                 completeKey(false, "member add name/Alex Tan   phone/91234567");
+                String untouched = "member add name/Alex phone/91234567";
+                field().setText(untouched);
+                field().positionCaret(untouched.indexOf("phone/"));
+                completeKey(false, untouched);
                 assertTrue(logic.commands.isEmpty());
                 assertEquals(0, storage.saves);
                 assertFalse(Files.exists(storage.getAddressBookFilePath()));
@@ -153,7 +162,20 @@ public class MainWindowShellTest {
                 recordOutcome("member view nus/A0000001X [Enter]");
                 reject("member view nus/invalid");
                 succeed("member list");
-                session.add("PASS: rejected input preserved state; later valid command succeeded.");
+                field().setText("member ed");
+                field().positionCaret(field().getLength());
+                completeKey(false, "member edit");
+                field().appendText(" nus/A0000001X name/ja");
+                field().positionCaret(field().getLength());
+                completeKey(false, "member edit nus/A0000001X name/Jamie Lim");
+                int saves = storage.saves;
+                field().fireEvent(key(KeyCode.ENTER));
+                assertEquals("", field().getText());
+                assertEquals("Success", label("feedbackStatus"));
+                assertEquals(saves + 1, storage.saves);
+                assertEquals("Jamie Lim", model.findMember(id(1)).orElseThrow().getName().fullName);
+                recordOutcome("member edit nus/A0000001X name/Jamie Lim [Enter]");
+                session.add("PASS: boundary preserved; member editing completed and executed; later input usable.");
             });
         } catch (AssertionError failure) {
             session.add("FAIL: " + failure.getMessage());

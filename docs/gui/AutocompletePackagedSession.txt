@@ -1,4 +1,4 @@
-Production code source: /private/tmp/laplace-tab-autocomplete/build/libs/Laplace.jar
+Production code source: /Users/keith/Desktop/CS2103T/tp/build/libs/Laplace.jar
 INPUT: mem [Tab]
 EXPECTED: member
 ACTUAL: member
@@ -11,6 +11,24 @@ ACTUAL: member add name/
 INPUT: member add name/al [Tab]
 EXPECTED: member add name/Alex Tan
 ACTUAL: member add name/Alex Tan
+INPUT: member ed [Tab]
+EXPECTED: member edit
+ACTUAL: member edit
+INPUT: member edit na [Tab]
+EXPECTED: member edit name/
+ACTUAL: member edit name/
+INPUT: member edit name/al [Tab]
+EXPECTED: member edit name/Alex Tan
+ACTUAL: member edit name/Alex Tan
+INPUT: member edit nus/a012 [Tab]
+EXPECTED: member edit nus/A0123456X
+ACTUAL: member edit nus/A0123456X
+INPUT: member edit phone/91 [Tab]
+EXPECTED: member edit phone/91234567
+ACTUAL: member edit phone/91234567
+INPUT: member edit email/alex [Tab]
+EXPECTED: member edit email/alex@example.com
+ACTUAL: member edit email/alex@example.com
 INPUT: equipment add category/pho [Tab]
 EXPECTED: equipment add category/Photography
 ACTUAL: equipment add category/Photography
@@ -20,6 +38,10 @@ ACTUAL: equipment add condition/GOOD
 INPUT: member add nus/A [Tab]
 EXPECTED: member add nus/A
 ACTUAL: member add nus/A
+BOUNDARY: member add name/Alex |phone/91234567 [Tab]
+EXPECTED: member add name/Alex phone/91234567
+ACTUAL: member add name/Alex phone/91234567
 CYCLE: member add -> member delete -> [Shift+Tab] member add
 ENTER: member view nus/A0123456X; commands=1, saves=1, input cleared.
+ENTER: member edit nus/A0123456X phone/98765432; commands=2, saves=2, input cleared.
 PASS: packaged JAR keyboard session.
