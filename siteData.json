@@ -109,7 +109,8 @@
         "json-contracts": "JSON contracts",
         "parser-contracts": "Parser contracts",
         "ownership-and-handoff": "Ownership and handoff",
-        "completion-milestones": "Completion milestones"
+        "completion-milestones": "Completion milestones",
+        "member-lifecycle-extension": "Member lifecycle extension"
       },
       "headingKeywords": {}
     },
@@ -151,6 +152,7 @@
         "view-a-member-and-their-equipment-member-view": "View a member and their equipment: member view",
         "edit-a-member-member-edit": "Edit a member: member edit",
         "delete-a-member-member-delete": "Delete a member: member delete",
+        "restore-a-member-member-restore": "Restore a member: member restore",
         "add-equipment-equipment-add": "Add equipment: equipment add",
         "list-equipment-equipment-list": "List equipment: equipment list",
         "view-equipment-and-its-holder-equipment-view": "View equipment and its holder: equipment view",
@@ -248,7 +250,7 @@
     {
       "src": "commands/member-delete.md",
       "headings": {
-        "delete-a-member": "Delete a member",
+        "soft-delete-a-member": "Soft-delete a member",
         "input-and-behavior": "Input and behavior",
         "command-contract": "Command contract",
         "verification": "Verification"
@@ -267,6 +269,15 @@
       "src": "commands/member-list.md",
       "headings": {
         "member-list": "Member list"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "commands/member-restore.md",
+      "headings": {
+        "restore-a-member": "Restore a member",
+        "model-and-persistence-contract": "Model and persistence contract",
+        "gui-and-feature-integration": "GUI and feature integration"
       },
       "headingKeywords": {}
     },

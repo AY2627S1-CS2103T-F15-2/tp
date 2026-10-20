@@ -25,7 +25,8 @@
 cannot be changed. Omitted details retain their stored values, including legacy saved values.
 Supplied fields follow the same validation and normalization as <a href="/tp/commands/member-add.html">member add</a>.
 Unknown/repeated prefixes, blank values, legacy aliases and unexpected preamble are rejected.
-An edit that leaves all values unchanged is rejected without saving.</p> <p>Editing is allowed while a member holds equipment. Open and completed loans retain their existing
+An edit that leaves all values unchanged is rejected without saving. Deleted members cannot be edited,
+even when the supplied values are unchanged; run <code class="hljs inline no-lang">member restore nus/NUS_ID</code> first.</p> <p>Editing is allowed while a member holds equipment. Open and completed loans retain their existing
 NUS-ID references, and no equipment, other member or legacy person record is changed. Different IDs
 may still have matching names and contact details.</p> <p>Success opens the edited member&#39;s details. The directory re-sorts by name/NUS ID and keeps that
 identity selected; cards, summaries and loan displays refresh from the stored replacement.</p> <p><code class="hljs inline no-lang">MemberEditCommand</code> is transactional. <code class="hljs inline no-lang">LogicManager</code> edits an isolated model, atomically saves it,
@@ -33,10 +34,10 @@ then publishes the replacement through the existing observable root. Invalid req
 edits do not save. A failed save preserves live records, loan history and the previous file bytes.</p> <h2 id="integration-contract">Integration contract<a class="fa fa-anchor" href="#integration-contract" onclick="event.stopPropagation()"></a></h2> <p><code class="hljs inline no-lang">Model.setMember(Member target, Member editedMember)</code> replaces details by normalized NUS ID.
 The collection rejects an identity change and a missing target. It retains collection order and
 the exposed observable view; the shell owns sorted presentation. An older target snapshot resolves
-the current stored identity. The JSON member format is unchanged and needs no migration.</p> <p>Member soft-delete, restore and archival are deferred. Their later implementation must preserve
-lifecycle metadata during edits and reject editing a deleted member until restoration. This branch
-does not change deletion behavior or implement transfer/history services. Isaac&#39;s history work can
-use the same successful transactional save/publish boundary as the existing member-add operation.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Tue, 20 Oct 2026, 19:35:21 GMT+8]</small></div></footer><!--]--></div>
+the current stored identity. Replacements preserve the deletion flag; changing lifecycle state
+requires the dedicated delete/restore operations.</p> <p>Member soft-delete and unlimited restore are integrated; archival remains outside scope.
+Editing never restores a deleted member. Isaac&#39;s history work can
+use the same successful transactional save/publish boundary as the existing member-add operation.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Tue, 20 Oct 2026, 22:57:56 GMT+8]</small></div></footer><!--]--></div>
 </body><script src="/tp/markbind/js/bootstrap-utility.min.js"></script>
 <script src="/tp/markbind/js/polyfill.min.js"></script>
 <script src="/tp/markbind/js/vue.global.prod.min.js"></script>
