@@ -3,6 +3,7 @@ package seedu.address.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.DeletionTestData.FIRST_EQUIPMENT;
 import static seedu.address.logic.commands.DeletionTestData.FIRST_MEMBER;
 import static seedu.address.logic.commands.DeletionTestData.RETURNED;
@@ -37,7 +38,7 @@ public class LaplaceDeletionIntegrationTest {
     public Path testFolder;
 
     @Test
-    public void memberDelete_closedHistory_saveReloadPreservesOnlyUnrelatedData() throws Exception {
+    public void memberDelete_closedHistory_saveReloadPreservesRetainedMemberAndAllHistory() throws Exception {
         ModelManager model = DeletionTestData.model();
         model.addLoan(DeletionTestData.loan(FIRST_EQUIPMENT, FIRST_MEMBER, false));
         Loan retained = DeletionTestData.loan(SECOND_EQUIPMENT, SECOND_MEMBER, true);
@@ -49,9 +50,10 @@ public class LaplaceDeletionIntegrationTest {
         storage.saveAddressBook(model.getAddressBook());
         ModelManager reloaded = reload(storage);
         assertEquals(model.getAddressBook(), reloaded.getAddressBook());
-        assertFalse(reloaded.hasMember(FIRST_MEMBER.getNusId()));
-        assertEquals(List.of(SECOND_MEMBER), reloaded.getMemberList());
-        assertEquals(List.of(retained), reloaded.getLoanList());
+        assertTrue(reloaded.findMember(FIRST_MEMBER.getNusId()).orElseThrow().isDeleted());
+        assertEquals(2, reloaded.getMemberList().size());
+        assertEquals(2, reloaded.getLoanList().size());
+        assertEquals(retained, reloaded.getLoanList().get(1));
         assertEquals(Availability.AVAILABLE, reloaded.getAvailability(FIRST_EQUIPMENT.getUuid()));
         assertEquals(Availability.ASSIGNED, reloaded.getAvailability(SECOND_EQUIPMENT.getUuid()));
     }
@@ -102,8 +104,9 @@ public class LaplaceDeletionIntegrationTest {
         parser.parse("nus/A0234567R").execute(model);
         storage.saveAddressBook(model.getAddressBook());
         assertEquals(model.getAddressBook(), reload(storage).getAddressBook());
-        assertEquals(List.of(), model.getMemberList());
-        assertEquals(List.of(), model.getLoanList());
+        assertEquals(2, model.getMemberList().size());
+        assertTrue(model.getMemberList().stream().allMatch(member -> member.isDeleted()));
+        assertEquals(1, model.getLoanList().size());
         assertEquals(List.of(FIRST_EQUIPMENT, SECOND_EQUIPMENT), model.getEquipmentList());
     }
 

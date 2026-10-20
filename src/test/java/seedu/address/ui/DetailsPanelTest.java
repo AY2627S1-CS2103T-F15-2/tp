@@ -250,7 +250,7 @@ public class DetailsPanelTest {
     }
 
     @Test
-    public void refresh_removalClearsDetailsAndUnknownSelectionShowsMissingIdentity() {
+    public void refresh_deletionRetainsMemberDetailsClearsEquipmentAndReportsMissingIdentity() {
         FxTestUtil.runAndWait(() -> {
             ModelManager model = ViewTestData.model();
             MemberDetailsPanel members = members(model);
@@ -263,7 +263,8 @@ public class DetailsPanelTest {
             equipment.refresh();
             assertTrue(value(members.getRoot(), "detailsStatus").contains(ALEX.getNusId().value));
             assertTrue(value(equipment.getRoot(), "detailsStatus").contains(CAMERA.getUuid().toString()));
-            assertNull(members.getRoot().lookup("#memberName"));
+            Label deletedName = (Label) members.getRoot().lookup("#memberName");
+            assertEquals("Alex Tan (deleted)", deletedName.getAccessibleText());
             assertNull(equipment.getRoot().lookup("#notes"));
             members.showMember(new NusId("A0999999Z"));
             equipment.showEquipment(new UUID(0, 999));
