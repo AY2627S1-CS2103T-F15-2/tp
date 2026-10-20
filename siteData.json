@@ -290,6 +290,18 @@
       "headingKeywords": {}
     },
     {
+      "src": "commands/search-and-planning.md",
+      "headings": {
+        "search-and-inventory-planning": "Search and inventory planning",
+        "members": "Members",
+        "equipment": "Equipment",
+        "input-refresh-and-navigation": "Input, refresh and navigation",
+        "inventory-groups-and-duplicates": "Inventory groups and duplicates",
+        "integration-contract": "Integration contract"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "gui/MvpCompletion.md",
       "headings": {
         "v1-3-3-mvp-completion-and-acceptance": "v1.3.3 MVP completion and acceptance",
@@ -330,6 +342,37 @@
         "review-status-after-merged-routing": "Review status after merged routing",
         "mvp-reconciliation": "MVP reconciliation",
         "evidence": "Evidence"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "gui/SearchPlanningLifecycle.md",
+      "headings": {
+        "search-planning-integration-with-member-lifecycle": "Search/planning integration with member lifecycle",
+        "conflict-resolution": "Conflict resolution",
+        "verification": "Verification"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "gui/SearchPlanningReview.md",
+      "headings": {
+        "search-planning-review-follow-up": "Search/planning review follow-up",
+        "preserve-queries-after-deletion": "Preserve queries after deletion",
+        "retain-integrated-edit-and-search-routing": "Retain integrated edit and search routing",
+        "verification": "Verification",
+        "git-convention-audit": "Git convention audit"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "gui/SearchPlanningVerification.md",
+      "headings": {
+        "week-10-search-and-inventory-planning-verification": "Week 10 search and inventory planning verification",
+        "implemented-behavior": "Implemented behavior",
+        "initial-feature-checks-on-windows-java-25-0-4": "Initial feature checks on Windows, Java 25.0.4",
+        "mounted-application-evidence": "Mounted application evidence",
+        "scope-and-later-shared-integration": "Scope and later shared integration"
       },
       "headingKeywords": {}
     },
