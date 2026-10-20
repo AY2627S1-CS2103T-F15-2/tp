@@ -2,14 +2,19 @@
 
 ## Integration status
 
-The ten MVP routes and the additional `loans list` navigation command dispatch to concrete parsers.
+The ten MVP routes, `loans list` navigation and `member edit` dispatch to concrete parsers.
 Command execution uses the
 LogicManager persistence boundary. Merged #93 integrates the real shell and #95 activates all ten routes.
 Current MVP completion evidence is in [MvpCompletion.md](../gui/MvpCompletion.md); #75 remains the final gate.
 
+Member editing extends the MVP through an identity-preserving model replacement API. Its parser,
+transactional behavior and shell-refresh contract are documented in [Edit member](member-edit.md).
+Soft-delete, restoration and archival are deferred to later work.
+
 | Command | Syntax | Reference |
 | --- | --- | --- |
 | member add | `member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL` | [Add member](member-add.md) |
+| member edit | `member edit nus/NUS_ID [name/NAME] [phone/PHONE] [email/EMAIL]` | [Edit member](member-edit.md) |
 | member delete | `member delete nus/NUS_ID` | [Delete member](member-delete.md) |
 | member view | `member view nus/NUS_ID` | [View member](member-view.md) |
 | member list | `member list` | [List members](member-list.md) |
@@ -28,7 +33,7 @@ nonblank preamble. Optional notes may be empty. Markers matching the agreed
 start/whitespace-delimited `[A-Za-z][A-Za-z0-9_-]*/` grammar are reserved even inside free
 text; there is no quoting or escaping. Ordinary embedded slashes and URLs remain text.
 
-The six Laplace mutation commands execute on an isolated snapshot. LogicManager atomically saves
+The seven Laplace mutation commands execute on an isolated snapshot. LogicManager atomically saves
 the candidate before publishing it through the existing live observable root. Parser/business
 rejection and save failures preserve all records; rejected operations do not save. Partial candidate
 writes and failed replacements preserve the prior data file and useful I/O causes. See

@@ -220,6 +220,31 @@ With no current loans, the holdings section says `This member currently holds no
 Failed viewing preserves the previous details and selection. This command covers both exact-ID lookup
 and viewing a member's equipment; no separate member-find or member-loans command is needed.
 
+### Edit a member: `member edit`
+
+```text
+member edit nus/NUS_ID [name/NAME] [phone/PHONE] [email/EMAIL]
+```
+
+Example: `member edit nus/a0123456x name/Anne-Marie Lim phone/+65 9876-5432`.
+
+Supply the exact NUS ID and at least one detail to change. Names, phones and emails follow the
+same validation and normalization as `member add`. Omitted fields keep their stored values.
+The NUS ID cannot be changed; open and completed loans remain attached to the same member.
+You can edit contact details while the member holds equipment. Matching another member's name
+or contacts does not merge records because NUS IDs identify members.
+
+Success reports `Edited member NUS_ID: NAME.` and opens the updated details. The directory
+re-sorts by name and NUS ID while keeping the edited member selected. Changes survive restart.
+
+| Situation | Result or correction |
+| --- | --- |
+| No editable fields supplied | Supply at least one of `name/`, `phone/` or `email/`. |
+| Supplied values make no change | `The supplied details do not change this member.` No save occurs. |
+| Member does not exist | `No member with NUS ID NUS_ID exists.` Check `member list`. |
+| Blank, invalid, repeated or unknown field | Correct the field using the `member add` rules. |
+| Saving fails | The previous details, loan history and saved file remain unchanged. |
+
 ### Delete a member: `member delete`
 
 ```text
@@ -480,7 +505,7 @@ and separate member-find/holder commands are outside the MVP.
 deleted. Return the relevant items first. Closed loans do not block deletion and are cleaned up with it.
 
 **Can I register broken equipment?** Yes. DAMAGED/UNDER_REPAIR records are UNAVAILABLE and cannot be
-assigned. The MVP does not include editing condition or other existing record fields.
+assigned. Equipment editing is not included. Member contact details can be changed with `member edit`.
 
 **Does an overdue loan close itself?** No. Record an actual return using `loans return`. A return later
 than expected is valid if it is no earlier than assignment and no later than the computer's local date.
@@ -494,7 +519,7 @@ Laplace folder at the configured data path, and launch the matching release ther
 backup until you have checked members, equipment and current loans on the other computer.
 
 **Where is Help?** Enter `help` or press F1. Use `exit` for normal shutdown; saved window preferences are
-reused within usable screen bounds. These utilities are separate from the eleven member, equipment
+reused within usable screen bounds. These utilities are separate from the twelve member, equipment
 and loan commands, including `loans list`.
 
 The **Menu** contains **Help** and **Exit**. Help displays the address of the
@@ -503,7 +528,7 @@ use **Copy URL** to copy its address and open it in your browser.
 
 ## MVP limits
 
-The MVP excludes record editing, archiving/restoring deleted records, separate find/member-loans/holder
+The MVP excludes equipment editing, archiving/restoring deleted records, separate find/member-loans/holder
 commands, completed loan-history viewing, import/export, undo/redo, batch operations, fuzzy search,
 filters, user-selected sorting and automatic overdue notifications. Copying a backup file while the app
 is closed is a file-management task, not an import/export command. Data is local to one operator;
@@ -514,6 +539,7 @@ authentication and concurrent multi-user operation are not provided.
 | Task | Format |
 | --- | --- |
 | Add member | `member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL` |
+| Edit member | `member edit nus/NUS_ID [name/NAME] [phone/PHONE] [email/EMAIL]` |
 | List members | `member list` |
 | View member and current holdings | `member view nus/NUS_ID` |
 | Delete member | `member delete nus/NUS_ID` |
