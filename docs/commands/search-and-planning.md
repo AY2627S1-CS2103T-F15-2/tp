@@ -7,17 +7,23 @@ and do not survive an application restart.
 ## Members
 
 ```text
-member search [q/TEXT] [holding/any|yes|no] [sort/name|id|held] [order/asc|desc]
+member search [q/TEXT] [holding/any|yes|no] [status/active|deleted|all]
+              [sort/name|id|held] [order/asc|desc]
 ```
 
 `q/` matches a case-insensitive substring of name, NUS ID, phone or email. Comparison normalizes
 whitespace without rewriting stored/displayed values. `holding/yes` requires an open loan;
 `holding/no` requires none. Closed loans do not count. All supplied filters combine with AND.
+Member search defaults to `status/active`, excluding soft-deleted members. Use `status/deleted` to
+find retained records for restoration or `status/all` to search both states. Status values are
+case-insensitive. `member list` resets to all states and shows deleted cards greyed out, as specified
+by the member lifecycle feature. Active and deleted totals are separate from the filtered Displayed count.
 
 ```text
 member search q/alex
 member search holding/yes sort/held order/desc
 member search q/example.com holding/no sort/id
+member search q/jamie status/deleted
 ```
 
 Default sorting is normalized name then NUS ID. `sort/id` orders NUS IDs; `sort/held` orders current
@@ -72,24 +78,27 @@ Each group shows available, assigned and unavailable physical units. Open loans 
 otherwise GOOD/FAIR is available and DAMAGED/UNDER_REPAIR unavailable. Groups are independent of the
 current filter, so narrowing a directory does not silently reduce planning totals.
 
-Successful member additions warn about other NUS IDs sharing a normalized name, phone or email.
+Successful member additions warn about other active NUS IDs sharing a normalized name, phone or email.
+Deleted members are excluded from similarity warnings; their retained NUS IDs still cannot be reused.
 Successful equipment additions warn about other UUIDs sharing normalized category and name.
 Warnings identify the existing records and are advisory: legitimate same-name members and multiple
 physical units can still be added. Existing identity-duplicate rejection is unchanged.
 
 ## Integration contract
 
-Initial baseline: team `c4e2001de6ec09389d827260d1a985093aa64bc0`, with member-edit baseline `9885bb1e`
-integrated during review. These baselines have no soft-deletion
-metadata, so all stored entities are currently eligible. Never guess lifecycle flags from names.
-`DirectoryQuery.members(data, eligible)`, `DirectoryQuery.equipment(data, lookup, eligible)` and
-`InventoryGroups.summarize(data, lookup, eligible)` accept lifecycle predicates. Eligibility is applied
-before availability lookup. When domain lifecycle changes merge, wire their actual active/eligible
-predicates consistently into commands, panels, summaries and duplicate checks. This is a follow-up
-integration after the domain changes merge; current-baseline search/planning is independently usable.
-No competing domain schema or reflection is introduced. The revised Week 10 delegation removes the
-archive/unarchive work and the 30-day restoration limit from the member/equipment assignment rows;
-this feature does not assume either rule.
+Integrated baseline: team `823efd5e`, including member editing, soft-delete and restoration. Queries
+use the actual `Member.isDeleted()` contract. Search commands default to active members, explicit
+status filters find retained records, and list/reset keeps both states visible. Global active counts
+exclude deleted records even when a filtered view displays only deleted members. Delete/restore
+reevaluates filters and counts without erasing identities or loan history. Existing seven-argument
+DirectoryQuery callers retain all-records behavior; the status-aware search parser supplies the new
+member criterion explicitly. No new domain schema or reflection is introduced.
+
+`DirectoryQuery.members(data, eligible)` composes extra eligibility with the status filter.
+`DirectoryQuery.equipment(data, lookup, eligible)` and `InventoryGroups.summarize(data, lookup, eligible)`
+apply eligibility before availability lookup. Equipment lifecycle metadata is not present on this
+baseline; its future domain contract must be applied consistently when merged. The revised Week 10
+delegation removes archive/unarchive and the 30-day restoration limit; neither is assumed here.
 
 DisplayRequest optionally carries an immutable DirectoryQuery for MEMBERS/EQUIPMENT. A plain directory
 request preserves existing criteria; a request carrying a query replaces them. MemberListCommand and
@@ -102,9 +111,8 @@ Keith remains the shell integrator; no shared theme/main FXML changes are needed
 Command.isReadOnly() defaults to false for compatibility and is true for searches. LogicManager
 bypasses saving for these commands. Isaac's history pipeline must likewise exclude queries.
 Existing list/legacy save behavior remains unchanged. Transfer PR #107 was closed without merging;
-team master still has the verified baseline contracts. When later transfer/history changes touch
+team master has the integrated member lifecycle contracts. When later transfer/history changes touch
 Command/LogicManager/MainWindow, retain query dispatch and the no-save/no-history query boundary.
-Team baseline `9885bb1e` adds member editing; both `member edit` and `member search` are retained in the
-integrated family parser and its diagnostic. No unmerged transfer/history/lifecycle implementation is
-copied into this branch. Those features'
-acceptance remains separate from this independently tested search/planning PR.
+The member parser and diagnostic retain `search`, `edit` and `restore`. No unmerged teammate
+implementation is copied into this branch. Other owners' feature acceptance remains separate from
+this search/planning PR.

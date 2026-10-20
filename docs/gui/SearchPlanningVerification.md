@@ -2,9 +2,10 @@
 
 Issue: [#108](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/108).
 Initial baseline: team master `c4e2001de6ec09389d827260d1a985093aa64bc0`.
-Review integration baseline: `9885bb1e`, including the merged member-edit feature.
+Latest integration baseline: `823efd5e`, including member edit, soft-delete and restoration.
 Fork branch: `duynguyen21007:search-and-planning`. No PR merge performed.
 Latest [review fixes, integrated checks and commit audit](SearchPlanningReview.md).
+Latest [member lifecycle conflict resolution and validation](SearchPlanningLifecycle.md).
 
 ## Implemented behavior
 
@@ -66,11 +67,12 @@ labels wrap instead of truncating the directory name. Tests regenerate original 
 
 ## Scope and later shared integration
 
-Lifecycle metadata is absent from the verified team baseline. Query/count helpers accept eligibility
-predicates, tested to exclude records before availability lookup. Actual soft-deletion eligibility
-must be wired after Keegan/Arjo's domain changes merge; it is not simulated or claimed complete here.
+Member lifecycle is integrated from team baseline `823efd5e`; see the latest lifecycle report linked
+above. Active/deleted/all search states, active-only counts/warnings and retained list rows are tested
+against the actual model and JSON. Equipment lifecycle metadata remains absent; its query/count
+eligibility hooks are available for the future domain contract and are not simulated here.
 Isaac's later history pipeline must exclude `isReadOnly()` queries. Transfer PR #107 was closed without
-merging; the review branch integrates member-edit baseline `9885bb1e`. Later shared integrations must
+merging; this branch integrates lifecycle baseline `823efd5e`. Later shared integrations must
 retain the query payload, filtered selection recovery and no-save query boundary.
 See [search contract and usage](../commands/search-and-planning.md).
 

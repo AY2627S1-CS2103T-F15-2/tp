@@ -28,6 +28,8 @@ public class MemberDirectorySummary extends UiPart<Region> {
     @FXML
     private Label activeCount;
     @FXML
+    private Label deletedCount;
+    @FXML
     private Label displayedCount;
     @FXML
     private Label selection;
@@ -53,8 +55,11 @@ public class MemberDirectorySummary extends UiPart<Region> {
     public void refresh(Optional<NusId> selected) {
         requireNonNull(selected);
         int count = data.getMemberList().size();
-        countBadge.setText(count + " ACTIVE");
-        activeCount.setText(Integer.toString(count));
+        long deleted = data.getMemberList().stream().filter(Member::isDeleted).count();
+        long active = count - deleted;
+        countBadge.setText(active + " ACTIVE");
+        activeCount.setText(Long.toString(active));
+        deletedCount.setText(Long.toString(deleted));
         int displayed = query.members(data).size();
         displayedCount.setText(Integer.toString(displayed));
         sortOrder.setText(query.sortDescription(true));
@@ -62,12 +67,17 @@ public class MemberDirectorySummary extends UiPart<Region> {
         Optional<Member> member = selected.flatMap(nusId -> data.getMemberList().stream()
                 .filter(candidate -> candidate.getNusId().equals(nusId)).findFirst());
         selection.setText(selected.isEmpty() ? "No member selected"
-                : member.map(value -> value.getName() + " - " + value.getNusId())
+                : member.map(value -> value.getName() + (value.isDeleted() ? " (deleted)" : "")
+                        + " - " + value.getNusId())
                         .orElse("Member no longer exists: " + selected.orElseThrow()));
-        statusTitle.setText(count == 0 ? "No members yet" : "All active members displayed");
-        if (displayed != count) {
-            statusTitle.setText("Showing " + displayed + " matching members");
+        String title = "No members yet";
+        if (count > 0) {
+            title = deleted == 0 ? "All active members displayed" : "Active and deleted members displayed";
         }
+        if (displayed != count) {
+            title = "Showing " + displayed + " matching members";
+        }
+        statusTitle.setText(title);
         statusMessage.setText(count == 0
                 ? "Add a member with member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL."
                 : "The member directory is ready for selection or another typed command.");

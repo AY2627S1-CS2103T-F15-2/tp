@@ -20,9 +20,12 @@ import seedu.address.model.member.Member;
 
 /** Immutable, transient directory criteria. Queries sort snapshots and never change stored records. */
 public record DirectoryQuery(String text, String category, Condition condition, Availability availability,
-        Holding holding, Sort sort, boolean descending) {
+        Holding holding, Sort sort, boolean descending, MemberStatus status) {
     /** Whether a member must hold any current equipment. */
     public enum Holding { ANY, YES, NO }
+
+    /** Member lifecycle states searchable without erasing retained records. */
+    public enum MemberStatus { ALL, ACTIVE, DELETED }
 
     /** Directory sort fields; parsers restrict fields to the applicable directory. */
     public enum Sort { DEFAULT, NAME, ID, HELD, CATEGORY, CONDITION, AVAILABILITY }
@@ -33,6 +36,13 @@ public record DirectoryQuery(String text, String category, Condition condition, 
         category = normalize(category);
         requireNonNull(holding);
         requireNonNull(sort);
+        requireNonNull(status);
+    }
+
+    /** Preserves the all-records criteria used by existing directory reset callers. */
+    public DirectoryQuery(String text, String category, Condition condition, Availability availability,
+            Holding holding, Sort sort, boolean descending) {
+        this(text, category, condition, availability, holding, sort, descending, MemberStatus.ALL);
     }
 
     public static DirectoryQuery all() {
@@ -44,7 +54,7 @@ public record DirectoryQuery(String text, String category, Condition condition, 
         return members(data, member -> true);
     }
 
-    /** Lifecycle owners supply eligibility here when their domain contracts merge. */
+    /** Composes additional eligibility with the requested member lifecycle status. */
     public List<Member> members(ReadOnlyAddressBook data, Predicate<Member> eligible) {
         requireNonNull(eligible);
         Comparator<Member> comparator = switch (sort) {
@@ -57,10 +67,19 @@ public record DirectoryQuery(String text, String category, Condition condition, 
             comparator = comparator.reversed();
         }
         return data.getMemberList().stream().filter(eligible)
+                .filter(this::matchesStatus)
                 .filter(member -> matches(member.getName().fullName, member.getNusId().value,
                         member.getPhone().value, member.getEmail().value))
                 .filter(member -> holding == Holding.ANY || (holdings(data, member) > 0) == (holding == Holding.YES))
                 .sorted(comparator).toList();
+    }
+
+    private boolean matchesStatus(Member member) {
+        return switch (status) {
+            case ALL -> true;
+            case ACTIVE -> !member.isDeleted();
+            case DELETED -> member.isDeleted();
+        };
     }
 
     public List<Equipment> equipment(ReadOnlyAddressBook data, Function<UUID, Availability> lookup) {
@@ -127,6 +146,9 @@ public record DirectoryQuery(String text, String category, Condition condition, 
         }
         if (holding != Holding.ANY) {
             filters.add("Holding equipment: " + holding);
+        }
+        if (status != MemberStatus.ALL) {
+            filters.add("Member status: " + status);
         }
         return filters.isEmpty() ? "All records" : String.join("; ", filters);
     }

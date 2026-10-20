@@ -60,7 +60,10 @@ public class MemberListPanel extends UiPart<Region> {
     public void refresh() {
         Optional<NusId> selected = getSelection();
         rows.getItems().setAll(getDisplayedItems());
-        countLabel.setText(query.equals(DirectoryQuery.all()) ? rows.getItems().size() + " active"
+        long deleted = rows.getItems().stream().filter(Member::isDeleted).count();
+        countLabel.setText(query.equals(DirectoryQuery.all())
+                ? (rows.getItems().size() - deleted) + " active"
+                        + (deleted == 0 ? "" : " \u00b7 " + deleted + " deleted")
                 : rows.getItems().size() + " of " + data.getMemberList().size() + " shown");
         Label emptyState = new Label(data.getMemberList().isEmpty() ? "No members yet. Use member add to get started."
                 : "No matching members. Use member list to reset the search.");

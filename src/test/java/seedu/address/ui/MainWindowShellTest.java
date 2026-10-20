@@ -43,6 +43,8 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
@@ -194,7 +196,9 @@ public class MainWindowShellTest {
             assertEquals("No member selected", detailLabel("selection"));
             assertEquals(model.getAddressBook(), assertDoesNotThrow(() -> storage.readAddressBook()).orElseThrow());
             submit("member list");
-            assertEquals(1, rows().getItems().size());
+            assertEquals(3, rows().getItems().size());
+            assertEquals("1", detailLabel("activeCount"));
+            assertEquals("2", detailLabel("deletedCount"));
             assertEquals("All records", detailLabel("criteria"));
             assertEquals("Name (A-Z), then NUS ID", detailLabel("sortOrder"));
         });
@@ -226,6 +230,50 @@ public class MainWindowShellTest {
             assertEquals(2, rows().getItems().size());
             assertEquals("All records", detailLabel("criteria"));
             assertEquals("Category, name, then UUID", detailLabel("sortOrder"));
+        });
+    }
+
+    @Test
+    public void search_deletedMembers_remainDiscoverableAndRestoreUpdatesQueryCountsAndPersistence() throws Exception {
+        FxTestUtil.runAndWait(() -> {
+            submit("member search q/jamie status/all sort/id order/desc");
+            assertEquals(1, rows().getItems().size());
+            String criteria = detailLabel("criteria");
+            String sort = detailLabel("sortOrder");
+            submit("member delete nus/" + id(2));
+            assertEquals("Success", label("feedbackStatus"));
+            assertEquals(1, rows().getItems().size());
+            assertTrue(((Member) rows().getItems().getFirst()).isDeleted());
+            assertEquals(criteria, detailLabel("criteria"));
+            assertEquals(sort, detailLabel("sortOrder"));
+            assertEquals("2", detailLabel("activeCount"));
+            assertEquals("1", detailLabel("deletedCount"));
+            assertEquals("1", detailLabel("displayedCount"));
+            assertTrue(detailLabel("selection").contains("(deleted)"));
+            submit("member search q/jamie status/deleted sort/id order/desc");
+            assertEquals(1, rows().getItems().size());
+            assertTrue(detailLabel("criteria").contains("DELETED"));
+            render("search-deleted-members", 1100, 700);
+            render("search-deleted-members", 760, 500);
+            submit("member view nus/" + id(2));
+            assertEquals("Success", label("feedbackStatus"));
+            submit("member restore nus/" + id(2));
+            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Jamie Lim", detailLabel("memberName"));
+            assertTrue(rows().getItems().isEmpty());
+            submit("member search q/jamie status/deleted");
+            assertEquals("0", detailLabel("displayedCount"));
+            assertEquals("3", detailLabel("activeCount"));
+            assertEquals("0", detailLabel("deletedCount"));
+            submit("member list");
+            assertEquals(3, rows().getItems().size());
+            assertEquals("All records", detailLabel("criteria"));
+        });
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+        reloadFreshShell();
+        FxTestUtil.runAndWait(() -> {
+            assertFalse(model.findMember(id(2)).orElseThrow().isDeleted());
+            assertEquals(3, rows().getItems().size());
         });
     }
 
@@ -572,14 +620,16 @@ public class MainWindowShellTest {
     }
 
     @Test
-    public void refresh_deletedDetailSelectionAndReset_recoversNextThenEmptyWithoutCommands() {
+    public void refresh_softDeletedDetailSelectionAndReset_retainsIdentityThenClearsWithoutCommands() {
         FxTestUtil.runAndWait(() -> {
             logic.nextResult = new CommandResult("Controlled target", DisplayRequest.memberDetails(id(2)));
             submit("controlled detail result");
             model.deleteMember(model.findMember(id(2)).orElseThrow());
         });
         FxTestUtil.runAndWait(() -> {
-            assertTrue(label("selection").contains("A0000003X"));
+            assertEquals(id(2), ((Member) rows().getSelectionModel().getSelectedItem()).getNusId());
+            assertTrue(((Label) node("directorySummaryPlaceholder").lookup("#memberName"))
+                    .getAccessibleText().contains("(deleted)"));
             model.setAddressBook(new AddressBook());
         });
         FxTestUtil.runAndWait(() -> {
@@ -614,9 +664,14 @@ public class MainWindowShellTest {
     @Test
     public void details_realViewResults_showContactsNotesDatesAndSameNameIdentities() {
         FxTestUtil.runAndWait(() -> {
-            model.deleteMember(model.findMember(id(2)).orElseThrow());
-            model.addMember(new Member(id(2), new Name("Alex Tan"), new Phone("98765432"),
-                    new Email("other@example.com")));
+            AddressBook replacement = new AddressBook();
+            model.getAddressBook().getPersonList().forEach(replacement::addPerson);
+            model.getMemberList().forEach(member -> replacement.addMember(member.getNusId().equals(id(2))
+                    ? new Member(id(2), new Name("Alex Tan"), new Phone("98765432"),
+                            new Email("other@example.com")) : member));
+            model.getEquipmentList().forEach(replacement::addEquipment);
+            model.getLoanList().forEach(replacement::addLoan);
+            model.setAddressBook(replacement);
             model.deleteEquipment(model.findEquipment(new UUID(0, 2)).orElseThrow());
             model.addEquipment(new Equipment(new UUID(0, 2), "Camera 1", "Photography", Condition.GOOD,
                     "Keep the lens cap on.\nCase included."));
@@ -775,7 +830,7 @@ public class MainWindowShellTest {
             succeed("member list");
             assertEquals(saved, model.getAddressBook());
             succeed("member delete nus/A0000002X");
-            assertFalse(model.hasMember(id(2)));
+            assertTrue(model.findMember(id(2)).orElseThrow().isDeleted());
             assertEquals(3, storage.saves);
         });
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
@@ -995,7 +1050,7 @@ public class MainWindowShellTest {
             succeed("member view nus/A0000001X");
             assertEquals("0 item(s) held", detailLabel("heldCount"));
             succeed("member delete nus/A0000001X");
-            assertEquals(id(2), ((Member) rows().getSelectionModel().getSelectedItem()).getNusId());
+            assertEquals(id(1), ((Member) rows().getSelectionModel().getSelectedItem()).getNusId());
             assertEquals(null, node("detailsTitle"));
             succeed("equipment view uuid/" + items[0]);
             succeed("equipment delete uuid/" + items[0]);
@@ -1004,13 +1059,13 @@ public class MainWindowShellTest {
             button("loansNavigation").fire();
             assertEquals("0", label("openCount"));
             assertEquals(null, node("historyCount"));
-            assertTrue(model.getLoanList().isEmpty());
+            assertEquals(1, model.getLoanList().size());
         });
         reloadFreshShell();
         FxTestUtil.runAndWait(() -> {
-            assertEquals(1, model.getMemberList().size());
+            assertEquals(2, model.getMemberList().size());
             assertEquals(1, model.getEquipmentList().size());
-            assertTrue(model.getLoanList().isEmpty());
+            assertEquals(1, model.getLoanList().size());
             succeed("member list");
             succeed("member view nus/A0000002X");
             assertEquals("other@example.com", detailLabel("email"));
@@ -1108,6 +1163,44 @@ public class MainWindowShellTest {
                 assertEquals(count + 1, logic.commands.size());
             });
         }
+    }
+
+    @Test
+    public void memberLifecycle_deletedCardDetailsAndReload_retainsSelectionAndRestoresPresentation() throws Exception {
+        FxTestUtil.runAndWait(() -> {
+            showMemberDetails(id(2));
+            succeed("member delete nus/" + id(2));
+            assertEquals(3, rows().getItems().size());
+            assertEquals(id(2), ((Member) rows().getSelectionModel().getSelectedItem()).getNusId());
+            assertEquals("1", label("deletedCount"));
+            assertEquals("2", label("activeCount"));
+            assertEquals("3", label("displayedCount"));
+            Region card = (Region) node("directoryListPlaceholder").lookup(".deleted-member");
+            assertFalse(card.isDisabled());
+            Label name = (Label) card.lookup("#name");
+            assertEquals(Color.web("#455A64"), name.getTextFill());
+            TextFlow flow = (TextFlow) name.getGraphic();
+            Text value = (Text) flow.getChildren().getFirst();
+            Text suffix = (Text) flow.getChildren().getLast();
+            assertTrue(value.isStrikethrough());
+            assertTrue(value.getFont().getStyle().toLowerCase(java.util.Locale.ROOT).contains("italic"));
+            assertEquals(" (deleted)", suffix.getText());
+            assertFalse(suffix.isStrikethrough());
+            render("member-soft-delete", 1100, 700);
+            showMemberDetails(id(2));
+            assertTrue(((Label) node("directorySummaryPlaceholder").lookup("#memberName"))
+                    .getAccessibleText().contains("(deleted)"));
+            render("member-deleted-details", 760, 500);
+        });
+        reloadFreshShell();
+        FxTestUtil.runAndWait(() -> {
+            assertTrue(model.findMember(id(2)).orElseThrow().isDeleted());
+            succeed("member restore nus/" + id(2));
+            assertEquals("Jamie Lim", detailLabel("memberName"));
+            assertEquals(null, node("directoryListPlaceholder").lookup(".deleted-member"));
+            assertEquals(id(2), ((Member) rows().getSelectionModel().getSelectedItem()).getNusId());
+        });
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
     }
 
     @Test

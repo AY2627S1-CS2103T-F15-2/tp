@@ -14,6 +14,7 @@ public final class DuplicateWarnings {
     /** Reports other member identities sharing a normalized contact or name field. */
     public static String member(ReadOnlyAddressBook data, Member candidate) {
         List<String> matches = data.getMemberList().stream()
+                .filter(member -> !member.isDeleted())
                 .filter(member -> !member.getNusId().equals(candidate.getNusId()))
                 .filter(member -> same(member.getName().fullName, candidate.getName().fullName)
                         || same(member.getPhone().value, candidate.getPhone().value)

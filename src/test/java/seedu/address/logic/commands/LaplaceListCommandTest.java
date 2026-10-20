@@ -60,6 +60,21 @@ public class LaplaceListCommandTest {
     }
 
     @Test
+    public void execute_retainedDeletedMembers_countsActiveSeparatelyAndExplicitlyResetsToAllRows() {
+        ModelManager model = new ModelManager();
+        Member first = new Member(new NusId("A0000001X"), new Name("Alex"),
+                new Phone("91234567"), new Email("alex@example.com"));
+        model.addMember(first);
+        model.deleteMember(first);
+        AddressBook before = new AddressBook(model.getAddressBook());
+        CommandResult result = new MemberListCommand().execute(model);
+        assertEquals("Listed 0 active members. 1 deleted member(s) remain visible.", result.getFeedbackToUser());
+        assertEquals(DisplayRequest.members(DirectoryQuery.all()), result.getDisplayRequest());
+        assertEquals(1, result.getDisplayRequest().getQuery().orElseThrow().members(model.getAddressBook()).size());
+        assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
     public void execute_nullModel_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new MemberListCommand().execute(null));
         assertThrows(NullPointerException.class, () -> new EquipmentListCommand().execute(null));

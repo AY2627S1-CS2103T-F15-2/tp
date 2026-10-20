@@ -2,6 +2,8 @@ package seedu.address.storage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.member.Member;
@@ -19,6 +21,7 @@ class JsonAdaptedMember {
     private final String name;
     private final String phone;
     private final String email;
+    private boolean deleted;
 
     /** Constructs an adapter from raw JSON fields. */
     @JsonCreator
@@ -37,6 +40,18 @@ class JsonAdaptedMember {
         name = source.getName().fullName;
         phone = source.getPhone().value;
         email = source.getEmail().value;
+        deleted = source.isDeleted();
+    }
+
+    /**
+     * Validates an explicitly supplied flag; absent legacy fields retain the default false value.
+     */
+    @JsonSetter("deleted")
+    void setDeleted(JsonNode value) {
+        if (value == null || !value.isBoolean()) {
+            throw new IllegalArgumentException("Member deleted must be a boolean.");
+        }
+        deleted = value.booleanValue();
     }
 
     /** Converts this adapter to its domain type. */
@@ -77,6 +92,6 @@ class JsonAdaptedMember {
         }
         Email modelEmail = Email.fromStoredMember(email);
 
-        return new Member(modelNusId, modelName, modelPhone, modelEmail);
+        return new Member(modelNusId, modelName, modelPhone, modelEmail, deleted);
     }
 }

@@ -18,6 +18,7 @@ public class DirectorySearchCommandParser implements Parser<DirectorySearchComma
     private static final Prefix CONDITION = new Prefix("condition/");
     private static final Prefix AVAILABILITY = new Prefix("availability/");
     private static final Prefix HOLDING = new Prefix("holding/");
+    private static final Prefix STATUS = new Prefix("status/");
     private static final Prefix SORT = new Prefix("sort/");
     private static final Prefix ORDER = new Prefix("order/");
     private final boolean members;
@@ -30,7 +31,7 @@ public class DirectorySearchCommandParser implements Parser<DirectorySearchComma
     public DirectorySearchCommand parse(String args) throws ParseException {
         try {
             Set<Prefix> prefixes = members
-                    ? Set.of(QUERY, HOLDING, SORT, ORDER)
+                    ? Set.of(QUERY, HOLDING, STATUS, SORT, ORDER)
                     : Set.of(QUERY, CATEGORY, CONDITION, AVAILABILITY, SORT, ORDER);
             Map<Prefix, LaplaceArgumentParser.ValueValidator> validators = new HashMap<>();
             for (Prefix prefix : prefixes) {
@@ -43,9 +44,12 @@ public class DirectorySearchCommandParser implements Parser<DirectorySearchComma
             Availability availability = values.getValue(AVAILABILITY).isPresent()
                     ? enumValue(Availability.class, values.getValue(AVAILABILITY).orElseThrow()) : null;
             DirectoryQuery.Holding holding = enumValue(DirectoryQuery.Holding.class, value(values, HOLDING, "any"));
+            DirectoryQuery.MemberStatus status = members
+                    ? enumValue(DirectoryQuery.MemberStatus.class, value(values, STATUS, "active"))
+                    : DirectoryQuery.MemberStatus.ALL;
             return new DirectorySearchCommand(members, new DirectoryQuery(value(values, QUERY, ""),
                     value(values, CATEGORY, ""), condition, availability, holding, sort,
-                    value(values, ORDER, "asc").equalsIgnoreCase("desc")));
+                    value(values, ORDER, "asc").equalsIgnoreCase("desc"), status));
         } catch (ParseException e) {
             throw new ParseException(e.getMessage() + "\n" + (members
                     ? DirectorySearchCommand.MEMBER_USAGE : DirectorySearchCommand.EQUIPMENT_USAGE), e);
@@ -66,6 +70,8 @@ public class DirectorySearchCommandParser implements Parser<DirectorySearchComma
             enumValue(Availability.class, value);
         } else if (prefix.equals(HOLDING)) {
             enumValue(DirectoryQuery.Holding.class, value);
+        } else if (prefix.equals(STATUS)) {
+            enumValue(DirectoryQuery.MemberStatus.class, value);
         } else if (prefix.equals(SORT)) {
             DirectoryQuery.Sort sort = enumValue(DirectoryQuery.Sort.class, value);
             Set<DirectoryQuery.Sort> allowed = members

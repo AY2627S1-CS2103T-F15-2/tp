@@ -38,7 +38,7 @@ import seedu.address.testutil.FxTestUtil;
 public class DirectorySummaryTest {
 
     @Test
-    public void members_emptyValidAndRemovedSelections_refreshesFromRealData() {
+    public void members_emptyValidAndDeletedSelections_refreshesFromRealData() {
         FxTestUtil.runAndWait(() -> {
             ModelManager model = new ModelManager();
             MemberDirectorySummary panel = new MemberDirectorySummary(model.getAddressBook());
@@ -62,8 +62,10 @@ public class DirectorySummaryTest {
             assertLabel(panel, "statusTitle", "All active members displayed");
             model.deleteMember(member);
             panel.refresh(Optional.of(member.getNusId()));
-            assertLabel(panel, "selection", "Member no longer exists: A0000001X");
+            assertLabel(panel, "selection", "Alex Tan (deleted) - A0000001X");
             assertLabel(panel, "activeCount", "1");
+            assertLabel(panel, "deletedCount", "1");
+            assertLabel(panel, "displayedCount", "2");
             panel.refresh(Optional.empty());
             assertLabel(panel, "selection", "No member selected");
         });

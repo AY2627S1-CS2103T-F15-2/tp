@@ -47,7 +47,8 @@ public class MemberViewCommand extends Command {
                                 + " for member " + targetNusId + ".")));
             }
             holdings.sort(LaplaceSortOrder.EQUIPMENT);
-            return new CommandResult("Viewing member: " + member.getName() + " (" + targetNusId
+            String name = member.getName() + (member.isDeleted() ? " (deleted)" : "");
+            return new CommandResult("Viewing member: " + name + " (" + targetNusId
                     + "). Currently holds " + holdings.size() + " item(s).", DisplayRequest.memberDetails(targetNusId));
         } catch (MemberNotFoundException | EquipmentNotFoundException e) {
             throw new CommandException("Could not resolve member " + targetNusId + " and their current holdings.", e);

@@ -60,6 +60,30 @@ public class DirectorySearchIntegrationTest {
     }
 
     @Test
+    public void memberStatus_realDeleteSearchAndRestore_preservesRetainedIdentityAndReadOnlyQueries() throws Exception {
+        ModelManager model = SearchData.sample();
+        CountingStorage storage = new CountingStorage(directory);
+        LogicManager logic = new LogicManager(model, storage);
+        logic.execute("member delete nus/A0000002X");
+        assertEquals(2, model.getMemberList().size());
+        byte[] saved = Files.readAllBytes(storage.getAddressBookFilePath());
+        assertEquals("Found 1 members.", logic.execute("member search").getFeedbackToUser());
+        assertEquals("Found 1 members.", logic.execute("member search status/DELETED").getFeedbackToUser());
+        assertEquals("Found 2 members.", logic.execute("member search status/all").getFeedbackToUser());
+        assertEquals(DirectoryQuery.MemberStatus.ACTIVE,
+                logic.execute("member search").getDisplayRequest().getQuery().orElseThrow().status());
+        assertEquals(1, storage.saves);
+        assertTrue(java.util.Arrays.equals(saved, Files.readAllBytes(storage.getAddressBookFilePath())));
+        assertTrue(storage.readAddressBook().orElseThrow().getMemberList().stream()
+                .anyMatch(member -> member.isDeleted() && member.getNusId().value.equals("A0000002X")));
+        logic.execute("member restore nus/A0000002X");
+        assertEquals(2, storage.saves);
+        assertEquals("Found 0 members.", logic.execute("member search status/deleted").getFeedbackToUser());
+        assertEquals("Found 2 members.", logic.execute("member search status/active").getFeedbackToUser());
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
     public void suppliedFieldErrors_followInputOrderAndRetainUsage() {
         AddressBookParser parser = new AddressBookParser();
         assertThrows(ParseException.class, "Invalid Holding: maybe\n" + MEMBER_USAGE, () ->
@@ -81,7 +105,9 @@ public class DirectorySearchIntegrationTest {
                 "member search category/photo", "member search holding/maybe", "member search sort/condition",
                 "member search order/reverse", "equipment search holding/yes", "equipment search condition/broken",
                 "equipment search availability/free", "equipment search sort/held", "equipment search q/x unknown/y",
-                "equipment search category/", "equipment search sort/", "equipment search order/")) {
+                "equipment search category/", "equipment search sort/", "equipment search order/",
+                "member search status/archived", "member search status/", "member search status/all status/active",
+                "equipment search status/active")) {
             assertThrows(ParseException.class, () -> logic.execute(input));
             assertEquals(before, model.getAddressBook());
             assertEquals(0, storage.saves);

@@ -21,6 +21,7 @@ import seedu.address.logic.commands.MemberAddCommand;
 import seedu.address.logic.commands.MemberDeleteCommand;
 import seedu.address.logic.commands.MemberEditCommand;
 import seedu.address.logic.commands.MemberListCommand;
+import seedu.address.logic.commands.MemberRestoreCommand;
 import seedu.address.logic.commands.MemberViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -52,7 +53,8 @@ public class LaplaceCommandRoutingTest {
         AddressBookParser parser = new AddressBookParser();
         assertInstanceOf(MemberEditCommand.class, parser.parseCommand("member edit nus/A0123456X name/Jamie Lim"));
         assertInstanceOf(DirectorySearchCommand.class, parser.parseCommand("member search q/jamie"));
-        String expected = "Expected member subcommand: add, edit, list, search, view, delete.";
+        assertInstanceOf(MemberRestoreCommand.class, parser.parseCommand("member restore nus/A0123456X"));
+        String expected = "Expected member subcommand: add, edit, list, search, view, delete, restore.";
         assertThrows(ParseException.class, expected, () -> parser.parseCommand("member unknown"));
     }
 

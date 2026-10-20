@@ -24,6 +24,7 @@ import seedu.address.model.equipment.Equipment;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
+import seedu.address.model.member.exceptions.MemberDeletedException;
 import seedu.address.model.member.exceptions.MemberNotFoundException;
 import seedu.address.model.person.Name;
 
@@ -141,6 +142,20 @@ public class MemberEditCommandTest {
         assertThrows(IllegalArgumentException.class, () -> model.setMember(ALEX, BEN));
         assertThrows(MemberNotFoundException.class, () -> model.setMember(BEN, BEN));
         assertEquals(List.of(ALEX), model.getMemberList());
+    }
+
+    @Test
+    public void setMember_lifecycleChangeOrDeletedTarget_rejectsWithoutChangingState() {
+        ModelManager model = new ModelManager();
+        model.addMember(ALEX);
+        Member deleted = new Member(ALEX.getNusId(), ALEX.getName(), ALEX.getPhone(), ALEX.getEmail(), true);
+        assertThrows(IllegalArgumentException.class, () -> model.setMember(ALEX, deleted));
+        assertEquals(List.of(ALEX), model.getMemberList());
+
+        model.deleteMember(ALEX);
+        assertThrows(MemberDeletedException.class, () -> model.setMember(ALEX, ALEX));
+        assertThrows(MemberDeletedException.class, () -> model.setMember(deleted, deleted));
+        assertEquals(List.of(deleted), model.getMemberList());
     }
 
     private MemberEditCommand parse(String fields) throws Exception {

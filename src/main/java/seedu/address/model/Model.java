@@ -106,16 +106,24 @@ public interface Model {
     /**
      * Replaces a stored member's details without changing their NUS ID or loan references.
      * @throws seedu.address.model.member.exceptions.MemberNotFoundException if the identity is unknown.
-     * @throws IllegalArgumentException if the replacement has a different NUS ID.
+     * @throws IllegalArgumentException if the replacement changes the NUS ID or deletion state.
+     * @throws IllegalStateException if the stored member is deleted.
      */
     void setMember(Member target, Member editedMember);
 
     /**
-     * Deletes a member by identity and removes their closed loan history.
+     * Soft-deletes a member by identity while retaining their details and loan history.
      * @throws seedu.address.model.member.exceptions.MemberNotFoundException if the identity is unknown.
-     * @throws IllegalStateException if the member has an open loan.
+     * @throws IllegalStateException if the member is already deleted or has an open loan.
      */
     void deleteMember(Member member);
+
+    /**
+     * Restores a deleted member without a recovery deadline.
+     * @throws seedu.address.model.member.exceptions.MemberNotFoundException if the identity is unknown.
+     * @throws IllegalStateException if the member is already active.
+     */
+    void restoreMember(Member member);
 
     /**
      * Returns an unmodifiable live view of all members.

@@ -8,7 +8,7 @@ import seedu.address.model.query.DirectoryQuery;
 /** Read-only search whose immutable criteria travel with the typed directory request. */
 public class DirectorySearchCommand extends Command {
     public static final String MEMBER_USAGE = "member search [q/TEXT] [holding/any|yes|no]"
-            + " [sort/name|id|held] [order/asc|desc]";
+            + " [status/active|deleted|all] [sort/name|id|held] [order/asc|desc]";
     public static final String EQUIPMENT_USAGE = "equipment search [q/TEXT] [category/TEXT]"
             + " [condition/CONDITION] [availability/AVAILABLE|ASSIGNED|UNAVAILABLE]"
             + " [sort/category|name|id|condition|availability] [order/asc|desc]";

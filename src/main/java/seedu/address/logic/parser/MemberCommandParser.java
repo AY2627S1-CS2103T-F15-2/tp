@@ -26,7 +26,9 @@ public class MemberCommandParser implements Parser<Command> {
             case "edit" -> new MemberEditCommandParser().parse(arguments);
             case "view" -> new MemberViewCommandParser().parse(arguments);
             case "delete" -> new MemberDeleteCommandParser().parse(arguments);
-            default -> throw new ParseException("Expected member subcommand: add, edit, list, search, view, delete.");
+            case "restore" -> new MemberRestoreCommandParser().parse(arguments);
+            default -> throw new ParseException(
+                    "Expected member subcommand: add, edit, list, search, view, delete, restore.");
         };
     }
 }

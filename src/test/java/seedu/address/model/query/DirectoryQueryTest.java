@@ -97,6 +97,36 @@ public class DirectoryQueryTest {
     }
 
     @Test
+    public void memberLifecycle_statusFiltersAndWarnings_followDeleteAndRestoreWithoutErasingRecords() {
+        ModelManager model = sample();
+        model.deleteMember(member(2));
+        AddressBook before = new AddressBook(model.getAddressBook());
+        DirectoryQuery active = new DirectoryQuery("alex", "", null, null, DirectoryQuery.Holding.ANY,
+                DirectoryQuery.Sort.ID, false, DirectoryQuery.MemberStatus.ACTIVE);
+        DirectoryQuery deleted = new DirectoryQuery("alex", "", null, null, DirectoryQuery.Holding.ANY,
+                DirectoryQuery.Sort.ID, false, DirectoryQuery.MemberStatus.DELETED);
+        assertEquals(List.of(member(1)), active.members(model.getAddressBook()));
+        assertEquals(List.of(model.findMember(member(2).getNusId()).orElseThrow()),
+                deleted.members(model.getAddressBook()));
+        assertEquals(2, DirectoryQuery.all().members(model.getAddressBook()).size());
+        assertTrue(active.members(model.getAddressBook(), member -> member.isDeleted()).isEmpty());
+        assertTrue(active.description().contains("ACTIVE"));
+        assertTrue(deleted.description().contains("DELETED"));
+        Member candidate = new Member(new NusId("A0000009X"), member(1).getName(), member(1).getPhone(),
+                member(1).getEmail());
+        String warning = DuplicateWarnings.member(model.getAddressBook(), candidate);
+        assertTrue(warning.contains(member(1).getNusId().value));
+        assertFalse(warning.contains(member(2).getNusId().value));
+        assertEquals(before, model.getAddressBook());
+        model.restoreMember(model.findMember(member(2).getNusId()).orElseThrow());
+        assertEquals(2, active.members(model.getAddressBook()).size());
+        assertTrue(deleted.members(model.getAddressBook()).isEmpty());
+        assertTrue(DuplicateWarnings.member(model.getAddressBook(), candidate).contains(member(2).getNusId().value));
+        assertThrows(NullPointerException.class, () -> new DirectoryQuery("", "", null, null,
+                DirectoryQuery.Holding.ANY, DirectoryQuery.Sort.DEFAULT, false, null));
+    }
+
+    @Test
     public void inventoryGroups_separatorAndQuoteCharacters_doNotMergeDistinctCategoryTypePairs() {
         ModelManager model = new ModelManager();
         model.addEquipment(new Equipment(new UUID(0, 1), "c", "a / b", Condition.GOOD, ""));
