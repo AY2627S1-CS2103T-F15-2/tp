@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.LoanCommandTestData.CLOCK;
@@ -52,6 +53,18 @@ public class LoanBatchCommandTest {
     }
 
     @Test
+    public void batchAssignment_emptyOrDuplicateIdentifiers_rejectsBeforeChangingModel() {
+        ModelManager model = LoanCommandTestData.model();
+        AddressBook before = new AddressBook(model.getAddressBook());
+
+        assertThrows(IllegalArgumentException.class, () -> new LoanAddCommand(List.of(),
+                FIRST_MEMBER.getNusId(), TODAY, TODAY.plusDays(7), CLOCK));
+        assertThrows(IllegalArgumentException.class, () -> new LoanAddCommand(List.of(FIRST_UUID, FIRST_UUID),
+                FIRST_MEMBER.getNusId(), TODAY, TODAY.plusDays(7), CLOCK));
+        assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
     public void batchReturn_updatesBothConditionsAndPreservesLoanHistory() throws Exception {
         ModelManager model = LoanCommandTestData.model();
         new LoanAddCommand(List.of(FIRST_UUID, SECOND_UUID), FIRST_MEMBER.getNusId(),
@@ -79,6 +92,36 @@ public class LoanBatchCommandTest {
                 TODAY, Condition.DAMAGED, CLOCK).execute(model));
 
         assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
+    public void batchReturn_emptyOrDuplicateIdentifiers_rejectsBeforeChangingModel() {
+        ModelManager model = LoanCommandTestData.model();
+        model.addLoan(LoanCommandTestData.openLoan());
+        AddressBook before = new AddressBook(model.getAddressBook());
+
+        assertThrows(IllegalArgumentException.class, () -> new LoanReturnCommand(List.of(), TODAY,
+                Condition.GOOD, CLOCK));
+        assertThrows(IllegalArgumentException.class, () -> new LoanReturnCommand(List.of(FIRST_UUID, FIRST_UUID),
+                TODAY, Condition.GOOD, CLOCK));
+        assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
+    public void batchReturn_equality_includesIdentifiersDateAndCondition() {
+        LoanReturnCommand command = new LoanReturnCommand(List.of(FIRST_UUID, SECOND_UUID),
+                TODAY, Condition.GOOD, CLOCK);
+        LoanReturnCommand equal = new LoanReturnCommand(List.of(FIRST_UUID, SECOND_UUID),
+                TODAY, Condition.GOOD, CLOCK);
+
+        assertEquals(command, equal);
+        assertEquals(command.hashCode(), equal.hashCode());
+        assertNotEquals(command, new LoanReturnCommand(List.of(SECOND_UUID, FIRST_UUID),
+                TODAY, Condition.GOOD, CLOCK));
+        assertNotEquals(command, new LoanReturnCommand(List.of(FIRST_UUID, SECOND_UUID),
+                TODAY.minusDays(1), Condition.GOOD, CLOCK));
+        assertNotEquals(command, new LoanReturnCommand(List.of(FIRST_UUID, SECOND_UUID),
+                TODAY, Condition.FAIR, CLOCK));
     }
 
     @Test

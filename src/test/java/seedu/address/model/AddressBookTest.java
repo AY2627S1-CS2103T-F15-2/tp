@@ -243,6 +243,37 @@ public class AddressBookTest {
     }
 
     @Test
+    public void returnLoans_emptyOrDuplicateIdentifiers_leaveRootUnchanged() {
+        AddressBook root = new AddressBook();
+        root.addMember(MEMBER);
+        root.addEquipment(EQUIPMENT);
+        root.addLoan(OPEN_LOAN);
+        AddressBook before = new AddressBook(root);
+
+        assertThrows(IllegalArgumentException.class, () -> root.returnLoans(List.of(), RETURN_DATE, null));
+        assertThrows(IllegalArgumentException.class, () -> root.returnLoans(
+                List.of(EQUIPMENT_ID, EQUIPMENT_ID), RETURN_DATE, Condition.DAMAGED));
+        assertEquals(before, root);
+    }
+
+    @Test
+    public void returnLoans_withoutObservedCondition_preservesEquipmentAndClosesBothLoans() {
+        AddressBook root = new AddressBook();
+        root.addMember(MEMBER);
+        root.addEquipment(EQUIPMENT);
+        root.addEquipment(OTHER_EQUIPMENT);
+        root.addLoan(OPEN_LOAN);
+        root.addLoan(new Loan(OTHER_EQUIPMENT.getUuid(), MEMBER_ID, ASSIGNED_DATE, RETURN_DATE, null));
+
+        root.returnLoans(List.of(EQUIPMENT_ID, OTHER_EQUIPMENT.getUuid()), RETURN_DATE, null);
+
+        assertTrue(root.getLoanList().stream().noneMatch(Loan::isOpen));
+        assertTrue(root.getLoanList().stream().allMatch(loan -> loan.getReturnCondition().isEmpty()));
+        assertEquals(Condition.GOOD, root.findEquipment(EQUIPMENT_ID).orElseThrow().getCondition());
+        assertEquals(Condition.FAIR, root.findEquipment(OTHER_EQUIPMENT.getUuid()).orElseThrow().getCondition());
+    }
+
+    @Test
     public void deletion_openReferences_blocksBothEntitiesWithoutMutation() {
         populateReferences(addressBook);
         addressBook.addLoan(OPEN_LOAN);

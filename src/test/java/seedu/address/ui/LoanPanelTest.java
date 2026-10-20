@@ -113,6 +113,9 @@ public class LoanPanelTest {
 
             memberFilter.setText(FIRST_MEMBER.getNusId().toString());
             assertTrue(section(panel, "openLoans").getChildren().size() >= 1);
+            equipmentFilter.setText(SECOND_UUID.toString());
+            assertEquals("0", ((Label) panel.getRoot().lookup("#openCount")).getText());
+            assertEquals("0", ((Label) panel.getRoot().lookup("#closedCount")).getText());
             equipmentFilter.setText(FIRST_UUID.toString());
             assertEquals(List.of(FIRST_UUID), equipmentIds(panel, "openLoans"));
             assertEquals("1", ((Label) panel.getRoot().lookup("#openCount")).getText());

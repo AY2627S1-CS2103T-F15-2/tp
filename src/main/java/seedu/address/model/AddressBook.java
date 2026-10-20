@@ -364,18 +364,13 @@ public class AddressBook implements ReadOnlyAddressBook {
         List<Equipment> equipmentReplacements = new java.util.ArrayList<>(candidate.getEquipmentList());
         for (UUID uuid : identifiers) {
             Loan open = candidate.findOpenLoan(uuid).orElseThrow(OpenLoanNotFoundException::new);
-            candidate.findEquipment(uuid).orElseThrow(EquipmentNotFoundException::new);
+            Equipment item = candidate.findEquipment(uuid).orElseThrow(EquipmentNotFoundException::new);
             Loan closed = open.withReturnedDate(returnedDate, returnCondition);
             replacements.set(replacements.indexOf(open), closed);
             if (returnCondition != null) {
-                for (int index = 0; index < equipmentReplacements.size(); index++) {
-                    Equipment item = equipmentReplacements.get(index);
-                    if (item.getUuid().equals(uuid)) {
-                        equipmentReplacements.set(index, new Equipment(uuid, item.getName(), item.getCategory(),
-                                returnCondition, item.getNotes()));
-                        break;
-                    }
-                }
+                int index = equipmentReplacements.indexOf(item);
+                equipmentReplacements.set(index, new Equipment(uuid, item.getName(), item.getCategory(),
+                        returnCondition, item.getNotes()));
             }
         }
         candidate.getLoanStorage().setLoans(replacements);

@@ -151,9 +151,7 @@ public interface Model {
     void addLoan(Loan loan);
 
     /** Adds all loans together, leaving the model unchanged if any loan is invalid. */
-    default void addLoans(List<Loan> loans) {
-        throw new UnsupportedOperationException("Batch loans are unsupported by this model");
-    }
+    void addLoans(List<Loan> loans);
 
     /**
      * Returns the open loan for this equipment UUID, or an empty Optional if none exists.
@@ -174,9 +172,7 @@ public interface Model {
     void closeLoan(UUID equipmentUuid, LocalDate returnedDate);
 
     /** Closes the named loans together and applies the observed equipment condition when supplied. */
-    default void returnLoans(List<UUID> equipmentUuids, LocalDate returnedDate, Condition returnCondition) {
-        throw new UnsupportedOperationException("Batch returns are unsupported by this model");
-    }
+    void returnLoans(List<UUID> equipmentUuids, LocalDate returnedDate, Condition returnCondition);
 
     /**
      * Returns an unmodifiable live view of all loans, including closed history.

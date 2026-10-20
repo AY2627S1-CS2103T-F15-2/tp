@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.member.NusId;
 
 public class LoanTest {
@@ -68,6 +69,12 @@ public class LoanTest {
     }
 
     @Test
+    public void constructor_openLoanWithReturnCondition_rejectsInconsistentHistory() {
+        assertThrows(IllegalArgumentException.class, () -> new Loan(UUID_ONE, NUS_ID,
+                ASSIGNED_DATE, EXPECTED_DATE, null, Condition.GOOD, Condition.DAMAGED));
+    }
+
+    @Test
     public void withReturnedDate_returnsClosedCopyAndLeavesOriginalOpen() {
         Loan loan = new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE, null);
 
@@ -120,6 +127,23 @@ public class LoanTest {
         assertFalse(loan.equals(new Loan(UUID_ONE, NUS_ID,
                 ASSIGNED_DATE, EXPECTED_DATE, RETURNED_DATE)));
         assertEquals(loan.hashCode(), copy.hashCode());
+    }
+
+    @Test
+    public void equals_closedLoans_distinguishesReturnDateAndRecordedConditions() {
+        Loan loan = new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE,
+                RETURNED_DATE, Condition.GOOD, Condition.FAIR);
+        Loan copy = new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE,
+                RETURNED_DATE, Condition.GOOD, Condition.FAIR);
+
+        assertEquals(loan, copy);
+        assertEquals(loan.hashCode(), copy.hashCode());
+        assertFalse(loan.equals(new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE,
+                RETURNED_DATE.plusDays(1), Condition.GOOD, Condition.FAIR)));
+        assertFalse(loan.equals(new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE,
+                RETURNED_DATE, Condition.DAMAGED, Condition.FAIR)));
+        assertFalse(loan.equals(new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE,
+                RETURNED_DATE, Condition.GOOD, Condition.DAMAGED)));
     }
 
     @Test
