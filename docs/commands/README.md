@@ -2,14 +2,19 @@
 
 ## Integration status
 
-The ten MVP routes, `loans list` navigation and `member restore` dispatch to concrete parsers.
+The ten MVP routes, `loans list` navigation, `member edit` and `member restore` dispatch to concrete parsers.
 Command execution uses the
 LogicManager persistence boundary. Merged #93 integrates the real shell and #95 activates all ten routes.
 Current MVP completion evidence is in [MvpCompletion.md](../gui/MvpCompletion.md); #75 remains the final gate.
 
+Member editing extends the MVP through an identity-preserving model replacement API. Its parser,
+transactional behavior and shell-refresh contract are documented in [Edit member](member-edit.md).
+Member soft-delete and unlimited restoration are supported. Archival remains outside scope.
+
 | Command | Syntax | Reference |
 | --- | --- | --- |
 | member add | `member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL` | [Add member](member-add.md) |
+| member edit | `member edit nus/NUS_ID [name/NAME] [phone/PHONE] [email/EMAIL]` | [Edit member](member-edit.md) |
 | member restore | `member restore nus/NUS_ID` | [Restore member](member-restore.md) |
 | member delete | `member delete nus/NUS_ID` | [Delete member](member-delete.md) |
 | member view | `member view nus/NUS_ID` | [View member](member-view.md) |

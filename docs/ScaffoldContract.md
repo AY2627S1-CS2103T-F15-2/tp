@@ -164,4 +164,5 @@ The integrated foundation now implements milestone B; its existing tests cover r
 The member soft-delete branch supersedes earlier permanent-member-deletion behavior. A boolean
 `deleted` field retains the record indefinitely; missing legacy flags mean active, while explicit
 null and non-boolean values are rejected. `member restore` has no time limit. Details are in
-[the lifecycle contract](commands/member-restore.md). The separate member-edit branch remains independent.
+[the lifecycle contract](commands/member-restore.md). Member editing preserves lifecycle state and
+rejects deleted members until restoration.

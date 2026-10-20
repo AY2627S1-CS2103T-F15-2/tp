@@ -128,6 +128,11 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public void setMember(Member target, Member editedMember) {
+        addressBook.setMember(target, editedMember);
+    }
+
+    @Override
     public void deleteMember(Member member) {
         addressBook.removeMember(member);
     }

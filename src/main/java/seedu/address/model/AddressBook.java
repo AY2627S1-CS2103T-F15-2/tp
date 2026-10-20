@@ -226,6 +226,18 @@ public class AddressBook implements ReadOnlyAddressBook {
     }
 
     /**
+     * Replaces member details while preserving the identity used by all loan references.
+     */
+    public void setMember(Member target, Member editedMember) {
+        requireNonNull(target);
+        requireNonNull(editedMember);
+        if (members == null) {
+            throw new MemberNotFoundException();
+        }
+        members.setMember(target, editedMember);
+    }
+
+    /**
      * Soft-deletes a member by identity, preserving their details and closed loan history.
      * An open loan blocks deletion and leaves every collection unchanged.
      *

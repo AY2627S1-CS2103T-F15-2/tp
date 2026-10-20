@@ -35,9 +35,8 @@ selectable, with an italic, struck-through name and separate `(deleted)` suffix.
 same name treatment and show the restore command. Summaries distinguish active, deleted and
 displayed counts. Deleting retains selection; restoring opens the same identity's details.
 
-This branch starts from master and does not include the independent `codex/member-edit` changes.
-When integrating editing, retain the lifecycle flag and reject edits to deleted members until
-restoration. Member editing must not silently resurrect a record via its four-field constructor.
+Member editing is integrated and preserves the lifecycle flag. Editing a deleted member is rejected
+with restore guidance before any no-op check or save. An edit cannot silently restore a record.
 
 Keith's transfer integration must retain all members and their deletion flags in export, preview,
 confirmation, backups and reloads. Coordinate lifecycle-aware snapshot versioning: old/unversioned
