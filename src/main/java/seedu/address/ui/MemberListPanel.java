@@ -48,7 +48,9 @@ public class MemberListPanel extends UiPart<Region> {
     public void refresh() {
         Optional<NusId> selected = getSelection();
         rows.getItems().setAll(data.getMemberList().stream().sorted(LaplaceSortOrder.MEMBERS).toList());
-        countLabel.setText(rows.getItems().size() + " active");
+        long deleted = rows.getItems().stream().filter(Member::isDeleted).count();
+        countLabel.setText((rows.getItems().size() - deleted) + " active"
+                + (deleted == 0 ? "" : " · " + deleted + " deleted"));
         Label emptyState = new Label("No members yet. Use member add to get started.");
         emptyState.setWrapText(true);
         emptyState.setMaxWidth(Double.MAX_VALUE);

@@ -17,3 +17,23 @@
 .member-card .member-holdings {
     -fx-text-fill: #546E7A;
 }
+
+.member-card.deleted-member {
+    -fx-background-color: #ECEFF1;
+    -fx-border-color: #B0BEC5;
+    -fx-border-width: 1;
+}
+
+.member-card.deleted-member .label {
+    -fx-text-fill: #455A64;
+}
+
+.list-cell:selected .member-card.deleted-member {
+    -fx-background-color: #DCE6ED;
+    -fx-border-color: #1877C9;
+    -fx-border-width: 2;
+}
+
+.laplace-root .list-cell:filled:selected .member-card.deleted-member .label {
+    -fx-text-fill: #455A64;
+}
