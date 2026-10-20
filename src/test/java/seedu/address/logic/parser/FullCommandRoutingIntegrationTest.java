@@ -34,6 +34,7 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
+import seedu.address.model.query.DirectoryQuery;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -77,8 +78,8 @@ public class FullCommandRoutingIntegrationTest {
         assertNotEquals(firstItem, secondItem);
         assertEquals(2, model.getMemberList().size());
         assertEquals(2, model.getEquipmentList().size());
-        execute("member list", DisplayRequest.members());
-        execute("equipment list", DisplayRequest.equipment());
+        execute("member list", DisplayRequest.members(DirectoryQuery.all()));
+        execute("equipment list", DisplayRequest.equipment(DirectoryQuery.all()));
         execute("member view nus/a0000001x", DisplayRequest.memberDetails(FIRST));
         execute("equipment view uuid/" + firstItem, DisplayRequest.equipmentDetails(firstItem));
         execute("loans\tadd\texpected/" + expected + " nus/ a0000001x assigned/ " + assigned

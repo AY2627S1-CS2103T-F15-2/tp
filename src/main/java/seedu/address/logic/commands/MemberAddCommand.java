@@ -7,6 +7,7 @@ import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.exceptions.DuplicateMemberException;
+import seedu.address.model.query.DuplicateWarnings;
 
 /**
  * Adds a member identified by a normalized NUS ID.
@@ -37,12 +38,13 @@ public class MemberAddCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
+        String warning = DuplicateWarnings.member(model.getAddressBook(), toAdd);
         try {
             model.addMember(toAdd);
         } catch (DuplicateMemberException e) {
             throw new CommandException(String.format(MESSAGE_DUPLICATE_MEMBER, toAdd.getNusId()), e);
         }
-        return new CommandResult(String.format(MESSAGE_SUCCESS, toAdd.getName(), toAdd.getNusId()),
+        return new CommandResult(String.format(MESSAGE_SUCCESS, toAdd.getName(), toAdd.getNusId()) + warning,
                 DisplayRequest.memberDetails(toAdd.getNusId()));
     }
 

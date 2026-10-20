@@ -24,7 +24,6 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import seedu.address.commons.core.GuiSettings;
-import seedu.address.commons.util.LaplaceSortOrder;
 import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DisplayRequest;
@@ -179,9 +178,9 @@ public class MainWindow extends UiPart<Stage> {
     /** Rebuilds all derived views, retaining identities or choosing the next sorted row after deletion. */
     private void refreshViews() {
         refreshQueued = false;
-        List<NusId> newMembers = data.getMemberList().stream().sorted(LaplaceSortOrder.MEMBERS)
+        List<NusId> newMembers = members.getDisplayedItems().stream()
                 .map(Member::getNusId).toList();
-        List<UUID> newEquipment = data.getEquipmentList().stream().sorted(LaplaceSortOrder.EQUIPMENT)
+        List<UUID> newEquipment = equipment.getDisplayedItems().stream()
                 .map(Equipment::getUuid).toList();
         Optional<NusId> memberSelection = recoverSelection(members.getSelection(), memberOrder, newMembers);
         Optional<UUID> equipmentSelection = recoverSelection(equipment.getSelection(), equipmentOrder, newEquipment);
@@ -196,10 +195,12 @@ public class MainWindow extends UiPart<Stage> {
         memberDetails.refresh();
         equipmentDetails.refresh();
         if (currentDisplay.getType() == DisplayRequest.Type.MEMBER_DETAILS
-                && !newMembers.contains(currentDisplay.getMemberNusId().orElseThrow())) {
+                && data.getMemberList().stream().noneMatch(member ->
+                        member.getNusId().equals(currentDisplay.getMemberNusId().orElseThrow()))) {
             display(DisplayRequest.members());
         } else if (currentDisplay.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS
-                && !newEquipment.contains(currentDisplay.getEquipmentUuid().orElseThrow())) {
+                && data.getEquipmentList().stream().noneMatch(item ->
+                        item.getUuid().equals(currentDisplay.getEquipmentUuid().orElseThrow()))) {
             display(DisplayRequest.equipment());
         }
     }
@@ -227,6 +228,19 @@ public class MainWindow extends UiPart<Stage> {
             return;
         }
         currentDisplay = request;
+        if (request.getType() == DisplayRequest.Type.MEMBERS) {
+            request.getQuery().ifPresent(query -> {
+                members.setQuery(query);
+                memberSummary.setQuery(query);
+            });
+            refreshViews();
+        } else if (request.getType() == DisplayRequest.Type.EQUIPMENT) {
+            request.getQuery().ifPresent(query -> {
+                equipment.setQuery(query);
+                equipmentSummary.setQuery(query);
+            });
+            refreshViews();
+        }
         boolean memberView = request.getType() == DisplayRequest.Type.MEMBERS
                 || request.getType() == DisplayRequest.Type.MEMBER_DETAILS;
         boolean equipmentView = request.getType() == DisplayRequest.Type.EQUIPMENT

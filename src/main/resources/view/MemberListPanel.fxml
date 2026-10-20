@@ -3,15 +3,14 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
-<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
 <VBox xmlns:fx="http://javafx.com/fxml/1" minWidth="0" minHeight="0" prefWidth="300"
       styleClass="laplace-surface,directory-list" stylesheets="@DirectoryList.css">
-    <HBox spacing="8" alignment="CENTER_LEFT" styleClass="directory-list-header">
+    <VBox spacing="3" styleClass="directory-list-header">
         <Label text="Members" styleClass="directory-list-title" />
         <Label fx:id="countLabel" styleClass="laplace-muted" wrapText="true" minWidth="0" />
-    </HBox>
+    </VBox>
     <ListView fx:id="rows" minWidth="0" minHeight="0" VBox.vgrow="ALWAYS" />
     <Label text="Select a member to view full details. Press Enter or Space to open."
            styleClass="laplace-muted,directory-selection-hint" wrapText="true" minWidth="0"

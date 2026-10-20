@@ -6,12 +6,14 @@
 
 # Laplace User Guide
 
+Week 10: [search, filters, selectable sorting, inventory planning and duplicate warnings](commands/search-and-planning.md).
+
 Laplace helps a CCA EXCO member manage **members, equipment and equipment loans** on one computer.
 Type commands to register records, find an exact member or item, issue equipment, record returns and
 remove erroneous records. Lists and details show who holds each item and what each member holds.
 
-This guide describes the **MVP release plus member editing, soft-delete, restoration and `loans list` navigation**:
-thirteen member, equipment and loan commands in total. Use it with the matching release supplied by the team;
+This guide describes the **MVP commands, `loans list`, member editing/restoration and Week 10 search commands**:
+fifteen member, equipment and loan commands in total. Use it with the matching release supplied by the team;
 earlier builds may not support every behavior described here. Laplace is a local, single-user application.
 
 <page-nav-print />

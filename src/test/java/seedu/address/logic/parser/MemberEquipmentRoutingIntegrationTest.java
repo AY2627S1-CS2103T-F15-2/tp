@@ -30,6 +30,7 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.member.NusId;
+import seedu.address.model.query.DirectoryQuery;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -72,8 +73,8 @@ public class MemberEquipmentRoutingIntegrationTest {
         assertEquals(4, storage.saves);
         assertReloadMatches();
         AddressBook beforeReads = new AddressBook(model.getAddressBook());
-        assertDisplay("member list", DisplayRequest.members());
-        assertDisplay("equipment list", DisplayRequest.equipment());
+        assertDisplay("member list", DisplayRequest.members(DirectoryQuery.all()));
+        assertDisplay("equipment list", DisplayRequest.equipment(DirectoryQuery.all()));
         assertDisplay("member view\tnus/a0000001x", DisplayRequest.memberDetails(FIRST_MEMBER));
         assertDisplay("equipment view uuid/" + first, DisplayRequest.equipmentDetails(first));
         assertEquals(beforeReads, model.getAddressBook());
