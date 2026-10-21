@@ -129,9 +129,9 @@ they are omitted from this view for readability.
 `Member` is immutable and contains its NUS ID, name, phone, email and a `deleted` boolean. The existing
 four-field constructor creates an active member; the five-field constructor accepts deletion state.
 Equality and hashing include all five fields, while `isSameMember` compares only the NUS ID.
-The diagram shows object-valued fields once, as navigable association lines with private role names
-and multiplicities. The primitive `deleted` flag appears in the attributes compartment. Interface
-classifiers use the `<<interface>>` keyword and dashed realization lines.
+The diagram shows object-valued fields once, as navigable association lines with multiplicities.
+Role labels are omitted for readability. The primitive `deleted` flag appears in the attributes
+compartment. Interface classifiers use the `<<interface>>` keyword and dashed realization lines.
 
 Editing replaces supplied details without changing the NUS ID or deletion state. Deleted members must
 be restored before editing. Soft-delete and restoration create replacements through `setDeleted`,

@@ -50,12 +50,12 @@ AddressBook ..|> ReadOnlyAddressBook
 UserPrefs ..|> ReadOnlyUserPrefs
 Model ..> ReadOnlyAddressBook
 Model ..> ReadOnlyUserPrefs
-AddressBook --> "0..1\n-members" UniqueMemberList
+AddressBook --> "0..1" UniqueMemberList
 UniqueMemberList --> "0..*" Member
-Member --> "1\n-nusId" NusId
-Member --> "1\n-name" Name
-Member --> "1\n-phone" Phone
-Member --> "1\n-email" Email
+Member --> "1" NusId
+Member --> "1" Name
+Member --> "1" Phone
+Member --> "1" Email
 
 note right of UniqueMemberList
   Includes active and deleted members.
@@ -65,7 +65,7 @@ note right of UniqueMemberList
 end note
 note bottom of Member
   Member instances are immutable.
-  The four named association ends are read-only.
+  The four value references are read-only.
   Four-field constructor defaults deleted to false.
   Five-field constructor accepts deletion state.
   Equality and hashing include deleted;
