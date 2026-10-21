@@ -1,60 +1,61 @@
 @startuml
 !include style.puml
-skinparam arrowThickness 1.1
 skinparam arrowColor UI_COLOR_T4
 skinparam classBackgroundColor UI_COLOR
+hide empty members
 
-package UI <<Rectangle>>{
-Class "<<interface>>\nUi" as Ui
-Class "{abstract}\nUiPart" as UiPart
-Class UiManager
-Class MainWindow
-Class HelpWindow
-Class ResultDisplay
-Class PersonListPanel
-Class PersonCard
-Class StatusBarFooter
-Class CommandBox
+package "UI (supported views)" {
+  interface Ui
+  class UiManager
+  class MainWindow
+  class CommandBox
+  class ResultDisplay
+  class MemberListPanel
+  class MemberDetailsPanel
+  class EquipmentListPanel
+  class EquipmentGroupPanel
+  class EquipmentDetailsPanel
+  class LoanPanel
+  class HelpWindow
+  class CommandPreview
 }
+interface Logic
+interface ReadOnlyAddressBook
+class DisplayRequest <<immutable>>
+class "InventoryGroups.Group" as Group <<derived>>
+class GuiSettings <<immutable>>
 
-package Model <<Rectangle>> {
-Class HiddenModel #FFFFFF
-}
+UiManager ..|> Ui
+UiManager --> "1" MainWindow
+MainWindow *--> "1" CommandBox
+MainWindow *--> "1" ResultDisplay
+MainWindow *--> "1" MemberListPanel
+MainWindow *--> "1" MemberDetailsPanel
+MainWindow *--> "1" EquipmentListPanel
+MainWindow *--> "1" EquipmentGroupPanel
+MainWindow *--> "1" LoanPanel
+MainWindow *--> "1" HelpWindow
+EquipmentGroupPanel *--> "1" EquipmentDetailsPanel
+EquipmentDetailsPanel ..> CommandPreview
+MemberDetailsPanel ..> CommandPreview
+HelpWindow ..> CommandPreview
+EquipmentListPanel ..> Group
+MainWindow --> Logic
+MainWindow --> ReadOnlyAddressBook
+MainWindow ..> DisplayRequest
+MainWindow ..> GuiSettings
 
-package Logic <<Rectangle>> {
-Class HiddenLogic #FFFFFF
-}
-
-Class HiddenOutside #FFFFFF
-HiddenOutside ..> Ui
-
-UiManager .left.|> Ui
-UiManager -down-> "1" MainWindow
-MainWindow *-down->  "1" CommandBox
-MainWindow *-down-> "1" ResultDisplay
-MainWindow *-down-> "1" PersonListPanel
-MainWindow *-down-> "1" StatusBarFooter
-MainWindow --> "0..1" HelpWindow
-
-PersonListPanel -down-> "*" PersonCard
-
-MainWindow -left-|> UiPart
-
-ResultDisplay --|> UiPart
-CommandBox --|> UiPart
-PersonListPanel --|> UiPart
-PersonCard --|> UiPart
-StatusBarFooter --|> UiPart
-HelpWindow --|> UiPart
-
-PersonCard ..> Model
-UiManager -right-> Logic
-MainWindow -left-> Logic
-
-PersonListPanel -[hidden]left- HelpWindow
-HelpWindow -[hidden]left- CommandBox
-CommandBox -[hidden]left- ResultDisplay
-ResultDisplay -[hidden]left- StatusBarFooter
-
-MainWindow -[hidden]-|> UiPart
+note bottom of EquipmentGroupPanel
+  Derived group + physical-unit table.
+  Explicit unit selection retains its UUID.
+end note
+note bottom of CommandPreview
+  Copy or prepare only.
+  Execution stays in CommandBox → MainWindow → Logic.
+end note
+legend bottom
+  Focused ownership and dependency view.
+  UiPart inheritance, directory summaries, footer and
+  internal legacy compatibility panel are omitted.
+endlegend
 @enduml

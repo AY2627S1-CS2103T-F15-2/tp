@@ -31,6 +31,9 @@ final class DetailsPanelContent {
         return label;
     }
 
+    /**
+     * Adds a wrapping field with readable state labels and exact-value copying where appropriate.
+     */
     static void field(VBox parent, String id, String caption, Object value) {
         GridPane field = new GridPane();
         field.setHgap(12);

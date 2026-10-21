@@ -77,6 +77,9 @@ public class LoanPanel extends UiPart<Region> {
         refreshSection(openLoans, open, "No open loans. Available equipment is ready to assign.");
     }
 
+    /**
+     * Replaces displayed loans with the current snapshot or a useful empty state.
+     */
     private void refreshSection(VBox section, List<Loan> loans, String emptyMessage) {
         section.getChildren().clear();
         if (loans.isEmpty()) {
@@ -86,6 +89,9 @@ public class LoanPanel extends UiPart<Region> {
         }
     }
 
+    /**
+     * Builds a responsive loan row with date-derived urgency and exact-identity actions.
+     */
     private VBox createLoanRow(Loan loan) {
         Optional<Equipment> equipment = data.getEquipmentList().stream()
                 .filter(item -> item.getUuid().equals(loan.getEquipmentUuid())).findFirst();

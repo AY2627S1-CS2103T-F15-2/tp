@@ -92,6 +92,9 @@ public class CommandBox extends UiPart<Region> {
         commandTextField.positionCaret(command.length());
     }
 
+    /**
+     * Handles explicit completion and session history without executing or silently rewriting input.
+     */
     private void handleKeyPressed(KeyEvent event) {
         if (event.isControlDown() && event.getCode() == KeyCode.SPACE) {
             completions.getItems().clear();

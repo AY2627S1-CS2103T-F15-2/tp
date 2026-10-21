@@ -129,6 +129,9 @@ public class EquipmentListPanel extends UiPart<Region> {
                 });
     }
 
+    /**
+     * Describes the group and availability within the matching result scope.
+     */
     private Region createCard(InventoryGroups.Group group) {
         Label name = new Label(group.name());
         name.getStyleClass().add("details-section-title");

@@ -76,16 +76,34 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+`MainWindow` owns navigation, the command pipeline and coalesced model refresh subscriptions. Its
+member/equipment directories, summaries, details and loan panel are read-only views. Most panels extend
+`UiPart` and load FXML; `EquipmentGroupPanel` and `CommandPreview` compose JavaFX controls directly.
+The inherited person panel remains an internal compatibility component, outside the supported navigation.
 
-The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
+`DisplayRequest` carries typed navigation intent. Directory requests with no query preserve criteria;
+explicit list commands reset them. `InventoryGroups.Group` derives normalized category/name groups and
+keeps separate retained and matching unit lists. Groups are never persisted. Selecting a group does not
+choose an arbitrary UUID; physical-unit selection routes `equipment view uuid/...` through the same
+pipeline as typed input. Refreshes preserve exact identities and recompute group membership after edits,
+loans, deletion and restoration. The group panel shares one scrolling surface with unit details.
 
-The `UI` component,
+`CommandPreview` copies exact plain text or prepares `CommandBox`; neither action executes a mutation.
+The command catalog supplies examples and explicit completion. Input history is bounded to 100 session
+entries. `ResultDisplay` keeps full feedback behind a compact, expandable view. Related-record links use
+identity-based commands. `LoanPanel` derives urgency from expected return dates and an injectable clock;
+its return shortcut prepares a command for explicit review and submission.
 
-* executes user commands using the `Logic` component.
-* listens for changes to `Model` data so that the UI can be updated with the modified data.
-* keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
-* depends on some classes in the `Model` component because it displays `Person` objects from the model.
+`LaplaceTheme.css` defines shared looked-up colors; component styles refer to these tokens. A `dark` style
+class changes the palette for both windows, including table selection, feedback and command previews.
+`ModeCommand` updates only `GuiSettings.darkMode` and returns an unchanged display request. Its
+`isReadOnly()` flag means no **domain-record** persistence; preferences are saved by the existing shutdown
+path. Missing `darkMode` in earlier preference JSON defaults to false. Window geometry and appearance are
+preserved together; equipment/member/loan schemas are unchanged.
+
+Tests exercise actual FXML/CSS on the shared JavaFX thread, command/storage routing, identity preservation,
+filter scope, date boundaries, clipboard text, theme changes and preference compatibility. UI snapshots
+are written under `build/reports/laplace` for visual review. No new libraries or font assets are required.
 
 ### Logic component
 
@@ -708,7 +726,7 @@ testers are expected to do more *exploratory* testing.
     1. Download the JAR file and copy it into an empty folder.
 
     1. Double-click the JAR file.<br>
-       Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+       Expected: The GUI opens in light mode with sample members, grouped equipment and open loans.
 
 1. Saving window preferences
 
@@ -718,6 +736,29 @@ testers are expected to do more *exploratory* testing.
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
+
+### Grouped equipment, command assistance and appearance
+
+Use a separate empty writable JAR folder. Keep any real dataset untouched.
+
+1. Run `equipment add name/UI Camera category/Photo condition/GOOD count/4`. Expect one group containing
+   four distinct UUIDs. Expand/copy Last result to capture all four. Open the group and select one unit;
+   Copy UUID must copy its complete UUID. Register another matching unit; expect five units in the same group.
+2. Edit one UUID with `equipment edit uuid/UUID condition/DAMAGED`, then search with
+   `equipment search availability/available`. The group must show matching versus retained counts;
+   Show all units reveals the damaged sibling. Directly view that UUID and check exact selection.
+3. Rename the damaged unit, delete it, then restore it with the documented equipment commands. Expect
+   regrouping without UUID changes. Check deleted records never inflate available counts.
+4. Open a member's details, copy contact fields, and use a related equipment link. Switch tabs and use
+   Back to results. The previous filter persists until Reset search or a list command.
+5. Use a command preview. Expect only input preparation; review and press Enter. Test history up/down
+   with an unfinished draft, Ctrl+Space completion, Escape dismissal and keyboard focus navigation.
+6. Open Loans. Verify due/overdue labels against the computer's local date and the stored due date.
+   Prepare a return; verify the UUID/date and that the loan remains open until submission.
+7. Run `mode dark`, open Help, then switch back via Menu. Repeat list/table selection, previews and errors
+   in each appearance. Exit normally and relaunch; the selected mode persists. `mode sepia` is rejected.
+8. Review at 1920×1080 with 100%/125% scaling and 1280×720 with 150% scaling on supported systems.
+   Check wrapping, scrolling, visible focus and contrast. Logical-size snapshots alone do not verify OS scaling.
 
 ### Rejection of retired commands
 
