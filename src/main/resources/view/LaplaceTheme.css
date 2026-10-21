@@ -288,3 +288,11 @@
 .laplace-neutral .text-area {
     -fx-text-fill: #37474F;
 }
+
+.group-panel {
+    -fx-padding: 10;
+}
+
+.laplace-root .table-view {
+    -fx-font-size: 14px;
+}

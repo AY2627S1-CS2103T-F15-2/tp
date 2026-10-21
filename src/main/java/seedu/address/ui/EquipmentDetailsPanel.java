@@ -51,6 +51,13 @@ public class EquipmentDetailsPanel extends UiPart<Region> {
         refresh();
     }
 
+    /** Transfers the detail body to a parent that supplies one shared scrolling surface. */
+    public Region detachContent() {
+        ScrollPane scroll = (ScrollPane) getRoot();
+        scroll.setContent(null);
+        return content;
+    }
+
     /** Selects an identity and resolves its current data. */
     public void showEquipment(UUID uuid) {
         requireNonNull(uuid);

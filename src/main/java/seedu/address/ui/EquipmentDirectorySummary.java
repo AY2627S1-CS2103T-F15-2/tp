@@ -67,6 +67,11 @@ public class EquipmentDirectorySummary extends UiPart<Region> {
         this.query = requireNonNull(query);
     }
 
+    /** Describes a selected group without implying a physical-unit selection. */
+    public void showGroupSelection(InventoryGroups.Key key) {
+        selection.setText("Group: " + key.name() + " · " + key.category());
+    }
+
     /** Refreshes counts, derived availability and selection; no collection writes or listeners are installed. */
     public void refresh(Optional<UUID> selected) {
         requireNonNull(selected);

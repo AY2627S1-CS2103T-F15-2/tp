@@ -9,6 +9,7 @@ import java.util.UUID;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.member.NusId;
 import seedu.address.model.query.DirectoryQuery;
+import seedu.address.model.query.InventoryGroups;
 
 /**
  * Immutable navigation intent, independent of JavaFX and persisted application data.
@@ -19,19 +20,26 @@ import seedu.address.model.query.DirectoryQuery;
 public final class DisplayRequest {
     /** Supported display targets. Help and exit take precedence over navigation. */
     public enum Type {
-        UNCHANGED, LEGACY_PERSONS, MEMBERS, MEMBER_DETAILS, EQUIPMENT, EQUIPMENT_DETAILS, LOANS
+        UNCHANGED, LEGACY_PERSONS, MEMBERS, MEMBER_DETAILS, EQUIPMENT, EQUIPMENT_DETAILS, EQUIPMENT_GROUP, LOANS
     }
 
     private final Type type;
     private final NusId memberNusId;
     private final UUID equipmentUuid;
     private final DirectoryQuery query;
+    private final InventoryGroups.Key equipmentGroup;
 
     private DisplayRequest(Type type, NusId memberNusId, UUID equipmentUuid) {
         this(type, memberNusId, equipmentUuid, null);
     }
 
     private DisplayRequest(Type type, NusId memberNusId, UUID equipmentUuid, DirectoryQuery query) {
+        this(type, memberNusId, equipmentUuid, query, null);
+    }
+
+    private DisplayRequest(Type type, NusId memberNusId, UUID equipmentUuid, DirectoryQuery query,
+            InventoryGroups.Key equipmentGroup) {
+        this.equipmentGroup = equipmentGroup;
         this.type = type;
         this.memberNusId = memberNusId;
         this.equipmentUuid = equipmentUuid;
@@ -74,6 +82,15 @@ public final class DisplayRequest {
         return new DisplayRequest(Type.EQUIPMENT_DETAILS, null, requireNonNull(uuid));
     }
 
+    /** Opens a derived group without selecting an arbitrary physical unit. */
+    public static DisplayRequest equipmentGroup(InventoryGroups.Key group) {
+        return new DisplayRequest(Type.EQUIPMENT_GROUP, null, null, null, requireNonNull(group));
+    }
+
+    public Optional<InventoryGroups.Key> getEquipmentGroup() {
+        return Optional.ofNullable(equipmentGroup);
+    }
+
     public static DisplayRequest loans() {
         return new DisplayRequest(Type.LOANS, null, null);
     }
@@ -101,12 +118,13 @@ public final class DisplayRequest {
         return type == otherRequest.type
                 && Objects.equals(memberNusId, otherRequest.memberNusId)
                 && Objects.equals(equipmentUuid, otherRequest.equipmentUuid)
-                && Objects.equals(query, otherRequest.query);
+                && Objects.equals(query, otherRequest.query)
+                && Objects.equals(equipmentGroup, otherRequest.equipmentGroup);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, memberNusId, equipmentUuid, query);
+        return Objects.hash(type, memberNusId, equipmentUuid, query, equipmentGroup);
     }
 
     @Override

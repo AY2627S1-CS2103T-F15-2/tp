@@ -21,135 +21,141 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.equipment.exceptions.EquipmentNotFoundException;
-import seedu.address.model.loan.Loan;
-import seedu.address.model.member.Member;
 import seedu.address.model.query.DirectoryQuery;
+import seedu.address.model.query.InventoryGroups;
 
-/** Sorted read-only equipment rows. Only explicit user activation invokes the callback. */
+/**
+ * Groups equipment for browsing while preserving physical-unit identity for explicit navigation.
+ */
 public class EquipmentListPanel extends UiPart<Region> {
-
     private final ReadOnlyAddressBook data;
-    private final Consumer<UUID> onSelect;
+    private final Consumer<InventoryGroups.Key> onSelect;
     private final Function<UUID, Availability> availabilityLookup;
     private DirectoryQuery query = DirectoryQuery.all();
+    private UUID selectedUuid;
 
     @FXML
     private Label countLabel;
     @FXML
-    private ListView<Equipment> rows;
+    private ListView<InventoryGroups.Group> rows;
 
-    /** Creates the list from non-null dependencies; the shell owns listeners and initial selection. */
-    public EquipmentListPanel(ReadOnlyAddressBook data,
-            Function<UUID, Availability> availabilityLookup, Consumer<UUID> onSelect) {
+    /** Creates a grouped directory; only explicit activation invokes the navigation callback. */
+    public EquipmentListPanel(ReadOnlyAddressBook data, Function<UUID, Availability> availabilityLookup,
+            Consumer<InventoryGroups.Key> onSelect) {
         super("EquipmentListPanel.fxml");
         this.data = requireNonNull(data);
-        this.onSelect = requireNonNull(onSelect);
         this.availabilityLookup = requireNonNull(availabilityLookup);
+        this.onSelect = requireNonNull(onSelect);
         rows.setCellFactory(unused -> new DirectoryCell());
+        rows.getSelectionModel().selectedItemProperty().addListener((unused, previous, current) -> selectedUuid = null);
         rows.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER || event.getCode() == KeyCode.SPACE) {
-                getSelection().ifPresent(this.onSelect);
+                getSelectedGroup().ifPresent(this.onSelect);
                 event.consume();
             }
         });
         refresh();
     }
 
-    /** Sets transient criteria; the parent refreshes once after coordinating both directory components. */
     public void setQuery(DirectoryQuery query) {
         this.query = requireNonNull(query);
     }
 
-    /** Returns the active transient directory criteria. */
     public DirectoryQuery getQuery() {
         return query;
     }
 
-    /** Returns a fresh sorted query snapshot for identity-preserving shell selection recovery. */
+    /** Returns individual query matches for identity recovery, independently of grouped rows. */
     public List<Equipment> getDisplayedItems() {
         return query.equipment(data, availabilityLookup);
     }
 
-    /** Rebuilds real card snapshots, preserving an existing identity without invoking the callback. */
+    /** Rebuilds derived groups while retaining group selection and any explicitly selected unit. */
     public void refresh() {
-        Optional<UUID> selected = getSelection();
-        rows.getItems().setAll(getDisplayedItems());
-        countLabel.setText(query.equals(DirectoryQuery.all()) ? rows.getItems().size() + " items"
-                : rows.getItems().size() + " of " + data.getEquipmentList().size() + " shown");
-        Label emptyState = new Label(data.getEquipmentList().isEmpty()
+        UUID unit = selectedUuid;
+        Optional<InventoryGroups.Key> selected = getSelectedGroup();
+        List<Equipment> matching = getDisplayedItems();
+        rows.getItems().setAll(InventoryGroups.group(data, matching));
+        countLabel.setText(rows.getItems().size() + " groups · " + matching.size() + " matching units / "
+                + data.getEquipmentList().size() + " retained");
+        Label empty = new Label(data.getEquipmentList().isEmpty()
                 ? "No equipment yet. Use equipment add to get started."
-                : "No matching equipment. Use equipment list to reset the search.");
-        emptyState.setWrapText(true);
-        emptyState.setMaxWidth(Double.MAX_VALUE);
-        emptyState.setMinWidth(0);
-        rows.setPlaceholder(emptyState);
-        rows.refresh();
-        select(selected);
+                : "No matching equipment. Reset search to show all retained units.");
+        empty.setWrapText(true);
+        rows.setPlaceholder(empty);
+        selected.ifPresent(this::selectGroup);
+        selectedUuid = unit;
     }
 
-    /** Returns the selected identity, if any. */
     public Optional<UUID> getSelection() {
-        return Optional.ofNullable(rows.getSelectionModel().getSelectedItem()).map(Equipment::getUuid);
+        return Optional.ofNullable(selectedUuid);
     }
 
-    /** Selects an existing identity or clears an absent selection, without invoking the callback. */
+    public Optional<InventoryGroups.Key> getSelectedGroup() {
+        return Optional.ofNullable(rows.getSelectionModel().getSelectedItem()).map(InventoryGroups.Group::key);
+    }
+
+    /** Selects a group without choosing a unit or invoking a command. */
+    public void selectGroup(InventoryGroups.Key key) {
+        rows.getItems().stream().filter(group -> group.key().equals(key)).findFirst()
+                .ifPresent(group -> rows.getSelectionModel().select(group));
+    }
+
+    /** Retains the exact UUID even when its group is outside the current directory filter. */
     public void select(Optional<UUID> selected) {
         requireNonNull(selected);
         if (getSelection().equals(selected)) {
             return;
         }
         rows.getSelectionModel().clearSelection();
-        selected.filter(id -> data.getEquipmentList().stream().anyMatch(item -> item.getUuid().equals(id)))
-                .flatMap(id -> rows.getItems().stream()
-                .filter(item -> item.getUuid().equals(id)).findFirst())
-                .ifPresent(item -> {
-                    rows.getSelectionModel().select(item);
-                    rows.scrollTo(item);
+        selectedUuid = null;
+        selected.flatMap(id -> data.getEquipmentList().stream().filter(unit -> unit.getUuid().equals(id)).findFirst())
+                .ifPresent(unit -> {
+                    selectGroup(InventoryGroups.keyOf(unit));
+                    selectedUuid = unit.getUuid();
                 });
     }
 
-    private Region createCard(Equipment equipment) {
-        Availability availability;
+    private Region createCard(InventoryGroups.Group group) {
+        Label name = new Label(group.name());
+        name.getStyleClass().add("details-section-title");
+        Label category = new Label(group.category());
+        category.getStyleClass().add("laplace-muted");
+        Label count = new Label(group.matching().size() + " matching / " + group.units().size() + " retained units");
+        Label availability = new Label();
         try {
-            availability = requireNonNull(availabilityLookup.apply(equipment.getUuid()));
-        } catch (EquipmentNotFoundException e) {
-            return inconsistentRow(equipment, "Availability could not be determined.");
+            long available = group.matching().stream().filter(unit -> !unit.isDeleted())
+                    .filter(unit -> availabilityLookup.apply(unit.getUuid()) == Availability.AVAILABLE).count();
+            long deleted = group.matching().stream().filter(Equipment::isDeleted).count();
+            availability.setText(available + " available in results"
+                    + (deleted == 0 ? "" : " · " + deleted + " deleted"));
+        } catch (EquipmentNotFoundException exception) {
+            availability.setText("Availability could not be determined.");
         }
-        Optional<Loan> loan = data.getLoanList().stream()
-                .filter(value -> value.isOpen() && value.getEquipmentUuid().equals(equipment.getUuid())).findFirst();
-        if (loan.isPresent() && availability != Availability.ASSIGNED) {
-            return inconsistentRow(equipment, "Open loan conflicts with derived availability.");
+        VBox card = new VBox(5, name, category, count, availability);
+        card.getStyleClass().addAll("laplace-row", "equipment-group-card");
+        for (Label label : List.of(name, category, count, availability)) {
+            label.setWrapText(true);
+            label.setMinWidth(0);
         }
-        Optional<Member> holder = loan.flatMap(value -> data.getMemberList().stream()
-                .filter(member -> member.getNusId().equals(value.getMemberNusId())).findFirst());
-        return new EquipmentCard(equipment, availability, holder).getRoot();
+        return card;
     }
 
-    private Region inconsistentRow(Equipment equipment, String message) {
-        Label details = new Label(equipment.getName() + "\nUUID: " + equipment.getUuid() + "\n" + message);
-        details.setWrapText(true);
-        details.setMinWidth(0);
-        VBox row = new VBox(details);
-        row.getStyleClass().addAll("laplace-row", "laplace-error", "equipment-inconsistent-row");
-        return row;
-    }
-
-    /** Reusable cells let the parent ListView own the selected-row style. */
-    private class DirectoryCell extends ListCell<Equipment> {
+    private class DirectoryCell extends ListCell<InventoryGroups.Group> {
         DirectoryCell() {
             setPrefWidth(0);
             setOnMouseClicked(event -> {
                 if (!isEmpty() && getItem() != null && event.getButton() == MouseButton.PRIMARY
                         && event.getClickCount() == 1) {
                     rows.getSelectionModel().select(getItem());
-                    onSelect.accept(getItem().getUuid());
+                    onSelect.accept(getItem().key());
                     event.consume();
                 }
             });
         }
 
         @Override
-        protected void updateItem(Equipment item, boolean empty) {
+        protected void updateItem(InventoryGroups.Group item, boolean empty) {
             super.updateItem(item, empty);
             setText(null);
             if (empty || item == null) {

@@ -67,7 +67,7 @@ public class MainWindow extends UiPart<Stage> {
     private MemberDirectorySummary memberSummary;
     private EquipmentDirectorySummary equipmentSummary;
     private MemberDetailsPanel memberDetails;
-    private EquipmentDetailsPanel equipmentDetails;
+    private EquipmentGroupPanel equipmentDetails;
     private LoanPanel loans;
     private CommandBox commandBox;
     private ResultDisplay resultDisplay;
@@ -138,13 +138,14 @@ public class MainWindow extends UiPart<Stage> {
         personListPanel.getRoot().getStylesheets().add(getClass().getResource("/view/DarkTheme.css").toExternalForm());
         members = new MemberListPanel(data, id -> activate("member view nus/" + id.value));
         equipment = new EquipmentListPanel(data, logic::getAvailability,
-                id -> activate("equipment view uuid/" + id));
+                key -> display(DisplayRequest.equipmentGroup(key)));
         memberSummary = new MemberDirectorySummary(data);
         equipmentSummary = new EquipmentDirectorySummary(data, logic::getAvailability);
         memberDetails = new MemberDetailsPanel(data, logic::getAvailability,
                 command -> commandBox.prepare(command), id -> activate("equipment view uuid/" + id));
-        equipmentDetails = new EquipmentDetailsPanel(data, logic::getAvailability,
-                command -> commandBox.prepare(command), id -> activate("member view nus/" + id));
+        equipmentDetails = new EquipmentGroupPanel(data, logic::getAvailability,
+                command -> commandBox.prepare(command), id -> activate("member view nus/" + id),
+                id -> activate("equipment view uuid/" + id));
         loans = new LoanPanel(data, id -> activate("equipment view uuid/" + id),
                 id -> activate("member view nus/" + id.value));
         resultDisplay = new ResultDisplay();
@@ -192,11 +193,17 @@ public class MainWindow extends UiPart<Stage> {
         List<UUID> newEquipment = equipment.getDisplayedItems().stream()
                 .map(Equipment::getUuid).toList();
         Optional<NusId> memberSelection = recoverSelection(members.getSelection(), memberOrder, newMembers);
-        Optional<UUID> equipmentSelection = recoverSelection(equipment.getSelection(), equipmentOrder, newEquipment);
+        Optional<UUID> equipmentSelection = currentDisplay.getEquipmentUuid().filter(id -> data.getEquipmentList()
+                .stream().anyMatch(unit -> unit.getUuid().equals(id)));
+        if (equipmentSelection.isEmpty()) {
+            equipmentSelection = recoverSelection(equipment.getSelection(), equipmentOrder, newEquipment);
+        }
         members.refresh();
         equipment.refresh();
         members.select(memberSelection);
-        equipment.select(equipmentSelection);
+        if (equipmentSelection.isPresent() || equipment.getSelection().isPresent()) {
+            equipment.select(equipmentSelection);
+        }
         memberOrder = newMembers;
         equipmentOrder = newEquipment;
         refreshSummaries();
@@ -229,6 +236,9 @@ public class MainWindow extends UiPart<Stage> {
     private void refreshSummaries() {
         memberSummary.refresh(members.getSelection());
         equipmentSummary.refresh(equipment.getSelection());
+        if (equipment.getSelection().isEmpty()) {
+            equipment.getSelectedGroup().ifPresent(equipmentSummary::showGroupSelection);
+        }
     }
 
     /** Mounts the real summary or detail panel according to the typed display request. */
@@ -253,14 +263,16 @@ public class MainWindow extends UiPart<Stage> {
         boolean memberView = request.getType() == DisplayRequest.Type.MEMBERS
                 || request.getType() == DisplayRequest.Type.MEMBER_DETAILS;
         boolean equipmentView = request.getType() == DisplayRequest.Type.EQUIPMENT
-                || request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS;
+                || request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS
+                || request.getType() == DisplayRequest.Type.EQUIPMENT_GROUP;
         boolean directoryView = memberView || equipmentView;
         directoryContext.setVisible(directoryView);
         directoryContext.setManaged(directoryView);
         queryContext.setText(directoryView ? "Filters: " + (memberView ? members.getQuery() : equipment.getQuery())
                 .description() : "");
         boolean details = request.getType() == DisplayRequest.Type.MEMBER_DETAILS
-                || request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS;
+                || request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS
+                || request.getType() == DisplayRequest.Type.EQUIPMENT_GROUP;
         backToResults.setVisible(details);
         backToResults.setManaged(details);
         directory.setVisible(directoryView);
@@ -273,8 +285,12 @@ public class MainWindow extends UiPart<Stage> {
                 memberDetails.showMember(request.getMemberNusId().orElseThrow());
                 directorySummaryPlaceholder.getChildren().setAll(memberDetails.getRoot());
             } else if (request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS) {
-                equipmentDetails.showEquipment(request.getEquipmentUuid().orElseThrow());
-                directorySummaryPlaceholder.getChildren().setAll(equipmentDetails.getRoot());
+                equipmentDetails.showUnit(request.getEquipmentUuid().orElseThrow(), equipment.getQuery());
+                directorySummaryPlaceholder.getChildren().setAll(equipmentDetails);
+            } else if (request.getType() == DisplayRequest.Type.EQUIPMENT_GROUP) {
+                equipmentDetails.showGroup(request.getEquipmentGroup().orElseThrow(), equipment.getQuery());
+                equipment.selectGroup(request.getEquipmentGroup().orElseThrow());
+                directorySummaryPlaceholder.getChildren().setAll(equipmentDetails);
             } else {
                 directorySummaryPlaceholder.getChildren().setAll(memberView
                         ? memberSummary.getRoot() : equipmentSummary.getRoot());

@@ -68,6 +68,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.query.InventoryGroups;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -114,7 +115,8 @@ public class MainWindowShellTest {
             submit("equipment search q/NoMatchingBatch");
             assertEquals(0, rows().getItems().size());
             succeed("equipment add name/Batch Camera category/Photo condition/GOOD count/3");
-            assertEquals(originalCount + 3, rows().getItems().size());
+            assertEquals(originalCount + 1, rows().getItems().size());
+            assertEquals(originalCount + 3, model.getEquipmentList().size());
             assertTrue(button("equipmentNavigation").getStyleClass().contains("laplace-navigation-active"));
             assertTrue(feedback().startsWith("Added 3 equipment units: Batch Camera"));
             assertEquals(1, storage.saves);
@@ -144,20 +146,28 @@ public class MainWindowShellTest {
             assertEquals("3", detailLabel("displayedCount"));
             submit("equipment search category/photo availability/available sort/id order/desc");
             assertEquals(1, rows().getItems().size());
-            assertEquals(new UUID(0, 2), ((Equipment) rows().getItems().getFirst()).getUuid());
+            assertEquals(new UUID(0, 2), ((InventoryGroups.Group) rows().getItems().getFirst())
+                    .matching().getFirst().getUuid());
             assertEquals("1", detailLabel("displayedCount"));
             assertTrue(detailLabel("inventoryGroups").contains("\"photography\" / \"camera 1\""));
             render("search-equipment", 1100, 700);
             render("search-equipment", 760, 500);
             int dispatches = logic.commands.size();
             rows().fireEvent(key(KeyCode.ENTER));
+            assertEquals(dispatches, logic.commands.size());
+            assertEquals("Camera 2", label("groupTitle"));
+            javafx.scene.control.TableView<?> units = (javafx.scene.control.TableView<?>) node("physicalUnits");
+            assertEquals(null, units.getSelectionModel().getSelectedItem());
+            units.getSelectionModel().selectFirst();
             assertEquals(dispatches + 1, logic.commands.size());
             assertEquals(new UUID(0, 2).toString(), detailLabel("equipmentUuid"));
             assertEquals(1, rows().getItems().size());
             submit("equipment search sort/id order/desc");
-            assertEquals(new UUID(0, 3), ((Equipment) rows().getItems().getFirst()).getUuid());
+            assertEquals(new UUID(0, 3), ((InventoryGroups.Group) rows().getItems().getFirst())
+                    .matching().getFirst().getUuid());
             submit("equipment list");
-            assertEquals(new UUID(0, 1), ((Equipment) rows().getItems().getFirst()).getUuid());
+            assertEquals(new UUID(0, 1), ((InventoryGroups.Group) rows().getItems().getFirst())
+                    .matching().getFirst().getUuid());
         });
     }
 
@@ -235,7 +245,7 @@ public class MainWindowShellTest {
             assertEquals("1", detailLabel("unavailableCount"));
             submit("equipment search status/deleted");
             assertEquals(1, rows().getItems().size());
-            assertTrue(((Equipment) rows().getItems().getFirst()).isDeleted());
+            assertTrue(((InventoryGroups.Group) rows().getItems().getFirst()).matching().getFirst().isDeleted());
             submit("equipment view uuid/" + target);
             assertEquals("DELETED", detailLabel("equipmentStatus"));
             assertEquals("Repair lens", detailLabel("notes"));
@@ -524,14 +534,16 @@ public class MainWindowShellTest {
             rows().getSelectionModel().select(1);
             rows().fireEvent(new KeyEvent(KeyEvent.KEY_RELEASED, "", "", KeyCode.DOWN,
                     false, false, false, false));
-            assertTrue(label("selection").contains(new UUID(0, 2).toString()));
+            assertTrue(label("selection").contains("camera 2"));
             assertTrue(logic.commands.isEmpty());
             rows().requestFocus();
             rows().fireEvent(key(KeyCode.SPACE));
             assertEquals(rows(), window.getPrimaryStage().getScene().getFocusOwner());
             assertEquals("", field().getText());
-            assertEquals(List.of("equipment view uuid/" + new UUID(0, 2)), logic.commands);
-            assertEquals(new UUID(0, 2).toString(), detailLabel("equipmentUuid"));
+            assertTrue(logic.commands.isEmpty());
+            assertEquals("Camera 2", label("groupTitle"));
+            assertEquals(null, ((javafx.scene.control.TableView<?>) node("physicalUnits"))
+                    .getSelectionModel().getSelectedItem());
             button("membersNavigation").fire();
             rows().getSelectionModel().select(1);
             Region directoryList = (Region) node("directoryListPlaceholder");
@@ -539,7 +551,7 @@ public class MainWindowShellTest {
                     false, false, false, false, false, false, false, false, false, true, null);
             directoryList.getChildrenUnmodifiable().getFirst().fireEvent(released);
             assertTrue(label("selection").contains("A0000002X"));
-            assertEquals(1, logic.commands.size());
+            assertTrue(logic.commands.isEmpty());
             window.getPrimaryStage().hide();
             model.setAddressBook(new AddressBook());
         });
@@ -632,7 +644,8 @@ public class MainWindowShellTest {
                     DisplayRequest.equipmentDetails(new UUID(0, 2)));
             submit("controlled equipment detail result");
             assertEquals(new UUID(0, 2).toString(), label("equipmentUuid"));
-            assertEquals(new UUID(0, 2), ((Equipment) rows().getSelectionModel().getSelectedItem()).getUuid());
+            assertEquals(new UUID(0, 2), ((Equipment) ((javafx.scene.control.TableView<?>) node("physicalUnits"))
+                    .getSelectionModel().getSelectedItem()).getUuid());
             logic.nextResult = new CommandResult("Requested loans", DisplayRequest.loans());
             submit("controlled loans result");
             assertTrue(node("openLoans") != null);
@@ -668,7 +681,8 @@ public class MainWindowShellTest {
             layout();
             card = (Region) rows().lookupAll(".list-cell").stream().map(node -> (ListCell<?>) node)
                     .filter(ListCell::isSelected).findFirst().orElseThrow().getGraphic();
-            assertEquals("No current holder", ((Label) card.lookup("#holder")).getText());
+            assertTrue(card.lookupAll(".label").stream().map(node -> ((Label) node).getText())
+                    .anyMatch(text -> text.contains("1 available in results")));
             button("loansNavigation").fire();
             assertEquals("0", label("openCount"));
             assertEquals(null, node("historyCount"));
@@ -1078,7 +1092,7 @@ public class MainWindowShellTest {
             succeed("member list");
             assertEquals(2, rows().getItems().size());
             succeed("equipment list");
-            assertEquals(2, rows().getItems().size());
+            assertEquals(1, rows().getItems().size());
             for (UUID item : items) {
                 succeed(assign(item, id(1), assigned, expected));
                 assertEquals("ASSIGNED", detailLabel("availability"));
@@ -1087,7 +1101,8 @@ public class MainWindowShellTest {
                 assertEquals("alex@example.com", detailLabel("holderEmail"));
                 assertEquals(assigned.toString(), detailLabel("assignedDate"));
                 assertEquals(expected.toString(), detailLabel("expectedReturnDate"));
-                assertEquals(item, ((Equipment) rows().getSelectionModel().getSelectedItem()).getUuid());
+                assertEquals(item, ((Equipment) ((javafx.scene.control.TableView<?>) node("physicalUnits"))
+                    .getSelectionModel().getSelectedItem()).getUuid());
             }
             succeed("member view nus/A0000001X");
             assertEquals("2 item(s) held", detailLabel("heldCount"));
@@ -1132,7 +1147,8 @@ public class MainWindowShellTest {
             assertEquals(null, node("detailsTitle"));
             succeed("equipment view uuid/" + items[0]);
             succeed("equipment delete uuid/" + items[0]);
-            assertEquals(items[0], ((Equipment) rows().getSelectionModel().getSelectedItem()).getUuid());
+            assertTrue(((InventoryGroups.Group) rows().getSelectionModel().getSelectedItem()).units().stream()
+                    .anyMatch(unit -> unit.getUuid().equals(items[0])));
             assertEquals(null, node("detailsTitle"));
             button("loansNavigation").fire();
             assertEquals("0", label("openCount"));
