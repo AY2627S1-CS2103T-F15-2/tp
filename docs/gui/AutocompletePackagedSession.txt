@@ -1,4 +1,13 @@
 Production code source: /Users/keith/Desktop/CS2103T/tp/build/libs/Laplace.jar
+INPUT: mo [Tab]
+EXPECTED: mode
+ACTUAL: mode
+INPUT: mode da [Tab]
+EXPECTED: mode dark
+ACTUAL: mode dark
+INPUT: mode li [Tab]
+EXPECTED: mode light
+ACTUAL: mode light
 INPUT: mem [Tab]
 EXPECTED: member
 ACTUAL: member

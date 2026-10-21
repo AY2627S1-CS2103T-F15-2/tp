@@ -51,6 +51,7 @@ import seedu.address.logic.commands.MemberEditCommand;
 import seedu.address.logic.commands.MemberListCommand;
 import seedu.address.logic.commands.MemberRestoreCommand;
 import seedu.address.logic.commands.MemberViewCommand;
+import seedu.address.logic.commands.ModeCommand;
 import seedu.address.logic.parser.Prefix;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.equipment.Availability;
@@ -86,6 +87,8 @@ public final class CompletionService {
             Map.entry(LoanReturnCommand.COMMAND_WORD,
                     List.of(PREFIX_EQUIPMENT_UUID, PREFIX_RETURNED_DATE, PREFIX_CONDITION)),
             Map.entry(LoanListCommand.COMMAND_WORD, List.of()),
+            Map.entry(ModeCommand.COMMAND_WORD + " dark", List.of()),
+            Map.entry(ModeCommand.COMMAND_WORD + " light", List.of()),
             Map.entry(ExitCommand.COMMAND_WORD, List.of()), Map.entry(HelpCommand.COMMAND_WORD, List.of()));
 
     /**

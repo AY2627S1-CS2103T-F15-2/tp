@@ -163,12 +163,15 @@ public class CompletionServiceTest {
 
     @Test
     public void complete_routesAndFields_matchEveryCurrentFamilyParser() throws Exception {
-        for (String family : List.of("Member", "Equipment", "Loans")) {
+        for (String family : List.of("Member", "Equipment", "Loans", "Mode")) {
             String source = Files.readString(Path.of("src/main/java/seedu/address/logic/parser/"
                     + family + "CommandParser.java"));
             Set<String> accepted = Pattern.compile("case \"([^\"]+)\"").matcher(source).results()
                     .map(match -> match.group(1)).collect(Collectors.toSet());
             assertEquals(accepted, Set.copyOf(proposal(family.toLowerCase() + " ").candidates()), family);
+            if (family.equals("Mode")) {
+                continue;
+            }
             var routes = Pattern.compile("case \"([^\"]+)\" -> new ([A-Za-z]+)\\(").matcher(source);
             while (routes.find()) {
                 String parserName = routes.group(2);
@@ -189,8 +192,12 @@ public class CompletionServiceTest {
                 assertEquals(fields, Set.copyOf(candidates), input);
             }
         }
-        assertCandidates("m", "member");
+        assertCandidates("m", "member", "mode");
         assertCandidates("e", "equipment", "exit");
+        assertCandidates("mode ", "dark", "light");
+        assertCandidates("mode da", "dark");
+        assertCandidates("mode li", "light");
+        assertTrue(service.complete("mode DARK", 9, model.getAddressBook()).isEmpty());
         assertCandidates("h", "help");
         assertCandidates("l", "loans");
     }

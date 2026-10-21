@@ -1,4 +1,16 @@
 Mounted JavaFX shell, real LogicManager/ModelManager/JSON storage. Java 25.
+INPUT: mo [Tab]
+EXPECTED: mode
+ACTUAL: mode
+CHECK: no command execution, save, or model mutation.
+INPUT: mode da [Tab]
+EXPECTED: mode dark
+ACTUAL: mode dark
+CHECK: no command execution, save, or model mutation.
+INPUT: mode li [Tab]
+EXPECTED: mode light
+ACTUAL: mode light
+CHECK: no command execution, save, or model mutation.
 INPUT: mem [Tab]
 EXPECTED: member
 ACTUAL: member
@@ -205,6 +217,24 @@ STATUS: Success
 OUTPUT: Edited member A0000001X: Jamie Lim.
 RETAINED INPUT:
 SUCCESSFUL SAVES: 3
+INPUT: mode da [Tab]
+EXPECTED: mode dark
+ACTUAL: mode dark
+CHECK: no command execution, save, or model mutation.
+INPUT: mode dark [Enter]
+STATUS: Success
+OUTPUT: Appearance: dark.
+RETAINED INPUT:
+SUCCESSFUL SAVES: 3
+INPUT: mode li [Tab]
+EXPECTED: mode light
+ACTUAL: mode light
+CHECK: no command execution, save, or model mutation.
+INPUT: mode light [Enter]
+STATUS: Success
+OUTPUT: Appearance: light.
+RETAINED INPUT:
+SUCCESSFUL SAVES: 3
 INPUT: member search holding/n [Tab]
 EXPECTED: member search holding/NO
 ACTUAL: member search holding/NO
@@ -230,7 +260,7 @@ CHECK: no command execution, save, or model mutation.
 INPUT: equipment add name/Batch Camera category/Photo count/2 condition/GOOD [Enter]
 STATUS: Success
 OUTPUT: Added 2 equipment units: Batch Camera, availability: AVAILABLE.
-UUIDs: 862292a9-973b-4b60-941c-6a44531c608d, 3c65c05a-dfee-41bf-9c34-93804db77927
+UUIDs: cd08536a-805a-460f-b424-adad090c54fa, 22f17d08-3093-4f6f-a8ea-318977244726
 RETAINED INPUT:
 SUCCESSFUL SAVES: 5
 INPUT: loans add uuid/00000000-0000-0000-0000-000000000002 assigned/2026-01-01 expected/2026-01-02 nus/a0000001 [Tab]

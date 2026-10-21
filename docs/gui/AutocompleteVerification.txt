@@ -1,19 +1,21 @@
 Autocomplete master-parity verification - 21 October 2026
 PR: https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/112
-Integrated team master: a66a1067df155176807f3515b30831aeb8712952
+Integrated team master: 630a0bf240c0100c3dd5ede1edb93aed9b5f4bec
 Working folder: /Users/keith/Desktop/CS2103T/tp
 Platform: Darwin arm64; Java: Zulu 25.0.3+9-LTS
 
 Command: ./gradlew test check coverage shadowJar --console plain
-Result: PASS; 852 tests, 0 failures, 0 errors, 0 skipped
+Result: PASS; 879 tests, 0 failures, 0 errors, 0 skipped
 Main/test Checkstyle: PASS
 Documentation: npm --prefix docs ci; npm --prefix docs run build; PASS
 Rendered user/developer completion sections reviewed in browser.
 
-Audit: all 19 accepted commands (7 member, 7 equipment, 3 loan, help, exit).
+Audit: all 17 domain commands plus help, exit and mode dark/light.
 Concrete parser prefix constants checked against completion fields by regression test.
 Search filters, lifecycle status, applicable sort fields and order values round-trip through parser.
 Restoration, equipment editing, count/ and return condition/ included.
+Master UI history, Ctrl+Space popup and context-prepared commands retained.
+Popup/history interaction and appearance-command completion verified.
 Batch UUID replacement preserves adjacent entries/spaces/fields and omits listed identities.
 Stored searchable values are suggested case-insensitively; retired AB3 routes are omitted.
 New member IDs, dates, numeric counts and free-form notes remain manual.
@@ -23,21 +25,21 @@ seedu/address/logic/completion/Completion
   INSTRUCTION: 15 covered; 0 missed
   LINE: 3 covered; 0 missed
 seedu/address/logic/completion/CompletionService
-  INSTRUCTION: 981 covered; 0 missed
+  INSTRUCTION: 993 covered; 0 missed
   BRANCH: 110 covered; 0 missed
-  LINE: 149 covered; 0 missed
+  LINE: 151 covered; 0 missed
 seedu/address/ui/CompletionController
   INSTRUCTION: 212 covered; 0 missed
   BRANCH: 26 covered; 0 missed
   LINE: 45 covered; 0 missed
 seedu/address/ui/CommandBox
-  INSTRUCTION: 95 covered; 0 missed
-  BRANCH: 4 covered; 0 missed
-  LINE: 29 covered; 0 missed
+  INSTRUCTION: 317 covered; 0 missed
+  BRANCH: 34 covered; 0 missed
+  LINE: 67 covered; 0 missed
 seedu/address/ui/MainWindow.fillInnerParts
-  INSTRUCTION: 270 covered; 0 missed
+  INSTRUCTION: 283 covered; 0 missed
   BRANCH: 4 covered; 0 missed
-  LINE: 34 covered; 0 missed
+  LINE: 35 covered; 0 missed
 seedu/address/logic/parser/DirectorySearchCommandParser.<clinit>
   INSTRUCTION: 41 covered; 0 missed
   LINE: 8 covered; 0 missed

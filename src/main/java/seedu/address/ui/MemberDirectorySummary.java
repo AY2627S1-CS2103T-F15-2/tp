@@ -7,12 +7,15 @@ import java.util.Optional;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
 import seedu.address.model.query.DirectoryQuery;
 
-/** Read-only member directory summary. The shell owns listeners and calls refresh on the FX thread. */
+/**
+ * Read-only member directory summary. The shell owns listeners and calls refresh on the FX thread.
+ */
 public class MemberDirectorySummary extends UiPart<Region> {
 
     private final ReadOnlyAddressBook data;
@@ -36,9 +39,13 @@ public class MemberDirectorySummary extends UiPart<Region> {
     @FXML
     private Label statusTitle;
     @FXML
+    private VBox status;
+    @FXML
     private Label statusMessage;
 
-    /** Creates a standalone summary from non-null read-only dependencies. */
+    /**
+     * Creates a standalone summary from non-null read-only dependencies.
+     */
     public MemberDirectorySummary(ReadOnlyAddressBook data) {
         super("MemberDirectorySummary.fxml");
         this.data = requireNonNull(data);
@@ -46,12 +53,16 @@ public class MemberDirectorySummary extends UiPart<Region> {
         refresh(Optional.empty());
     }
 
-    /** Sets transient criteria; the parent refreshes once after coordinating both directory components. */
+    /**
+     * Sets transient criteria; the parent refreshes once after coordinating both directory components.
+     */
     public void setQuery(DirectoryQuery query) {
         this.query = requireNonNull(query);
     }
 
-    /** Refreshes current counts and selection without executing commands or retaining entity snapshots. */
+    /**
+     * Refreshes current counts and selection without executing commands or retaining entity snapshots.
+     */
     public void refresh(Optional<NusId> selected) {
         requireNonNull(selected);
         int count = data.getMemberList().size();
@@ -77,6 +88,8 @@ public class MemberDirectorySummary extends UiPart<Region> {
         if (displayed != count) {
             title = "Showing " + displayed + " matching members";
         }
+        status.setVisible(count == 0);
+        status.setManaged(count == 0);
         statusTitle.setText(title);
         statusMessage.setText(count == 0
                 ? "Add a member with member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL."

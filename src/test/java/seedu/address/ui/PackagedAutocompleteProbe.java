@@ -61,6 +61,7 @@ public final class PackagedAutocompleteProbe {
         TextField field = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
         try {
             String[][] examples = {
+                {"mo", "mode"}, {"mode da", "mode dark"}, {"mode li", "mode light"},
                 {"mem", "member"}, {"member ad", "member add"}, {"member add na", "member add name/"},
                 {"member add name/al", "member add name/Alex Tan"},
                 {"member ed", "member edit"}, {"member edit na", "member edit name/"},

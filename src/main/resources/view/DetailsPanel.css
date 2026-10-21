@@ -1,6 +1,6 @@
 .laplace-root .details-scroll,
 .laplace-root .details-scroll > .viewport {
-    -fx-background-color: #FFFFFF;
+    -fx-background-color: -laplace-surface;
 }
 
 .details-scroll {
@@ -8,29 +8,21 @@
 }
 
 .details-content {
-    -fx-padding: 20;
+    -fx-padding: 12;
 }
 
-.details-name {
-    -fx-font-size: 21px;
-    -fx-font-weight: bold;
-}
-
-.details-section-title {
-    -fx-font-size: 15px;
-    -fx-font-weight: bold;
-}
-
+.details-name,
+.details-section-title,
 .details-caption {
-    -fx-font-weight: bold;
+    -fx-padding: 0 2 0 0;
 }
 
 .details-holding {
-    -fx-padding: 14;
-    -fx-background-color: #F8FAFB;
-    -fx-border-color: #DCE3E8;
-    -fx-border-radius: 3;
-    -fx-background-radius: 3;
+    -fx-padding: 12;
+    -fx-background-color: -laplace-inset;
+    -fx-border-color: -laplace-border;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
 }
 
 .details-status {

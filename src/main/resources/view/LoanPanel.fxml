@@ -12,7 +12,7 @@
     <content>
       <VBox spacing="18.0" minWidth="0.0" styleClass="loan-content">
         <Label text="Loans" styleClass="laplace-title,loan-title" wrapText="true" />
-        <Label text="Current equipment assignments"
+        <Label text="Current assignments and completed history"
                styleClass="laplace-muted,loan-subtitle" wrapText="true" />
         <HBox spacing="10.0">
           <TextField fx:id="memberFilter" promptText="Filter by NUS ID" HBox.hgrow="ALWAYS" />

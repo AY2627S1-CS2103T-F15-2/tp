@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.net.URL;
 
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.stage.Stage;
 import seedu.address.MainApp;
 
 /**
@@ -65,6 +67,7 @@ public abstract class UiPart<T> {
      */
     private void loadFxmlFile(URL location, T root) {
         requireNonNull(location);
+        LaplaceFonts.register();
         fxmlLoader.setLocation(location);
         fxmlLoader.setController(this);
         fxmlLoader.setRoot(root);
@@ -72,6 +75,18 @@ public abstract class UiPart<T> {
             fxmlLoader.load();
         } catch (IOException e) {
             throw new AssertionError(e);
+        }
+        installFonts(fxmlLoader.getRoot());
+    }
+
+    /**
+     * Applies exact interface faces to loaded controls and controls added later.
+     */
+    private static void installFonts(Object loaded) {
+        if (loaded instanceof Stage stage && stage.getScene() != null) {
+            LaplaceFonts.install(stage.getScene().getRoot());
+        } else if (loaded instanceof Node node) {
+            LaplaceFonts.install(node);
         }
     }
 

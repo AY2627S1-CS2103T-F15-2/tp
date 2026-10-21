@@ -34,9 +34,11 @@ earlier builds may not support every behavior described here. Laplace is a local
    to open each directory and the current-loans tab.
 7. Use `help` or **F1** to open Help, and `exit` to close the application normally.
 
-![Laplace directory layout reference](images/Ui.png)
+![Laplace equipment groups in light mode](images/BetterUi.png)
 
-The image is a layout reference. Your rows, counts and selected record depend on your data.
+Command text uses [IBM Plex Mono](https://github.com/IBM/plex), distributed under the SIL Open Font License.
+
+Your rows, counts and selected record depend on your data. Both light and dark appearance are supported.
 If startup fails, check the JAR filename and Java version and keep the terminal error for the team.
 Do not delete your data file to troubleshoot startup.
 
@@ -59,8 +61,8 @@ to case and retain their stored spelling. Suggestions use the current records, i
 since startup. Identical values appear once.
 
 Command words and field prefixes are case-sensitive. Field suggestions depend on the command and omit
-non-repeatable prefixes already present. All seventeen member, equipment and loan commands plus `help`
-and `exit` have command completion. Search supports `q/`, the applicable filters, sorting and ordering;
+non-repeatable prefixes already present. All seventeen member, equipment and loan commands plus `help`,
+`exit`, `mode dark` and `mode light` have command completion. Search supports `q/`, the applicable filters, sorting and ordering;
 finite options such as `status/de` complete to `status/DELETED`. Query text can reuse searchable stored
 values. Equipment editing and both restoration commands support their fields and existing references.
 Batch equipment creation includes `count/`; batch loan UUID completion fills the active comma-separated
@@ -110,15 +112,53 @@ To explore without changing the sample records:
 
 ## Using the window
 
-- **Members** opens the member directory. **Equipment** opens the equipment directory.
-- The left panel contains selectable records. The right panel shows a directory summary or record
-  details. Startup selects the first member, when present, while leaving the summary visible.
-- Click a record, or focus its row and press **Enter** or **Space**, to open its details.
-  Identically named records remain distinguishable by NUS ID or equipment UUID.
-- The **Loans** tab shows current assignments and completed history, with links to their members and equipment.
-  Type `loans list` to open the same tab.
-- The feedback area reports the last command's result. The command box and Enter hint appear below it.
-- At smaller sizes, use the list/detail scrollbars to reach long identifiers, notes and holdings.
+- **Members**, **Equipment** and **Loans** switch views. Member/equipment search criteria remain active
+  when switching tabs or opening details. **Back to results** returns to the current filtered summary;
+  **Reset search**, `member list` or `equipment list` clears that directory's criteria and sorting.
+- The left equipment directory groups units with the same normalized category and name, including units
+  registered in different batches. Open a group with a click, **Enter** or **Space**, then select a row in
+  its physical-unit table. Each unit still has its own UUID, condition, notes, holder and lifecycle state.
+- Group counts distinguish **matching** units from **retained** units. Availability counts exclude deleted
+  units. **Show all units** reveals group members outside the active search, including deleted records.
+  Direct `equipment view uuid/UUID` opens that exact unit, enabling Show all units if needed.
+  Unchecking it narrows the table again while retaining the selected unit's details; a message explains
+  when that unit is outside the table filter.
+  Short table identifiers are display labels only: hover for the full UUID, or copy it from unit details.
+- Member rows open member details. Copy buttons preserve full identifiers and contact fields. Related
+  member/equipment links open the exact record. **Commands for this unit/member** contains command previews:
+  **Copy** copies plain text; **Use command** prepares the input and never executes it. Replace the marked
+  uppercase placeholders and press Enter yourself. Availability and validation rules still apply.
+- The **Loans** tab shows current open assignments, exact-identity links, assigned/due dates and an
+  **Overdue** or **Due today** label when applicable. Rows reflow at narrower widths. **Prepare return command**
+  fills the input with the unit UUID and today's local date; review it before pressing Enter.
+  Urgency updates when you open Loans, execute a command or change records. Reopen Loans after midnight
+  to refresh the labels. Completed loans show return dates and recorded issue/return conditions, without
+  urgency labels or return actions. Filter both sections by NUS ID and equipment UUID. `loans list` opens
+  this same tab; member and equipment details also show the selected record's loan history.
+- **Last result** sits above the command feedback and stays after switching tabs. A green box is a
+  successful command, a red box is an error, and the box is neutral before the first command.
+  The heading displays only **Last result**; assistive text includes the status and full message.
+  **Details** expands the complete feedback and **Copy** includes all UUIDs from batch creation.
+- The command input, identifiers and command examples use IBM Plex Mono. **↑/↓** browse up to 100 recent submissions in this session,
+  preserving an unfinished draft. **Ctrl+Space** offers command-name or parameter-prefix completion at
+  the end of the input. Choose an entry to insert it; **Escape** dismisses suggestions. Tab completes the
+  active token or value as described above; with no applicable suggestion it retains normal focus navigation. History is cleared when the application closes.
+- **F1** or `help` opens a scrollable command reference with copyable templates and the user-guide link.
+- Drag the directory divider to resize its panels. Scroll long lists/details vertically; the data filename
+  appears in the footer, with the full path available on hover.
+
+### Appearance: `mode dark` and `mode light`
+
+```text
+mode dark
+mode light
+```
+
+Use these commands or the header button labeled **Dark mode** or **Light mode**. The button names the appearance it will apply. **Menu** contains Help and Exit. The main window and Help switch together.
+Light is the default for new and older preference files. The chosen mode is saved with window preferences
+on normal exit and restored on the next launch. Changing mode preserves the current search and records.
+Only `dark` and `light` are accepted; missing/extra arguments are errors. These are appearance utilities,
+in addition to the seventeen member, equipment and loan commands.
 
 ## Command format and feedback
 
@@ -150,7 +190,7 @@ The old top-level commands `add`, `edit`, `delete`, `clear`, `find`, and `list` 
 They return `Unknown command.` and do not change records or save the data file, even when arguments
 are supplied. For example, use `member list` instead of `list members`, `equipment list` to view
 inventory, and `member search q/Alex` to search members. There is no supported bulk-clear command.
-Use the member, equipment and loan commands documented below, or `help` and `exit`.
+Use the member, equipment and loan commands documented below, or `mode`, `help` and `exit`.
 
 ### Shared field rules
 
@@ -235,7 +275,7 @@ active, deleted and displayed counts. Archival is not supported.
 
 The result is `Listed N active members.` Deleted records are counted separately when present.
 If there are no records, the list displays:
-`No members yet. Use member add to get started.`
+`No members yet`
 
 This command takes no parameters. For example, `member list nus/A0123456X` is rejected; use
 `member view nus/A0123456X` for an exact lookup. A syntax failure leaves the current screen unchanged.
@@ -380,9 +420,11 @@ during creation or saving commits no new units. There is no stored quantity repl
 equipment list
 ```
 
-Show every equipment item, including retained deleted units, ordered by normalized **category, name, then UUID**. Rows expose the UUID,
-name, category, condition, derived availability and current holder when assigned. An unassigned item has
-no current holder. Identical descriptions remain separate rows.
+Show all retained physical units, including deleted units, grouped by normalized **category and name**.
+Groups follow category/name order; select a group to inspect its distinct units. The table shows condition,
+availability, holder and lifecycle status, with the full UUID in a tooltip and the selected unit's details.
+Matching descriptions share a directory row but retain separate identities. Default unit order is UUID;
+a search's sorting applies to its matching units. Clicking a table heading temporarily sorts the table.
 
 Feedback is `Listed N equipment items.` An empty list displays:
 `No equipment yet. Use equipment add to get started.`
@@ -447,7 +489,7 @@ Soft-delete one exact item **only when it has no open loan**. Its condition does
 The unit, UUID, details and closed loans are retained. Feedback includes the identity and name:
 `Deleted equipment UUID: EQUIPMENT_NAME.` The equipment directory appears with its existing filters.
 Deleted units remain visible in all-record lists, labeled `[DELETED]`; active-only searches exclude them.
-They cannot be assigned and are excluded from inventory group and availability totals.
+They cannot be assigned and are excluded from active availability totals. Group retained counts include them.
 
 | Situation | Result or correction |
 | --- | --- |
@@ -474,7 +516,7 @@ Equipment search defaults to active units. Use `status/active`, `status/deleted`
 other search filters; values are case-insensitive. Deleted units have derived UNAVAILABLE status, so
 `equipment search status/deleted availability/available` returns no matches. `equipment list` resets
 filters and includes both states. Total counts include retained units; availability counts and inventory
-groups cover active units only. Deleted equipment can still be opened with `equipment view uuid/UUID`.
+availability summaries cover active units only; retained group counts include deleted units. Deleted equipment can still be opened with `equipment view uuid/UUID`.
 
 ### Open the Loans tab: `loans list`
 

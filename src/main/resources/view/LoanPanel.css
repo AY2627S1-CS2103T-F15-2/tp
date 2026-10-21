@@ -1,7 +1,5 @@
 .loan-panel {
-    -fx-background-color: #eef1f3;
-    -fx-font-family: "System";
-    -fx-font-size: 13px;
+    -fx-background-color: -laplace-canvas;
 }
 
 .loan-panel .scroll-pane,
@@ -10,90 +8,104 @@
 }
 
 .loan-content {
-    -fx-padding: 18;
+    -fx-padding: 12;
 }
 
 .loan-panel .label {
-    -fx-text-fill: #37474f;
+    -fx-text-fill: -laplace-text;
 }
 
 .loan-title {
-    -fx-font-size: 22px;
-    -fx-font-weight: bold;
+    -fx-padding: 0 2 0 0;
 }
 
 .loan-panel .loan-subtitle,
 .loan-panel .loan-empty {
-    -fx-text-fill: #607d8b;
+    -fx-text-fill: -laplace-muted;
 }
 
 .loan-section {
-    -fx-background-color: white;
-    -fx-border-color: #dce3e8;
-    -fx-border-radius: 3;
-    -fx-background-radius: 3;
-    -fx-padding: 16;
+    -fx-background-color: -laplace-surface;
+    -fx-border-color: -laplace-border;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
+    -fx-padding: 0;
 }
 
 .loan-section-title {
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
+    -fx-padding: 0 2 0 0;
 }
 
 .loan-panel .loan-count {
-    -fx-background-color: #e3f2fd;
-    -fx-text-fill: #126bb3;
-    -fx-background-radius: 12;
+    -fx-background-color: -laplace-selection;
+    -fx-text-fill: -laplace-link;
+    -fx-background-radius: 0;
     -fx-padding: 3 10;
-    -fx-font-weight: bold;
 }
 
 .loan-row {
-    -fx-background-color: #ffffff;
-    -fx-border-color: #dce3e8;
-    -fx-border-radius: 3;
-    -fx-background-radius: 3;
+    -fx-background-color: -laplace-surface;
+    -fx-border-color: -laplace-border;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
     -fx-padding: 12;
 }
 
 .loan-identity-link {
     -fx-background-color: transparent;
-    -fx-text-fill: #126bb3;
+    -fx-text-fill: -laplace-link;
     -fx-alignment: center-left;
     -fx-padding: 4 0;
     -fx-cursor: hand;
 }
 
 .loan-identity-link:hover {
-    -fx-background-color: #e3f2fd;
+    -fx-background-color: -laplace-selection;
 }
 
 .loan-identity-link:focused {
-    -fx-border-color: #1688e8;
-    -fx-border-radius: 2;
+    -fx-border-color: -laplace-focus;
+    -fx-border-radius: 0;
 }
 
 .loan-identity-link:disabled {
-    -fx-text-fill: #a32323;
+    -fx-text-fill: -laplace-error-text;
     -fx-opacity: 1;
 }
 
 .loan-status {
     -fx-padding: 3 8;
-    -fx-background-radius: 3;
-    -fx-font-weight: bold;
+    -fx-background-radius: 0;
 }
 
 .loan-open-status {
-    -fx-background-color: #e3f2fd;
+    -fx-background-color: -laplace-selection;
+}
+
+.loan-due-status {
+    -fx-background-color: -laplace-warning;
+}
+
+.loan-panel .loan-due-status {
+    -fx-text-fill: -laplace-warning-text;
+}
+
+.loan-overdue-status {
+    -fx-background-color: -laplace-error;
+}
+
+.loan-panel .loan-overdue-status {
+    -fx-text-fill: -laplace-error-text;
 }
 
 .loan-closed-status {
-    -fx-background-color: #e8f5e9;
+    -fx-background-color: -laplace-success;
 }
 
 .loan-panel .text-field {
-    -fx-background-color: white;
-    -fx-border-color: #dce3e8;
+    -fx-background-color: -laplace-surface;
+    -fx-text-fill: -laplace-text;
+    -fx-prompt-text-fill: -laplace-muted;
+    -fx-border-color: -laplace-border;
     -fx-padding: 8;
 }

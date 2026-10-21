@@ -1,12 +1,16 @@
 package seedu.address.ui;
 
+import java.util.Set;
+
 import javafx.scene.control.Label;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
-/** Small presentation helpers shared only by the two detail panels. */
+/**
+ * Small presentation helpers shared only by the two detail panels.
+ */
 final class DetailsPanelContent {
     private DetailsPanelContent() {}
 
@@ -27,6 +31,9 @@ final class DetailsPanelContent {
         return label;
     }
 
+    /**
+     * Adds a wrapping field with readable state labels and exact-value copying where appropriate.
+     */
     static void field(VBox parent, String id, String caption, Object value) {
         GridPane field = new GridPane();
         field.setHgap(12);
@@ -40,11 +47,23 @@ final class DetailsPanelContent {
         field.getColumnConstraints().addAll(key, data);
         field.getStyleClass().add("details-field");
         field.add(label(id + "Caption", caption, "laplace-muted", "details-caption"), 0, 0);
-        field.add(label(id, value.toString(), "details-value"), 1, 0);
+        String displayed = value instanceof Enum<?> state ? EquipmentPresentation.label(state) : value.toString();
+        Label valueLabel = label(id, displayed, "details-value");
+        if (Set.of("UUID", "NUS ID").contains(caption)) {
+            valueLabel.getStyleClass().add("identity-value");
+        }
+        if (caption.equals("Status") || caption.equals("Availability") || caption.equals("Condition")) {
+            valueLabel.getStyleClass().add("record-status");
+        }
+        if (Set.of("UUID", "NUS ID", "Phone", "Email").contains(caption)) {
+            field.add(new VBox(4, valueLabel, CommandPreview.copyButton("Copy " + caption, value.toString())), 1, 0);
+        } else {
+            field.add(valueLabel, 1, 0);
+        }
         parent.getChildren().add(field);
     }
 
     static void status(VBox parent, String message, boolean error) {
-        text(parent, "detailsStatus", message, error ? "laplace-error" : "laplace-success", "details-status");
+        text(parent, "detailsStatus", message, error ? "laplace-error" : "laplace-neutral", "details-status");
     }
 }
