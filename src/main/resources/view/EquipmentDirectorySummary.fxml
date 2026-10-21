@@ -27,7 +27,7 @@
                         <ColumnConstraints percentWidth="38" minWidth="0" />
                         <ColumnConstraints percentWidth="62" minWidth="0" hgrow="ALWAYS" />
                     </columnConstraints>
-                <Label text="Total items" styleClass="directory-key" wrapText="true" minWidth="0"
+                <Label text="Total (including deleted)" styleClass="directory-key" wrapText="true" minWidth="0"
                        GridPane.rowIndex="0" GridPane.columnIndex="0" />
                 <Label fx:id="totalCount" text="" wrapText="true" minWidth="0" maxWidth="Infinity"
                        GridPane.rowIndex="0" GridPane.columnIndex="1" />
@@ -56,7 +56,7 @@
                 <Label fx:id="selection" text="" wrapText="true" minWidth="0" maxWidth="Infinity"
                        GridPane.rowIndex="6" GridPane.columnIndex="1" />
                 </GridPane>
-                <Label text="INVENTORY BY CATEGORY / TYPE (ALL ITEMS)" styleClass="laplace-muted"
+                <Label text="INVENTORY BY CATEGORY / TYPE (ACTIVE ITEMS)" styleClass="laplace-muted"
                        wrapText="true" minWidth="0" />
                 <Label fx:id="inventoryGroups" wrapText="true" minWidth="0" maxWidth="Infinity" />
             </VBox>

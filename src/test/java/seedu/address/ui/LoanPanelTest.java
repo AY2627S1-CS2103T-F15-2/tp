@@ -163,7 +163,7 @@ public class LoanPanelTest {
             panel.refresh();
             assertOpenCount(panel, 1);
             assertEquals(List.of(SECOND_UUID), equipmentIds(panel, "openLoans"));
-            assertEquals(1, model.getLoanList().stream().filter(loan -> !loan.isOpen()).count());
+            assertEquals(4, model.getLoanList().stream().filter(loan -> !loan.isOpen()).count());
         });
     }
 

@@ -77,6 +77,9 @@ public class EquipmentDirectorySummary extends UiPart<Region> {
         }
         int unknown = 0;
         for (Equipment equipment : data.getEquipmentList()) {
+            if (equipment.isDeleted()) {
+                continue;
+            }
             try {
                 Availability availability = requireNonNull(availabilityLookup.apply(equipment.getUuid()));
                 counts.merge(availability, 1, Integer::sum);
@@ -110,6 +113,6 @@ public class EquipmentDirectorySummary extends UiPart<Region> {
         }
         statusMessage.setText(unknown > 0 ? "Availability could not be determined for " + unknown + " item(s)."
                 : count == 0 ? "Add an item with equipment add name/NAME category/CATEGORY condition/CONDITION."
-                : "Availability reflects current condition and open loans.");
+                : "Availability counts and inventory groups include active units only; total includes deleted units.");
     }
 }

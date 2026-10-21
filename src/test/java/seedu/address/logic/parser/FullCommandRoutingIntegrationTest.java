@@ -71,7 +71,7 @@ public class FullCommandRoutingIntegrationTest {
     }
 
     @Test
-    public void allTenRoutes_memberDeletionRetainsHistoryAndEquipmentDeletionRemovesIt() throws Exception {
+    public void allTenRoutes_memberAndEquipmentDeletionRetainsHistory() throws Exception {
         LocalDate assigned = LocalDate.now().minusDays(3);
         LocalDate expected = assigned.plusDays(10);
         LocalDate returned = assigned.plusDays(1);
@@ -117,7 +117,7 @@ public class FullCommandRoutingIntegrationTest {
         execute("member delete nus/" + FIRST, DisplayRequest.members());
         assertEquals(2, model.getLoanList().size());
         execute("equipment delete uuid/" + firstItem, DisplayRequest.equipment());
-        assertTrue(model.getLoanList().isEmpty());
+        assertEquals(2, model.getLoanList().size());
         assertTrue(model.hasMember(SECOND));
         assertTrue(model.hasEquipment(secondItem));
         assertEquals(1, model.getAddressBook().getPersonList().size());
@@ -268,7 +268,7 @@ public class FullCommandRoutingIntegrationTest {
     private CommandResult execute(String input, DisplayRequest display) throws Exception {
         int saves = storage.saves;
         CommandResult result = logic.execute(input);
-        assertEquals(saves + 1, storage.saves, input);
+        assertEquals(saves + (input.equals("equipment list") ? 0 : 1), storage.saves, input);
         if (display != null) {
             assertEquals(display, result.getDisplayRequest(), input);
         }

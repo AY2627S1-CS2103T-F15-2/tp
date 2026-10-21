@@ -34,7 +34,7 @@ public class EquipmentDeleteCommandTest {
     public void execute_exactUuid_preservesIdenticalItemAndOtherCollections() throws Exception {
         ModelManager model = DeletionTestData.model();
         CommandResult result = new EquipmentDeleteCommand(FIRST_EQUIPMENT.getUuid()).execute(model);
-        assertEquals(List.of(SECOND_EQUIPMENT), model.getEquipmentList());
+        assertEquals(List.of(FIRST_EQUIPMENT.withDeleted(true), SECOND_EQUIPMENT), model.getEquipmentList());
         assertEquals(List.of(FIRST_MEMBER, SECOND_MEMBER), model.getMemberList());
         assertEquals(List.of(LEGACY_PERSON), model.getFilteredPersonList());
         assertEquals(DisplayRequest.equipment(), result.getDisplayRequest());
@@ -54,7 +54,7 @@ public class EquipmentDeleteCommandTest {
         };
         model.addEquipment(FIRST_EQUIPMENT);
         new EquipmentDeleteCommand(FIRST_EQUIPMENT.getUuid()).execute(model);
-        assertTrue(model.getEquipmentList().isEmpty());
+        assertTrue(model.findEquipment(FIRST_EQUIPMENT.getUuid()).orElseThrow().isDeleted());
     }
 
     @Test
@@ -86,7 +86,7 @@ public class EquipmentDeleteCommandTest {
     }
 
     @Test
-    public void execute_closedHistory_removesOnlyDeletedItemsLoans() throws Exception {
+    public void execute_closedHistory_retainsAllLoans() throws Exception {
         ModelManager model = DeletionTestData.model();
         model.addLoan(DeletionTestData.loan(FIRST_EQUIPMENT, FIRST_MEMBER, false));
         model.addLoan(DeletionTestData.loan(FIRST_EQUIPMENT, SECOND_MEMBER, false));
@@ -95,8 +95,10 @@ public class EquipmentDeleteCommandTest {
         model.addLoan(retainedHistory);
         model.addLoan(retainedOpen);
         new EquipmentDeleteCommand(FIRST_EQUIPMENT.getUuid()).execute(model);
-        assertEquals(List.of(SECOND_EQUIPMENT), model.getEquipmentList());
-        assertEquals(List.of(retainedHistory, retainedOpen), model.getLoanList());
+        assertEquals(List.of(FIRST_EQUIPMENT.withDeleted(true), SECOND_EQUIPMENT), model.getEquipmentList());
+        assertEquals(List.of(DeletionTestData.loan(FIRST_EQUIPMENT, FIRST_MEMBER, false),
+                DeletionTestData.loan(FIRST_EQUIPMENT, SECOND_MEMBER, false), retainedHistory, retainedOpen),
+                model.getLoanList());
         assertEquals(List.of(FIRST_MEMBER, SECOND_MEMBER), model.getMemberList());
         assertEquals(List.of(LEGACY_PERSON), model.getAddressBook().getPersonList());
     }

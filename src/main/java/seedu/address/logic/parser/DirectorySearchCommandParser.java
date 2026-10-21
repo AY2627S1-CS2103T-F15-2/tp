@@ -32,7 +32,7 @@ public class DirectorySearchCommandParser implements Parser<DirectorySearchComma
         try {
             Set<Prefix> prefixes = members
                     ? Set.of(QUERY, HOLDING, STATUS, SORT, ORDER)
-                    : Set.of(QUERY, CATEGORY, CONDITION, AVAILABILITY, SORT, ORDER);
+                    : Set.of(QUERY, CATEGORY, CONDITION, AVAILABILITY, STATUS, SORT, ORDER);
             Map<Prefix, LaplaceArgumentParser.ValueValidator> validators = new HashMap<>();
             for (Prefix prefix : prefixes) {
                 validators.put(prefix, value -> validate(prefix, value));
@@ -44,9 +44,7 @@ public class DirectorySearchCommandParser implements Parser<DirectorySearchComma
             Availability availability = values.getValue(AVAILABILITY).isPresent()
                     ? enumValue(Availability.class, values.getValue(AVAILABILITY).orElseThrow()) : null;
             DirectoryQuery.Holding holding = enumValue(DirectoryQuery.Holding.class, value(values, HOLDING, "any"));
-            DirectoryQuery.MemberStatus status = members
-                    ? enumValue(DirectoryQuery.MemberStatus.class, value(values, STATUS, "active"))
-                    : DirectoryQuery.MemberStatus.ALL;
+            DirectoryQuery.Status status = enumValue(DirectoryQuery.Status.class, value(values, STATUS, "active"));
             return new DirectorySearchCommand(members, new DirectoryQuery(value(values, QUERY, ""),
                     value(values, CATEGORY, ""), condition, availability, holding, sort,
                     value(values, ORDER, "asc").equalsIgnoreCase("desc"), status));
@@ -71,7 +69,7 @@ public class DirectorySearchCommandParser implements Parser<DirectorySearchComma
         } else if (prefix.equals(HOLDING)) {
             enumValue(DirectoryQuery.Holding.class, value);
         } else if (prefix.equals(STATUS)) {
-            enumValue(DirectoryQuery.MemberStatus.class, value);
+            enumValue(DirectoryQuery.Status.class, value);
         } else if (prefix.equals(SORT)) {
             DirectoryQuery.Sort sort = enumValue(DirectoryQuery.Sort.class, value);
             Set<DirectoryQuery.Sort> allowed = members

@@ -31,7 +31,7 @@ public final class InventoryGroups {
             Predicate<Equipment> eligible) {
         Map<Group, EnumMap<Availability, Integer>> counts = new TreeMap<>(
                 Comparator.comparing(Group::category).thenComparing(Group::name));
-        data.getEquipmentList().stream().filter(eligible).forEach(item -> {
+        data.getEquipmentList().stream().filter(item -> !item.isDeleted()).filter(eligible).forEach(item -> {
             Group key = new Group(DirectoryQuery.normalize(item.getCategory()),
                     DirectoryQuery.normalize(item.getName()));
             EnumMap<Availability, Integer> values = counts.computeIfAbsent(key,

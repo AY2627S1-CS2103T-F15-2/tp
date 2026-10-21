@@ -34,24 +34,27 @@ Equal names never merge distinct members.
 
 ```text
 equipment search [q/TEXT] [category/TEXT] [condition/CONDITION]
-                 [availability/AVAILABLE|ASSIGNED|UNAVAILABLE]
+                 [availability/AVAILABLE|ASSIGNED|UNAVAILABLE] [status/active|deleted|all]
                  [sort/category|name|id|condition|availability] [order/asc|desc]
 ```
 
 `q/` matches UUID, name, category or notes. `category/` matches a category substring, case-insensitively.
 Condition and availability are exact values, case-insensitive. Conditions are GOOD, FAIR, DAMAGED
-and UNDER_REPAIR, including the existing space/hyphen aliases. Filters combine with AND. Search
+and UNDER_REPAIR; space/hyphen aliases are not accepted. Filters combine with AND. Search
 does not correct spelling or interpret regular expressions.
 
 ```text
 equipment search q/camera category/photo availability/available
-equipment search condition/under-repair sort/name
+equipment search condition/under_repair sort/name
 equipment search sort/availability order/desc
 ```
 
 Default/category sorting is normalized category, name, then full UUID. Other sorts use their named
 field followed by the default comparator. Conditions/availability sort alphabetically by enum name.
 Every physical UUID remains a separate row, including units with identical descriptions.
+Search defaults to `status/active`; use `status/deleted` to find retained units or `status/all` for both.
+Deleted units are UNAVAILABLE, labeled in the directory, and can be viewed/restored by UUID.
+The directory total includes deleted units, but availability counts and inventory groups exclude them.
 
 ## Input, refresh and navigation
 
@@ -61,8 +64,8 @@ selects the default comparator. Parameter order is free. Existing reserved-prefi
 whitespace-delimited `name/`-style tokens are parameters even inside free text, with no quoting or
 escaping. Ordinary URLs/embedded slashes remain text.
 
-The left list and Displayed count reflect the query. Total/active, overall availability and inventory
-groups describe all inventory. Criteria and order are visible in the summary. Zero results shows a
+The left list and Displayed count reflect the query. Equipment Total includes all retained units;
+overall availability and inventory groups describe all active equipment. Criteria and order are visible in the summary. Zero results shows a
 reset hint. Opening details retains the filtered list. Refresh reevaluates queries against current
 data, including loan-only changes, without executing row callbacks. Errors retain criteria and input
 for correction. List commands clear filters.

@@ -159,7 +159,8 @@ Command display results are fixed:
 | member view | memberDetails(requested NUS ID) |
 | member list | members() |
 | equipment add | Count 1: equipmentDetails(generated UUID); count > 1: equipment with DirectoryQuery.all() |
-| equipment delete | equipment() |
+| equipment edit or equipment restore | equipmentDetails(affected UUID) |
+| equipment delete | equipment(); retains records, current query and eligible selection |
 | equipment view | equipmentDetails(requested UUID) |
 | equipment list | equipment() |
 | loans add or loans return | equipmentDetails(affected UUID) |
@@ -229,3 +230,11 @@ The shell registers listeners once on members, equipment, loans and the existing
 
 The existing Model, ModelManager, AddressBook, ReadOnlyAddressBook, collection and storage contracts are frozen. A discovered defect in someone else's module requires a small separate coordinated fix, not an opportunistic rewrite. Outside Keith's explicitly assigned minimal graphical-runtime work, do not alter build dependencies/CI. Do not alter another owner's global CSS, shared fixtures, or domain semantics to make one feature easier. Ask only for a concrete unresolved contract conflict; continue independent work meanwhile.
 
+
+## Equipment maintenance update
+
+Equipment cards mark deleted units with `[DELETED]`; details expose ACTIVE/DELETED and a restore hint.
+`equipment list` is read-only and resets to all records. Equipment search defaults to active units and
+accepts `status/active|deleted|all`. Total includes retained units; availability totals and inventory
+groups count active units only. Edit/restore details resolve the same UUID even if it no longer matches
+the retained directory query. All panels refresh from published model data, without extra commands.

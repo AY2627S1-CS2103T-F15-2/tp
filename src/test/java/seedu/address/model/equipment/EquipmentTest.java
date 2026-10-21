@@ -79,7 +79,8 @@ public class EquipmentTest {
     public void toStringMethod() {
         Equipment equipment = new Equipment(UUID_ONE, "Camera", "Photography", Condition.GOOD, "With strap");
         String expected = Equipment.class.getCanonicalName()
-                + "{uuid=" + UUID_ONE + ", name=Camera, category=Photography, condition=GOOD, notes=With strap}";
+                + "{uuid=" + UUID_ONE + ", name=Camera, category=Photography, condition=GOOD, "
+                + "notes=With strap, deleted=false}";
 
         assertEquals(expected, equipment.toString());
     }

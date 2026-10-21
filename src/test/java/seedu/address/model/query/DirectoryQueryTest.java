@@ -102,9 +102,9 @@ public class DirectoryQueryTest {
         model.deleteMember(member(2));
         AddressBook before = new AddressBook(model.getAddressBook());
         DirectoryQuery active = new DirectoryQuery("alex", "", null, null, DirectoryQuery.Holding.ANY,
-                DirectoryQuery.Sort.ID, false, DirectoryQuery.MemberStatus.ACTIVE);
+                DirectoryQuery.Sort.ID, false, DirectoryQuery.Status.ACTIVE);
         DirectoryQuery deleted = new DirectoryQuery("alex", "", null, null, DirectoryQuery.Holding.ANY,
-                DirectoryQuery.Sort.ID, false, DirectoryQuery.MemberStatus.DELETED);
+                DirectoryQuery.Sort.ID, false, DirectoryQuery.Status.DELETED);
         assertEquals(List.of(member(1)), active.members(model.getAddressBook()));
         assertEquals(List.of(model.findMember(member(2).getNusId()).orElseThrow()),
                 deleted.members(model.getAddressBook()));
