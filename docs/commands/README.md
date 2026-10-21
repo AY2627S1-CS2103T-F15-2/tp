@@ -20,7 +20,7 @@ Member soft-delete and unlimited restoration are supported. Archival remains out
 | member view | `member view nus/NUS_ID` | [View member](member-view.md) |
 | member list | `member list` | [List members](member-list.md) |
 | member search | `member search [q/TEXT] [holding/VALUE] [status/active\|deleted\|all] [sort/FIELD] [order/VALUE]` | [Search and planning](search-and-planning.md) |
-| equipment add | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES]` | [Add equipment](equipment-add.md) |
+| equipment add | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES] [count/COUNT]` | [Add equipment](equipment-add.md) |
 | equipment delete | `equipment delete uuid/UUID` | [Delete equipment](equipment-delete.md) |
 | equipment view | `equipment view uuid/UUID` | [View equipment](equipment-view.md) |
 | equipment list | `equipment list` | [List equipment](equipment-list.md) |

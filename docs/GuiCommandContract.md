@@ -158,7 +158,7 @@ Command display results are fixed:
 | member delete | members() |
 | member view | memberDetails(requested NUS ID) |
 | member list | members() |
-| equipment add | equipmentDetails(generated UUID) |
+| equipment add | Count 1: equipmentDetails(generated UUID); count > 1: equipment with DirectoryQuery.all() |
 | equipment delete | equipment() |
 | equipment view | equipmentDetails(requested UUID) |
 | equipment list | equipment() |

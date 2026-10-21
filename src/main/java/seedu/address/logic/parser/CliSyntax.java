@@ -21,6 +21,7 @@ public class CliSyntax {
     public static final Prefix PREFIX_EQUIPMENT_UUID = new Prefix("uuid/");
     public static final Prefix PREFIX_CATEGORY = new Prefix("category/");
     public static final Prefix PREFIX_CONDITION = new Prefix("condition/");
+    public static final Prefix PREFIX_COUNT = new Prefix("count/");
     public static final Prefix PREFIX_NOTES = new Prefix("notes/");
     public static final Prefix PREFIX_ASSIGNED_DATE = new Prefix("assigned/");
     public static final Prefix PREFIX_EXPECTED_RETURN_DATE = new Prefix("expected/");

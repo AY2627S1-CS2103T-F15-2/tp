@@ -89,7 +89,7 @@ To explore without changing the sample records:
 Commands and prefixes are **lowercase and case-sensitive**. Use `member add`, not `Member Add`.
 
 - Replace uppercase placeholders with your values: replace `NUS_ID` with `A0123456X`, for example.
-- Square brackets mean an optional parameter; do not type them. Only equipment notes are optional.
+- Square brackets mean an optional parameter; do not type them. Optional parameters are marked in each command's syntax.
 - Put spaces between command words and parameters. Parameters may appear in any order; tabs also separate fields.
 - Each prefix may appear **at most once**, including `notes/`.
 - Leading/trailing whitespace is ignored. Runs of whitespace in text values become one ordinary space.
@@ -301,31 +301,42 @@ are rejected without saving. A failed save leaves the member deleted and permits
 
 ### Add equipment: `equipment add`
 
-Register one physical item and let Laplace generate its immutable UUID.
+Register one or more physical units with the same details. Laplace generates a separate immutable UUID for each unit.
 
 ```text
-equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES]
+equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES] [count/COUNT]
 ```
 
 `name/`, `category/` and `condition/` are required. Notes are optional; `notes/` with no value also means
-no notes. Do not supply `uuid/`, a holder or availability. Follow the shared text limits and condition rules.
+no notes. `count/` is optional and defaults to **1**. Supply a whole number from **1 to 100**, using
+ASCII digits only; leading zeros are allowed. Blank counts, signs, fractions, repeated `count/` fields
+and values outside this range are rejected. Do not supply `uuid/`, a holder or availability.
+Follow the shared text limits and condition rules.
 
 Examples:
 
 ```text
 equipment add name/Canon EOS R50 category/Camera condition/GOOD notes/Includes battery and strap
 equipment add name/Tripod category/Camera Support condition/fair
+equipment add name/Camera Kit category/Photography condition/GOOD count/3 notes/Includes strap
 ```
 
-Success creates one item, selects its row and opens its details. Feedback includes the generated UUID
+For a count of 1, success creates one item, selects its row and opens its details. Feedback includes the generated UUID
 and name, for example:
 `New equipment added: Canon EOS R50 (550e8400-e29b-41d4-a716-446655440000), availability: AVAILABLE`.
 Copy the **actual generated UUID**, which will normally differ from that example, for later commands.
 
+For larger counts, success creates the entire batch, resets equipment search filters/sorting, and opens
+the full equipment directory. Feedback reports the created count, name, availability and all generated
+UUIDs, for example `Added 3 equipment units: Camera Kit, availability: AVAILABLE.` followed by `UUIDs:`.
+Every unit has the same supplied details and its own UUID. Existing similar records may produce one
+advisory duplicate warning; the new batch does not warn about its own intentionally matching units.
+
 GOOD/FAIR items start as AVAILABLE. DAMAGED/UNDER_REPAIR items can be registered but start UNAVAILABLE.
 Otherwise identical items are allowed: two cameras with the same description are separate physical units
 with different UUIDs. Laplace silently retries a generated UUID collision; if it cannot obtain a unique
-identifier, it reports an error without adding an item. A save failure also commits no new item.
+identifier, it reports an error without adding any units. The batch is saved as one operation: a failure
+during creation or saving commits no new units. There is no stored quantity replacing individual records.
 
 ### List equipment: `equipment list`
 
@@ -577,7 +588,7 @@ authentication and concurrent multi-user operation are not provided.
 | View member and current holdings | `member view nus/NUS_ID` |
 | Soft-delete member | `member delete nus/NUS_ID` |
 | Restore member | `member restore nus/NUS_ID` |
-| Add equipment | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES]` |
+| Add equipment | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES] [count/COUNT]` |
 | List equipment | `equipment list` |
 | View equipment and current holder | `equipment view uuid/UUID` |
 | Delete equipment | `equipment delete uuid/UUID` |
