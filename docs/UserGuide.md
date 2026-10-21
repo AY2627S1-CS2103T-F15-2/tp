@@ -12,8 +12,9 @@ Laplace helps a CCA EXCO member manage **members, equipment and equipment loans*
 Type commands to register records, find an exact member or item, issue equipment, record returns and
 remove erroneous records. Lists and details show who holds each item and what each member holds.
 
-This guide describes the **MVP commands, `loans list`, member editing/restoration and Week 10 search commands**:
-fifteen member, equipment and loan commands in total. Use it with the matching release supplied by the team;
+This guide describes **seventeen member, equipment and loan commands**, including member and equipment
+editing/restoration, batch equipment registration and search: seven member commands, seven equipment
+commands and three loan commands. Use it with the matching release supplied by the team;
 earlier builds may not support every behavior described here. Laplace is a local, single-user application.
 
 <page-nav-print />
@@ -600,7 +601,7 @@ Laplace folder at the configured data path, and launch the matching release ther
 backup until you have checked members, equipment and current loans on the other computer.
 
 **Where is Help?** Enter `help` or press F1. Use `exit` for normal shutdown; saved window preferences are
-reused within usable screen bounds. These utilities are separate from the thirteen member, equipment
+reused within usable screen bounds. These utilities are separate from the seventeen member, equipment
 and loan commands, including `loans list`.
 
 The **Menu** contains **Help** and **Exit**. Help displays the address of the
@@ -609,9 +610,13 @@ use **Copy URL** to copy its address and open it in your browser.
 
 ## MVP limits
 
-The MVP excludes equipment editing, archival, equipment restoration, separate find/member-loans/holder
-commands, completed loan-history viewing, import/export, undo/redo, batch operations, fuzzy search,
-filters, user-selected sorting and automatic overdue notifications. Copying a backup file while the app
+The MVP supports member and equipment editing, soft deletion and restoration, plus search with filters
+and user-selected sorting. Batch equipment registration supports 1–100 physical units per
+`equipment add` command using `count/COUNT`; each unit receives its own UUID. Other batch operations,
+such as bulk editing, deletion, restoration or loan assignment, are not supported.
+
+The MVP excludes separate find/member-loans/holder commands, completed loan-history viewing,
+import/export, undo/redo, fuzzy search and automatic overdue notifications. Copying a backup file while the app
 is closed is a file-management task, not an import/export command. Data is local to one operator;
 authentication and concurrent multi-user operation are not provided.
 
@@ -622,11 +627,13 @@ authentication and concurrent multi-user operation are not provided.
 | Add member | `member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL` |
 | Edit member | `member edit nus/NUS_ID [name/NAME] [phone/PHONE] [email/EMAIL]` |
 | List members | `member list` |
+| Search, filter and sort members | `member search [q/TEXT] [holding/HOLDING] [status/STATUS] [sort/FIELD] [order/ORDER]` |
 | View member and current holdings | `member view nus/NUS_ID` |
 | Soft-delete member | `member delete nus/NUS_ID` |
 | Restore member | `member restore nus/NUS_ID` |
 | Add equipment | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES] [count/COUNT]` |
 | List equipment | `equipment list` |
+| Search, filter and sort equipment | `equipment search [q/TEXT] [category/TEXT] [condition/CONDITION] [availability/AVAILABILITY] [status/STATUS] [sort/FIELD] [order/ORDER]` |
 | View equipment and current holder | `equipment view uuid/UUID` |
 | Edit equipment | `equipment edit uuid/UUID [name/NAME] [category/CATEGORY] [condition/CONDITION] [notes/NOTES]` |
 | Restore equipment | `equipment restore uuid/UUID` |
@@ -634,5 +641,7 @@ authentication and concurrent multi-user operation are not provided.
 | Open the Loans tab | `loans list` |
 | Assign equipment | `loans add uuid/UUID nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |
 | Return equipment | `loans return uuid/UUID returned/ACTUAL_RETURN_DATE` |
+
+See [search, filters and sorting](commands/search-and-planning.md) for accepted search parameter values.
 
 Application utilities: `help` (or F1) opens Help; `exit` closes Laplace.
