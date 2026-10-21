@@ -35,6 +35,8 @@ earlier builds may not support every behavior described here. Laplace is a local
 
 ![Laplace equipment groups in light mode](images/BetterUi.png)
 
+Command text uses [IBM Plex Mono](https://github.com/IBM/plex), distributed under the SIL Open Font License.
+
 Your rows, counts and selected record depend on your data. Both light and dark appearance are supported.
 If startup fails, check the JAR filename and Java version and keep the terminal error for the team.
 Do not delete your data file to troubleshoot startup.
@@ -84,6 +86,8 @@ To explore without changing the sample records:
 - Group counts distinguish **matching** units from **retained** units. Availability counts exclude deleted
   units. **Show all units** reveals group members outside the active search, including deleted records.
   Direct `equipment view uuid/UUID` opens that exact unit, enabling Show all units if needed.
+  Unchecking it narrows the table again while retaining the selected unit's details; a message explains
+  when that unit is outside the table filter.
   Short table identifiers are display labels only: hover for the full UUID, or copy it from unit details.
 - Member rows open member details. Copy buttons preserve full identifiers and contact fields. Related
   member/equipment links open the exact record. **Commands for this unit/member** contains command previews:
@@ -92,10 +96,13 @@ To explore without changing the sample records:
 - The **Loans** tab shows current open assignments, exact-identity links, assigned/due dates and an
   **Overdue** or **Due today** label when applicable. Rows reflow at narrower widths. **Prepare return command**
   fills the input with the unit UUID and today's local date; review it before pressing Enter.
-  Completed loan history remains retained internally and is not a user-facing list.
-- **Last result** describes the last command, even after switching tabs. **Details** expands the complete
-  feedback and **Copy** includes all UUIDs from batch creation. Ready, Success and Error are explicitly labeled.
-- The command input uses a monospaced font. **↑/↓** browse up to 100 recent submissions in this session,
+  Urgency updates when you open Loans, execute a command or change records. Reopen Loans after midnight
+  to refresh the labels. Completed loan history remains retained internally and is not a user-facing list.
+- **Last result** sits above the command feedback and stays after switching tabs. A green box is a
+  successful command, a red box is an error, and the box is neutral before the first command.
+  **Ready**, **Success** and **Error** also identify the status in text. **Details**
+  expands the complete feedback and **Copy** includes all UUIDs from batch creation.
+- The command input, identifiers and command examples use IBM Plex Mono. **↑/↓** browse up to 100 recent submissions in this session,
   preserving an unfinished draft. **Ctrl+Space** offers command-name or parameter-prefix completion at
   the end of the input. Choose an entry to insert it; **Escape** dismisses suggestions. Tab retains normal
   keyboard focus navigation. History is cleared when the application closes.
@@ -110,7 +117,7 @@ mode dark
 mode light
 ```
 
-Use these commands or **Menu → Dark mode / Light mode**. The main window and Help switch together.
+Use these commands or the header button labeled **Dark mode** or **Light mode**. The button names the appearance it will apply. **Menu** contains Help and Exit. The main window and Help switch together.
 Light is the default for new and older preference files. The chosen mode is saved with window preferences
 on normal exit and restored on the next launch. Changing mode preserves the current search and records.
 Only `dark` and `light` are accepted; missing/extra arguments are errors. These are appearance utilities,
@@ -231,7 +238,7 @@ active, deleted and displayed counts. Archival is not supported.
 
 The result is `Listed N active members.` Deleted records are counted separately when present.
 If there are no records, the list displays:
-`No members yet. Use member add to get started.`
+`No members yet`
 
 This command takes no parameters. For example, `member list nus/A0123456X` is rejected; use
 `member view nus/A0123456X` for an exact lookup. A syntax failure leaves the current screen unchanged.
