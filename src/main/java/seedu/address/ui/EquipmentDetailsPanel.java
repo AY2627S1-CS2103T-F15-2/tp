@@ -24,7 +24,9 @@ import seedu.address.model.loan.Loan;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
 
-/** Read-only equipment details. The shell owns selection, navigation and refresh listeners. */
+/**
+ * Read-only equipment details. The shell owns selection, navigation and refresh listeners.
+ */
 public class EquipmentDetailsPanel extends UiPart<Region> {
     private final ReadOnlyAddressBook data;
     private final Consumer<String> onUse;
@@ -35,12 +37,16 @@ public class EquipmentDetailsPanel extends UiPart<Region> {
     @FXML
     private VBox content;
 
-    /** Creates an initially unselected panel from non-null read-only dependencies. */
+    /**
+     * Creates an initially unselected panel from non-null read-only dependencies.
+     */
     public EquipmentDetailsPanel(ReadOnlyAddressBook data, Function<UUID, Availability> availabilityLookup) {
         this(data, availabilityLookup, unused -> { }, unused -> { });
     }
 
-    /** Creates details with explicit command preparation and related-record navigation callbacks. */
+    /**
+     * Creates details with explicit command preparation and related-record navigation callbacks.
+     */
     public EquipmentDetailsPanel(ReadOnlyAddressBook data, Function<UUID, Availability> availabilityLookup,
             Consumer<String> onUse, Consumer<NusId> onNavigate) {
         super("EquipmentDetailsPanel.fxml");
@@ -51,14 +57,18 @@ public class EquipmentDetailsPanel extends UiPart<Region> {
         refresh();
     }
 
-    /** Transfers the detail body to a parent that supplies one shared scrolling surface. */
+    /**
+     * Transfers the detail body to a parent that supplies one shared scrolling surface.
+     */
     public Region detachContent() {
         ScrollPane scroll = (ScrollPane) getRoot();
         scroll.setContent(null);
         return content;
     }
 
-    /** Selects an identity and resolves its current data. */
+    /**
+     * Selects an identity and resolves its current data.
+     */
     public void showEquipment(UUID uuid) {
         requireNonNull(uuid);
         boolean identityChanged = !uuid.equals(selectedUuid);
@@ -70,7 +80,9 @@ public class EquipmentDetailsPanel extends UiPart<Region> {
         }
     }
 
-    /** Rebuilds fields, clearing stale holder/loan details after return, reset or removal. */
+    /**
+     * Rebuilds fields, clearing stale holder/loan details after return, reset or removal.
+     */
     public void refresh() {
         content.getChildren().clear();
         text(content, "detailsTitle", "Equipment details", "laplace-title");
@@ -104,7 +116,7 @@ public class EquipmentDetailsPanel extends UiPart<Region> {
         actions.setExpanded(false);
         content.getChildren().add(actions);
         field(content, "equipmentUuid", "UUID", item.getUuid());
-        field(content, "equipmentStatus", "Status", item.isDeleted() ? "DELETED" : "ACTIVE");
+        field(content, "equipmentStatus", "Status", item.isDeleted() ? "Deleted" : "Active");
         field(content, "category", "Category", item.getCategory());
         field(content, "condition", "Condition", item.getCondition());
         Availability availability;

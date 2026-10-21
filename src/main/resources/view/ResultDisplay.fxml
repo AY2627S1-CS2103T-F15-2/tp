@@ -12,5 +12,5 @@
   </VBox>
   <TextArea fx:id="resultDisplay" editable="false" wrapText="true" HBox.hgrow="ALWAYS" prefHeight="38"
             minHeight="0" accessibleText="Last command result" />
-  <VBox fx:id="feedbackActions" spacing="4" />
+  <HBox fx:id="feedbackActions" spacing="4" />
 </HBox>

@@ -18,7 +18,9 @@ import seedu.address.model.query.InventoryGroups;
  * Explicit list commands supply {@code DirectoryQuery.all()} to reset filters and sorting.
  */
 public final class DisplayRequest {
-    /** Supported display targets. Help and exit take precedence over navigation. */
+    /**
+     * Supported display targets. Help and exit take precedence over navigation.
+     */
     public enum Type {
         UNCHANGED, LEGACY_PERSONS, MEMBERS, MEMBER_DETAILS, EQUIPMENT, EQUIPMENT_DETAILS, EQUIPMENT_GROUP, LOANS
     }
@@ -82,7 +84,9 @@ public final class DisplayRequest {
         return new DisplayRequest(Type.EQUIPMENT_DETAILS, null, requireNonNull(uuid));
     }
 
-    /** Opens a derived group without selecting an arbitrary physical unit. */
+    /**
+     * Opens a derived group without selecting an arbitrary physical unit.
+     */
     public static DisplayRequest equipmentGroup(InventoryGroups.Key group) {
         return new DisplayRequest(Type.EQUIPMENT_GROUP, null, null, null, requireNonNull(group));
     }
@@ -134,6 +138,7 @@ public final class DisplayRequest {
                 .add("memberNusId", memberNusId)
                 .add("equipmentUuid", equipmentUuid)
                 .add("query", query)
+                .add("equipmentGroup", equipmentGroup)
                 .toString();
     }
 }

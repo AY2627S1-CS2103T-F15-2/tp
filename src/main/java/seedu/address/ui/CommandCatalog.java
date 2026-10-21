@@ -24,7 +24,9 @@ final class CommandCatalog {
     private CommandCatalog() {
     }
 
-    /** Returns replacements for the full input, completing command names or an unfinished prefix. */
+    /**
+     * Returns replacements for the full input, completing command names or an unfinished prefix.
+     */
     static List<String> complete(String input) {
         List<String> commands = EXAMPLES.stream().map(CommandCatalog::commandName).distinct().toList();
         List<String> names = commands.stream().filter(name -> name.startsWith(input)).map(name -> name + " ").toList();

@@ -37,7 +37,9 @@ import seedu.address.model.equipment.Equipment;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
 
-/** Application shell. Owns navigation and refresh subscriptions, while panels remain read-only views. */
+/**
+ * Application shell. Owns navigation and refresh subscriptions, while panels remain read-only views.
+ */
 public class MainWindow extends UiPart<Stage> {
     private static final String FXML = "MainWindow.fxml";
     private static final String ACTIVE_STYLE = "laplace-navigation-active";
@@ -110,7 +112,9 @@ public class MainWindow extends UiPart<Stage> {
     @FXML
     private Button backToResults;
 
-    /** Creates the shell with the actual command pipeline and the existing live root. */
+    /**
+     * Creates the shell with the actual command pipeline and the existing live root.
+     */
     public MainWindow(Stage primaryStage, Logic logic, Path dataFilePath) {
         super(FXML, requireNonNull(primaryStage));
         this.primaryStage = primaryStage;
@@ -130,7 +134,9 @@ public class MainWindow extends UiPart<Stage> {
         return primaryStage;
     }
 
-    /** Mounts each component and subscribes exactly once. Initial selection never executes a command. */
+    /**
+     * Mounts each component and subscribes exactly once. Initial selection never executes a command.
+     */
     void fillInnerParts() {
         if (initialized || disposed) {
             return;
@@ -175,7 +181,9 @@ public class MainWindow extends UiPart<Stage> {
         commandBox.requestFocus();
     }
 
-    /** Coalesces synchronous root changes, so observers render after a whole model operation finishes. */
+    /**
+     * Coalesces synchronous root changes, so observers render after a whole model operation finishes.
+     */
     private void queueRefresh() {
         if (disposed || refreshQueued) {
             return;
@@ -188,7 +196,9 @@ public class MainWindow extends UiPart<Stage> {
         });
     }
 
-    /** Rebuilds all derived views, retaining identities or choosing the next sorted row after deletion. */
+    /**
+     * Rebuilds all derived views, retaining identities or choosing the next sorted row after deletion.
+     */
     private void refreshViews() {
         refreshQueued = false;
         List<NusId> newMembers = members.getDisplayedItems().stream()
@@ -224,7 +234,9 @@ public class MainWindow extends UiPart<Stage> {
         }
     }
 
-    /** Resolves a deleted selection by its former position, without firing a panel activation callback. */
+    /**
+     * Resolves a deleted selection by its former position, without firing a panel activation callback.
+     */
     private static <T> Optional<T> recoverSelection(Optional<T> selected, List<T> previous, List<T> current) {
         if (selected.isPresent() && current.contains(selected.get())) {
             return selected;
@@ -244,7 +256,9 @@ public class MainWindow extends UiPart<Stage> {
         }
     }
 
-    /** Mounts the real summary or detail panel according to the typed display request. */
+    /**
+     * Mounts the real summary or detail panel according to the typed display request.
+     */
     private void display(DisplayRequest request) {
         if (request.getType() == DisplayRequest.Type.UNCHANGED) {
             return;
@@ -347,7 +361,9 @@ public class MainWindow extends UiPart<Stage> {
                 || currentDisplay.getType() == DisplayRequest.Type.MEMBER_DETAILS ? "member list" : "equipment list");
     }
 
-    /** Returns correction focus only after Space's typed event has finished on its originating control. */
+    /**
+     * Returns correction focus only after Space's typed event has finished on its originating control.
+     */
     private void handleActivationRelease(KeyEvent event) {
         if (event.getCode() == KeyCode.SPACE) {
             spacePressed = false;
@@ -358,7 +374,9 @@ public class MainWindow extends UiPart<Stage> {
         }
     }
 
-    /** Routes explicit UI activation through exactly the same pipeline as command input. */
+    /**
+     * Routes explicit UI activation through exactly the same pipeline as command input.
+     */
     private void activate(String commandText) {
         try {
             executeCommand(commandText);
@@ -395,7 +413,9 @@ public class MainWindow extends UiPart<Stage> {
         }
     }
 
-    /** Keeps saved geometry usable on the current screens, while choosing a wider first-run shell. */
+    /**
+     * Keeps saved geometry usable on the current screens, while choosing a wider first-run shell.
+     */
     private void setWindowDefaultSize(GuiSettings settings) {
         Rectangle2D bounds = Screen.getScreens().stream()
                 .filter(screen -> settings.getWindowCoordinates() != null
@@ -440,7 +460,9 @@ public class MainWindow extends UiPart<Stage> {
         activate("mode light");
     }
 
-    /** Opens help or brings its existing window to the front. */
+    /**
+     * Opens help or brings its existing window to the front.
+     */
     @FXML
     public void handleHelp() {
         if (helpWindow.isShowing()) {
@@ -455,7 +477,9 @@ public class MainWindow extends UiPart<Stage> {
         directory.setDividerPositions(0.28);
     }
 
-    /** Saves window preferences and closes the shell and its owned help window. */
+    /**
+     * Saves window preferences and closes the shell and its owned help window.
+     */
     @FXML
     private void handleExit() {
         logic.setGuiSettings(new GuiSettings(primaryStage.getWidth(), primaryStage.getHeight(),
@@ -465,7 +489,9 @@ public class MainWindow extends UiPart<Stage> {
         primaryStage.hide();
     }
 
-    /** Detaches subscriptions and handlers; queued refreshes become harmless after shutdown. */
+    /**
+     * Detaches subscriptions and handlers; queued refreshes become harmless after shutdown.
+     */
     public void dispose() {
         if (disposed) {
             return;

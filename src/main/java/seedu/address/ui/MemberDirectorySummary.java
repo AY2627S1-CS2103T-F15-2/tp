@@ -13,7 +13,9 @@ import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
 import seedu.address.model.query.DirectoryQuery;
 
-/** Read-only member directory summary. The shell owns listeners and calls refresh on the FX thread. */
+/**
+ * Read-only member directory summary. The shell owns listeners and calls refresh on the FX thread.
+ */
 public class MemberDirectorySummary extends UiPart<Region> {
 
     private final ReadOnlyAddressBook data;
@@ -41,7 +43,9 @@ public class MemberDirectorySummary extends UiPart<Region> {
     @FXML
     private Label statusMessage;
 
-    /** Creates a standalone summary from non-null read-only dependencies. */
+    /**
+     * Creates a standalone summary from non-null read-only dependencies.
+     */
     public MemberDirectorySummary(ReadOnlyAddressBook data) {
         super("MemberDirectorySummary.fxml");
         this.data = requireNonNull(data);
@@ -49,12 +53,16 @@ public class MemberDirectorySummary extends UiPart<Region> {
         refresh(Optional.empty());
     }
 
-    /** Sets transient criteria; the parent refreshes once after coordinating both directory components. */
+    /**
+     * Sets transient criteria; the parent refreshes once after coordinating both directory components.
+     */
     public void setQuery(DirectoryQuery query) {
         this.query = requireNonNull(query);
     }
 
-    /** Refreshes current counts and selection without executing commands or retaining entity snapshots. */
+    /**
+     * Refreshes current counts and selection without executing commands or retaining entity snapshots.
+     */
     public void refresh(Optional<NusId> selected) {
         requireNonNull(selected);
         int count = data.getMemberList().size();

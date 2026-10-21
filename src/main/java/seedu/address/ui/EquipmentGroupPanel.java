@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,6 +39,7 @@ public class EquipmentGroupPanel extends VBox {
     private final Region detailBody;
     private final Label title = new Label();
     private final Label counts = new Label();
+    private final Label availabilityCounts = new Label();
     private final CheckBox showAll = new CheckBox("Show all units in this group, including deleted");
     private final TableView<Equipment> units = new TableView<>();
     private final StackPane detailArea = new StackPane();
@@ -47,7 +49,9 @@ public class EquipmentGroupPanel extends VBox {
     private UUID selectedUuid;
     private boolean refreshing;
 
-    /** Creates a read-only group view; user unit selection requests navigation through the shell. */
+    /**
+     * Creates a read-only group view; user unit selection requests navigation through the shell.
+     */
     public EquipmentGroupPanel(ReadOnlyAddressBook data, Function<UUID, Availability> lookup,
             Consumer<String> onUse, Consumer<NusId> onMember, Consumer<UUID> onUnit) {
         super(8);
@@ -57,6 +61,7 @@ public class EquipmentGroupPanel extends VBox {
         detailBody = details.detachContent();
         requireNonNull(onUnit);
         getStyleClass().addAll("laplace-surface", "group-panel");
+        getStylesheets().add(getClass().getResource("/view/DetailsPanel.css").toExternalForm());
         setMinHeight(0);
         title.setId("groupTitle");
         title.getStyleClass().add("laplace-title");
@@ -66,6 +71,9 @@ public class EquipmentGroupPanel extends VBox {
         counts.setMinHeight(USE_PREF_SIZE);
         counts.setMinWidth(0);
         counts.getStyleClass().add("laplace-muted");
+        availabilityCounts.setId("groupAvailability");
+        availabilityCounts.setWrapText(true);
+        availabilityCounts.setMinHeight(USE_PREF_SIZE);
         showAll.setId("showAllUnits");
         showAll.setWrapText(true);
         showAll.setOnAction(event -> refresh());
@@ -74,7 +82,7 @@ public class EquipmentGroupPanel extends VBox {
         units.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         units.setPlaceholder(new Label("No units match these filters. Try Show all units or reset search."));
         addColumn("Unit", unit -> "…" + unit.getUuid().toString().substring(28));
-        addColumn("Condition", unit -> unit.getCondition().toString());
+        addColumn("Condition", unit -> EquipmentPresentation.label(unit.getCondition()));
         addColumn("Availability", this::availability);
         addColumn("Holder", this::holder);
         addColumn("Status", unit -> unit.isDeleted() ? "Deleted" : "Active");
@@ -86,7 +94,7 @@ public class EquipmentGroupPanel extends VBox {
         prompt.setWrapText(true);
         detailArea.setMinHeight(0);
         detailArea.getChildren().setAll(prompt);
-        VBox body = new VBox(10, title, counts, showAll, units, detailArea);
+        VBox body = new VBox(8, title, counts, availabilityCounts, showAll, units, detailArea);
         body.setMinWidth(0);
         ScrollPane scroll = new ScrollPane(body);
         scroll.setFitToWidth(true);
@@ -95,7 +103,9 @@ public class EquipmentGroupPanel extends VBox {
         getChildren().add(scroll);
     }
 
-    /** Opens a group with no implicit physical-unit selection. */
+    /**
+     * Opens a group with no implicit physical-unit selection.
+     */
     public void showGroup(InventoryGroups.Key key, DirectoryQuery query) {
         this.key = requireNonNull(key);
         this.query = requireNonNull(query);
@@ -104,14 +114,18 @@ public class EquipmentGroupPanel extends VBox {
         refresh();
     }
 
-    /** Resolves an exact UUID, showing all group units if that target lies outside the active filter. */
+    /**
+     * Resolves an exact UUID, showing all group units if that target lies outside the active filter.
+     */
     public void showUnit(UUID uuid, DirectoryQuery query) {
         selectedUuid = requireNonNull(uuid);
         this.query = requireNonNull(query);
         refresh();
     }
 
-    /** Recomputes group membership, counts and selection after edits, loans and lifecycle changes. */
+    /**
+     * Recomputes group membership, counts and selection after edits, loans and lifecycle changes.
+     */
     public void refresh() {
         refreshing = true;
         try {
@@ -122,7 +136,8 @@ public class EquipmentGroupPanel extends VBox {
                 return;
             }
             List<Equipment> all = data.getEquipmentList().stream()
-                    .filter(unit -> InventoryGroups.keyOf(unit).equals(key)).toList();
+                    .filter(unit -> InventoryGroups.keyOf(unit).equals(key))
+                    .sorted(Comparator.comparing(unit -> unit.getUuid().toString())).toList();
             List<Equipment> matching = query.equipment(data, lookup).stream()
                     .filter(unit -> InventoryGroups.keyOf(unit).equals(key)).toList();
             if (selected.isPresent() && !matching.contains(selected.orElseThrow())) {
@@ -133,7 +148,10 @@ public class EquipmentGroupPanel extends VBox {
             counts.setText(key.category() + " · " + matching.size() + " matching / " + all.size()
                     + " retained units · " + active + " active · " + (all.size() - active) + " deleted"
                     + (showAll.isSelected() ? " · Table shows all units" : " · Table shows matching units"));
-            units.getItems().setAll(showAll.isSelected() ? all : matching);
+            List<Equipment> shown = showAll.isSelected() ? all : matching;
+            availabilityCounts.setText((showAll.isSelected() ? "All units: " : "Matching units: ")
+                    + EquipmentPresentation.counts(shown, lookup));
+            units.getItems().setAll(shown);
             units.setPrefHeight(Math.min(230, Math.max(90, units.getItems().size() * 30 + 34)));
             units.setMinHeight(USE_PREF_SIZE);
             units.setMaxHeight(USE_PREF_SIZE);
@@ -170,7 +188,7 @@ public class EquipmentGroupPanel extends VBox {
 
     private String availability(Equipment unit) {
         try {
-            return lookup.apply(unit.getUuid()).toString();
+            return EquipmentPresentation.label(lookup.apply(unit.getUuid()));
         } catch (EquipmentNotFoundException exception) {
             return "Unknown";
         }

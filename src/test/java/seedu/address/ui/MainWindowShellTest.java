@@ -159,6 +159,15 @@ public class MainWindowShellTest {
             assertTrue(button("equipmentNavigation").getStyleClass().contains("laplace-navigation-active"));
             assertTrue(feedback().startsWith("Added 3 equipment units: Batch Camera"));
             assertEquals(1, storage.saves);
+            rows().getSelectionModel().selectFirst();
+            rows().fireEvent(key(KeyCode.ENTER));
+            assertEquals("Batch Camera", label("groupTitle"));
+            javafx.scene.control.TableView<?> units = (javafx.scene.control.TableView<?>) node("physicalUnits");
+            assertEquals(3, units.getItems().size());
+            render("grouped-equipment", 1280, 720);
+            units.getSelectionModel().selectFirst();
+            render("grouped-unit", 1280, 720);
+            render("grouped-unit", 760, 500);
         });
     }
 
@@ -188,7 +197,7 @@ public class MainWindowShellTest {
             assertEquals(new UUID(0, 2), ((InventoryGroups.Group) rows().getItems().getFirst())
                     .matching().getFirst().getUuid());
             assertEquals("1", detailLabel("displayedCount"));
-            assertTrue(detailLabel("inventoryGroups").contains("\"photography\" / \"camera 1\""));
+            assertTrue(detailLabel("inventoryGroups").contains("Photography · Camera 1"));
             render("search-equipment", 1100, 700);
             render("search-equipment", 760, 500);
             int dispatches = logic.commands.size();
@@ -226,7 +235,7 @@ public class MainWindowShellTest {
             assertEquals(new UUID(0, 1).toString(), detailLabel("equipmentUuid"));
             submit("equipment search availability/available");
             assertEquals("2", detailLabel("displayedCount"));
-            assertTrue(detailLabel("inventoryGroups").contains("\"camera 1\": 1 available"));
+            assertTrue(detailLabel("inventoryGroups").contains("Camera 1: 1 available"));
         });
     }
 
@@ -278,7 +287,7 @@ public class MainWindowShellTest {
             assertEquals(target.toString(), detailLabel("equipmentUuid"));
             assertEquals("Updated Camera", detailLabel("equipmentName"));
             assertEquals("Repair lens", detailLabel("notes"));
-            assertEquals("UNAVAILABLE", detailLabel("availability"));
+            assertEquals("Unavailable", detailLabel("availability"));
             submit("equipment delete uuid/" + target);
             assertEquals(2, rows().getItems().size());
             assertEquals("1", detailLabel("unavailableCount"));
@@ -286,12 +295,12 @@ public class MainWindowShellTest {
             assertEquals(1, rows().getItems().size());
             assertTrue(((InventoryGroups.Group) rows().getItems().getFirst()).matching().getFirst().isDeleted());
             submit("equipment view uuid/" + target);
-            assertEquals("DELETED", detailLabel("equipmentStatus"));
+            assertEquals("Deleted", detailLabel("equipmentStatus"));
             assertEquals("Repair lens", detailLabel("notes"));
             submit("equipment restore uuid/" + target);
-            assertEquals("ACTIVE", detailLabel("equipmentStatus"));
+            assertEquals("Active", detailLabel("equipmentStatus"));
             assertEquals(target.toString(), detailLabel("equipmentUuid"));
-            assertEquals("UNAVAILABLE", detailLabel("availability"));
+            assertEquals("Unavailable", detailLabel("availability"));
             assertTrue(rows().getItems().isEmpty());
             submit("equipment search status/active");
             assertEquals(3, rows().getItems().size());
@@ -302,8 +311,8 @@ public class MainWindowShellTest {
         FxTestUtil.runAndWait(() -> {
             submit("equipment view uuid/" + target);
             assertEquals("Updated Camera", detailLabel("equipmentName"));
-            assertEquals("ACTIVE", detailLabel("equipmentStatus"));
-            assertEquals("DAMAGED", detailLabel("condition"));
+            assertEquals("Active", detailLabel("equipmentStatus"));
+            assertEquals("Damaged", detailLabel("condition"));
             render("equipment-maintenance", 1100, 700);
         });
     }
@@ -722,7 +731,7 @@ public class MainWindowShellTest {
             card = (Region) rows().lookupAll(".list-cell").stream().map(node -> (ListCell<?>) node)
                     .filter(ListCell::isSelected).findFirst().orElseThrow().getGraphic();
             assertTrue(card.lookupAll(".label").stream().map(node -> ((Label) node).getText())
-                    .anyMatch(text -> text.contains("1 available in results")));
+                    .anyMatch(text -> text.contains("1 available")));
             button("loansNavigation").fire();
             assertEquals("0", label("openCount"));
             assertEquals(null, node("historyCount"));
@@ -780,7 +789,7 @@ public class MainWindowShellTest {
             model.deleteEquipment(model.findEquipment(new UUID(0, 2)).orElseThrow());
         });
         FxTestUtil.runAndWait(() -> {
-            assertEquals("DELETED", detailLabel("equipmentStatus"));
+            assertEquals("Deleted", detailLabel("equipmentStatus"));
             assertEquals("Renamed Camera", detailLabel("equipmentName"));
             assertEquals(1, logic.commands.size());
         });
@@ -817,7 +826,7 @@ public class MainWindowShellTest {
             showEquipmentDetails(new UUID(0, 2));
             assertEquals(new UUID(0, 2).toString(), detailLabel("equipmentUuid"));
             assertEquals("Keep the lens cap on.\nCase included.", detailLabel("notes"));
-            assertEquals("ASSIGNED", detailLabel("availability"));
+            assertEquals("Assigned", detailLabel("availability"));
             assertEquals("Alex Tan", detailLabel("holder"));
             assertEquals("A0000001X", detailLabel("holderNusId"));
             assertEquals("91234567", detailLabel("holderPhone"));
@@ -854,7 +863,7 @@ public class MainWindowShellTest {
                     assertEquals("2 item(s) held", detailLabel("heldCount"));
                     assertEquals(2, node("directorySummaryPlaceholder").lookupAll("#equipmentUuid").size());
                 } else if (active == DisplayRequest.Type.EQUIPMENT_DETAILS) {
-                    assertEquals("ASSIGNED", detailLabel("availability"));
+                    assertEquals("Assigned", detailLabel("availability"));
                     assertEquals("A0000001X", detailLabel("holderNusId"));
                 } else {
                     assertEquals("2", label("openCount"));
@@ -868,7 +877,7 @@ public class MainWindowShellTest {
                     assertEquals(new UUID(0, 2).toString(), detailLabel("equipmentUuid"));
                     assertEquals("2026-01-03", detailLabel("expectedReturnDate"));
                 } else if (active == DisplayRequest.Type.EQUIPMENT_DETAILS) {
-                    assertEquals("AVAILABLE", detailLabel("availability"));
+                    assertEquals("Available", detailLabel("availability"));
                     assertEquals("No current holder", detailLabel("holder"));
                     assertEquals(null, node("directorySummaryPlaceholder").lookup("#holderEmail"));
                     assertEquals(null, node("directorySummaryPlaceholder").lookup("#assignedDate"));
@@ -1135,7 +1144,7 @@ public class MainWindowShellTest {
             assertEquals(1, rows().getItems().size());
             for (UUID item : items) {
                 succeed(assign(item, id(1), assigned, expected));
-                assertEquals("ASSIGNED", detailLabel("availability"));
+                assertEquals("Assigned", detailLabel("availability"));
                 assertEquals("A0000001X", detailLabel("holderNusId"));
                 assertEquals("91234567", detailLabel("holderPhone"));
                 assertEquals("alex@example.com", detailLabel("holderEmail"));
@@ -1167,7 +1176,7 @@ public class MainWindowShellTest {
             reject("equipment delete uuid/" + items[0]);
             for (UUID item : items) {
                 succeed("loans return uuid/" + item + " returned/" + LocalDate.now());
-                assertEquals("AVAILABLE", detailLabel("availability"));
+                assertEquals("Available", detailLabel("availability"));
                 assertEquals("No current holder", detailLabel("holder"));
                 assertEquals(null, node("directorySummaryPlaceholder").lookup("#assignedDate"));
                 reject("loans return uuid/" + item + " returned/" + LocalDate.now());
@@ -1205,7 +1214,7 @@ public class MainWindowShellTest {
             assertEquals("other@example.com", detailLabel("email"));
             succeed("equipment list");
             succeed("equipment view uuid/" + items[1]);
-            assertEquals("AVAILABLE", detailLabel("availability"));
+            assertEquals("Available", detailLabel("availability"));
         });
         Path transcript = Path.of("build", "reports", "laplace", "routed-shell-session.txt");
         Files.createDirectories(transcript.getParent());
@@ -1275,7 +1284,7 @@ public class MainWindowShellTest {
                     assertEquals("2 item(s) held", detailLabel("heldCount"));
                     assertTrue(label("itemsHeld").contains("2"));
                 } else if (active == DisplayRequest.Type.EQUIPMENT_DETAILS) {
-                    assertEquals("ASSIGNED", detailLabel("availability"));
+                    assertEquals("Assigned", detailLabel("availability"));
                     assertEquals("A0000001X", detailLabel("holderNusId"));
                 } else {
                     assertEquals("2", label("openCount"));
@@ -1288,7 +1297,7 @@ public class MainWindowShellTest {
                 if (active == DisplayRequest.Type.MEMBER_DETAILS) {
                     assertEquals("1 item(s) held", detailLabel("heldCount"));
                 } else if (active == DisplayRequest.Type.EQUIPMENT_DETAILS) {
-                    assertEquals("AVAILABLE", detailLabel("availability"));
+                    assertEquals("Available", detailLabel("availability"));
                     assertEquals("No current holder", detailLabel("holder"));
                 } else {
                     assertEquals("1", label("openCount"));

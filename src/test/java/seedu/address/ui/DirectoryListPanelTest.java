@@ -202,7 +202,7 @@ public class DirectoryListPanelTest {
             assertEquals("alex@example.com", label(memberCard, "email"));
             assertTrue(label(memberCard, "identityAndPhone").contains(nusId.value));
             assertTrue(equipmentCard.lookupAll(".label").stream().map(node -> ((Label) node).getText())
-                    .anyMatch(text -> text.contains("2 available in results")));
+                    .anyMatch(text -> text.contains("2 available")));
             assertEquals(before, model.getAddressBook());
             assertEquals(Optional.of(nusId), members.getSelection());
             assertEquals(Optional.of(uuid), equipment.getSelection());
@@ -215,7 +215,7 @@ public class DirectoryListPanelTest {
             equipmentCard = (Region) cellFor(rows(equipment), model.findEquipment(uuid).orElseThrow()).getGraphic();
             assertEquals("0 items held", label(memberCard, "itemsHeld"));
             assertTrue(equipmentCard.lookupAll(".label").stream().map(node -> ((Label) node).getText())
-                    .anyMatch(text -> text.contains("3 available in results")));
+                    .anyMatch(text -> text.contains("3 available")));
         });
     }
 

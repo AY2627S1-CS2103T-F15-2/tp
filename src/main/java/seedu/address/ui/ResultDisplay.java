@@ -6,8 +6,8 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
 
 /**
  * A UI component that displays the result of a command execution.
@@ -23,9 +23,11 @@ public class ResultDisplay extends UiPart<Region> {
     private Label feedbackStatus;
 
     @FXML
-    private VBox feedbackActions;
+    private HBox feedbackActions;
 
-    /** Creates compact feedback with neutral startup guidance. */
+    /**
+     * Creates compact feedback with neutral startup guidance.
+     */
     public ResultDisplay() {
         super(FXML);
         setReady("Type a command or open Help for examples.");
@@ -35,7 +37,9 @@ public class ResultDisplay extends UiPart<Region> {
         setFeedbackToUser(feedbackToUser, false);
     }
 
-    /** Shows success or failure with both a textual status and a distinct background. */
+    /**
+     * Shows success or failure with both a textual status and a distinct background.
+     */
     public void setFeedbackToUser(String feedbackToUser, boolean error) {
         requireNonNull(feedbackToUser);
         getRoot().getStyleClass().removeAll("laplace-success", "laplace-error", "laplace-neutral");
@@ -53,7 +57,9 @@ public class ResultDisplay extends UiPart<Region> {
         feedbackActions.getChildren().setAll(expand, CommandPreview.copyButton("Copy", feedbackToUser));
     }
 
-    /** Shows neutral startup guidance without describing it as a successful command. */
+    /**
+     * Shows neutral startup guidance without describing it as a successful command.
+     */
     public void setReady(String message) {
         setFeedbackToUser(message);
         feedbackStatus.setText("Ready");

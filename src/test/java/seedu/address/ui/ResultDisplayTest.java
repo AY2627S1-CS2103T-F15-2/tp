@@ -5,13 +5,45 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.HashMap;
+
 import org.junit.jupiter.api.Test;
 
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.DataFormat;
 import seedu.address.testutil.FxTestUtil;
 
 public class ResultDisplayTest {
+    @Test
+    public void fullFeedback_expandsCollapsesAndCopiesEveryBatchIdentity() {
+        FxTestUtil.runAndWait(() -> {
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            HashMap<DataFormat, Object> previous = new HashMap<>();
+            clipboard.getContentTypes().forEach(format -> previous.put(format, clipboard.getContent(format)));
+            try {
+                ResultDisplay display = new ResultDisplay();
+                TextArea area = (TextArea) display.getRoot().lookup("#resultDisplay");
+                String batch = "Added 100 units\n" + "00000000-0000-0000-0000-000000000001\n".repeat(100);
+                display.setFeedbackToUser(batch);
+                Button details = display.getRoot().lookupAll(".button").stream().map(node -> (Button) node)
+                        .filter(button -> button.getText().equals("Details")).findFirst().orElseThrow();
+                details.fire();
+                assertTrue(area.getPrefHeight() > 100);
+                assertEquals("Collapse", details.getText());
+                details.fire();
+                assertTrue(area.getPrefHeight() < 50);
+                display.getRoot().lookupAll(".button").stream().map(node -> (Button) node)
+                        .filter(button -> button.getText().equals("Copy")).findFirst().orElseThrow().fire();
+                assertEquals(batch, clipboard.getString());
+            } finally {
+                clipboard.setContent(previous);
+            }
+        });
+    }
+
     @Test
     public void feedback_successAndError_displaysTextAndAccessibleStatus() {
         FxTestUtil.runAndWait(() -> {

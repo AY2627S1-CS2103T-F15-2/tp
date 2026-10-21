@@ -20,7 +20,6 @@ import javafx.scene.layout.VBox;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.Equipment;
-import seedu.address.model.equipment.exceptions.EquipmentNotFoundException;
 import seedu.address.model.query.DirectoryQuery;
 import seedu.address.model.query.InventoryGroups;
 
@@ -39,7 +38,9 @@ public class EquipmentListPanel extends UiPart<Region> {
     @FXML
     private ListView<InventoryGroups.Group> rows;
 
-    /** Creates a grouped directory; only explicit activation invokes the navigation callback. */
+    /**
+     * Creates a grouped directory; only explicit activation invokes the navigation callback.
+     */
     public EquipmentListPanel(ReadOnlyAddressBook data, Function<UUID, Availability> availabilityLookup,
             Consumer<InventoryGroups.Key> onSelect) {
         super("EquipmentListPanel.fxml");
@@ -65,17 +66,25 @@ public class EquipmentListPanel extends UiPart<Region> {
         return query;
     }
 
-    /** Returns individual query matches for identity recovery, independently of grouped rows. */
+    /**
+     * Returns individual query matches for identity recovery, independently of grouped rows.
+     */
     public List<Equipment> getDisplayedItems() {
         return query.equipment(data, availabilityLookup);
     }
 
-    /** Rebuilds derived groups while retaining group selection and any explicitly selected unit. */
+    /**
+     * Rebuilds derived groups while retaining group selection and any explicitly selected unit.
+     */
     public void refresh() {
         UUID unit = selectedUuid;
         Optional<InventoryGroups.Key> selected = getSelectedGroup();
         List<Equipment> matching = getDisplayedItems();
-        rows.getItems().setAll(InventoryGroups.group(data, matching));
+        List<InventoryGroups.Group> groups = InventoryGroups.group(data, matching);
+        if (!rows.getItems().equals(groups)) {
+            rows.getItems().setAll(groups);
+        }
+        rows.refresh();
         countLabel.setText(rows.getItems().size() + " groups · " + matching.size() + " matching units / "
                 + data.getEquipmentList().size() + " retained");
         Label empty = new Label(data.getEquipmentList().isEmpty()
@@ -95,13 +104,17 @@ public class EquipmentListPanel extends UiPart<Region> {
         return Optional.ofNullable(rows.getSelectionModel().getSelectedItem()).map(InventoryGroups.Group::key);
     }
 
-    /** Selects a group without choosing a unit or invoking a command. */
+    /**
+     * Selects a group without choosing a unit or invoking a command.
+     */
     public void selectGroup(InventoryGroups.Key key) {
         rows.getItems().stream().filter(group -> group.key().equals(key)).findFirst()
                 .ifPresent(group -> rows.getSelectionModel().select(group));
     }
 
-    /** Retains the exact UUID even when its group is outside the current directory filter. */
+    /**
+     * Retains the exact UUID even when its group is outside the current directory filter.
+     */
     public void select(Optional<UUID> selected) {
         requireNonNull(selected);
         if (getSelection().equals(selected)) {
@@ -122,16 +135,8 @@ public class EquipmentListPanel extends UiPart<Region> {
         Label category = new Label(group.category());
         category.getStyleClass().add("laplace-muted");
         Label count = new Label(group.matching().size() + " matching / " + group.units().size() + " retained units");
-        Label availability = new Label();
-        try {
-            long available = group.matching().stream().filter(unit -> !unit.isDeleted())
-                    .filter(unit -> availabilityLookup.apply(unit.getUuid()) == Availability.AVAILABLE).count();
-            long deleted = group.matching().stream().filter(Equipment::isDeleted).count();
-            availability.setText(available + " available in results"
-                    + (deleted == 0 ? "" : " · " + deleted + " deleted"));
-        } catch (EquipmentNotFoundException exception) {
-            availability.setText("Availability could not be determined.");
-        }
+        Label availability = new Label("In results: "
+                + EquipmentPresentation.counts(group.matching(), availabilityLookup));
         VBox card = new VBox(5, name, category, count, availability);
         card.getStyleClass().addAll("laplace-row", "equipment-group-card");
         for (Label label : List.of(name, category, count, availability)) {

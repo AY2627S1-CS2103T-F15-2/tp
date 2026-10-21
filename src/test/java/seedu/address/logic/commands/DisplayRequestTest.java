@@ -12,10 +12,25 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.member.NusId;
+import seedu.address.model.query.InventoryGroups;
 
 public class DisplayRequestTest {
     private static final NusId NUS_ID = new NusId("a0123456x");
     private static final UUID UUID_ONE = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+
+    @Test
+    public void groupTarget_normalizesDescriptionsWithoutChoosingAUnit() {
+        DisplayRequest group = DisplayRequest.equipmentGroup(new InventoryGroups.Key(" Photo ", "Camera"));
+        DisplayRequest same = DisplayRequest.equipmentGroup(new InventoryGroups.Key("photo", "camera"));
+        assertEquals(group, same);
+        assertEquals(group.hashCode(), same.hashCode());
+        assertNotEquals(group, DisplayRequest.equipmentGroup(new InventoryGroups.Key("photo", "Tripod")));
+        assertEquals(DisplayRequest.Type.EQUIPMENT_GROUP, group.getType());
+        assertTrue(group.getEquipmentUuid().isEmpty());
+        assertEquals("camera", group.getEquipmentGroup().orElseThrow().name());
+        assertTrue(group.toString().contains("camera"));
+        assertThrows(NullPointerException.class, () -> DisplayRequest.equipmentGroup(null));
+    }
 
     @Test
     public void factories_directoryTargets_haveNoIdentity() {

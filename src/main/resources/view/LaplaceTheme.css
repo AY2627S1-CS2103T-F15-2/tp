@@ -389,3 +389,22 @@
 .laplace-root .menu-item:focused .label {
     -fx-text-fill: -laplace-text;
 }
+
+.identity-value {
+    -fx-font-family: "monospace";
+}
+
+.record-status {
+    -fx-padding: 3 7;
+    -fx-background-color: -laplace-neutral;
+    -fx-background-radius: 3;
+}
+
+.equipment-group-card .details-section-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.command-code .command-name {
+    -fx-font-weight: bold;
+}

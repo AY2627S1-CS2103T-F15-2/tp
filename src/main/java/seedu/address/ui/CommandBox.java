@@ -81,12 +81,15 @@ public class CommandBox extends UiPart<Region> {
         requestFocus();
     }
 
-    /** Prepares a command without executing it or discarding the user's ability to edit it. */
+    /**
+     * Prepares a command without executing it or discarding the user's ability to edit it.
+     */
     public void prepare(String command) {
+        completions.hide();
         commandTextField.setText(requireNonNull(command));
-        commandTextField.positionCaret(command.length());
         historyIndex = history.size();
         requestFocus();
+        commandTextField.positionCaret(command.length());
     }
 
     private void handleKeyPressed(KeyEvent event) {
@@ -116,7 +119,9 @@ public class CommandBox extends UiPart<Region> {
         }
     }
 
-    /** Returns keyboard focus to command input after navigation or submission. */
+    /**
+     * Returns keyboard focus to command input after navigation or submission.
+     */
     public void requestFocus() {
         commandTextField.requestFocus();
     }

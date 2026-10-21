@@ -28,7 +28,9 @@ import seedu.address.model.loan.Loan;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
 
-/** Read-only member details and current holdings, resolved afresh on each refresh. */
+/**
+ * Read-only member details and current holdings, resolved afresh on each refresh.
+ */
 public class MemberDetailsPanel extends UiPart<Region> {
     private final ReadOnlyAddressBook data;
     private final Consumer<String> onUse;
@@ -39,12 +41,16 @@ public class MemberDetailsPanel extends UiPart<Region> {
     @FXML
     private VBox content;
 
-    /** Creates an initially unselected panel from non-null read-only dependencies. */
+    /**
+     * Creates an initially unselected panel from non-null read-only dependencies.
+     */
     public MemberDetailsPanel(ReadOnlyAddressBook data, Function<UUID, Availability> availabilityLookup) {
         this(data, availabilityLookup, unused -> { }, unused -> { });
     }
 
-    /** Creates details with explicit command preparation and related-record navigation callbacks. */
+    /**
+     * Creates details with explicit command preparation and related-record navigation callbacks.
+     */
     public MemberDetailsPanel(ReadOnlyAddressBook data, Function<UUID, Availability> availabilityLookup,
             Consumer<String> onUse, Consumer<UUID> onNavigate) {
         super("MemberDetailsPanel.fxml");
@@ -55,7 +61,9 @@ public class MemberDetailsPanel extends UiPart<Region> {
         refresh();
     }
 
-    /** Selects an identity and resolves its current data. */
+    /**
+     * Selects an identity and resolves its current data.
+     */
     public void showMember(NusId nusId) {
         requireNonNull(nusId);
         boolean identityChanged = !nusId.equals(selectedNusId);
@@ -67,7 +75,9 @@ public class MemberDetailsPanel extends UiPart<Region> {
         }
     }
 
-    /** Refreshes contacts and holdings; no listeners, callbacks or writes are installed. */
+    /**
+     * Refreshes contacts and holdings; no listeners, callbacks or writes are installed.
+     */
     public void refresh() {
         content.getChildren().clear();
         text(content, "detailsTitle", "Member details", "laplace-title");
@@ -129,7 +139,9 @@ public class MemberDetailsPanel extends UiPart<Region> {
                 .forEach(loan -> addHolding(holdings, holdingEquipment(loan), loan));
     }
 
-    /** Resolves a prevalidated loan without detaching its dates from the corresponding physical item. */
+    /**
+     * Resolves a prevalidated loan without detaching its dates from the corresponding physical item.
+     */
     private Equipment holdingEquipment(Loan loan) {
         return data.getEquipmentList().stream().filter(item -> item.getUuid().equals(loan.getEquipmentUuid()))
                 .findFirst().orElseThrow();

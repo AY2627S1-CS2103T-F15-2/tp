@@ -15,14 +15,20 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.Equipment;
 
-/** Inventory planning by normalized category and equipment name, retaining every eligible physical unit. */
+/**
+ * Inventory planning by normalized category and equipment name, retaining every eligible physical unit.
+ */
 public final class InventoryGroups {
     private InventoryGroups() {
     }
 
-    /** Category and type are separate keys even when either contains a display separator. */
+    /**
+     * Category and type are separate keys even when either contains a display separator.
+     */
     public record Key(String category, String name) {
-        /** Normalizes a presentation key without changing any stored unit. */
+        /**
+         * Normalizes a presentation key without changing any stored unit.
+         */
         public Key {
             category = DirectoryQuery.normalize(category);
             name = DirectoryQuery.normalize(name);
@@ -34,9 +40,13 @@ public final class InventoryGroups {
         }
     }
 
-    /** A derived group retains every physical unit and separately identifies query matches. */
+    /**
+     * A derived group retains every physical unit and separately identifies query matches.
+     */
     public record Group(Key key, List<Equipment> units, List<Equipment> matching) {
-        /** Copies the lists so a view cannot mutate group membership. */
+        /**
+         * Copies the lists so a view cannot mutate group membership.
+         */
         public Group {
             units = List.copyOf(units);
             matching = List.copyOf(matching);
@@ -51,12 +61,16 @@ public final class InventoryGroups {
         }
     }
 
-    /** Returns the normalized category/name key for one physical unit. */
+    /**
+     * Returns the normalized category/name key for one physical unit.
+     */
     public static Key keyOf(Equipment unit) {
         return new Key(unit.getCategory(), unit.getName());
     }
 
-    /** Groups matches in their query order while retaining all units for scoped counts and navigation. */
+    /**
+     * Groups matches in their query order while retaining all units for scoped counts and navigation.
+     */
     public static List<Group> group(ReadOnlyAddressBook data, List<Equipment> matching) {
         Map<Key, List<Equipment>> all = new LinkedHashMap<>();
         data.getEquipmentList().forEach(unit ->
@@ -67,7 +81,9 @@ public final class InventoryGroups {
                 new Group(entry.getKey(), all.get(entry.getKey()), entry.getValue())).toList();
     }
 
-    /** Counts are derived from current loans/condition and are never persisted. */
+    /**
+     * Counts are derived from current loans/condition and are never persisted.
+     */
     public static List<String> summarize(ReadOnlyAddressBook data, Function<UUID, Availability> lookup,
             Predicate<Equipment> eligible) {
         Map<Key, EnumMap<Availability, Integer>> counts = new TreeMap<>(

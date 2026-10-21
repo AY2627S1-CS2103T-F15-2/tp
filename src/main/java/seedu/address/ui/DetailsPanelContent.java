@@ -8,7 +8,9 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
-/** Small presentation helpers shared only by the two detail panels. */
+/**
+ * Small presentation helpers shared only by the two detail panels.
+ */
 final class DetailsPanelContent {
     private DetailsPanelContent() {}
 
@@ -42,7 +44,14 @@ final class DetailsPanelContent {
         field.getColumnConstraints().addAll(key, data);
         field.getStyleClass().add("details-field");
         field.add(label(id + "Caption", caption, "laplace-muted", "details-caption"), 0, 0);
-        Label valueLabel = label(id, value.toString(), "details-value");
+        String displayed = value instanceof Enum<?> state ? EquipmentPresentation.label(state) : value.toString();
+        Label valueLabel = label(id, displayed, "details-value");
+        if (Set.of("UUID", "NUS ID").contains(caption)) {
+            valueLabel.getStyleClass().add("identity-value");
+        }
+        if (caption.equals("Status") || caption.equals("Availability") || caption.equals("Condition")) {
+            valueLabel.getStyleClass().add("record-status");
+        }
         if (Set.of("UUID", "NUS ID", "Phone", "Email").contains(caption)) {
             field.add(new VBox(4, valueLabel, CommandPreview.copyButton("Copy " + caption, value.toString())), 1, 0);
         } else {

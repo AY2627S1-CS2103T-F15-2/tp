@@ -12,10 +12,13 @@ import org.junit.jupiter.api.Test;
 
 import javafx.event.ActionEvent;
 import javafx.scene.Scene;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -106,6 +109,65 @@ public class CommandBoxTest {
             field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.DOWN, false, false, false, false));
             assertEquals("member search q/draft", field.getText());
             assertEquals(List.of("equipment list"), executed);
+        });
+    }
+
+    @Test
+    public void completion_popupPreparesWithoutExecutingAndEscapeDismisses() {
+        FxTestUtil.runAndWait(() -> {
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("Success");
+            });
+            TextField field = field(box);
+            Stage stage = new Stage();
+            try {
+                stage.setScene(field.getScene());
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+                box.prepare("equipment ad");
+                field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.SPACE, false, true, false, false));
+                ContextMenu menu = Window.getWindows().stream().filter(window -> window instanceof ContextMenu)
+                        .map(window -> (ContextMenu) window).filter(Window::isShowing).findFirst().orElseThrow();
+                assertEquals("equipment add ", menu.getItems().getFirst().getText());
+                menu.getItems().getFirst().fire();
+                assertEquals("equipment add ", field.getText());
+                assertTrue(executed.isEmpty());
+                field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.SPACE, false, true, false, false));
+                assertTrue(menu.isShowing());
+                field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ESCAPE, false, false, false, false));
+                assertFalse(menu.isShowing());
+                field.positionCaret(2);
+                field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.SPACE, false, true, false, false));
+                assertFalse(menu.isShowing());
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    @Test
+    public void history_boundsAndDuplicateSubmissions_keepTheLatestHundredAndDraft() {
+        FxTestUtil.runAndWait(() -> {
+            CommandBox box = new CommandBox(command -> new CommandResult("Success"));
+            TextField field = field(box);
+            for (int i = 0; i < 102; i++) {
+                box.prepare("member search q/" + i);
+                field.fireEvent(new ActionEvent());
+                box.prepare("member search q/" + i);
+                field.fireEvent(new ActionEvent());
+            }
+            box.prepare("unfinished");
+            for (int i = 0; i < 110; i++) {
+                field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.UP, false, false, false, false));
+            }
+            assertEquals("member search q/2", field.getText());
+            for (int i = 0; i < 110; i++) {
+                field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.DOWN, false, false, false, false));
+            }
+            assertEquals("unfinished", field.getText());
         });
     }
 

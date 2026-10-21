@@ -24,7 +24,9 @@ import javafx.util.Duration;
 public class CommandPreview extends VBox {
     private static final Pattern PREFIX = Pattern.compile("(?<!\\S)[a-z]+/");
 
-    /** Creates a wrapping preview, identifying placeholders when this is a command template. */
+    /**
+     * Creates a wrapping preview, identifying placeholders when this is a command template.
+     */
     public CommandPreview(String command, boolean template, Consumer<String> onUse) {
         super(6);
         requireNonNull(command);
@@ -36,6 +38,13 @@ public class CommandPreview extends VBox {
         code.getStyleClass().add("command-code");
         Matcher matcher = PREFIX.matcher(command);
         int position = 0;
+        Matcher commandName = Pattern.compile("^(?:(?:member|equipment|loans|mode) \\w+|help|exit)").matcher(command);
+        if (commandName.find()) {
+            Text name = new Text(commandName.group());
+            name.getStyleClass().add("command-name");
+            code.getChildren().add(name);
+            position = commandName.end();
+        }
         while (matcher.find()) {
             code.getChildren().add(new Text(command.substring(position, matcher.start())));
             Text prefix = new Text(matcher.group());
@@ -55,7 +64,9 @@ public class CommandPreview extends VBox {
         getChildren().addAll(code, actions, hint);
     }
 
-    /** Creates a copy action that preserves the exact value and confirms success briefly. */
+    /**
+     * Creates a copy action that preserves the exact value and confirms success briefly.
+     */
     public static Button copyButton(String caption, String value) {
         requireNonNull(value);
         Button copy = new Button(caption);

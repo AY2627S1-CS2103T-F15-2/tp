@@ -30,19 +30,19 @@
                        GridPane.rowIndex="0" GridPane.columnIndex="0" />
                 <Label fx:id="totalCount" text="" wrapText="true" minWidth="0" maxWidth="Infinity"
                        GridPane.rowIndex="0" GridPane.columnIndex="1" />
-                <Label text="Displayed" styleClass="directory-key" wrapText="true" minWidth="0"
+                <Label text="Matching units" styleClass="directory-key" wrapText="true" minWidth="0"
                        GridPane.rowIndex="1" GridPane.columnIndex="0" />
                 <Label fx:id="displayedCount" text="" wrapText="true" minWidth="0" maxWidth="Infinity"
                        GridPane.rowIndex="1" GridPane.columnIndex="1" />
-                <Label text="Available" styleClass="directory-key" wrapText="true" minWidth="0"
+                <Label text="Available (all active)" styleClass="directory-key" wrapText="true" minWidth="0"
                        GridPane.rowIndex="2" GridPane.columnIndex="0" />
                 <Label fx:id="availableCount" text="" wrapText="true" minWidth="0" maxWidth="Infinity"
                        GridPane.rowIndex="2" GridPane.columnIndex="1" />
-                <Label text="Assigned" styleClass="directory-key" wrapText="true" minWidth="0"
+                <Label text="Assigned (all active)" styleClass="directory-key" wrapText="true" minWidth="0"
                        GridPane.rowIndex="3" GridPane.columnIndex="0" />
                 <Label fx:id="assignedCount" text="" wrapText="true" minWidth="0" maxWidth="Infinity"
                        GridPane.rowIndex="3" GridPane.columnIndex="1" />
-                <Label text="Unavailable" styleClass="directory-key" wrapText="true" minWidth="0"
+                <Label text="Unavailable (all active)" styleClass="directory-key" wrapText="true" minWidth="0"
                        GridPane.rowIndex="4" GridPane.columnIndex="0" />
                 <Label fx:id="unavailableCount" text="" wrapText="true" minWidth="0" maxWidth="Infinity"
                        GridPane.rowIndex="4" GridPane.columnIndex="1" />
@@ -55,7 +55,7 @@
                 <Label fx:id="selection" text="" wrapText="true" minWidth="0" maxWidth="Infinity"
                        GridPane.rowIndex="6" GridPane.columnIndex="1" />
                 </GridPane>
-                <Label text="INVENTORY BY CATEGORY / TYPE (ACTIVE ITEMS)" styleClass="laplace-muted"
+                <Label text="All retained groups · availability excludes deleted" styleClass="laplace-muted"
                        wrapText="true" minWidth="0" />
                 <Label fx:id="inventoryGroups" wrapText="true" minWidth="0" maxWidth="Infinity" />
             </VBox>

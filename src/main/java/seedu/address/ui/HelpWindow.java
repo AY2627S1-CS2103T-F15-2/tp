@@ -41,7 +41,9 @@ public class HelpWindow extends UiPart<Stage> {
         this(root, unused -> { });
     }
 
-    /** Creates a reference whose examples can prepare commands in the main window. */
+    /**
+     * Creates a reference whose examples can prepare commands in the main window.
+     */
     public HelpWindow(Stage root, Consumer<String> onUse) {
         super(FXML, root);
         helpMessage.setText(HELP_MESSAGE);

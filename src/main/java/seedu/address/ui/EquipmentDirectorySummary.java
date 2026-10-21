@@ -18,7 +18,9 @@ import seedu.address.model.equipment.exceptions.EquipmentNotFoundException;
 import seedu.address.model.query.DirectoryQuery;
 import seedu.address.model.query.InventoryGroups;
 
-/** Read-only equipment directory summary with freshly derived availability on every refresh. */
+/**
+ * Read-only equipment directory summary with freshly derived availability on every refresh.
+ */
 public class EquipmentDirectorySummary extends UiPart<Region> {
 
     private final ReadOnlyAddressBook data;
@@ -53,7 +55,9 @@ public class EquipmentDirectorySummary extends UiPart<Region> {
     @FXML
     private Label statusMessage;
 
-    /** Creates a standalone summary from non-null read-only dependencies. */
+    /**
+     * Creates a standalone summary from non-null read-only dependencies.
+     */
     public EquipmentDirectorySummary(ReadOnlyAddressBook data, Function<UUID, Availability> availabilityLookup) {
         super("EquipmentDirectorySummary.fxml");
         this.data = requireNonNull(data);
@@ -62,17 +66,23 @@ public class EquipmentDirectorySummary extends UiPart<Region> {
         refresh(Optional.empty());
     }
 
-    /** Sets transient criteria; the parent refreshes once after coordinating both directory components. */
+    /**
+     * Sets transient criteria; the parent refreshes once after coordinating both directory components.
+     */
     public void setQuery(DirectoryQuery query) {
         this.query = requireNonNull(query);
     }
 
-    /** Describes a selected group without implying a physical-unit selection. */
+    /**
+     * Describes a selected group without implying a physical-unit selection.
+     */
     public void showGroupSelection(InventoryGroups.Key key) {
         selection.setText("Group: " + key.name() + " · " + key.category());
     }
 
-    /** Refreshes counts, derived availability and selection; no collection writes or listeners are installed. */
+    /**
+     * Refreshes counts, derived availability and selection; no collection writes or listeners are installed.
+     */
     public void refresh(Optional<UUID> selected) {
         requireNonNull(selected);
         int count = data.getEquipmentList().size();
@@ -92,14 +102,16 @@ public class EquipmentDirectorySummary extends UiPart<Region> {
                 unknown++;
             }
         }
-        countBadge.setText(count + " ITEMS");
+        countBadge.setText(count + " UNITS");
         totalCount.setText(Integer.toString(count));
         int displayed = query.equipment(data, availabilityLookup).size();
         displayedCount.setText(Integer.toString(displayed));
         sortOrder.setText(query.sortDescription(false));
         criteria.setText(query.description());
         inventoryGroups.setText(unknown == 0 ? String.join("\n",
-                InventoryGroups.summarize(data, availabilityLookup, item -> true))
+                InventoryGroups.group(data, DirectoryQuery.all().equipment(data, availabilityLookup)).stream()
+                        .map(group -> group.category() + " · " + group.name() + ": "
+                                + EquipmentPresentation.counts(group.units(), availabilityLookup)).toList())
                 : "Inventory groups unavailable: inconsistent equipment data.");
         availableCount.setText(Integer.toString(counts.get(Availability.AVAILABLE)));
         assignedCount.setText(Integer.toString(counts.get(Availability.ASSIGNED)));

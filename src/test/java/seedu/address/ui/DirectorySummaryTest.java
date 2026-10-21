@@ -79,7 +79,7 @@ public class DirectorySummaryTest {
                     model::getAvailability);
             mount(panel.getRoot(), 720, 500);
             assertLabel(panel, "totalCount", "0");
-            assertLabel(panel, "countBadge", "0 ITEMS");
+            assertLabel(panel, "countBadge", "0 UNITS");
             assertLabel(panel, "statusTitle", "No equipment yet");
             assertTrue(label(panel, "statusMessage").contains("equipment add"));
             assertLabel(panel, "selection", "No equipment selected");
