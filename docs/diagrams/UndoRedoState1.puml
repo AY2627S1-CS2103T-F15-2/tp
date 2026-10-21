@@ -1,23 +1,42 @@
 @startuml
-!include style.puml
-skinparam ClassFontColor #000000
-skinparam ClassBorderColor #000000
-skinparam ClassBackgroundColor #FFFFAA
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam objectAttributeIconSize 0
+skinparam objectBackgroundColor #F6F8FA
+skinparam objectBorderColor #59636E
+skinparam ArrowColor #59636E
+hide empty members
 
-title After command "delete 5"
+title After equipment add: one reversible change
 
-package States <<rectangle>> {
-    class State1 as "<u>ab0:AddressBook</u>"
-    class State2 as "<u>ab1:AddressBook</u>"
-    class State3 as "<u>ab2:AddressBook</u>"
+object "<u>h1:AddressBookHistory</u>" as history {
+  position = 1
+  states = [s0, s1]
+  descriptions = [equipment add]
 }
 
-State1 -[hidden]right-> State2
-State2 -[hidden]right-> State3
+object "<u>s0:AddressBook</u>" as s0 {
+  Equipment: none
+}
 
-hide State3
+object "<u>s1:AddressBook</u>" as s1 #DDF4FF {
+  uuid = u
+  name = Camera
+  condition = GOOD
+}
+s0 -[hidden]right-> s1
 
-class Pointer as "Current State" #FFFFFF
+history ..> s1 : states[position]
 
-Pointer -up-> State2
-@end
+note bottom of history
+  The first successful change records before and after states.
+  The generated UUID u belongs to the same physical unit in later states.
+end note
+
+legend bottom
+  Each sN is a complete stored record snapshot; unrelated records are omitted from its label.
+  The highlighted snapshot matches live record values after saving and publication.
+  The live observable AddressBook remains a separate object.
+endlegend
+@enduml

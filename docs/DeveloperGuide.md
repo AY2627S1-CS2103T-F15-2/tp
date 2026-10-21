@@ -138,7 +138,7 @@ The sequence diagram below is a historical AB3 example of `execute("delete 1")`,
 `LogicManager.execute()` first calls `AddressBookParser.parseCommand()`. The root parser accepts
 `member`, `equipment`, and `loans`, delegating to their family parsers and then the appropriate leaf
 parser (for example, `EquipmentCommandParser` and `EquipmentAddCommandParser`). It also accepts
-`help` and `exit`. Family and leaf parsers remain responsible for validating subcommands and arguments.
+`undo`, `redo`, `mode`, `help` and `exit`. Family and leaf parsers remain responsible for validating subcommands and arguments.
 
 The retired top-level words `add`, `edit`, `delete`, `clear`, `find`, and `list` now reach the existing
 unknown-command branch and throw `ParseException("Unknown command.")`. In particular, `list members`
@@ -284,9 +284,9 @@ the chain. Neither a parser failure nor invalid count creates a transaction snap
 #### Equipment-add execution and publication
 
 The next sequence starts after successful parsing. `Model.createTransactionSnapshot()` creates a new
-`ModelManager` with independent collection containers. Immutable entity values may be shared until a
-command replaces them. `EquipmentAddCommand.execute(candidate)` prepares the complete batch before
-inserting any unit. The diagram abbreviates the root/collection delegation and the repeated read-only
+`ModelManager` with independent collection containers and copied preferences. It initially shares the
+live model's immutable `AddressBookHistory`. Immutable entity values may be shared until a command
+replaces them. `EquipmentAddCommand.execute(candidate)` prepares the complete batch before inserting any unit. The diagram abbreviates the root/collection delegation and the repeated read-only
 UUID checks; these occur on the candidate, not on the live model.
 
 <puml src="diagrams/EquipmentTransactionSequence.puml" alt="Equipment batch execution, atomic save and failure path" />
@@ -304,9 +304,11 @@ from the successful execution path shown. A failure after candidate insertion st
 candidate, so a later successful command cannot accidentally save a failed batch.
 
 Editing, soft deletion and restoration use the same snapshot/save/publish boundary with different
-command bodies. Equipment list/search are read-only and do not follow this mutation sequence.
-These diagrams describe a single-user command transaction, not concurrent-writer coordination or an
-undo/redo implementation.
+command bodies. Equipment list/search do not change records or create history entries, so they do not
+follow this mutation sequence. Existing navigation-save behavior is described under undo/redo below.
+These diagrams describe a single-user command transaction, including history recording. They do not
+provide concurrent-writer coordination. [Undo/redo](#undo-redo-feature) uses the same save/publication
+boundary but navigates existing history instead of recording a new change.
 
 ### Equipment editing, deletion and restoration
 
@@ -333,7 +335,7 @@ All maintenance commands are transactional: execute against a snapshot, save ato
 No-change/rejected edits and failed writes leave live state and previously saved bytes unchanged.
 
 Directory queries share `DirectoryQuery.Status` across members and equipment. Equipment search defaults
-to active; `status/deleted|all` exposes retained units. List resets to all states and does not save.
+to active; `status/deleted|all` exposes retained units. List resets to all states without recording history.
 Cards label deleted units; details show lifecycle state and a restore command. Edit/restore navigate to
 the same UUID, retaining query criteria even if that unit no longer matches. Total counts include deleted
 units; availability counts and inventory groups include active units only. The Loans tab and entity
@@ -346,6 +348,17 @@ The CLI commands `undo` and `redo` restore complete record states within the cur
 `AddressBook` rather than replacing or subclassing its observable root. It retains at most ten
 reversible changes (eleven snapshots). Each snapshot has independent collection containers for
 members, physical equipment, loans and retained legacy persons; immutable entity values may be shared.
+
+The class diagram below shows only the command, persistence and record-history collaborators. Parser
+classes, collection wrappers, domain entities and preferences are omitted. The live model and each
+candidate own separate roots; multiple immutable history values may reference the same private stored
+snapshots. Accordingly, snapshot sharing uses ordinary associations rather than exclusive composition.
+The ordered `states` association has multiplicity `0..11`, including empty history before the first change.
+An `AddressBook` snapshot has no `ModelManager` owner, hence `0..1` at the model end of root composition;
+every model still owns exactly one root. The logic associations allow model/storage collaborators to
+be shared by more than one `LogicManager` instance.
+
+<puml src="diagrams/UndoRedoClassDiagram.puml" alt="Undo and redo command, model, snapshot history and storage dependencies" />
 
 The first successful mutation records both the preceding state and the candidate state. Later mutations
 append a snapshot and a short action description, such as `equipment add`, without retaining command
@@ -369,6 +382,25 @@ snapshot are discarded. A batch creation, issue or return is one history entry r
    the live observable root and current preferences. Parse, validation and save failures leave live data,
    history position, redo availability and the previously saved file unchanged.
 
+The logic sequence traces one `undo` through parsing, availability checks, candidate execution,
+atomic saving and publication. The `Storage` lifeline abbreviates `StorageManager`, JSON serialization
+and `AtomicFileWriter`. Invalid arguments stop during parsing; unavailable undo stops during execution.
+Neither reaches saving. A save error discards the staged result without consuming a live history step.
+
+<puml src="diagrams/UndoSequenceDiagram-Logic.puml" alt="Undo command parsing, candidate restoration, atomic save and publication or failure" />
+
+The next two sequences expand only the model operation inside that candidate. They distinguish the
+candidate's stable root from the defensive copy returned by `getCurrentState()`. `before` and `restored`
+are separate immutable history values; position changes never mutate a history shared with the live model.
+Field assignment is shown as a note, rather than as a fictitious method call.
+
+<puml src="diagrams/UndoSequenceDiagram-Model.puml" alt="Candidate undo creates earlier history and restores an independent record copy" />
+
+<puml src="diagrams/RedoSequenceDiagram-Model.puml" alt="Candidate redo creates later history and restores recorded identifiers and dates" />
+
+`redo` follows the same logic/save/publication sequence with `RedoCommandParser`, `RedoCommand`,
+`canRedoAddressBook()` and `redoAddressBook()`. Its unavailable error is `Nothing to redo.`.
+
 The model exposes `canUndoAddressBook()`, `canRedoAddressBook()`, `undoAddressBook()` and
 `redoAddressBook()`. Direct history navigation requires an available step; commands translate unavailable
 history into `Nothing to undo.` or `Nothing to redo.`. Successful feedback identifies the action:
@@ -386,6 +418,63 @@ are outside record history. The existing shell refreshes summaries, groups, hold
 when undo removes a displayed exact record, it returns to the corresponding filtered directory.
 No undo/redo buttons or new shortcuts are provided.
 
+#### Example history states
+
+These object diagrams show a small equipment workflow after each successful command is saved and
+published. `u` denotes the UUID generated by the first add command. Labels show only the relevant unit,
+but every `sN` is a complete record snapshot. The highlighted stored snapshot has the same record values
+as the live model; it is not the live `AddressBook` object. The integer `position` selects a snapshot,
+so the dashed `states[position]` arrow is a derived selection, not a separately stored pointer field.
+
+1. On launch, history `h0` has no snapshots or descriptions. The loaded record state is the baseline `s0`;
+   this example assumes it contains no equipment. Undo and redo are unavailable.
+
+<puml src="diagrams/UndoRedoState0.puml" alt="Startup with empty history and no recorded snapshots" />
+
+2. Run `equipment add name/Camera category/Photo condition/GOOD`. After saving, `h1` retains `s0` and
+   `s1`, with position 1 and one action description. A batch would still create only one history entry.
+
+<puml src="diagrams/UndoRedoState1.puml" alt="First equipment addition records before and after snapshots" />
+
+3. Run `equipment edit uuid/u condition/FAIR`, substituting the real UUID for `u`. History `h2` appends
+   `s2` at position 2. The unit keeps its identity.
+
+<puml src="diagrams/UndoRedoState2.puml" alt="Equipment edit appends a third snapshot with the same UUID" />
+
+4. Run `undo`. New history `h3` selects `s1` at position 1; `s2` remains available for redo.
+
+<puml src="diagrams/UndoRedoState3.puml" alt="Undo selects the preceding snapshot without discarding redo" />
+
+5. Run `equipment list`. The directory opens, but the same history `h3`, position and redo branch remain.
+
+<puml src="diagrams/UndoRedoState4.puml" alt="List navigation preserves the current immutable history" />
+
+6. Run `redo`. New history `h4` selects the recorded `s2` again without executing the edit command.
+
+<puml src="diagrams/UndoRedoState6.puml" alt="Redo selects the existing edited snapshot without replaying a command" />
+
+7. Run `undo` again, creating `h5` at position 1, then `equipment edit uuid/u condition/DAMAGED`.
+   Successful saving publishes `h6` with a new `s3`. It retains `s0` and `s1` and drops the old redo state
+   `s2` and its corresponding action description. Redo is now unavailable. Failed saves publish none of this.
+
+<puml src="diagrams/UndoRedoState5.puml" alt="A new successful edit after undo replaces the redo branch" />
+
+#### Retention limit and command flow
+
+After twelve successful record changes, only snapshots `s2` through `s12` and the ten actions between
+them remain in the current history. The earliest reachable state is `s2`: ten undos reach position 0,
+and ten redos can return to `s12`. These limits apply to reversible commands, not the number of records.
+Older history values referenced transiently during a transaction can share stored snapshots; the bound
+applies to the history retained by each model. A failed save cannot evict entries from the live history.
+
+<puml src="diagrams/UndoRedoLimit.puml" alt="Eleven retained snapshots permit at most ten undo or redo steps" />
+
+The activity diagram summarizes `LogicManager.execute()`. It preserves the existing distinction between
+`isReadOnly()` commands, which skip saving, and nontransactional navigation commands, which can still save
+without adding history. Only successful transactional saves publish candidate records and history.
+
+<puml src="diagrams/CommitActivityDiagram.puml" alt="Parsing, staged execution, bounded history recording, atomic save and publication" />
+
 #### Design considerations and verification
 
 Complete snapshots keep linked member/equipment/loan data consistent and make batch restoration atomic.
@@ -396,9 +485,6 @@ Inverse operations would require separate reversal logic for every command and b
 Command/parser tests cover syntax and empty history. `UndoRedoIntegrationTest` verifies identity and loan
 restoration, lifecycle changes, exact saved states, ten undos/redos, restart behavior and failed-save retries.
 Shell tests exercise the real command box, preserved filters, missing details, loans and error feedback.
-
-The inherited AB3 undo/redo PlantUML sources are retained unchanged for a separate diagram update;
-they do not describe this implementation yet.
 
 ### \[Proposed\] Data archiving
 

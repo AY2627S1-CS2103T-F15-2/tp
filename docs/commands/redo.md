@@ -23,3 +23,6 @@ redo availability and the prior file; retry is supported. Search criteria and pr
 history. History is not serialized: restarting loads the last saved records with no undo/redo available.
 
 See [undo](./undo.md) for the opposite operation.
+
+The [Developer Guide](../DeveloperGuide.md#undo-redo-feature) includes class, sequence, history-state
+and retention-limit diagrams for this implementation.
