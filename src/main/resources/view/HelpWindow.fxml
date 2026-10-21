@@ -11,7 +11,7 @@
     <Scene>
       <stylesheets><URL value="@LaplaceTheme.css" /></stylesheets>
       <ScrollPane fitToWidth="true" styleClass="laplace-root" minWidth="0">
-        <VBox fx:id="helpMessageContainer" spacing="12" styleClass="details-content">
+        <VBox fx:id="helpMessageContainer" spacing="12" styleClass="laplace-content">
           <Label text="Command reference" styleClass="laplace-title" />
           <Label text="Examples may include optional fields. Replace placeholders; remove fields you do not need."
                  wrapText="true" />

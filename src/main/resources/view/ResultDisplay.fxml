@@ -6,11 +6,11 @@
 <?import javafx.scene.layout.VBox?>
 <HBox spacing="10" alignment="CENTER_LEFT" styleClass="laplace-feedback,laplace-neutral"
       xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-  <VBox spacing="2">
+  <VBox spacing="2" minWidth="-Infinity">
     <Label text="Last result" styleClass="laplace-muted" />
     <Label fx:id="feedbackStatus" text="Ready" minWidth="55" />
   </VBox>
   <TextArea fx:id="resultDisplay" editable="false" wrapText="true" HBox.hgrow="ALWAYS" prefHeight="38"
-            minHeight="0" accessibleText="Last command result" />
-  <HBox fx:id="feedbackActions" spacing="4" />
+            minHeight="0" minWidth="0" accessibleText="Last command result" />
+  <HBox fx:id="feedbackActions" spacing="4" minWidth="-Infinity" />
 </HBox>

@@ -169,6 +169,9 @@ public class EquipmentGroupPanel extends VBox {
         }
     }
 
+    /**
+     * Adds a readable column whose cells retain the complete unit identity in their tooltip.
+     */
     private void addColumn(String caption, Function<Equipment, String> value) {
         TableColumn<Equipment, String> column = new TableColumn<>(caption);
         column.setCellValueFactory(cell -> new ReadOnlyStringWrapper(value.apply(cell.getValue())));
@@ -178,7 +181,8 @@ public class EquipmentGroupPanel extends VBox {
                 super.updateItem(item, empty);
                 setText(empty ? null : item);
                 Equipment unit = getTableRow() == null ? null : getTableRow().getItem();
-                setTooltip(empty || unit == null ? null : new Tooltip(unit.getUuid().toString()));
+                setTooltip(empty || unit == null ? null
+                        : new Tooltip(caption + ": " + item + "\nUUID: " + unit.getUuid()));
             }
         });
         column.setMinWidth(60);
@@ -186,6 +190,9 @@ public class EquipmentGroupPanel extends VBox {
         units.getColumns().add(column);
     }
 
+    /**
+     * Formats current availability, preserving a visible fallback for inconsistent references.
+     */
     private String availability(Equipment unit) {
         try {
             return EquipmentPresentation.label(lookup.apply(unit.getUuid()));
@@ -194,6 +201,9 @@ public class EquipmentGroupPanel extends VBox {
         }
     }
 
+    /**
+     * Resolves the current holder through the open loan instead of storing a separate holder field.
+     */
     private String holder(Equipment unit) {
         return data.getLoanList().stream().filter(loan -> loan.isOpen()
                 && loan.getEquipmentUuid().equals(unit.getUuid())).findFirst().map(loan ->

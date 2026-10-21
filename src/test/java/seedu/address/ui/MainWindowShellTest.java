@@ -176,6 +176,11 @@ public class MainWindowShellTest {
                     && ((Stage) stage).getTitle().equals("Command reference")).map(stage -> (Stage) stage)
                     .findFirst().orElseThrow();
             assertTrue(help.getScene().getRoot().getStyleClass().contains("dark"));
+            Region helpRoot = (Region) help.getScene().getRoot();
+            helpRoot.resize(720, 600);
+            helpRoot.applyCss();
+            helpRoot.layout();
+            writeSnapshot(helpRoot, "dark-help", 720, 600);
             MenuButton menu = (MenuButton) window.getPrimaryStage().getScene().lookup(".menu-button");
             menu.getItems().stream().filter(item -> item.getText().equals("Light mode"))
                     .findFirst().orElseThrow().fire();
@@ -1551,6 +1556,14 @@ public class MainWindowShellTest {
             double position = ((SplitPane) node("directory")).getDividerPositions()[0];
             assertTrue(position > 0 && position < 1);
         }
+        for (Node control : node("feedbackActions").lookupAll(".button")) {
+            Button action = (Button) control;
+            assertTrue(action.getWidth() >= action.prefWidth(-1) - 1, "Feedback controls must not truncate");
+        }
+        writeSnapshot(root, name, width, height);
+    }
+
+    private static void writeSnapshot(Region root, String name, int width, int height) {
         WritableImage image = root.snapshot(null, new WritableImage(width, height));
         int[] pixels = new int[width * height];
         image.getPixelReader().getPixels(0, 0, width, height, PixelFormat.getIntArgbInstance(), pixels, 0, width);
