@@ -1,7 +1,7 @@
 .loan-panel {
     -fx-background-color: #eef1f3;
     -fx-font-family: "System";
-    -fx-font-size: 13px;
+    -fx-font-size: 15px;
 }
 
 .loan-panel .scroll-pane,
@@ -10,7 +10,7 @@
 }
 
 .loan-content {
-    -fx-padding: 18;
+    -fx-padding: 12;
 }
 
 .loan-panel .label {
@@ -24,7 +24,7 @@
 
 .loan-panel .loan-subtitle,
 .loan-panel .loan-empty {
-    -fx-text-fill: #607d8b;
+    -fx-text-fill: #526672;
 }
 
 .loan-section {
@@ -32,11 +32,11 @@
     -fx-border-color: #dce3e8;
     -fx-border-radius: 3;
     -fx-background-radius: 3;
-    -fx-padding: 16;
+    -fx-padding: 0;
 }
 
 .loan-section-title {
-    -fx-font-size: 16px;
+    -fx-font-size: 19px;
     -fx-font-weight: bold;
 }
 
@@ -86,4 +86,20 @@
 
 .loan-open-status {
     -fx-background-color: #e3f2fd;
+}
+
+.loan-due-status {
+    -fx-background-color: #fff3cd;
+}
+
+.loan-panel .loan-due-status {
+    -fx-text-fill: #684800;
+}
+
+.loan-overdue-status {
+    -fx-background-color: #fdecec;
+}
+
+.loan-panel .loan-overdue-status {
+    -fx-text-fill: #a12626;
 }

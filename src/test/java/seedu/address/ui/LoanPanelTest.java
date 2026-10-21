@@ -10,7 +10,9 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -238,6 +240,30 @@ public class LoanPanelTest {
     }
 
     @Test
+    public void dates_urgencyAndReturnPreparation_useTodayWithoutMutatingLoans() {
+        FxTestUtil.runAndWait(() -> {
+            AddressBook data = mixedBook();
+            AddressBook before = new AddressBook(data);
+            List<String> commands = new ArrayList<>();
+            for (int days : List.of(6, 7, 8, 10)) {
+                LocalDate today = ASSIGNED.plusDays(days);
+                LoanPanel panel = new LoanPanel(data, unused -> { }, unused -> { }, commands::add,
+                        Clock.fixed(today.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC));
+                new Scene(panel.getRoot(), 760, 500);
+                panel.getRoot().applyCss();
+                String expected = days == 6 ? "Open loan" : days == 7 ? "Due today"
+                        : days == 8 ? "Overdue · 1 day" : "Overdue · 3 days";
+                VBox first = row(panel, "openLoans", 0);
+                assertEquals(expected, ((Label) first.lookup(".loan-status")).getText());
+                Button prepare = (Button) first.getChildren().getLast();
+                prepare.fire();
+                assertEquals("loans return uuid/" + FIRST_UUID + " returned/" + today, commands.getLast());
+                assertEquals(before, data);
+            }
+        });
+    }
+
+    @Test
     public void constructor_nullArguments_throwsNullPointerException() {
         FxTestUtil.runAndWait(() -> {
             assertThrows(NullPointerException.class, () -> new LoanPanel(null, id -> {}, id -> {}));
@@ -297,7 +323,8 @@ public class LoanPanelTest {
     }
 
     private static LoanPanel panel(ReadOnlyAddressBook data, Consumer<UUID> onEquipment, Consumer<NusId> onMember) {
-        LoanPanel panel = new LoanPanel(data, onEquipment, onMember);
+        LoanPanel panel = new LoanPanel(data, onEquipment, onMember, unused -> { },
+                Clock.fixed(ASSIGNED.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC));
         Region root = panel.getRoot();
         root.getStyleClass().add("laplace-root");
         Scene scene = new Scene(root, 760, 500);
@@ -333,8 +360,8 @@ public class LoanPanelTest {
     }
 
     private static List<String> dates(VBox row) {
-        return row.getChildren().stream().filter(node -> node.getStyleClass().contains("loan-date"))
-                .map(node -> ((Label) node).getText()).toList();
+        return row.lookupAll(".loan-date").stream()
+                .map(node -> ((Label) node).getText()).sorted().toList();
     }
 
     private static List<UUID> equipmentIds(LoanPanel panel, String name) {

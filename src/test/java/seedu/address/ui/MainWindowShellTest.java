@@ -513,7 +513,7 @@ public class MainWindowShellTest {
             assertEquals("A0000001X", detailLabel("memberNusId"));
             assertTrue(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
             button("loansNavigation").fire();
-            List<Button> links = node("openLoans").lookupAll(".button").stream()
+            List<Button> links = node("openLoans").lookupAll(".loan-identity-link").stream()
                     .map(node -> (Button) node).toList();
             assertEquals(2, links.size());
             for (Button link : links) {

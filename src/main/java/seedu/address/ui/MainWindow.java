@@ -3,6 +3,7 @@ package seedu.address.ui;
 import static java.util.Objects.requireNonNull;
 
 import java.nio.file.Path;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -147,7 +148,8 @@ public class MainWindow extends UiPart<Stage> {
                 command -> commandBox.prepare(command), id -> activate("member view nus/" + id),
                 id -> activate("equipment view uuid/" + id));
         loans = new LoanPanel(data, id -> activate("equipment view uuid/" + id),
-                id -> activate("member view nus/" + id.value));
+                id -> activate("member view nus/" + id.value),
+                command -> commandBox.prepare(command), Clock.systemDefaultZone());
         resultDisplay = new ResultDisplay();
         commandBox = new CommandBox(this::executeCommand);
         commandBoxPlaceholder.getChildren().setAll(commandBox.getRoot());

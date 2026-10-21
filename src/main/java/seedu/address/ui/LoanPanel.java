@@ -3,6 +3,9 @@ package seedu.address.ui;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +15,8 @@ import java.util.function.Consumer;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -30,6 +35,8 @@ public class LoanPanel extends UiPart<Region> {
     private static final String FXML = "LoanPanel.fxml";
 
     private final ReadOnlyAddressBook data;
+    private final Clock clock;
+    private final Consumer<String> onUse;
     private final Consumer<UUID> onEquipmentSelected;
     private final Consumer<NusId> onMemberSelected;
 
@@ -43,8 +50,18 @@ public class LoanPanel extends UiPart<Region> {
      */
     public LoanPanel(ReadOnlyAddressBook data, Consumer<UUID> onEquipmentSelected,
             Consumer<NusId> onMemberSelected) {
+        this(data, onEquipmentSelected, onMemberSelected, unused -> { }, Clock.systemDefaultZone());
+    }
+
+    /**
+     * Creates a panel with command preparation and a clock for date-sensitive presentation.
+     */
+    public LoanPanel(ReadOnlyAddressBook data, Consumer<UUID> onEquipmentSelected,
+            Consumer<NusId> onMemberSelected, Consumer<String> onUse, Clock clock) {
         super(FXML);
-        requireAllNonNull(data, onEquipmentSelected, onMemberSelected);
+        requireAllNonNull(data, onEquipmentSelected, onMemberSelected, onUse, clock);
+        this.clock = clock;
+        this.onUse = onUse;
         this.data = data;
         this.onEquipmentSelected = onEquipmentSelected;
         this.onMemberSelected = onMemberSelected;
@@ -86,11 +103,37 @@ public class LoanPanel extends UiPart<Region> {
         memberLink.setDisable(member.isEmpty());
         memberLink.setOnAction(event -> onMemberSelected.accept(loan.getMemberNusId()));
 
-        Label status = label("Open loan", "loan-status");
-        status.getStyleClass().add("loan-open-status");
-        VBox row = new VBox(6, status, equipmentLink, memberLink,
-                label("Assigned: " + loan.getAssignedDate(), "loan-date"),
+        long overdueDays = ChronoUnit.DAYS.between(loan.getExpectedReturnDate(), LocalDate.now(clock));
+        String statusText = overdueDays > 0 ? "Overdue · " + overdueDays + (overdueDays == 1 ? " day" : " days")
+                : overdueDays == 0 ? "Due today" : "Open loan";
+        Label status = label(statusText, "loan-status");
+        status.getStyleClass().add(overdueDays > 0 ? "loan-overdue-status"
+                : overdueDays == 0 ? "loan-due-status" : "loan-open-status");
+        VBox equipmentColumn = new VBox(4, equipmentLink,
+                label("Assigned: " + loan.getAssignedDate(), "loan-date"));
+        VBox memberColumn = new VBox(4, memberLink,
                 label("Expected return: " + loan.getExpectedReturnDate(), "loan-date"));
+        GridPane identities = new GridPane();
+        identities.setHgap(16);
+        identities.setVgap(6);
+        identities.add(equipmentColumn, 0, 0);
+        identities.add(memberColumn, 0, 1);
+        identities.widthProperty().addListener((unused, previous, width) -> {
+            boolean wide = width.doubleValue() >= 650;
+            identities.getColumnConstraints().clear();
+            for (int i = 0; i < (wide ? 2 : 1); i++) {
+                ColumnConstraints column = new ColumnConstraints();
+                column.setPercentWidth(wide ? 50 : 100);
+                column.setMinWidth(0);
+                identities.getColumnConstraints().add(column);
+            }
+            GridPane.setColumnIndex(memberColumn, wide ? 1 : 0);
+            GridPane.setRowIndex(memberColumn, wide ? 0 : 1);
+        });
+        Button prepareReturn = new Button("Prepare return command");
+        prepareReturn.setOnAction(event -> onUse.accept("loans return uuid/" + loan.getEquipmentUuid()
+                + " returned/" + LocalDate.now(clock)));
+        VBox row = new VBox(6, status, identities, prepareReturn);
         row.getStyleClass().addAll("laplace-row", "loan-row");
         row.setMinWidth(0);
         row.setMaxWidth(Double.MAX_VALUE);
