@@ -1,23 +1,76 @@
-/* Shared Laplace theme. Load on a laplace-root; keep legacy/help dark styles local to their content. */
+.laplace-root {
+    -laplace-canvas: #EEF1F3;
+    -laplace-surface: #FFFFFF;
+    -laplace-text: #37474F;
+    -laplace-muted: #526672;
+    -laplace-link: #075C9E;
+    -laplace-focus: #1688E8;
+    -laplace-faint-focus: #1688E822;
+    -laplace-border: #DCE3E8;
+    -laplace-success: #E8F5E9;
+    -laplace-success-text: #285331;
+    -laplace-error: #FDECEC;
+    -laplace-error-text: #A12626;
+    -laplace-error-border: #E6B9B9;
+    -laplace-hover: #F3F8FC;
+    -laplace-selection: #E3F2FD;
+    -laplace-thumb: #B0BEC5;
+    -laplace-neutral: #E9EFF3;
+    -laplace-inset: #F3F6F8;
+    -laplace-warning: #FFF3CD;
+    -laplace-warning-text: #684800;
+    -laplace-header-text: #FFFFFF;
+    -laplace-header-hover: #455A64;
+    -fx-text-background-color: -laplace-text;
+    -fx-text-base-color: -laplace-text;
+    -fx-selection-bar: -laplace-selection;
+    -fx-selection-bar-non-focused: -laplace-selection;
+    -fx-selection-bar-text: -laplace-link;
+}
+
+.laplace-root.dark {
+    -laplace-canvas: #151C23;
+    -laplace-surface: #202B35;
+    -laplace-text: #E4EBF0;
+    -laplace-muted: #B3C2CE;
+    -laplace-link: #9FD3FF;
+    -laplace-focus: #68B9FF;
+    -laplace-faint-focus: #68B9FF33;
+    -laplace-border: #485B69;
+    -laplace-success: #233E30;
+    -laplace-success-text: #BBEBC7;
+    -laplace-error: #482C32;
+    -laplace-error-text: #FFBDC3;
+    -laplace-error-border: #9A5B65;
+    -laplace-hover: #2C3A46;
+    -laplace-selection: #244764;
+    -laplace-thumb: #607888;
+    -laplace-neutral: #2B3946;
+    -laplace-inset: #18232D;
+    -laplace-warning: #493D24;
+    -laplace-warning-text: #FFE0A1;
+}
+
+/* Shared palette and component styles. Legacy compatibility styles remain scoped. */
 .laplace-root {
     -fx-font-family: "System";
     -fx-font-size: 15px;
-    -fx-background-color: #EEF1F3;
-    -fx-base: #FFFFFF;
-    -fx-control-inner-background: #FFFFFF;
-    -fx-accent: #1688E8;
-    -fx-focus-color: #1688E8;
-    -fx-faint-focus-color: #1688E822;
+    -fx-background-color: -laplace-canvas;
+    -fx-base: -laplace-surface;
+    -fx-control-inner-background: -laplace-surface;
+    -fx-accent: -laplace-focus;
+    -fx-focus-color: -laplace-focus;
+    -fx-faint-focus-color: -laplace-faint-focus;
 }
 
 .laplace-root .label {
-    -fx-text-fill: #37474F;
+    -fx-text-fill: -laplace-text;
 }
 
 .laplace-surface {
-    -fx-background-color: #FFFFFF;
+    -fx-background-color: -laplace-surface;
     -fx-background-radius: 3;
-    -fx-border-color: #DCE3E8;
+    -fx-border-color: -laplace-border;
     -fx-border-radius: 3;
     -fx-border-width: 1;
 }
@@ -25,19 +78,19 @@
 .laplace-root .laplace-title {
     -fx-font-size: 23px;
     -fx-font-weight: bold;
-    -fx-text-fill: #37474F;
+    -fx-text-fill: -laplace-text;
 }
 
 .laplace-root .laplace-muted {
     -fx-font-size: 13px;
-    -fx-text-fill: #526672;
+    -fx-text-fill: -laplace-muted;
 }
 
 .laplace-root .laplace-count-badge {
     -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-text-fill: #075C9E;
-    -fx-background-color: #E8F5E9;
+    -fx-text-fill: -laplace-link;
+    -fx-background-color: -laplace-success;
     -fx-background-radius: 12;
     -fx-padding: 4 10;
 }
@@ -50,7 +103,7 @@
 
 .laplace-root .laplace-header .label,
 .laplace-root .laplace-header .laplace-title {
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -laplace-header-text;
 }
 
 .laplace-navigation {
@@ -63,37 +116,37 @@
 }
 
 .laplace-navigation:hover {
-    -fx-background-color: #37474F;
-    -fx-text-fill: #FFFFFF;
+    -fx-background-color: -laplace-header-hover;
+    -fx-text-fill: -laplace-header-text;
 }
 
 .laplace-navigation-active,
 .laplace-navigation:selected {
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -laplace-header-text;
     -fx-font-weight: bold;
-    -fx-border-color: #1688E8;
+    -fx-border-color: -laplace-focus;
 }
 
 .laplace-navigation:focused {
-    -fx-background-color: #455A64;
-    -fx-border-color: #FFFFFF;
+    -fx-background-color: -laplace-header-hover;
+    -fx-border-color: -laplace-header-text;
 }
 
 .laplace-success {
-    -fx-background-color: #E8F5E9;
-    -fx-border-color: #DCE3E8;
+    -fx-background-color: -laplace-success;
+    -fx-border-color: -laplace-border;
     -fx-background-radius: 3;
     -fx-border-radius: 3;
     -fx-padding: 8 12;
 }
 
 .laplace-root .laplace-success .label {
-    -fx-text-fill: #285331;
+    -fx-text-fill: -laplace-success-text;
 }
 
 .laplace-error {
-    -fx-background-color: #FDECEC;
-    -fx-border-color: #E6B9B9;
+    -fx-background-color: -laplace-error;
+    -fx-border-color: -laplace-error-border;
     -fx-background-radius: 3;
     -fx-border-radius: 3;
     -fx-padding: 8 12;
@@ -101,7 +154,7 @@
 
 .laplace-root .laplace-error .label,
 .laplace-root .label.laplace-error {
-    -fx-text-fill: #A12626;
+    -fx-text-fill: -laplace-error-text;
 }
 
 .laplace-row {
@@ -111,16 +164,16 @@
 }
 
 .laplace-root .list-view {
-    -fx-background-color: #FFFFFF;
+    -fx-background-color: -laplace-surface;
     -fx-background-insets: 0;
     -fx-padding: 0;
 }
 
 .laplace-root .list-cell {
-    -fx-background-color: #FFFFFF;
-    -fx-text-fill: #37474F;
+    -fx-background-color: -laplace-surface;
+    -fx-text-fill: -laplace-text;
     -fx-padding: 0;
-    -fx-border-color: #DCE3E8;
+    -fx-border-color: -laplace-border;
     -fx-border-width: 0 0 1 0;
 }
 
@@ -129,37 +182,37 @@
 }
 
 .laplace-root .list-cell:filled:hover {
-    -fx-background-color: #F3F8FC;
+    -fx-background-color: -laplace-hover;
 }
 
 .laplace-root .list-cell:filled:selected {
-    -fx-background-color: #E3F2FD;
-    -fx-border-color: #1688E8;
+    -fx-background-color: -laplace-selection;
+    -fx-border-color: -laplace-focus;
     -fx-border-width: 1;
-    -fx-text-fill: #075C9E;
+    -fx-text-fill: -laplace-link;
 }
 
 .laplace-root .list-cell:filled:selected .label {
-    -fx-text-fill: #075C9E;
+    -fx-text-fill: -laplace-link;
 }
 
 .laplace-root .text-field {
-    -fx-background-color: #FFFFFF;
-    -fx-text-fill: #37474F;
-    -fx-prompt-text-fill: #526672;
-    -fx-border-color: #DCE3E8;
+    -fx-background-color: -laplace-surface;
+    -fx-text-fill: -laplace-text;
+    -fx-prompt-text-fill: -laplace-muted;
+    -fx-border-color: -laplace-border;
     -fx-border-radius: 4;
     -fx-background-radius: 4;
     -fx-padding: 10 12;
 }
 
 .laplace-root .text-field:focused {
-    -fx-border-color: #1688E8;
+    -fx-border-color: -laplace-focus;
 }
 
 .laplace-root .text-field.error {
-    -fx-border-color: #A12626;
-    -fx-background-color: #FDECEC;
+    -fx-border-color: -laplace-error-text;
+    -fx-background-color: -laplace-error;
 }
 
 .laplace-root .scroll-pane,
@@ -168,11 +221,11 @@
 }
 
 .laplace-root .scroll-bar {
-    -fx-background-color: #EEF1F3;
+    -fx-background-color: -laplace-canvas;
 }
 
 .laplace-root .scroll-bar .thumb {
-    -fx-background-color: #B0BEC5;
+    -fx-background-color: -laplace-thumb;
     -fx-background-radius: 4;
 }
 
@@ -187,7 +240,7 @@
 }
 
 .laplace-directory > .split-pane-divider {
-    -fx-background-color: #EEF1F3;
+    -fx-background-color: -laplace-canvas;
     -fx-padding: 0 4;
 }
 
@@ -201,11 +254,11 @@
 }
 
 .laplace-success .text-area {
-    -fx-text-fill: #285331;
+    -fx-text-fill: -laplace-success-text;
 }
 
 .laplace-error .text-area {
-    -fx-text-fill: #A12626;
+    -fx-text-fill: -laplace-error-text;
 }
 
 .laplace-command {
@@ -213,7 +266,7 @@
 }
 
 .laplace-root .status-bar {
-    -fx-background-color: #EEF1F3;
+    -fx-background-color: -laplace-canvas;
     -fx-padding: 0 16 8 16;
 }
 
@@ -222,7 +275,7 @@
 }
 
 .laplace-header .context-menu .label {
-    -fx-text-fill: #37474F;
+    -fx-text-fill: -laplace-text;
 }
 
 /* Restore the legacy list's contrast inside the surrounding light application shell. */
@@ -242,7 +295,7 @@
 
 .laplace-root .laplace-legacy .list-cell .label,
 .laplace-root .laplace-legacy .list-cell:filled:selected .label {
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -laplace-surface;
 }
 
 .laplace-command .text-field {
@@ -252,25 +305,25 @@
 
 .laplace-root .command-key {
     -fx-padding: 5 8;
-    -fx-background-color: #E2E8ED;
+    -fx-background-color: -laplace-neutral;
     -fx-background-radius: 4;
-    -fx-text-fill: #37474F;
+    -fx-text-fill: -laplace-text;
 }
 
 .command-preview {
     -fx-padding: 10;
-    -fx-background-color: #F3F6F8;
+    -fx-background-color: -laplace-inset;
     -fx-background-radius: 4;
 }
 
 .command-code Text {
     -fx-font-family: "monospace";
     -fx-font-size: 15px;
-    -fx-fill: #37474F;
+    -fx-fill: -laplace-text;
 }
 
 .command-code .command-prefix {
-    -fx-fill: #075C9E;
+    -fx-fill: -laplace-link;
     -fx-font-weight: bold;
 }
 
@@ -280,13 +333,13 @@
 }
 
 .laplace-neutral {
-    -fx-background-color: #E9EFF3;
+    -fx-background-color: -laplace-neutral;
     -fx-padding: 8 12;
     -fx-background-radius: 3;
 }
 
 .laplace-neutral .text-area {
-    -fx-text-fill: #37474F;
+    -fx-text-fill: -laplace-text;
 }
 
 .group-panel {
@@ -295,4 +348,44 @@
 
 .laplace-root .table-view {
     -fx-font-size: 14px;
+}
+
+.laplace-root .table-view,
+.laplace-root .table-row-cell {
+    -fx-background-color: -laplace-surface;
+    -fx-control-inner-background: -laplace-surface;
+    -fx-text-background-color: -laplace-text;
+}
+
+.laplace-root .table-cell {
+    -fx-text-fill: -laplace-text;
+    -fx-border-color: transparent -laplace-border -laplace-border transparent;
+}
+
+.laplace-root .table-row-cell:filled:selected {
+    -fx-background-color: -laplace-selection;
+}
+
+.laplace-root .table-row-cell:filled:selected .table-cell {
+    -fx-text-fill: -laplace-link;
+}
+
+.laplace-root .titled-pane > .title,
+.laplace-root .table-view .column-header,
+.laplace-root .table-view .filler {
+    -fx-background-color: -laplace-neutral;
+}
+
+.laplace-root .titled-pane > .content {
+    -fx-background-color: -laplace-surface;
+    -fx-border-color: -laplace-border;
+}
+
+.laplace-root .check-box,
+.laplace-root .titled-pane {
+    -fx-text-fill: -laplace-text;
+}
+
+.laplace-root .menu-item:focused .label {
+    -fx-text-fill: -laplace-text;
 }

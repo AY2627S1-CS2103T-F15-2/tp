@@ -1,5 +1,5 @@
 .loan-panel {
-    -fx-background-color: #eef1f3;
+    -fx-background-color: -laplace-canvas;
     -fx-font-family: "System";
     -fx-font-size: 15px;
 }
@@ -14,7 +14,7 @@
 }
 
 .loan-panel .label {
-    -fx-text-fill: #37474f;
+    -fx-text-fill: -laplace-text;
 }
 
 .loan-title {
@@ -24,12 +24,12 @@
 
 .loan-panel .loan-subtitle,
 .loan-panel .loan-empty {
-    -fx-text-fill: #526672;
+    -fx-text-fill: -laplace-muted;
 }
 
 .loan-section {
-    -fx-background-color: white;
-    -fx-border-color: #dce3e8;
+    -fx-background-color: -laplace-surface;
+    -fx-border-color: -laplace-border;
     -fx-border-radius: 3;
     -fx-background-radius: 3;
     -fx-padding: 0;
@@ -41,16 +41,16 @@
 }
 
 .loan-panel .loan-count {
-    -fx-background-color: #e3f2fd;
-    -fx-text-fill: #126bb3;
+    -fx-background-color: -laplace-selection;
+    -fx-text-fill: -laplace-link;
     -fx-background-radius: 12;
     -fx-padding: 3 10;
     -fx-font-weight: bold;
 }
 
 .loan-row {
-    -fx-background-color: #ffffff;
-    -fx-border-color: #dce3e8;
+    -fx-background-color: -laplace-surface;
+    -fx-border-color: -laplace-border;
     -fx-border-radius: 3;
     -fx-background-radius: 3;
     -fx-padding: 12;
@@ -58,23 +58,23 @@
 
 .loan-identity-link {
     -fx-background-color: transparent;
-    -fx-text-fill: #126bb3;
+    -fx-text-fill: -laplace-link;
     -fx-alignment: center-left;
     -fx-padding: 4 0;
     -fx-cursor: hand;
 }
 
 .loan-identity-link:hover {
-    -fx-background-color: #e3f2fd;
+    -fx-background-color: -laplace-selection;
 }
 
 .loan-identity-link:focused {
-    -fx-border-color: #1688e8;
+    -fx-border-color: -laplace-focus;
     -fx-border-radius: 2;
 }
 
 .loan-identity-link:disabled {
-    -fx-text-fill: #a32323;
+    -fx-text-fill: -laplace-error-text;
     -fx-opacity: 1;
 }
 
@@ -85,21 +85,21 @@
 }
 
 .loan-open-status {
-    -fx-background-color: #e3f2fd;
+    -fx-background-color: -laplace-selection;
 }
 
 .loan-due-status {
-    -fx-background-color: #fff3cd;
+    -fx-background-color: -laplace-warning;
 }
 
 .loan-panel .loan-due-status {
-    -fx-text-fill: #684800;
+    -fx-text-fill: -laplace-warning-text;
 }
 
 .loan-overdue-status {
-    -fx-background-color: #fdecec;
+    -fx-background-color: -laplace-error;
 }
 
 .loan-panel .loan-overdue-status {
-    -fx-text-fill: #a12626;
+    -fx-text-fill: -laplace-error-text;
 }

@@ -109,6 +109,45 @@ public class MainWindowShellTest {
     }
 
     @Test
+    public void appearance_commandsAndMenu_preserveFiltersDataAndSavedPreference() throws Exception {
+        FxTestUtil.runAndWait(() -> {
+            submit("equipment search availability/available");
+            String criteria = label("queryContext");
+            int saves = storage.saves;
+            submit("mode dark");
+            assertTrue(model.getGuiSettings().isDarkMode());
+            assertTrue(window.getPrimaryStage().getScene().getRoot().getStyleClass().contains("dark"));
+            assertEquals(criteria, label("queryContext"));
+            assertEquals(saves, storage.saves);
+            assertEquals(Color.web("#151C23"), ((Region) window.getPrimaryStage().getScene().getRoot())
+                    .getBackground().getFills().getFirst().getFill());
+            render("dark-equipment", 1100, 700);
+            submit("equipment view uuid/" + new UUID(0, 1));
+            render("dark-unit", 760, 500);
+            button("loansNavigation").fire();
+            render("dark-loans", 1100, 700);
+            window.handleHelp();
+            Stage help = Stage.getWindows().stream().filter(stage -> stage instanceof Stage
+                    && ((Stage) stage).getTitle().equals("Command reference")).map(stage -> (Stage) stage)
+                    .findFirst().orElseThrow();
+            assertTrue(help.getScene().getRoot().getStyleClass().contains("dark"));
+            MenuButton menu = (MenuButton) window.getPrimaryStage().getScene().lookup(".menu-button");
+            menu.getItems().stream().filter(item -> item.getText().equals("Light mode"))
+                    .findFirst().orElseThrow().fire();
+            assertFalse(model.getGuiSettings().isDarkMode());
+            assertFalse(help.getScene().getRoot().getStyleClass().contains("dark"));
+            menu.getItems().stream().filter(item -> item.getText().equals("Dark mode"))
+                    .findFirst().orElseThrow().fire();
+            assertTrue(model.getGuiSettings().isDarkMode());
+            submit("exit");
+            assertTrue(model.getGuiSettings().isDarkMode());
+        });
+        JsonUserPrefsStorage prefs = new JsonUserPrefsStorage(temporaryDirectory.resolve("appearance.json"));
+        prefs.saveUserPrefs(model.getUserPrefs());
+        assertTrue(prefs.readUserPrefs().orElseThrow().getGuiSettings().isDarkMode());
+    }
+
+    @Test
     public void equipmentBatchAdd_resetsSearchAndShowsAllUnitsAfterOneSave() {
         FxTestUtil.runAndWait(() -> {
             int originalCount = model.getEquipmentList().size();
@@ -448,7 +487,8 @@ public class MainWindowShellTest {
             assertEquals("1", label("openCount"));
             button("membersNavigation").fire();
             MenuButton menu = (MenuButton) window.getPrimaryStage().getScene().getRoot().lookup(".menu-button");
-            assertEquals(List.of("Help", "Exit"), menu.getItems().stream().map(item -> item.getText()).toList());
+            assertEquals(List.of("Help", "Light mode", "Dark mode", "Exit"),
+                    menu.getItems().stream().map(item -> item.getText()).toList());
             reject("list");
             assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
             reject("list members");
@@ -1272,7 +1312,7 @@ public class MainWindowShellTest {
             Region card = (Region) node("directoryListPlaceholder").lookup(".deleted-member");
             assertFalse(card.isDisabled());
             Label name = (Label) card.lookup("#name");
-            assertEquals(Color.web("#455A64"), name.getTextFill());
+            assertEquals(Color.web("#526672"), name.getTextFill());
             TextFlow flow = (TextFlow) name.getGraphic();
             Text value = (Text) flow.getChildren().getFirst();
             Text suffix = (Text) flow.getChildren().getLast();

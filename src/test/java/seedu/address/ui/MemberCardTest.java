@@ -70,6 +70,9 @@ public class MemberCardTest {
             Region root = new MemberCard(member("A0123456X", longName, longEmail), 12).getRoot();
             VBox container = new VBox(root);
             new Scene(container, 210, 400);
+            container.getStyleClass().add("laplace-root");
+            container.getScene().getStylesheets().add(
+                    MemberCard.class.getResource("/view/LaplaceTheme.css").toExternalForm());
             container.applyCss();
             container.resize(210, 400);
             container.layout();
@@ -94,6 +97,9 @@ public class MemberCardTest {
             Region root = new MemberCard(member, 0).getRoot();
             VBox container = new VBox(root);
             new Scene(container, 210, 500);
+            container.getStyleClass().add("laplace-root");
+            container.getScene().getStylesheets().add(
+                    MemberCard.class.getResource("/view/LaplaceTheme.css").toExternalForm());
             container.applyCss();
             container.resize(210, 500);
             container.layout();

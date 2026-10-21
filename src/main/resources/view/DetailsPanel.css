@@ -1,6 +1,6 @@
 .laplace-root .details-scroll,
 .laplace-root .details-scroll > .viewport {
-    -fx-background-color: #FFFFFF;
+    -fx-background-color: -laplace-surface;
 }
 
 .details-scroll {
@@ -27,8 +27,8 @@
 
 .details-holding {
     -fx-padding: 12;
-    -fx-background-color: #F8FAFB;
-    -fx-border-color: #DCE3E8;
+    -fx-background-color: -laplace-inset;
+    -fx-border-color: -laplace-border;
     -fx-border-radius: 3;
     -fx-background-radius: 3;
 }

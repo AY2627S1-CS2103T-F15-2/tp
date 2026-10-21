@@ -23,6 +23,8 @@
           <MenuButton text="Menu" mnemonicParsing="false" styleClass="laplace-navigation">
             <items>
               <MenuItem fx:id="helpMenuItem" text="Help" onAction="#handleHelp" />
+              <MenuItem text="Light mode" onAction="#handleLightMode" />
+              <MenuItem text="Dark mode" onAction="#handleDarkMode" />
               <MenuItem text="Exit" onAction="#handleExit" />
             </items>
           </MenuButton>

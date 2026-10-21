@@ -1,11 +1,11 @@
 /* Component-only layout styles; palette and common surfaces come from LaplaceTheme.css. */
 .laplace-root .directory-summary.scroll-pane {
-    -fx-background-color: #FFFFFF;
+    -fx-background-color: -laplace-surface;
     -fx-padding: 0;
 }
 
 .laplace-root .directory-summary.scroll-pane > .viewport {
-    -fx-background-color: #FFFFFF;
+    -fx-background-color: -laplace-surface;
 }
 
 .directory-summary .directory-summary-box {

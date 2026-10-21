@@ -119,6 +119,7 @@ public class MainWindow extends UiPart<Stage> {
         data = requireNonNull(logic.getAddressBook());
         helpWindow = new HelpWindow(new Stage(), command -> commandBox.prepare(command));
         setWindowDefaultSize(logic.getGuiSettings());
+        applyAppearance();
         helpMenuItem.setAccelerator(KeyCombination.valueOf("F1"));
         primaryStage.addEventFilter(KeyEvent.KEY_PRESSED, helpFilter);
         primaryStage.addEventFilter(KeyEvent.KEY_RELEASED, activationReleaseFilter);
@@ -375,6 +376,7 @@ public class MainWindow extends UiPart<Stage> {
     private CommandResult executeCommand(String commandText) throws CommandException, ParseException {
         try {
             CommandResult result = logic.execute(commandText);
+            applyAppearance();
             resultDisplay.setFeedbackToUser(result.getFeedbackToUser());
             refreshViews();
             if (result.isShowHelp()) {
@@ -400,7 +402,7 @@ public class MainWindow extends UiPart<Stage> {
                         && screen.getVisualBounds().contains(settings.getWindowCoordinates().getX(),
                                 settings.getWindowCoordinates().getY()))
                 .findFirst().orElse(Screen.getPrimary()).getVisualBounds();
-        boolean firstRun = settings.equals(new GuiSettings());
+        boolean firstRun = settings.withDarkMode(false).equals(new GuiSettings());
         double width = Math.min(bounds.getWidth(), Math.max(760, firstRun ? 1100 : settings.getWindowWidth()));
         double height = Math.min(bounds.getHeight(), Math.max(500, firstRun ? 700 : settings.getWindowHeight()));
         primaryStage.setMinWidth(Math.min(760, bounds.getWidth()));
@@ -413,6 +415,29 @@ public class MainWindow extends UiPart<Stage> {
             primaryStage.setY(Math.max(bounds.getMinY(), Math.min(settings.getWindowCoordinates().getY(),
                     bounds.getMaxY() - height)));
         }
+    }
+
+    /**
+     * Applies the same palette to the shell and its separate help window.
+     */
+    private void applyAppearance() {
+        boolean dark = logic.getGuiSettings().isDarkMode();
+        for (Stage stage : List.of(primaryStage, helpWindow.getRoot())) {
+            stage.getScene().getRoot().getStyleClass().remove("dark");
+            if (dark) {
+                stage.getScene().getRoot().getStyleClass().add("dark");
+            }
+        }
+    }
+
+    @FXML
+    private void handleDarkMode() {
+        activate("mode dark");
+    }
+
+    @FXML
+    private void handleLightMode() {
+        activate("mode light");
     }
 
     /** Opens help or brings its existing window to the front. */
@@ -434,7 +459,8 @@ public class MainWindow extends UiPart<Stage> {
     @FXML
     private void handleExit() {
         logic.setGuiSettings(new GuiSettings(primaryStage.getWidth(), primaryStage.getHeight(),
-                (int) primaryStage.getX(), (int) primaryStage.getY()));
+                (int) primaryStage.getX(), (int) primaryStage.getY())
+                .withDarkMode(logic.getGuiSettings().isDarkMode()));
         dispose();
         primaryStage.hide();
     }

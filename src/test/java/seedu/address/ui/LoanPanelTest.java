@@ -250,6 +250,9 @@ public class LoanPanelTest {
                 LoanPanel panel = new LoanPanel(data, unused -> { }, unused -> { }, commands::add,
                         Clock.fixed(today.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC));
                 new Scene(panel.getRoot(), 760, 500);
+                panel.getRoot().getStyleClass().add("laplace-root");
+                panel.getRoot().getScene().getStylesheets().add(
+                        LoanPanel.class.getResource("/view/LaplaceTheme.css").toExternalForm());
                 panel.getRoot().applyCss();
                 String expected = days == 6 ? "Open loan" : days == 7 ? "Due today"
                         : days == 8 ? "Overdue · 1 day" : "Overdue · 3 days";
