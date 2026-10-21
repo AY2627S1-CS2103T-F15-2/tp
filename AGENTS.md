@@ -106,9 +106,9 @@ Source: [deliverables](https://nus-cs2103-ay2627-s1.github.io/website/admin/tp-d
 
 Sources: [reuse/AI policy](https://nus-cs2103-ay2627-s1.github.io/website/admin/appendixB-policies.html), [RepoSense](https://nus-cs2103-ay2627-s1.github.io/website/admin/tools.html#tool-reposense-for-authorship-tracking), [GitHub workflow](https://nus-cs2103-ay2627-s1.github.io/website/admin/appendixE-gitHub.html).
 
-- AI assistance is expected, but generated work must be understood, reviewed, tested, and acknowledged. Localized use is credited near the work; widespread use goes in DG acknowledgements with tool, users, and extent.
+- Generated work must be understood, reviewed and tested. Follow the user's attribution-placement instructions; do not add AI-agent usage acknowledgements to repository files unless explicitly requested.
 - Do not fabricate authorship, reviews, test results, or contributions. Merging another person's PR is integration work, not authorship of all its code.
-- Preserve the user's preference against unsolicited AI commit-message trailers; that preference does not remove course acknowledgements.
+- Do not add unsolicited AI commit-message trailers. Preserve third-party source, library and asset credits.
 - Check RepoSense attribution before feature freeze. Use truthful `@@author` corrections only where necessary; externally reused code follows the course's reuse marking rules.
 - When authorized to create work on GitHub: use meaningful assigned issues and separate branches; assign both issues and PRs to their actual milestone. PR ownership is determined by author.
 - From v1.4, branches directly in the team repository are allowed. Earlier iterations use forks.

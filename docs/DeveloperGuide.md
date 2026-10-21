@@ -14,10 +14,7 @@
 ## **Acknowledgements**
 
 * Laplace evolves the course-provided [AddressBook-Level3 starter](https://github.com/NUS-CS2103-AY2627-S1/tp).
-* For retirement of the legacy command routes, Arjo Das used OpenAI Codex to assist with planning,
-  implementation, regression tests, and documentation.
-* Arjo Das also used OpenAI Codex for equipment batch-add and identity-preserving equipment maintenance planning, implementation, tests, lifecycle UML, and documentation.
-  These acknowledgements describe those changes only.
+
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -134,12 +131,47 @@ The inherited parser diagram below documents the remaining AB3 classes, not the 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/model/Model.java)
 
+#### Equipment and loan model
+
+The following diagram shows the equipment-related subset of the current model. Member/person
+collections, preferences, JavaFX collection wrappers and interfaces are omitted to keep its scope clear.
+Solid arrows show stored references; the dashed loan-to-equipment arrow describes UUID resolution,
+not an object reference stored inside `Loan`.
+
+<puml src="diagrams/EquipmentModel.puml" alt="Equipment model, retained identities and loan references" />
+
+`AddressBook` creates equipment/loan containers lazily, hence the `0..1` multiplicities. A null container
+means an empty collection to callers. The `0..*` multiplicity at each collection end of the value
+associations accounts for immutable objects shared across transaction snapshots; it does not mean
+one physical unit has several UUIDs. Equipment collections hold distinct UUIDs, and editing replaces a
+value at its existing position. Ordinary associations are used instead of composition because immutable
+values can outlive or be shared by their containers.
+
+| Relationship or rule | Meaning in a valid root dataset |
+| --- | --- |
+| Loan → equipment | Each loan's `equipmentUuid` resolves to exactly one retained equipment record. A unit can have zero or more historical loans, with at most one open loan. |
+| Loan → member (omitted from diagram) | Each loan's `memberNusId` resolves to one retained member. A member may have multiple open or closed loans. |
+| Identity and details | UUID identifies a physical unit. Name/category determine a derived inventory group; matching descriptions do not merge identities. |
+| Lifecycle | Deleted records retain UUIDs, details and closed loans. Open loans cannot reference deleted equipment or deleted members. |
+| Availability | `ModelManager` returns UNAVAILABLE for deleted units; otherwise the calculator returns ASSIGNED for an open loan, AVAILABLE for GOOD/FAIR, and UNAVAILABLE for DAMAGED/UNDER_REPAIR. |
+
+Availability, holders and inventory totals are derived, never persisted as independent fields.
+`AvailabilityCalculator` only accepts condition and open-loan state; the deletion check belongs to
+`ModelManager`. `AddressBook` validates cross-record references, while `UniqueLoanList` enforces the
+one-open-loan-per-unit rule. `UniqueEquipmentList` checks UUID uniqueness and identity-preserving
+replacement. These responsibilities keep editing and restoration from breaking loan references.
+
+#### Inherited person model
+
+The following diagrams describe the retained AB3 person model and an inherited alternative design;
+they do not replace the equipment model above.
+
 <puml src="diagrams/ModelClassDiagram.puml" width="450" />
 
 
-The `Model` component,
+The inherited person-related part of the `Model` component,
 
-* stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+* stores all `Person` objects (which are contained in a `UniquePersonList` object).
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -193,6 +225,46 @@ changing live records. No quantity field, batch entity, persistence migration, o
 Count 1 preserves existing feedback and `equipmentDetails(uuid)` navigation. Larger batches report all
 new UUIDs and return `DisplayRequest.equipment(DirectoryQuery.all())`, resetting prior filters/sorting
 so the newly created units can be found. Availability remains derived from each unit's condition/loans.
+
+#### Equipment-add parsing
+
+The parsing sequence below traces a valid `equipment add ... count/2` request and leaf-parser
+rejection. `AddressBookParser` selects the family, `EquipmentCommandParser` selects the operation,
+and `EquipmentAddCommandParser` applies the shared grammar and validators before constructing the
+command. Parsing is separate from UUID generation and does not access or mutate the live model.
+
+<puml src="diagrams/EquipmentAddSequence.puml" alt="Equipment add parsing and validation sequence" />
+
+The diagram omits shared-validator lifelines and command-constructor normalization calls. The parser
+returns a command; it does not execute it. Missing/unknown family or subcommand errors stop earlier in
+the chain. Neither a parser failure nor invalid count creates a transaction snapshot or saves data.
+
+#### Equipment-add execution and publication
+
+The next sequence starts after successful parsing. `Model.createTransactionSnapshot()` creates a new
+`ModelManager` with independent collection containers. Immutable entity values may be shared until a
+command replaces them. `EquipmentAddCommand.execute(candidate)` prepares the complete batch before
+inserting any unit. The diagram abbreviates the root/collection delegation and the repeated read-only
+UUID checks; these occur on the candidate, not on the live model.
+
+<puml src="diagrams/EquipmentTransactionSequence.puml" alt="Equipment batch execution, atomic save and failure path" />
+
+The `CommandResult` exists before saving, but `LogicManager` returns it to the UI only after successful
+persistence and publication. Count 1 requests exact-unit details; larger batches request the full
+equipment directory. Observable refreshes resolve current data by identity after publication.
+
+The shown failure alternative is an `IOException` during saving. Serialization/write/replacement
+failure prevents publication; partial writes affect only a private temporary file, and unsupported
+atomic replacement fails rather than falling back to truncation. Temporary-file cleanup is attempted
+on failure. The existing data file remains intact; a first failed save need not leave a data file.
+Validation, UUID-generation and command-execution failures occur before the save call and are omitted
+from the successful execution path shown. A failure after candidate insertion still discards that
+candidate, so a later successful command cannot accidentally save a failed batch.
+
+Editing, soft deletion and restoration use the same snapshot/save/publish boundary with different
+command bodies. Equipment list/search are read-only and do not follow this mutation sequence.
+These diagrams describe a single-user command transaction, not concurrent-writer coordination or an
+undo/redo implementation.
 
 ### Equipment editing, deletion and restoration
 

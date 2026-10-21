@@ -1,0 +1,63 @@
+@startuml
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+
+class ModelManager {
+  + getAvailability(uuid): Availability
+  + setEquipment(target, edited)
+}
+class AddressBook {
+  + addEquipment(item)
+  + setEquipment(target, edited)
+  + removeEquipment(item)
+  + restoreEquipment(item)
+}
+class UniqueEquipmentList {
+  + setEquipment(target, replacement)
+}
+class Equipment {
+  - uuid: UUID
+  - name: String
+  - category: String
+  - condition: Condition
+  - notes: String
+  - deleted: boolean
+}
+class UniqueLoanList {
+  + findOpenLoan(equipmentUuid)
+}
+class Loan {
+  - equipmentUuid: UUID
+  - memberNusId: NusId
+  - assignedDate: LocalDate
+  - expectedReturnDate: LocalDate
+  - returnedDate: LocalDate
+  + isOpen(): boolean
+}
+class AvailabilityCalculator {
+  {static} + calculate(condition, hasOpenLoan): Availability
+}
+
+ModelManager "1" --> "1" AddressBook : addressBook
+AddressBook "1" --> "0..1" UniqueEquipmentList : equipment
+AddressBook "1" --> "0..1" UniqueLoanList : loans
+UniqueEquipmentList "0..*" --> "0..*" Equipment : contains values
+UniqueLoanList "0..*" --> "0..*" Loan : contains values
+ModelManager ..> AvailabilityCalculator : calls for active units
+Loan ..> Equipment : resolved by equipmentUuid
+
+note bottom of Equipment
+  Immutable values can be shared by snapshots.
+  Edits replace a value; UUID never changes.
+  No stored quantity, holder or availability.
+end note
+note bottom of Loan
+  No direct Equipment object reference.
+  Root resolves equipmentUuid to one unit.
+  At most one open loan per UUID.
+  returnedDate = null means open.
+end note
+@enduml
