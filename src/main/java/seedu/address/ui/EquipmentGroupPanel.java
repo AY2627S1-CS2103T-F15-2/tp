@@ -47,7 +47,7 @@ public class EquipmentGroupPanel extends VBox {
     private InventoryGroups.Key key;
     private DirectoryQuery query = DirectoryQuery.all();
     private UUID selectedUuid;
-    private boolean refreshing;
+    private boolean isRefreshing;
 
     /**
      * Creates a read-only group view; user unit selection requests navigation through the shell.
@@ -87,7 +87,7 @@ public class EquipmentGroupPanel extends VBox {
         addColumn("Holder", this::holder);
         addColumn("Status", unit -> unit.isDeleted() ? "Deleted" : "Active");
         units.getSelectionModel().selectedItemProperty().addListener((unused, previous, current) -> {
-            if (!refreshing && current != null) {
+            if (!isRefreshing && current != null) {
                 onUnit.accept(current.getUuid());
             }
         });
@@ -120,6 +120,9 @@ public class EquipmentGroupPanel extends VBox {
     public void showUnit(UUID uuid, DirectoryQuery query) {
         selectedUuid = requireNonNull(uuid);
         this.query = requireNonNull(query);
+        if (query.equipment(data, lookup).stream().noneMatch(unit -> unit.getUuid().equals(uuid))) {
+            showAll.setSelected(true);
+        }
         refresh();
     }
 
@@ -127,7 +130,7 @@ public class EquipmentGroupPanel extends VBox {
      * Recomputes group membership, counts and selection after edits, loans and lifecycle changes.
      */
     public void refresh() {
-        refreshing = true;
+        isRefreshing = true;
         try {
             Optional<Equipment> selected = data.getEquipmentList().stream()
                     .filter(unit -> unit.getUuid().equals(selectedUuid)).findFirst();
@@ -140,9 +143,6 @@ public class EquipmentGroupPanel extends VBox {
                     .sorted(Comparator.comparing(unit -> unit.getUuid().toString())).toList();
             List<Equipment> matching = query.equipment(data, lookup).stream()
                     .filter(unit -> InventoryGroups.keyOf(unit).equals(key)).toList();
-            if (selected.isPresent() && !matching.contains(selected.orElseThrow())) {
-                showAll.setSelected(true);
-            }
             title.setText(all.isEmpty() ? "Equipment group no longer exists" : all.getFirst().getName());
             long active = all.stream().filter(unit -> !unit.isDeleted()).count();
             counts.setText(key.category() + " · " + matching.size() + " matching / " + all.size()
@@ -152,12 +152,17 @@ public class EquipmentGroupPanel extends VBox {
             availabilityCounts.setText((showAll.isSelected() ? "All units: " : "Matching units: ")
                     + EquipmentPresentation.counts(shown, lookup));
             units.getItems().setAll(shown);
+            units.sort();
             units.setPrefHeight(Math.min(230, Math.max(90, units.getItems().size() * 30 + 34)));
             units.setMinHeight(USE_PREF_SIZE);
             units.setMaxHeight(USE_PREF_SIZE);
             units.getSelectionModel().clearSelection();
             if (selected.isPresent()) {
-                units.getSelectionModel().select(selected.orElseThrow());
+                if (shown.contains(selected.orElseThrow())) {
+                    units.getSelectionModel().select(selected.orElseThrow());
+                } else {
+                    counts.setText(counts.getText() + " · Selected unit is outside the table filter");
+                }
                 details.showEquipment(selectedUuid);
                 detailArea.getChildren().setAll(detailBody);
             } else {
@@ -165,7 +170,7 @@ public class EquipmentGroupPanel extends VBox {
                 detailArea.getChildren().setAll(prompt);
             }
         } finally {
-            refreshing = false;
+            isRefreshing = false;
         }
     }
 
@@ -177,11 +182,11 @@ public class EquipmentGroupPanel extends VBox {
         column.setCellValueFactory(cell -> new ReadOnlyStringWrapper(value.apply(cell.getValue())));
         column.setCellFactory(unused -> new TableCell<>() {
             @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty ? null : item);
+            protected void updateItem(String item, boolean isEmpty) {
+                super.updateItem(item, isEmpty);
+                setText(isEmpty ? null : item);
                 Equipment unit = getTableRow() == null ? null : getTableRow().getItem();
-                setTooltip(empty || unit == null ? null
+                setTooltip(isEmpty || unit == null ? null
                         : new Tooltip(caption + ": " + item + "\nUUID: " + unit.getUuid()));
             }
         });

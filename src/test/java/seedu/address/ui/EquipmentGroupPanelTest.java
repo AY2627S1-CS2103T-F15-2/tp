@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import seedu.address.model.ModelManager;
 import seedu.address.model.equipment.Availability;
@@ -55,6 +56,7 @@ class EquipmentGroupPanelTest {
             panel.showUnit(DAMAGED.getUuid(), available);
             assertEquals(DAMAGED, units.getSelectionModel().getSelectedItem());
             assertEquals(2, units.getItems().size());
+            verifySortedRefresh(panel);
             Equipment renamed = new Equipment(DAMAGED.getUuid(), "Tripod", "Photo", Condition.DAMAGED, "");
             model.setEquipment(DAMAGED, renamed);
             panel.refresh();
@@ -69,6 +71,33 @@ class EquipmentGroupPanelTest {
             panel.refresh();
             assertEquals(renamed, units.getSelectionModel().getSelectedItem());
             assertTrue(activations.isEmpty());
+        });
+    }
+
+    @Test
+    void exactUnitOutsideFilter_canReturnToMatchingRowsWithoutLosingDetails() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = model();
+            List<UUID> activations = new ArrayList<>();
+            EquipmentGroupPanel panel = new EquipmentGroupPanel(model.getAddressBook(), model::getAvailability,
+                    unused -> { }, unused -> { }, activations::add);
+            mount(panel);
+            DirectoryQuery available = new DirectoryQuery("", "", null, Availability.AVAILABLE,
+                    DirectoryQuery.Holding.ANY, DirectoryQuery.Sort.DEFAULT, false, DirectoryQuery.Status.ACTIVE);
+            panel.showUnit(DAMAGED.getUuid(), available);
+            CheckBox all = (CheckBox) panel.lookup("#showAllUnits");
+            assertTrue(all.isSelected());
+            all.fire();
+            panel.refresh();
+            TableView<?> units = (TableView<?>) panel.lookup("#physicalUnits");
+            assertEquals(false, all.isSelected());
+            assertEquals(List.of(CAMERA), units.getItems());
+            assertEquals(null, units.getSelectionModel().getSelectedItem());
+            assertEquals(DAMAGED.getUuid().toString(), ((Label) panel.lookup("#equipmentUuid")).getText());
+            assertTrue(((Label) panel.lookup("#groupCounts")).getText().contains("outside the table filter"));
+            assertTrue(activations.isEmpty());
+            all.fire();
+            assertEquals(DAMAGED, units.getSelectionModel().getSelectedItem());
         });
     }
 
@@ -105,6 +134,16 @@ class EquipmentGroupPanelTest {
             assertEquals("Equipment group no longer exists", ((Label) panel.lookup("#groupTitle")).getText());
             assertTrue(((TableView<?>) panel.lookup("#physicalUnits")).getItems().isEmpty());
         });
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void verifySortedRefresh(EquipmentGroupPanel panel) {
+        TableView<Equipment> units = (TableView<Equipment>) panel.lookup("#physicalUnits");
+        TableColumn<Equipment, ?> condition = units.getColumns().get(1);
+        units.getSortOrder().add(condition);
+        panel.refresh();
+        assertEquals(List.of(DAMAGED, CAMERA), units.getItems());
+        assertEquals(DAMAGED, units.getSelectionModel().getSelectedItem());
     }
 
     private static void mount(EquipmentGroupPanel panel) {
