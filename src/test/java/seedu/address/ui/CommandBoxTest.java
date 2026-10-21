@@ -149,6 +149,25 @@ public class CommandBoxTest {
     }
 
     @Test
+    public void keyboard_escapeAndSelectionShortcut_preserveDraftWithoutSubmitting() {
+        FxTestUtil.runAndWait(() -> {
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("Success");
+            });
+            TextField field = field(box);
+            String draft = "equipment search q/camera";
+            box.prepare(draft);
+            field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ESCAPE, false, false, false, false));
+            assertEquals(draft, field.getText());
+            field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.A, false, true, false, false));
+            assertEquals(draft, field.getText());
+            assertTrue(executed.isEmpty());
+        });
+    }
+
+    @Test
     public void history_boundsAndDuplicateSubmissions_keepTheLatestHundredAndDraft() {
         FxTestUtil.runAndWait(() -> {
             CommandBox box = new CommandBox(command -> new CommandResult("Success"));

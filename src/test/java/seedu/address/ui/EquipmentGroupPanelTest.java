@@ -19,6 +19,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
+import seedu.address.model.equipment.exceptions.EquipmentNotFoundException;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.query.DirectoryQuery;
 import seedu.address.model.query.InventoryGroups;
@@ -133,6 +134,29 @@ class EquipmentGroupPanelTest {
             panel.refresh();
             assertEquals("Equipment group no longer exists", ((Label) panel.lookup("#groupTitle")).getText());
             assertTrue(((TableView<?>) panel.lookup("#physicalUnits")).getItems().isEmpty());
+        });
+    }
+
+    @Test
+    void unavailableLookup_displaysUnknownInsteadOfInventingAvailability() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = model();
+            List<UUID> selected = new ArrayList<>();
+            EquipmentGroupPanel panel = new EquipmentGroupPanel(model.getAddressBook(), uuid -> {
+                throw new EquipmentNotFoundException();
+            }, unused -> { }, unused -> { }, selected::add);
+            mount(panel);
+            panel.showGroup(InventoryGroups.keyOf(CAMERA), DirectoryQuery.all());
+            TableView<?> units = (TableView<?>) panel.lookup("#physicalUnits");
+            TableColumn<?, ?> availability = units.getColumns().stream()
+                    .filter(column -> column.getText().equals("Availability")).findFirst().orElseThrow();
+            assertEquals(2, units.getItems().size());
+            for (int index = 0; index < units.getItems().size(); index++) {
+                assertEquals("Unknown", availability.getCellObservableValue(index).getValue());
+            }
+            assertTrue(((Label) panel.lookup("#groupAvailability")).getText()
+                    .contains("Availability could not be determined"));
+            assertTrue(selected.isEmpty());
         });
     }
 

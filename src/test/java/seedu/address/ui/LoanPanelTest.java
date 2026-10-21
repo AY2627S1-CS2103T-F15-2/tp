@@ -30,6 +30,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -290,6 +291,40 @@ public class LoanPanelTest {
                 assertEquals("loans return uuid/" + FIRST_UUID + " returned/" + today, commands.getLast());
                 assertEquals(before, data);
             }
+        });
+    }
+
+    @Test
+    public void layout_narrowWideAndNarrowAgain_reflowsIdentitiesWithoutChangingLoans() {
+        FxTestUtil.runAndWait(() -> {
+            AddressBook data = mixedBook();
+            AddressBook before = new AddressBook(data);
+            List<UUID> selected = new ArrayList<>();
+            LoanPanel panel = new LoanPanel(data, selected::add, unused -> { });
+            Region root = panel.getRoot();
+            root.getStyleClass().add("laplace-root");
+            Scene scene = new Scene(root, 480, 500);
+            scene.getStylesheets().add(LoanPanel.class.getResource("/view/LaplaceTheme.css").toExternalForm());
+            for (int width : List.of(480, 1000, 480)) {
+                root.resize(width, 500);
+                root.applyCss();
+                root.layout();
+                VBox first = row(panel, "openLoans", 0);
+                GridPane identities = (GridPane) equipmentButton(first).getParent().getParent();
+                boolean isWide = width == 1000;
+                assertEquals(isWide, identities.getWidth() >= 650);
+                assertEquals(isWide ? 2 : 1, identities.getColumnConstraints().size());
+                assertEquals(isWide ? 50 : 100, identities.getColumnConstraints().getFirst().getPercentWidth());
+                assertEquals(isWide ? 1 : 0, GridPane.getColumnIndex(memberButton(first).getParent()));
+                assertEquals(isWide ? 0 : 1, GridPane.getRowIndex(memberButton(first).getParent()));
+                assertEquals("Camera\nUUID: " + FIRST_UUID, equipmentButton(first).getText());
+            }
+            VBox first = row(panel, "openLoans", 0);
+            equipmentButton(first).fire();
+            assertEquals(List.of(FIRST_UUID), selected);
+            Button prepareReturn = (Button) first.getChildren().getLast();
+            prepareReturn.fire();
+            assertEquals(before, data);
         });
     }
 
