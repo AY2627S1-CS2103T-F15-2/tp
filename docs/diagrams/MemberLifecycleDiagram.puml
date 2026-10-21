@@ -1,0 +1,36 @@
+@startuml
+!include style.puml
+skinparam stateBackgroundColor MODEL_COLOR_T1
+skinparam stateBorderColor MODEL_COLOR
+skinparam arrowColor MODEL_COLOR
+skinparam stateFontColor #202020
+
+title Member editing, soft-delete and unlimited restore
+
+state "Active member\ndeleted = false" as Active
+state "Deleted member\ndeleted = true" as Deleted
+
+[*] --> Active : member add
+Active --> Active : member edit [details change]\nreplace details; retain NUS ID
+Active --> Deleted : member delete [no outstanding loans]\nretain details, NUS ID and loan history
+Deleted --> Active : member restore\nno time limit
+
+note left of Active
+  Editing is allowed with outstanding loans.
+  Empty and unchanged edits are rejected.
+  Outstanding loans block deletion.
+  Restoring an active member is rejected.
+end note
+note right of Deleted
+  Remains visible and selectable in the directory.
+  NUS ID stays reserved; records are never purged.
+  Editing, new loans and repeated deletion are rejected.
+  Restore before editing or borrowing again.
+end note
+note bottom of Active
+  Successful mutations save an isolated snapshot before publishing.
+  Validation or save failures leave live state and saved bytes unchanged.
+  Deletion and restoration create immutable replacements.
+  Archival and deletion timestamps are outside scope.
+end note
+@enduml

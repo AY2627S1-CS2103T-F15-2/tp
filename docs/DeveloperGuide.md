@@ -119,35 +119,45 @@ How the parsing works:
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/model/Model.java)
 
-<puml src="diagrams/ModelClassDiagram.puml" width="450" />
+<puml src="diagrams/ModelClassDiagram.puml" alt="Member model with immutable details and deletion state" />
 
+The member-focused diagram shows the model operations used by editing, soft-delete and restoration.
+`ModelManager` delegates to `AddressBook`, whose `UniqueMemberList` stores active and deleted members
+in the same identity-unique collection. Equipment, loans and legacy Person collections still exist;
+they are omitted from this view for readability.
 
-The `Model` component,
+`Member` is immutable and contains its NUS ID, name, phone, email and a `deleted` boolean. The existing
+four-field constructor creates an active member; the five-field constructor accepts deletion state.
+Equality and hashing include all five fields, while `isSameMember` compares only the NUS ID.
 
-* stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
-* stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
-* stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
-* does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
+Editing replaces supplied details without changing the NUS ID or deletion state. Deleted members must
+be restored before editing. Soft-delete and restoration create replacements through `setDeleted`,
+retaining collection position, reserved identities and historical loan references. The exposed member
+list remains observable and includes deleted records. The model also retains user preferences through
+`UserPrefs` and `ReadOnlyUserPrefs`.
 
+<puml src="diagrams/MemberLifecycleDiagram.puml" alt="Member editing, soft-delete and unlimited restore" />
 
-<box type="info" seamless>
-
-**Note:** The alternative, arguably more object-oriented, design below keeps a unique list of tags in `AddressBook`, and each `Person` references tags from that list. This lets `AddressBook` maintain one `Tag` object per unique tag instead of each `Person` holding its own `Tag` objects.<br>
-
-<puml src="diagrams/BetterModelClassDiagram.puml" width="450" />
-</box>
-
+Deletion is blocked while a member has outstanding loans. A deleted member remains visible and
+recoverable indefinitely; editing, new loans and repeated deletion are rejected. Restoration has no
+time limit, expiry or automatic purge. These mutations use the existing transactional save-before-publish
+pipeline: validation and persistence failures preserve live state and the previous saved file.
 
 ### Storage component
 
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
-<puml src="diagrams/StorageClassDiagram.puml" width="550" />
+<puml src="diagrams/StorageClassDiagram.puml" alt="JSON storage of member deletion state" />
 
 The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
+
+Member JSON includes a `deleted` boolean. Missing fields in legacy saves default to `false`; explicit
+null and non-boolean values are rejected. Snapshots retain deleted members and their closed loan
+history. Loading validates member identities before loan references, rejecting open loans whose member
+is deleted while accepting valid closed references.
 
 ### Common classes
 

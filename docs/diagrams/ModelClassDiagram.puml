@@ -1,54 +1,80 @@
 @startuml
 !include style.puml
+skinparam classAttributeFontColor #FFFFFF
+skinparam classAttributeIconSize 0
 skinparam arrowThickness 1.1
 skinparam arrowColor MODEL_COLOR
 skinparam classBackgroundColor MODEL_COLOR
+skinparam linetype ortho
 
-Package Model as ModelPackage <<Rectangle>>{
-Class "<<interface>>\nReadOnlyAddressBook" as ReadOnlyAddressBook
-Class "<<interface>>\nReadOnlyUserPrefs" as ReadOnlyUserPrefs
-Class "<<interface>>\nModel" as Model
-Class AddressBook
-Class ModelManager
-Class UserPrefs
+title Member model: immutable details and retained deletion state
 
-Class UniquePersonList
-Class Person
-Class Address
-Class Email
-Class Name
-Class Phone
-Class Tag
-
-Class I #FFFFFF
+package Model as ModelPackage {
+    interface Model {
+        +setMember(target: Member, editedMember: Member)
+        +deleteMember(member: Member)
+        +restoreMember(member: Member)
+    }
+    interface ReadOnlyAddressBook
+    interface ReadOnlyUserPrefs
+    class ModelManager
+    class UserPrefs
+    class AddressBook {
+        +setMember(target: Member, editedMember: Member)
+        +removeMember(member: Member)
+        +restoreMember(member: Member)
+    }
+    class UniqueMemberList {
+        +setMember(target: Member, editedMember: Member)
+        +setDeleted(nusId: NusId, isDeleted: boolean)
+    }
+    class Member <<immutable>> {
+        -nusId: NusId {readOnly}
+        -name: Name {readOnly}
+        -phone: Phone {readOnly}
+        -email: Email {readOnly}
+        -deleted: boolean {readOnly}
+        +isDeleted(): boolean
+        +isSameMember(otherMember: Member): boolean
+    }
+    class NusId
+    class Name
+    class Phone
+    class Email
 }
+show Model methods
+show AddressBook methods
+show UniqueMemberList methods
+show Member members
 
-Class HiddenOutside #FFFFFF
-HiddenOutside ..> Model
+ModelManager ..|> Model
+ModelManager --> "1" AddressBook
+ModelManager --> "1" UserPrefs
+AddressBook ..|> ReadOnlyAddressBook
+UserPrefs ..|> ReadOnlyUserPrefs
+Model ..> ReadOnlyAddressBook
+Model ..> ReadOnlyUserPrefs
+AddressBook *--> "0..1" UniqueMemberList : lazily initialized
+UniqueMemberList --> "0..*" Member : active and deleted
+Member --> "1" NusId
+Member --> "1" Name
+Member --> "1" Phone
+Member --> "1" Email
 
-AddressBook .up.|> ReadOnlyAddressBook
-
-ModelManager .up.|> Model
-Model .right.> ReadOnlyUserPrefs
-Model .left.> ReadOnlyAddressBook
-ModelManager -left-> "1" AddressBook
-ModelManager -right-> "1" UserPrefs
-UserPrefs .up.|> ReadOnlyUserPrefs
-
-AddressBook *--> "1" UniquePersonList
-UniquePersonList --> "~* all" Person
-Person *--> Name
-Person *--> Phone
-Person *--> Email
-Person *--> Address
-Person *--> "*" Tag
-
-Person -[hidden]up--> I
-UniquePersonList -[hidden]right-> I
-
-Name -[hidden]right-> Phone
-Phone -[hidden]right-> Address
-Address -[hidden]right-> Email
-
-ModelManager --> "~* filtered" Person
+note right of UniqueMemberList
+  Replacements retain identity and list position.
+  Edits cannot change deletion state.
+  Deleted members must be restored before editing.
+end note
+note bottom of Member
+  Four-field constructor defaults deleted to false.
+  Five-field constructor accepts deletion state.
+  Equality and hashing include deleted;
+  isSameMember compares only the NUS ID.
+end note
+note left of AddressBook
+  Member-focused view: equipment, loans and
+  legacy Person collections are omitted.
+  Closed loan history and deleted IDs are retained.
+end note
 @enduml
