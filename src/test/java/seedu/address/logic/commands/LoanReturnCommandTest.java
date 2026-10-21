@@ -85,6 +85,19 @@ public class LoanReturnCommandTest {
     }
 
     @Test
+    public void execute_singleReturnWithObservedCondition_updatesHistoryAndEquipment() throws Exception {
+        ModelManager model = modelWithLoan(Condition.GOOD);
+
+        CommandResult result = new LoanReturnCommand(List.of(FIRST_UUID), TODAY,
+                Condition.DAMAGED, CLOCK).execute(model);
+
+        assertEquals(DisplayRequest.equipmentDetails(FIRST_UUID), result.getDisplayRequest());
+        assertEquals(Condition.DAMAGED, model.getLoanList().get(1).getReturnCondition().orElseThrow());
+        assertEquals(Condition.DAMAGED, model.findEquipment(FIRST_UUID).orElseThrow().getCondition());
+        assertEquals(Availability.UNAVAILABLE, model.getAvailability(FIRST_UUID));
+    }
+
+    @Test
     public void execute_returnBeforeAssignmentOrAfterToday_rejectsWithoutMutation() {
         ModelManager model = modelWithLoan(Condition.GOOD);
         AddressBook before = new AddressBook(model.getAddressBook());

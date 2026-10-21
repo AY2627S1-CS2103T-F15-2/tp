@@ -57,8 +57,8 @@ canonical UUID. Equipment directories retain category/name/UUID ordering. Switch
 the scroll position; background refresh preserves it. Inconsistent references produce an explicit error
 instead of an incomplete holdings list.
 
-Loans shows current open assignments only, with exact member/equipment navigation and dates. Closed records
-remain in the model/JSON through deletion/restoration; there is no history presentation.
+Loans shows current assignments and completed history, with exact member/equipment navigation and dates.
+Closed records remain in the model/JSON through deletion/restoration.
 
 The command input replaces pasted tabs and line-break characters with spaces before JavaFX
 can strip them. CRLF occupies two input spaces to preserve edit offsets; text value normalization

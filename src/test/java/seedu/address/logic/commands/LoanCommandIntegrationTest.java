@@ -29,6 +29,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.equipment.Availability;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.loan.Loan;
 import seedu.address.storage.JsonAddressBookStorage;
 
@@ -109,7 +110,8 @@ public class LoanCommandIntegrationTest {
         storage.saveAddressBook(restored.getAddressBook());
         ModelManager returned = reload(storage);
         Loan closed = returned.getLoanList().get(1);
-        assertEquals(new Loan(FIRST_UUID, FIRST_MEMBER.getNusId(), TODAY, TODAY.plusDays(7), TODAY), closed);
+        assertEquals(new Loan(FIRST_UUID, FIRST_MEMBER.getNusId(), TODAY, TODAY.plusDays(7),
+                TODAY, Condition.GOOD, null), closed);
         assertEquals(Availability.AVAILABLE, returned.getAvailability(FIRST_UUID));
         returned.deleteMember(FIRST_MEMBER);
         assertTrue(returned.findMember(FIRST_MEMBER.getNusId()).orElseThrow().isDeleted());

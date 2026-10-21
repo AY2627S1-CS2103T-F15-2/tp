@@ -40,7 +40,8 @@ public class LoanAddCommandTest {
         ModelManager model = LoanCommandTestData.model();
         AddressBook before = new AddressBook(model.getAddressBook());
         CommandResult result = command(TODAY, TODAY.plusDays(5)).execute(model);
-        Loan loan = new Loan(FIRST_UUID, FIRST_MEMBER.getNusId(), TODAY, TODAY.plusDays(5), null);
+        Loan loan = new Loan(FIRST_UUID, FIRST_MEMBER.getNusId(), TODAY, TODAY.plusDays(5),
+                null, Condition.GOOD, null);
         assertEquals(loan, model.findOpenLoan(FIRST_UUID).orElseThrow());
         assertEquals(Availability.ASSIGNED, model.getAvailability(FIRST_UUID));
         assertEquals(List.of(loan), model.findOpenLoansForMember(FIRST_MEMBER.getNusId()));

@@ -97,3 +97,15 @@
 .loan-panel .loan-overdue-status {
     -fx-text-fill: -laplace-error-text;
 }
+
+.loan-closed-status {
+    -fx-background-color: -laplace-success;
+}
+
+.loan-panel .text-field {
+    -fx-background-color: -laplace-surface;
+    -fx-text-fill: -laplace-text;
+    -fx-prompt-text-fill: -laplace-muted;
+    -fx-border-color: -laplace-border;
+    -fx-padding: 8;
+}

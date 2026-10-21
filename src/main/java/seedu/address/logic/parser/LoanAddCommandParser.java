@@ -18,11 +18,12 @@ public class LoanAddCommandParser implements Parser<LoanAddCommand> {
         try {
             ArgumentMultimap arguments = LaplaceArgumentParser.parse(args,
                     Set.of(PREFIX_EQUIPMENT_UUID, PREFIX_NUS_ID, PREFIX_ASSIGNED_DATE, PREFIX_EXPECTED_RETURN_DATE),
-                    Set.of(), Map.of(PREFIX_EQUIPMENT_UUID, ParserUtil::parseUuid,
+                    Set.of(), Map.of(PREFIX_EQUIPMENT_UUID, LoanUuidListParser::parse,
                             PREFIX_NUS_ID, ParserUtil::parseNusId,
                             PREFIX_ASSIGNED_DATE, ParserUtil::parseDate,
                             PREFIX_EXPECTED_RETURN_DATE, ParserUtil::parseDate));
-            return new LoanAddCommand(ParserUtil.parseUuid(arguments.getValue(PREFIX_EQUIPMENT_UUID).orElseThrow()),
+            return LoanAddCommand.batch(
+                    LoanUuidListParser.parse(arguments.getValue(PREFIX_EQUIPMENT_UUID).orElseThrow()),
                     ParserUtil.parseNusId(arguments.getValue(PREFIX_NUS_ID).orElseThrow()),
                     ParserUtil.parseDate(arguments.getValue(PREFIX_ASSIGNED_DATE).orElseThrow()),
                     ParserUtil.parseDate(arguments.getValue(PREFIX_EXPECTED_RETURN_DATE).orElseThrow()));

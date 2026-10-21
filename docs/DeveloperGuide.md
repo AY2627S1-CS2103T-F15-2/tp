@@ -88,9 +88,11 @@ loans, deletion and restoration. The group panel shares one scrolling surface wi
 `CommandPreview` copies exact plain text or prepares `CommandBox`; neither action executes a mutation.
 The command catalog supplies examples and explicit completion. Input history is bounded to 100 session
 entries. `ResultDisplay` keeps full feedback behind a compact, expandable view. Related-record links use
-identity-based commands. `LoanPanel` derives urgency from expected return dates and an injectable clock;
-its return shortcut prepares a command for explicit review and submission. Loan urgency refreshes on
-commands, data changes and opening the Loans tab; there is no background midnight timer.
+identity-based commands. `LoanPanel` filters open and completed loans by stable member/equipment IDs.
+Only open loans derive urgency from expected return dates and an injectable clock, and offer a return
+shortcut for explicit review and submission. Completed rows show recorded conditions and return dates.
+Loan urgency refreshes on commands, data changes and opening the Loans tab; there is no background
+midnight timer.
 
 `LaplaceTheme.css` defines shared looked-up colors; component styles refer to these tokens. A `dark` style
 class changes the palette for both windows, including table selection, feedback and command previews.
@@ -189,6 +191,17 @@ Availability, holders and inventory totals are derived, never persisted as indep
 `ModelManager`. `AddressBook` validates cross-record references, while `UniqueLoanList` enforces the
 one-open-loan-per-unit rule. `UniqueEquipmentList` checks UUID uniqueness and identity-preserving
 replacement. These responsibilities keep editing and restoration from breaking loan references.
+
+#### Loan workflow and history
+
+The following class diagram traces batch assignment and return from their parsers to the
+model, JSON adapter and history views. It lists the loan-facing methods relevant to this
+workflow; shared infrastructure and unrelated methods are omitted. `AddressBook` validates
+each batch in a candidate root, while `UniqueLoanList` retains completed loans and rejects
+a second open loan for the same equipment UUID. `MemberDetailsPanel` and
+`EquipmentDetailsPanel` both call `LoanHistoryContent.add` for their selected identity.
+
+<puml src="diagrams/LoanWorkflowClassDiagram.puml" alt="Loan workflow and history class diagram" />
 
 #### Inherited person model
 
@@ -323,8 +336,8 @@ Directory queries share `DirectoryQuery.Status` across members and equipment. Eq
 to active; `status/deleted|all` exposes retained units. List resets to all states and does not save.
 Cards label deleted units; details show lifecycle state and a restore command. Edit/restore navigate to
 the same UUID, retaining query criteria even if that unit no longer matches. Total counts include deleted
-units; availability counts and inventory groups include active units only. Closed history remains stored,
-with no new history-view UI in this feature.
+units; availability counts and inventory groups include active units only. The Loans tab and entity
+details show the retained completed loan history.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -456,7 +469,7 @@ These requirements consolidate the [team's project notes](https://docs.google.co
 
 * **MVP baseline:** Add, list, view, and delete members and equipment; identify members by NUS ID and equipment by a generated UUID; issue and return individual items; show holdings and holders; validate input and preserve consistency on failure.
 * **Broader requirements:** Editing, archiving, recovery, import/export, search and filtering, summaries, batch operations, condition recording at handover, histories, and undo/redo remain documented below even if they are not delivered this semester.
-* **Deletion and retention:** Members and equipment are soft-deleted only without open loans. Records and closed history are retained; restoration has no time limit. This supersedes the original permanent-deletion and proposed 30-day recovery policies. A dedicated history view remains future work.
+* **Deletion and retention:** Members and equipment are soft-deleted only without open loans. Records and closed history are retained; restoration has no time limit. This supersedes the original permanent-deletion and proposed 30-day recovery policies. The Loans tab and entity details show completed loan history.
 * **Single-user boundary:** Import/export supports the same user's local records and backups. The earlier idea of handing a snapshot to another EXCO member is retained as a considered use of export, but is excluded from the course product's regular operations. Shared datasets, concurrent users, and member self-service are outside scope.
 
 ### User stories

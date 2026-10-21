@@ -1172,7 +1172,7 @@ public class MainWindowShellTest {
                 }
             }
             button("loansNavigation").fire();
-            session.add("Loans tab: " + label("openCount") + " open; closed history is not presented.");
+            session.add("Loans tab: " + label("openCount") + " open; " + label("closedCount") + " completed.");
             session.add("Commands executed: " + logic.commands);
             session.add("Successful saves: " + storage.saves);
             assertEquals(6, logic.commands.size());

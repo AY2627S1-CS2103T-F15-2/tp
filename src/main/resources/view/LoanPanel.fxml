@@ -2,6 +2,7 @@
 
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
@@ -11,14 +12,25 @@
     <content>
       <VBox spacing="18.0" minWidth="0.0" styleClass="loan-content">
         <Label text="Loans" styleClass="laplace-title,loan-title" wrapText="true" />
-        <Label text="Current equipment assignments"
+        <Label text="Current assignments and completed history"
                styleClass="laplace-muted,loan-subtitle" wrapText="true" />
+        <HBox spacing="10.0">
+          <TextField fx:id="memberFilter" promptText="Filter by NUS ID" HBox.hgrow="ALWAYS" />
+          <TextField fx:id="equipmentFilter" promptText="Filter by equipment UUID" HBox.hgrow="ALWAYS" />
+        </HBox>
         <VBox spacing="12.0" minWidth="0.0" styleClass="laplace-surface,loan-section">
           <HBox spacing="12.0" alignment="CENTER_LEFT">
             <Label text="Open loans" styleClass="loan-section-title" />
             <Label fx:id="openCount" text="0" styleClass="laplace-count-badge,loan-count" />
           </HBox>
           <VBox fx:id="openLoans" spacing="10.0" minWidth="0.0" />
+        </VBox>
+        <VBox fx:id="loanHistory" spacing="12.0" minWidth="0.0" styleClass="laplace-surface,loan-section">
+          <HBox spacing="12.0" alignment="CENTER_LEFT">
+            <Label text="Completed loans" styleClass="loan-section-title" />
+            <Label fx:id="closedCount" text="0" styleClass="laplace-count-badge,loan-count" />
+          </HBox>
+          <VBox fx:id="closedLoans" spacing="10.0" minWidth="0.0" />
         </VBox>
 
       </VBox>

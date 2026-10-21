@@ -44,12 +44,11 @@ rejection and save failures preserve all records; rejected operations do not sav
 writes and failed replacements preserve the prior data file and useful I/O causes. See
 [MVP fields and failure behavior](MvpFields.md) for normalization and ordered diagnostics.
 
-Existing person commands and data remain supported. `loans list` opens the existing Loans tab,
-a read-only presentation of current open loans. Closed records remain stored without a history presentation.
+`loans list` opens the Loans tab with current assignments and completed loan history.
 
 ## Loan rules
 
-Assignments require an existing member, existing AVAILABLE equipment, an assigned date
+Assignments require an existing active member, existing active AVAILABLE equipment, an assigned date
 on or before today, and an expected return on or after assignment. GOOD/FAIR equipment
 is available when it has no open loan; DAMAGED/UNDER_REPAIR items cannot be assigned.
 Expected returns may be after today. Returns require an open loan and its existing member,
