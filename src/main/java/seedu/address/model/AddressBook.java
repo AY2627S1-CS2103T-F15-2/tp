@@ -13,6 +13,7 @@ import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.equipment.UniqueEquipmentList;
 import seedu.address.model.equipment.exceptions.EquipmentDeletedException;
@@ -346,6 +347,16 @@ public class AddressBook implements ReadOnlyAddressBook {
         getLoanStorage().add(loan);
     }
 
+    /** Adds an entire batch through a private copy so failures cannot publish partial loans. */
+    public void addLoans(List<Loan> newLoans) {
+        List<Loan> replacement = List.copyOf(requireNonNull(newLoans));
+        AddressBook candidate = new AddressBook(this);
+        for (Loan loan : replacement) {
+            candidate.addLoan(loan);
+        }
+        resetData(candidate);
+    }
+
     /**
      * Finds the open loan for an equipment identity.
      */
@@ -372,6 +383,34 @@ public class AddressBook implements ReadOnlyAddressBook {
             throw new OpenLoanNotFoundException();
         }
         loans.closeLoan(equipmentUuid, returnedDate);
+    }
+
+    /** Completes a batch and updates equipment condition as a single validated root replacement. */
+    public void returnLoans(List<UUID> equipmentUuids, LocalDate returnedDate, Condition returnCondition) {
+        List<UUID> identifiers = List.copyOf(requireNonNull(equipmentUuids));
+        requireNonNull(returnedDate);
+        if (identifiers.isEmpty() || identifiers.stream().distinct().count() != identifiers.size()) {
+            throw new IllegalArgumentException("Return batch must contain distinct equipment UUIDs");
+        }
+        AddressBook candidate = new AddressBook(this);
+        List<Loan> replacements = new java.util.ArrayList<>(candidate.getLoanList());
+        List<Equipment> equipmentReplacements = new java.util.ArrayList<>(candidate.getEquipmentList());
+        for (UUID uuid : identifiers) {
+            Loan open = candidate.findOpenLoan(uuid).orElseThrow(OpenLoanNotFoundException::new);
+            Equipment item = candidate.findEquipment(uuid).orElseThrow(EquipmentNotFoundException::new);
+            Loan closed = open.withReturnedDate(returnedDate, returnCondition);
+            replacements.set(replacements.indexOf(open), closed);
+            if (returnCondition != null) {
+                int index = equipmentReplacements.indexOf(item);
+                equipmentReplacements.set(index, new Equipment(uuid, item.getName(), item.getCategory(),
+                        returnCondition, item.getNotes()));
+            }
+        }
+        candidate.getLoanStorage().setLoans(replacements);
+        if (returnCondition != null) {
+            candidate.getEquipmentStorage().setEquipment(equipmentReplacements);
+        }
+        resetData(candidate);
     }
 
     /**

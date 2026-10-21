@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.equipment.Availability;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.member.Member;
@@ -174,6 +175,9 @@ public interface Model {
      */
     void addLoan(Loan loan);
 
+    /** Adds all loans together, leaving the model unchanged if any loan is invalid. */
+    void addLoans(List<Loan> loans);
+
     /**
      * Returns the open loan for this equipment UUID, or an empty Optional if none exists.
      */
@@ -191,6 +195,9 @@ public interface Model {
      * @throws IllegalArgumentException if the returned date precedes the assigned date.
      */
     void closeLoan(UUID equipmentUuid, LocalDate returnedDate);
+
+    /** Closes the named loans together and applies the observed equipment condition when supplied. */
+    void returnLoans(List<UUID> equipmentUuids, LocalDate returnedDate, Condition returnCondition);
 
     /**
      * Returns an unmodifiable live view of all loans, including closed history.

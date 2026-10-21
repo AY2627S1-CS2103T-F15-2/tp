@@ -87,3 +87,13 @@
 .loan-open-status {
     -fx-background-color: #e3f2fd;
 }
+
+.loan-closed-status {
+    -fx-background-color: #e8f5e9;
+}
+
+.loan-panel .text-field {
+    -fx-background-color: white;
+    -fx-border-color: #dce3e8;
+    -fx-padding: 8;
+}
