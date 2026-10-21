@@ -5,7 +5,7 @@
 
 ![Ui](docs/images/Laplace.png)
 
-![Ui](docs/images/Ui.png)
+![Laplace grouped equipment](docs/images/BetterUi.png)
 
 
 
@@ -15,3 +15,6 @@
 
 ## Acknowledgments
 This project is based on the AddressBook-Level3 project created by the [SE-EDU initiative](https://se-education.org).
+
+Command text uses [IBM Plex Mono](https://github.com/IBM/plex), copyright IBM Corp., under the
+[SIL Open Font License](src/main/resources/fonts/OFL.txt).

@@ -115,7 +115,7 @@ Sources: [reuse/AI policy](https://nus-cs2103-ay2627-s1.github.io/website/admin/
 - Retain PR branches. Avoid squash/rebase/history rewriting that distorts course progress timestamps. Do not backdate work.
 - Reviews should contain specific, useful code-location comments. Merely merging or posting a conversation comment is not equivalent.
 
-Commit messages follow [Git conventions](https://se-education.org/guides/conventions/git.html): imperative, capitalized subject, no terminal period, preferably ≤50 characters and at most 72. For non-trivial changes, explain the problem/reason and resulting behavior in a body; this is a project practice, not a claim that every course commit requires a body.
+Commit messages follow [Git conventions](https://se-education.org/guides/conventions/git.html): imperative, capitalized subject, no terminal period, preferably ≤50 characters and at most 72. Separate the subject from the body with a blank line. Hard-wrap every body line at 72 characters; editor soft wrapping does not count. Check the complete message before committing. For non-trivial changes, explain the problem/reason and resulting behavior in a body; this is a project practice, not a claim that every course commit requires a body.
 
 ## Deadline-sensitive changes
 

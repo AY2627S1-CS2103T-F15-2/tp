@@ -19,21 +19,30 @@
       <stylesheets><URL value="@LaplaceTheme.css" /></stylesheets>
       <VBox styleClass="laplace-root">
         <HBox styleClass="laplace-header" alignment="CENTER_LEFT">
-          <Label text="Laplace" styleClass="laplace-title" />
+          <Label fx:id="wordmark" text="Laplace" styleClass="laplace-wordmark" />
+          <Button fx:id="membersNavigation" text="Members" onAction="#handleMembers"
+                  styleClass="laplace-navigation" />
+          <Button fx:id="equipmentNavigation" text="Equipment" onAction="#handleEquipment"
+                  styleClass="laplace-navigation" />
+          <Button fx:id="loansNavigation" text="Loans" onAction="#handleLoans"
+                  styleClass="laplace-navigation" />
+          <Region HBox.hgrow="ALWAYS" />
+          <Button fx:id="modeButton" text="Dark mode" onAction="#handleToggleMode"
+                  styleClass="laplace-navigation" />
           <MenuButton text="Menu" mnemonicParsing="false" styleClass="laplace-navigation">
             <items>
               <MenuItem fx:id="helpMenuItem" text="Help" onAction="#handleHelp" />
               <MenuItem text="Exit" onAction="#handleExit" />
             </items>
           </MenuButton>
-          <Region HBox.hgrow="ALWAYS" />
-          <Button fx:id="membersNavigation" text="Members" onAction="#handleMembers"
-                  styleClass="laplace-navigation" />
-          <Button fx:id="equipmentNavigation" text="Equipment" onAction="#handleEquipment"
-                  styleClass="laplace-navigation" />
-          <Button fx:id="loansNavigation" text="Loans" onAction="#handleLoans" styleClass="laplace-navigation" />
         </HBox>
         <VBox styleClass="laplace-content" spacing="8" VBox.vgrow="ALWAYS">
+          <HBox fx:id="directoryContext" spacing="8" alignment="CENTER_LEFT">
+            <Label fx:id="queryContext" wrapText="true" minWidth="0" HBox.hgrow="ALWAYS"
+                   maxWidth="Infinity" styleClass="laplace-muted" />
+            <Button fx:id="backToResults" text="Back to results" onAction="#handleBackToResults" />
+            <Button text="Reset search" onAction="#handleResetSearch" />
+          </HBox>
           <StackPane VBox.vgrow="ALWAYS" minHeight="0">
             <SplitPane fx:id="directory" dividerPositions="0.28" styleClass="laplace-directory" minHeight="0">
               <StackPane fx:id="directoryListPlaceholder" minWidth="180" minHeight="0" />
@@ -41,7 +50,7 @@
             </SplitPane>
             <StackPane fx:id="singlePanelPlaceholder" minHeight="0" visible="false" managed="false" />
           </StackPane>
-          <StackPane fx:id="resultDisplayPlaceholder" minHeight="70" prefHeight="78" maxHeight="78" />
+          <StackPane fx:id="resultDisplayPlaceholder" minHeight="-Infinity" maxHeight="-Infinity" />
           <StackPane fx:id="commandBoxPlaceholder" />
         </VBox>
         <StackPane fx:id="statusbarPlaceholder" />
