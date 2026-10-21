@@ -13,7 +13,9 @@
 
 ## **Acknowledgements**
 
-* _{List the sources of reused or adapted ideas, code, documentation, and third-party libraries here, with links to the originals.}_
+* Laplace evolves the course-provided [AddressBook-Level3 starter](https://github.com/NUS-CS2103-AY2627-S1/tp).
+* For retirement of the legacy command routes, Arjo Das used OpenAI Codex to assist with planning,
+  implementation, regression tests, and documentation. This acknowledgement describes that change only.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -50,7 +52,8 @@ The bulk of the app's work is done by the following four components:
 
 **How the architecture components interact with each other**
 
-The *Sequence Diagram* below shows how the components interact with each other for the scenario where the user issues the command `delete 1`.
+The *Sequence Diagram* below is an inherited AB3 example using `delete 1`. That command is now rejected;
+see [command routing and legacy compatibility](#command-routing-and-legacy-compatibility) for current behavior.
 
 <puml src="diagrams/ArchitectureSequenceDiagram.puml" width="574" />
 
@@ -86,11 +89,11 @@ The `UI` component,
 
 **API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/logic/Logic.java)
 
-Here's a (partial) class diagram of the `Logic` component:
+The following inherited class diagram shows the AB3 `Logic` structure; its person-command routes are retired:
 
 <puml src="diagrams/LogicClassDiagram.puml" width="550"/>
 
-The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
+The sequence diagram below is a historical AB3 example of `execute("delete 1")`, not a supported Laplace flow.
 
 <puml src="diagrams/DeleteSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `delete 1` Command" />
 
@@ -100,21 +103,31 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 </box>
 
 
-How the `Logic` component works:
+#### Command routing and legacy compatibility
 
-1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
-1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).<br>
-   Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
-1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
+`LogicManager.execute()` first calls `AddressBookParser.parseCommand()`. The root parser accepts
+`member`, `equipment`, and `loans`, delegating to their family parsers and then the appropriate leaf
+parser (for example, `EquipmentCommandParser` and `EquipmentAddCommandParser`). It also accepts
+`help` and `exit`. Family and leaf parsers remain responsible for validating subcommands and arguments.
 
-Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
+The retired top-level words `add`, `edit`, `delete`, `clear`, `find`, and `list` now reach the existing
+unknown-command branch and throw `ParseException("Unknown command.")`. In particular, `list members`
+is rejected; the supported command is `member list`. Rejection occurs before a command is constructed
+or executed, before a transaction snapshot is created, and before storage is called.
+
+For supported commands, `LogicManager` executes transactional mutations on an isolated model snapshot,
+saves that candidate state, and publishes it to the live root only after saving succeeds. Commands
+marked `isReadOnly()` return without saving. This retirement does not change those execution rules.
+
+`AddressBook` is still the shared root for persons, members, equipment, and loans. Its name and the
+`getAddressBook()`/`saveAddressBook()` APIs do not identify disposable person-only behavior. Existing
+JSON `persons` data is retained and round-trips when supported commands save. Person value classes
+used by members, legacy command/parser implementations and their unit tests, and the legacy UI panel
+remain for a separate dependency-aware cleanup. Removing public routes does not remove stored records.
+
+The inherited parser diagram below documents the remaining AB3 classes, not the active root dispatch:
 
 <puml src="diagrams/ParserClasses.puml" width="600"/>
-
-How the parsing works:
-* When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
-* All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/model/Model.java)
@@ -160,6 +173,9 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 This section describes some noteworthy details on how certain features are implemented.
 
 ### \[Proposed\] Undo/redo feature
+
+The following inherited AB3 proposal uses retired person commands as examples. It is not implemented
+Laplace behavior and needs redesign for the current domain before implementation.
 
 #### Proposed Implementation
 
@@ -635,22 +651,20 @@ testers are expected to do more *exploratory* testing.
 
 1. _{ more test cases … }_
 
-### Deleting a person
+### Rejection of retired commands
 
-1. Deleting a person while all persons are being shown
-
-    1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
-
-    1. Test case: `delete 1`<br>
-       Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
-
-    1. Test case: `delete 0`<br>
-       Expected: No person is deleted. The status message shows error details.
-
-    1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-       Expected: Similar to previous.
-
-1. _{ more test cases … }_
+1. Run the JAR from a separate empty writable folder to get sample members, equipment and loans.
+   Use only this temporary dataset for these checks. Run `member list`, `equipment list`, and
+   `loans list`; record the identities and counts. Copy the saved data file for comparison if present.
+2. Enter each of `add`, `edit 1 name/Changed`, `delete 1`, `clear`, `clear 3`, `find Alex`, `list`,
+   and `list members`. Expected: `Unknown command.`; the current view/selection and all records stay
+   unchanged. An existing data file must remain byte-for-byte unchanged; rejected input must not
+   create a data file if none existed.
+3. Run `member list`, `equipment list`, and `loans list` again. Expected: normal directory navigation
+   and the same records and loan identities as before. These supported controls are separate from
+   the rejected-input file comparison above.
+4. Restart the application. Expected: saved records still load normally. Existing JSON files with a
+   `persons` array remain readable; no migration or removal of that array is required by this change.
 
 ### Saving data
 

@@ -1,3 +1,9 @@
+> Legacy-command retirement amendment (21 October 2026): top-level `add`, `edit`, `delete`,
+> `clear`, `find`, and `list` are rejected. Earlier requirements below to preserve public person-command
+> routing are superseded. Stored persons, shared value types and legacy implementation/UI classes
+> remain for compatibility and later cleanup. See the
+> [current routing contract](DeveloperGuide.md#command-routing-and-legacy-compatibility).
+
 > v1.3.3 amendment: [MVP fields](commands/MvpFields.md) and [completion evidence](gui/MvpCompletion.md)
 > supersede older component handoff assumptions below. #93/#95 are merged; validation, transactions,
 > holdings order and open-only Loans now follow the detailed MVP specification.

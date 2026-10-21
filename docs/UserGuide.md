@@ -108,6 +108,14 @@ shown; another error may appear after correction. Rejected commands do not chang
 In feedback examples, `N` is the current count and uppercase placeholders such as `UUID`, `NUS_ID`
 and `EQUIPMENT_NAME` stand for the actual record values. `TODAY` is the computer's local date.
 
+### Unsupported AddressBook commands
+
+The old top-level commands `add`, `edit`, `delete`, `clear`, `find`, and `list` are unsupported.
+They return `Unknown command.` and do not change records or save the data file, even when arguments
+are supplied. For example, use `member list` instead of `list members`, `equipment list` to view
+inventory, and `member search q/Alex` to search members. There is no supported bulk-clear command.
+Use the member, equipment and loan commands documented below, or `help` and `exit`.
+
 ### Shared field rules
 
 | Field | Accepted input and stored form |

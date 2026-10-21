@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -349,7 +350,7 @@ public class MainWindowShellTest {
     }
 
     @Test
-    public void navigation_tabsAndMenu_exposesHelpExitAndPreservesLegacyTypedRoute() {
+    public void navigation_tabsAndMenu_exposesHelpExitAndRejectsLegacyTypedRoutes() {
         FxTestUtil.runAndWait(() -> {
             model.addPerson(new PersonBuilder().withName("Legacy Person").build());
             AddressBook before = new AddressBook(model.getAddressBook());
@@ -363,20 +364,14 @@ public class MainWindowShellTest {
             button("membersNavigation").fire();
             MenuButton menu = (MenuButton) window.getPrimaryStage().getScene().getRoot().lookup(".menu-button");
             assertEquals(List.of("Help", "Exit"), menu.getItems().stream().map(item -> item.getText()).toList());
-            submit("list");
-            assertTrue(window.getPersonListPanel().getRoot().getParent() != null);
-            layout();
-            assertEquals(1, ((ListView<?>) node("personListView")).getItems().size());
-            assertTrue(node("personListView").lookupAll(".label").stream()
-                    .filter(item -> item instanceof Label).map(item -> ((Label) item).getText())
-                    .anyMatch(text -> text.contains("Legacy Person")));
-            ListCell<?> personCell = node("personListView").lookupAll(".list-cell").stream()
-                    .map(item -> (ListCell<?>) item).filter(item -> !item.isEmpty()).findFirst().orElseThrow();
-            assertEquals(Color.web("#3C3E3F"), personCell.getBackground().getFills().getFirst().getFill());
-            assertEquals(Color.WHITE, ((Label) personCell.getGraphic().lookup("#name")).getTextFill());
-            assertFalse(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
-            assertEquals(List.of("equipment list", "member list", "list"), logic.commands);
-            assertEquals(3, storage.saves);
+            reject("list");
+            assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
+            reject("list members");
+            assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
+            assertTrue(window.getPersonListPanel().getRoot().getParent() == null);
+            assertTrue(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
+            assertEquals(List.of("equipment list", "member list", "list", "list members"), logic.commands);
+            assertEquals(2, storage.saves);
             assertEquals(before, model.getAddressBook());
         });
     }
@@ -837,24 +832,26 @@ public class MainWindowShellTest {
     }
 
     @Test
-    public void storageFailure_realLegacyMutation_reportsFailureAndRefreshesActualMemory() {
+    public void storageFailure_retiredCommands_preserveMemoryAndDoNotCreateDataFile() {
         FxTestUtil.runAndWait(() -> {
+            AddressBook before = new AddressBook(model.getAddressBook());
+            Object selected = rows().getSelectionModel().getSelectedItem();
             storage.fail = true;
-            submit("add n/Test Person p/91234567 e/test@example.com a/Test Address");
-            assertEquals("Error", label("feedbackStatus"));
-            assertTrue(feedback().contains("Could not save data"));
-            assertTrue(field().getText().startsWith("add"));
-            assertTrue(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
-            assertEquals(1, model.getFilteredPersonList().size());
-            assertFalse(Files.exists(temporaryDirectory.resolve("laplace.json")));
-            button("equipmentNavigation").fire();
-            assertTrue(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
-        });
-        FxTestUtil.runAndWait(() -> {
-            assertEquals(1, ((ListView<?>) window.getPersonListPanel().getRoot().lookup("#personListView"))
-                    .getItems().size());
+            for (String input : List.of("clear", "add n/Test Person p/91234567 e/test@example.com a/Test Address")) {
+                submit(input);
+                assertEquals("Error", label("feedbackStatus"));
+                assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
+                assertEquals(input, field().getText());
+                assertEquals(field(), window.getPrimaryStage().getScene().getFocusOwner());
+                assertTrue(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
+                assertEquals(selected, rows().getSelectionModel().getSelectedItem());
+                assertEquals(before, model.getAddressBook());
+                assertEquals(0, storage.saves);
+                assertFalse(Files.exists(temporaryDirectory.resolve("laplace.json")));
+            }
             storage.fail = false;
-            submit("list");
+            succeed("member list");
+            assertEquals(before, model.getAddressBook());
             assertTrue(Files.exists(temporaryDirectory.resolve("laplace.json")));
         });
     }
@@ -968,13 +965,18 @@ public class MainWindowShellTest {
                 session.add("STATUS: " + label("feedbackStatus"));
                 session.add("OUTPUT: " + feedback());
                 session.add("RETAINED INPUT: " + field().getText());
+                if (input.equals("list")) {
+                    assertEquals("Error", label("feedbackStatus"));
+                    assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
+                    assertEquals(input, field().getText());
+                }
             }
             button("loansNavigation").fire();
             session.add("Loans tab: " + label("openCount") + " open; closed history is not presented.");
             session.add("Commands executed: " + logic.commands);
             session.add("Successful saves: " + storage.saves);
             assertEquals(6, logic.commands.size());
-            assertEquals(5, storage.saves);
+            assertEquals(4, storage.saves);
         });
         Path path = Path.of("build", "reports", "laplace", "shell-session.txt");
         Files.createDirectories(path.getParent());

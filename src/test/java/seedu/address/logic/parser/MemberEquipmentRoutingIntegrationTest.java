@@ -188,16 +188,25 @@ public class MemberEquipmentRoutingIntegrationTest {
     }
 
     @Test
-    public void routes_legacyPersonCommands_preserveLaplaceData() throws Exception {
+    public void routes_retiredPersonCommands_preserveAllDataWithoutSaving() throws Exception {
         addMembers();
-        addEquipment();
-        AddressBook before = new AddressBook(model.getAddressBook());
-        assertDisplay("add n/Legacy Person p/98765432 e/legacy@example.com a/NUS", DisplayRequest.legacyPersons());
-        assertDisplay("find Legacy", DisplayRequest.legacyPersons());
-        assertEquals(1, model.getFilteredPersonList().size());
-        assertDisplay("delete 1", DisplayRequest.legacyPersons());
-        assertDisplay("list", DisplayRequest.legacyPersons());
-        assertEquals(before, model.getAddressBook());
+        UUID assigned = addEquipment();
+        UUID returned = addEquipment();
+        model.addLoan(new Loan(assigned, FIRST_MEMBER, ASSIGNED, ASSIGNED.plusDays(1), null));
+        model.addLoan(new Loan(returned, SECOND_MEMBER, ASSIGNED, ASSIGNED, ASSIGNED));
+        storage.saveAddressBook(model.getAddressBook());
+        for (boolean failOnSave : new boolean[] {false, true}) {
+            storage.saveFailure = failOnSave ? new IOException("Unexpected save of a rejected command") : null;
+            for (String input : new String[] {
+                "add n/Legacy Person p/98765432 e/legacy@example.com a/NUS", "edit 1 n/Changed Person",
+                "delete 1", "clear", "clear 3", "find Nobody", "list", "list members", " \tclear\t "
+            }) {
+                assertRejected(ParseException.class, input);
+            }
+            assertReloadMatches();
+        }
+        storage.saveFailure = null;
+        assertDisplay("member list", DisplayRequest.members(DirectoryQuery.all()));
         assertReloadMatches();
     }
 
