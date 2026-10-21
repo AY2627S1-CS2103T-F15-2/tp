@@ -49,8 +49,11 @@ public class LaplaceTransactionTest {
     public void execute_eachLaplaceMutationAndFilesystemFailure_preservesMemoryDiskAndLaterCommands() throws Exception {
         List<String> commands = List.of(
                 "member add nus/A0000003X name/Third Member phone/91234567 email/third@example.com",
+                "member edit nus/" + FIRST + " name/Updated Name phone/98765432 email/updated@example.com",
                 "member delete nus/" + SECOND,
                 "equipment add name/Camera category/Test condition/GOOD notes/Case included",
+                "equipment add name/Camera category/Test condition/GOOD count/3 notes/Case included",
+                "equipment edit uuid/" + uuid(3) + " name/Updated Unit notes/",
                 "equipment delete uuid/" + uuid(3),
                 "loans add uuid/" + uuid(1) + " nus/" + FIRST + " assigned/" + DATE + " expected/" + DATE,
                 "loans return uuid/" + uuid(2) + " returned/" + DATE);

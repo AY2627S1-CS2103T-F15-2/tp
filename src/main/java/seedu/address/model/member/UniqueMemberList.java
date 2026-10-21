@@ -1,6 +1,7 @@
 package seedu.address.model.member;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.Optional;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import seedu.address.model.member.exceptions.DuplicateMemberException;
+import seedu.address.model.member.exceptions.MemberDeletedException;
 import seedu.address.model.member.exceptions.MemberNotFoundException;
 
 /**
@@ -41,6 +43,34 @@ public class UniqueMemberList {
             throw new DuplicateMemberException();
         }
         internalList.add(member);
+    }
+
+    /**
+     * Replaces only deletion state, retaining identity, details and collection position.
+     */
+    public void setDeleted(NusId nusId, boolean isDeleted) {
+        requireNonNull(nusId);
+        Member stored = findByNusId(nusId).orElseThrow(MemberNotFoundException::new);
+        Member replacement = new Member(stored.getNusId(), stored.getName(), stored.getPhone(),
+                stored.getEmail(), isDeleted);
+        internalList.set(internalList.indexOf(stored), replacement);
+    }
+
+    /**
+     * Replaces the stored identity's details without changing its NUS ID or list position.
+     * The target is resolved by identity, so an older snapshot of its details is accepted.
+     * Deleted members must be restored before editing; replacements retain deletion state.
+     */
+    public void setMember(Member target, Member editedMember) {
+        requireAllNonNull(target, editedMember);
+        checkArgument(target.isSameMember(editedMember), "A member's NUS ID cannot be changed.");
+        Member stored = findByNusId(target.getNusId()).orElseThrow(MemberNotFoundException::new);
+        if (stored.isDeleted()) {
+            throw new MemberDeletedException();
+        }
+        checkArgument(stored.isDeleted() == editedMember.isDeleted(),
+                "Editing a member cannot change their deletion state.");
+        internalList.set(internalList.indexOf(stored), editedMember);
     }
 
     /** Removes the member with the same identity as {@code member}. */

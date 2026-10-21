@@ -7,19 +7,22 @@ import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
+import seedu.address.model.member.exceptions.MemberDeletedException;
 import seedu.address.model.member.exceptions.MemberNotFoundException;
 
 /**
- * Deletes a stored member by normalized NUS ID, delegating loan integrity to the model.
+ * Soft-deletes a stored member by normalized NUS ID, delegating loan integrity to the model.
  */
 public class MemberDeleteCommand extends Command {
 
     public static final String COMMAND_WORD = "member delete";
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Deletes a member without open loans. Parameters: nus/NUS_ID\n"
+            + ": Soft-deletes a member without open loans. Parameters: nus/NUS_ID\n"
             + "Example: member delete nus/A0123456X";
     public static final String MESSAGE_SUCCESS = "Deleted member %1$s: %2$s.";
     public static final String MESSAGE_NOT_FOUND = "No member with NUS ID %1$s exists.";
+    public static final String MESSAGE_ALREADY_DELETED =
+            "Member %1$s is already deleted. Use member restore nus/%1$s to restore them.";
     public static final String MESSAGE_OPEN_LOAN =
             "Cannot delete %1$s because the member holds %2$d item(s). Return the items first.";
 
@@ -45,6 +48,8 @@ public class MemberDeleteCommand extends Command {
             int heldCount = model.findOpenLoansForMember(targetNusId).size();
             try {
                 model.deleteMember(member);
+            } catch (MemberDeletedException e) {
+                throw new CommandException(String.format(MESSAGE_ALREADY_DELETED, targetNusId), e);
             } catch (IllegalStateException e) {
                 throw new CommandException(String.format(MESSAGE_OPEN_LOAN, targetNusId, heldCount), e);
             }

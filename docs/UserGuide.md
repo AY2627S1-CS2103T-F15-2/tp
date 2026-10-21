@@ -6,12 +6,15 @@
 
 # Laplace User Guide
 
+Week 10: [search, filters, selectable sorting, inventory planning and duplicate warnings](commands/search-and-planning.md).
+
 Laplace helps a CCA EXCO member manage **members, equipment and equipment loans** on one computer.
 Type commands to register records, find an exact member or item, issue equipment, record returns and
 remove erroneous records. Lists and details show who holds each item and what each member holds.
 
-This guide describes the **MVP release and the additional `loans list` navigation command**:
-eleven member, equipment and loan commands in total. Use it with the matching release supplied by the team;
+This guide describes **seventeen member, equipment and loan commands**, including member and equipment
+editing/restoration, batch equipment registration and search: seven member commands, seven equipment
+commands and three loan commands. Use it with the matching release supplied by the team;
 earlier builds may not support every behavior described here. Laplace is a local, single-user application.
 
 <page-nav-print />
@@ -41,7 +44,7 @@ Do not delete your data file to troubleshoot startup.
 When there is no saved data file, Laplace starts with five fictional members and seven equipment items.
 The samples include two cameras, a damaged tripod, a microphone, a speaker, a projector under repair
 and an event laptop. Three open loans illustrate current holders, one overdue item and a member holding
-multiple items. One closed loan is retained internally and is hidden from the Loans tab.
+multiple items. One closed loan appears in the Loans tab history.
 
 Dates are relative to the day of first launch. Try `member list`, `equipment list` and `loans list`,
 then copy displayed identities to view details or try a return. These are ordinary records:
@@ -64,7 +67,7 @@ issue, return or delete records.
 
 To explore without changing the sample records:
 
-1. Run `loans list`. The Loans tab shows three open loans; the closed speaker loan is hidden.
+1. Run `loans list`. The Loans tab shows three open loans and the closed speaker loan in history.
 2. Run `member view nus/A0123456X`. Alex's details show the camera and laptop under Held Equipment.
 3. Run `equipment view uuid/550e8400-e29b-41d4-a716-446655440003`. The microphone's details identify
    Jamie as the holder and show its assignment and expected return dates.
@@ -77,8 +80,8 @@ To explore without changing the sample records:
   details. Startup selects the first member, when present, while leaving the summary visible.
 - Click a record, or focus its row and press **Enter** or **Space**, to open its details.
   Identically named records remain distinguishable by NUS ID or equipment UUID.
-- The **Loans** tab shows current open assignments and links to their member and equipment.
-  Type `loans list` to open the same tab. Completed loan history is not a user-facing feature.
+- The **Loans** tab shows current assignments and completed history, with links to their members and equipment.
+  Type `loans list` to open the same tab.
 - The feedback area reports the last command's result. The command box and Enter hint appear below it.
 - At smaller sizes, use the list/detail scrollbars to reach long identifiers, notes and holdings.
 
@@ -87,7 +90,7 @@ To explore without changing the sample records:
 Commands and prefixes are **lowercase and case-sensitive**. Use `member add`, not `Member Add`.
 
 - Replace uppercase placeholders with your values: replace `NUS_ID` with `A0123456X`, for example.
-- Square brackets mean an optional parameter; do not type them. Only equipment notes are optional.
+- Square brackets mean an optional parameter; do not type them. Optional parameters are marked in each command's syntax.
 - Put spaces between command words and parameters. Parameters may appear in any order; tabs also separate fields.
 - Each prefix may appear **at most once**, including `notes/`.
 - Leading/trailing whitespace is ignored. Runs of whitespace in text values become one ordinary space.
@@ -105,6 +108,14 @@ shown; another error may appear after correction. Rejected commands do not chang
 
 In feedback examples, `N` is the current count and uppercase placeholders such as `UUID`, `NUS_ID`
 and `EQUIPMENT_NAME` stand for the actual record values. `TODAY` is the computer's local date.
+
+### Unsupported AddressBook commands
+
+The old top-level commands `add`, `edit`, `delete`, `clear`, `find`, and `list` are unsupported.
+They return `Unknown command.` and do not change records or save the data file, even when arguments
+are supplied. For example, use `member list` instead of `list members`, `equipment list` to view
+inventory, and `member search q/Alex` to search members. There is no supported bulk-clear command.
+Use the member, equipment and loan commands documented below, or `help` and `exit`.
 
 ### Shared field rules
 
@@ -182,11 +193,13 @@ preserves the current view/selection. If saving fails, correct file access and r
 member list
 ```
 
-Show every active member, ordered by normalized name and then NUS ID. Each row shows the member's name,
-NUS ID, phone, email and **Items Held** count. All stored members are active; archiving is not supported.
-The directory summary shows the active/displayed counts, sorting and selection.
+Show active and deleted members together, ordered by normalized name and then NUS ID. Each row shows
+name, NUS ID, phone, email and **Items Held** count. Deleted cards are grey, with an italic,
+struck-through name and a separate `(deleted)` suffix. They remain selectable. The summary shows
+active, deleted and displayed counts. Archival is not supported.
 
-The result is `Listed N active members.` If there are no records, the list displays:
+The result is `Listed N active members.` Deleted records are counted separately when present.
+If there are no records, the list displays:
 `No members yet. Use member add to get started.`
 
 This command takes no parameters. For example, `member list nus/A0123456X` is rejected; use
@@ -220,6 +233,32 @@ With no current loans, the holdings section says `This member currently holds no
 Failed viewing preserves the previous details and selection. This command covers both exact-ID lookup
 and viewing a member's equipment; no separate member-find or member-loans command is needed.
 
+### Edit a member: `member edit`
+
+```text
+member edit nus/NUS_ID [name/NAME] [phone/PHONE] [email/EMAIL]
+```
+
+Example: `member edit nus/a0123456x name/Anne-Marie Lim phone/+65 9876-5432`.
+
+Supply the exact NUS ID and at least one detail to change. Names, phones and emails follow the
+same validation and normalization as `member add`. Omitted fields keep their stored values.
+The NUS ID cannot be changed; open and completed loans remain attached to the same member.
+You can edit contact details while the member holds equipment. Matching another member's name
+or contacts does not merge records because NUS IDs identify members.
+
+Success reports `Edited member NUS_ID: NAME.` and opens the updated details. The directory
+re-sorts by name and NUS ID while keeping the edited member selected. Changes survive restart.
+
+| Situation | Result or correction |
+| --- | --- |
+| No editable fields supplied | Supply at least one of `name/`, `phone/` or `email/`. |
+| Supplied values make no change | `The supplied details do not change this member.` No save occurs. |
+| Member is deleted | Run `member restore nus/NUS_ID` before editing. |
+| Member does not exist | `No member with NUS ID NUS_ID exists.` Check `member list`. |
+| Blank, invalid, repeated or unknown field | Correct the field using the `member add` rules. |
+| Saving fails | The previous details, loan history and saved file remain unchanged. |
+
 ### Delete a member: `member delete`
 
 ```text
@@ -229,49 +268,76 @@ member delete nus/NUS_ID
 Example: `member delete nus/A0123456X`.
 
 Delete one exact member **only if they currently hold no equipment**. Equal-name members with other
-IDs remain. Success removes the member from lists/details and permanently removes closed loans that
-refer to that member. Unrelated members, equipment and loans are preserved.
+IDs remain. Success marks the member deleted, preserving their details, reserved NUS ID and all loan
+history. They remain visible and selected in the directory with a grey card, italic struck-through
+name and `(deleted)` suffix. A deleted member cannot receive new loans; restore them first.
 
-Example feedback: `Deleted member A0123456X: Alex Tan.` The directory appears with a surviving selection,
-or an empty state when no members remain. Stale details for the deleted member are removed.
+Example feedback: `Deleted member A0123456X: Alex Tan.` The directory keeps the same member selected.
+Viewing deleted details shows restore guidance. Repeating deletion is rejected without saving.
 
 | Situation | Result or correction |
 | --- | --- |
 | Member holds equipment | `Cannot delete NUS_ID because the member holds N item(s). Return the items first.` Use `member view` to identify them. |
+| Member is already deleted | Restore them first; repeated deletion is rejected without saving. |
 | Member does not exist | `No member with NUS ID NUS_ID exists.` Check `member list`. |
 | Malformed/missing/repeated/unknown parameter | Correct the identity or syntax and retry. |
 | Saving fails | No records change. Correct file access before retrying. |
 
-Deletion is permanent: the MVP has no undo, restore or archive operation. Return all outstanding items
-with `loans return` before retrying a blocked deletion. A failed deletion preserves the member and loans.
+Deletion has no expiry and never clears a member record automatically. Return all outstanding items
+with `loans return` before retrying blocked deletion. A failed save changes neither records nor saved bytes.
+
+### Restore a member: `member restore`
+
+```text
+member restore nus/NUS_ID
+```
+
+Example: `member restore nus/a0123456x`.
+
+Restore any deleted member at any time. There is no time limit, timestamp check, purge or separate
+archive state. The same NUS ID, details and loan history are retained. Success reports
+`Restored member NUS_ID: NAME.`, opens their details and removes the deleted styling. New loans
+can then be assigned normally. An unknown identity, an already-active member or invalid arguments
+are rejected without saving. A failed save leaves the member deleted and permits a later retry.
 
 ### Add equipment: `equipment add`
 
-Register one physical item and let Laplace generate its immutable UUID.
+Register one or more physical units with the same details. Laplace generates a separate immutable UUID for each unit.
 
 ```text
-equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES]
+equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES] [count/COUNT]
 ```
 
 `name/`, `category/` and `condition/` are required. Notes are optional; `notes/` with no value also means
-no notes. Do not supply `uuid/`, a holder or availability. Follow the shared text limits and condition rules.
+no notes. `count/` is optional and defaults to **1**. Supply a whole number from **1 to 100**, using
+ASCII digits only; leading zeros are allowed. Blank counts, signs, fractions, repeated `count/` fields
+and values outside this range are rejected. Do not supply `uuid/`, a holder or availability.
+Follow the shared text limits and condition rules.
 
 Examples:
 
 ```text
 equipment add name/Canon EOS R50 category/Camera condition/GOOD notes/Includes battery and strap
 equipment add name/Tripod category/Camera Support condition/fair
+equipment add name/Camera Kit category/Photography condition/GOOD count/3 notes/Includes strap
 ```
 
-Success creates one item, selects its row and opens its details. Feedback includes the generated UUID
+For a count of 1, success creates one item, selects its row and opens its details. Feedback includes the generated UUID
 and name, for example:
 `New equipment added: Canon EOS R50 (550e8400-e29b-41d4-a716-446655440000), availability: AVAILABLE`.
 Copy the **actual generated UUID**, which will normally differ from that example, for later commands.
 
+For larger counts, success creates the entire batch, resets equipment search filters/sorting, and opens
+the full equipment directory. Feedback reports the created count, name, availability and all generated
+UUIDs, for example `Added 3 equipment units: Camera Kit, availability: AVAILABLE.` followed by `UUIDs:`.
+Every unit has the same supplied details and its own UUID. Existing similar records may produce one
+advisory duplicate warning; the new batch does not warn about its own intentionally matching units.
+
 GOOD/FAIR items start as AVAILABLE. DAMAGED/UNDER_REPAIR items can be registered but start UNAVAILABLE.
 Otherwise identical items are allowed: two cameras with the same description are separate physical units
 with different UUIDs. Laplace silently retries a generated UUID collision; if it cannot obtain a unique
-identifier, it reports an error without adding an item. A save failure also commits no new item.
+identifier, it reports an error without adding any units. The batch is saved as one operation: a failure
+during creation or saving commits no new units. There is no stored quantity replacing individual records.
 
 ### List equipment: `equipment list`
 
@@ -279,7 +345,7 @@ identifier, it reports an error without adding an item. A save failure also comm
 equipment list
 ```
 
-Show every equipment item, ordered by normalized **category, name, then UUID**. Rows expose the UUID,
+Show every equipment item, including retained deleted units, ordered by normalized **category, name, then UUID**. Rows expose the UUID,
 name, category, condition, derived availability and current holder when assigned. An unassigned item has
 no current holder. Identical descriptions remain separate rows.
 
@@ -300,7 +366,7 @@ Example: `equipment view uuid/550e8400-e29b-41d4-a716-446655440000`.
 Uppercase hexadecimal letters identify the same UUID. You must use the complete UUID; shortened forms
 and partial matching are not supported.
 
-Details show the full UUID, name, category, condition, notes and derived availability. An open loan also
+Details show the full UUID, name, category, condition, notes, lifecycle status and derived availability. An open loan also
 shows the holder's NUS ID, name, phone and email, plus assignment and expected return dates. The matching
 equipment row is selected when its list is visible. Long notes wrap and scroll with the details.
 
@@ -316,6 +382,24 @@ validation error. Missing/repeated/unknown parameters are rejected. An open loan
 member produces an inconsistent-data error instead of incomplete holder information. Failure leaves the
 previous view and selection unchanged.
 
+### Edit equipment: `equipment edit`
+
+```text
+equipment edit uuid/UUID [name/NAME] [category/CATEGORY] [condition/CONDITION] [notes/NOTES]
+```
+
+Supply the exact UUID and at least one field to change. Unspecified fields keep their existing values;
+`notes/` with no value clears notes. Names, categories, conditions and notes follow the same validation
+as equipment add. Duplicate/unknown parameters and unchanged edits are rejected without saving.
+
+Example: `equipment edit uuid/550e8400-e29b-41d4-a716-446655440000 condition/DAMAGED notes/Lens needs repair`.
+
+Only that physical unit changes. Its UUID and loan references remain intact; matching siblings are
+unaffected. Changing the name/category changes its inventory group. You may edit a loaned unit,
+including its condition: it remains ASSIGNED until returned, after which its new condition determines
+availability. This does not record a separate condition-at-handover history. Deleted units must first
+be restored. Success opens the edited unit's details; failed validation or saving changes nothing.
+
 ### Delete equipment: `equipment delete`
 
 ```text
@@ -324,10 +408,11 @@ equipment delete uuid/UUID
 
 Example: `equipment delete uuid/550e8400-e29b-41d4-a716-446655440000`.
 
-Permanently delete one exact item **only when it has no open loan**. Its condition does not prevent
-deletion. Success removes the item and its associated closed loans, leaving unrelated records intact.
-Feedback includes the identity and name: `Deleted equipment UUID: EQUIPMENT_NAME.` The equipment
-directory appears with a surviving selection or an empty state; deleted-item details disappear.
+Soft-delete one exact item **only when it has no open loan**. Its condition does not prevent deletion.
+The unit, UUID, details and closed loans are retained. Feedback includes the identity and name:
+`Deleted equipment UUID: EQUIPMENT_NAME.` The equipment directory appears with its existing filters.
+Deleted units remain visible in all-record lists, labeled `[DELETED]`; active-only searches exclude them.
+They cannot be assigned and are excluded from inventory group and availability totals.
 
 | Situation | Result or correction |
 | --- | --- |
@@ -336,7 +421,25 @@ directory appears with a surviving selection or an empty state; deleted-item det
 | UUID or syntax is invalid | Correct the full UUID/required prefix and retry. |
 | Saving fails | The item and loan records remain unchanged. Correct file access and retry. |
 
-Deleting one UUID never deletes other items with the same description. Deletion cannot be undone.
+Deleting one UUID never deletes other items with the same description. Repeated deletion is rejected.
+
+### Restore equipment: `equipment restore`
+
+```text
+equipment restore uuid/UUID
+```
+
+Find retained units with `equipment search status/deleted` or `equipment list`, then restore one exact
+UUID. There is no restoration time limit. The unit retains its identity, condition, notes and closed loan
+history. A restored DAMAGED or UNDER_REPAIR unit remains UNAVAILABLE; GOOD/FAIR units become AVAILABLE.
+Success opens its details. Unknown UUIDs, already-active units, invalid syntax and save failures do not
+change records. Records permanently removed by older versions require an earlier backup to recover.
+
+Equipment search defaults to active units. Use `status/active`, `status/deleted` or `status/all` alongside
+other search filters; values are case-insensitive. Deleted units have derived UNAVAILABLE status, so
+`equipment search status/deleted availability/available` returns no matches. `equipment list` resets
+filters and includes both states. Total counts include retained units; availability counts and inventory
+groups cover active units only. Deleted equipment can still be opened with `equipment view uuid/UUID`.
 
 ### Open the Loans tab: `loans list`
 
@@ -382,6 +485,7 @@ the same member. Reaching the expected return date does not automatically return
 | Situation | Result or correction |
 | --- | --- |
 | Equipment/member does not exist | `No equipment with UUID UUID exists.` or `No member with NUS ID NUS_ID exists.` Check the corresponding list. |
+| Equipment or member is deleted | Restore that record before assigning it; an invalid unit rejects the entire batch. |
 | Item already has an open loan | `Equipment UUID is unavailable because it is assigned to CURRENT_NUS_ID.` Return it before assigning it again. |
 | Condition is DAMAGED/UNDER_REPAIR | `Equipment UUID is unavailable (condition: CONDITION).` Choose an AVAILABLE item. |
 | Expected date precedes assignment | `Expected return date cannot be before assigned date` |
@@ -416,6 +520,7 @@ Multiple UUIDs return in one request. If `condition/` is supplied, it is recorde
 and updates each item's current condition. Use separate commands for different observed conditions.
 If omitted, the current equipment condition stays unchanged and history shows the return condition
 as "Not recorded". A failed item prevents the entire batch from being returned.
+For a batch, feedback lists the number of units and their UUIDs without naming one borrower for all of them.
 
 | Situation | Result or correction |
 | --- | --- |
@@ -446,7 +551,7 @@ on or after 20 September 2026; choose valid actual dates for your own operation.
 6. Return it: `loans return uuid/UUID returned/2026-09-20`.
 7. View both records again. The member has no current holding for this item; the GOOD item is AVAILABLE.
 8. If these were erroneous/test records, remove them with `equipment delete uuid/UUID` and
-   `member delete nus/E0678901C`. Delete only records you intend to remove permanently.
+   `member delete nus/E0678901C`. Both deletions retain records; use `equipment restore` or `member restore` to recover them.
 
 ## Saving, file access and recovery
 
@@ -460,14 +565,17 @@ before copying them into the matching locations beside the JAR. Data is not auto
 from the old working folder. Moving only the JAR to a new empty folder starts a separate sample dataset.
 When running development classes with Gradle, runtime files remain relative to the project working folder.
 
-For the six MVP mutation commands, a failed save leaves the live records and previously saved data
+For Laplace mutation commands, a failed save leaves the live records and previously saved data
 unchanged. An error is not a successful addition, deletion, assignment or return. The command remains
 available for correction. Fix the folder/file access problem, then retry. Do not repeatedly resubmit a
 successful command: duplicate members, already-assigned items and repeated returns are rejected.
 
 Data includes members, equipment and open/closed loan records. Availability and holders are derived;
-do not try to maintain separate holder/availability fields. Deleting a permitted member/item also
-permanently deletes its related closed loans. There is no recovery feature for that deletion.
+do not try to maintain separate holder/availability fields. Member deletion retains the record,
+its `deleted` boolean and closed loans for unlimited restoration. Equipment follows the same policy.
+Older member/equipment records without a `deleted` field load as active;
+explicit null or non-boolean values are invalid. Do not open lifecycle-aware data in an older release
+that may discard deletion state.
 
 Back up the data file while Laplace is closed. Do not edit it while the app is running or run multiple
 instances against the same file. Manual data editing is not an MVP operation. If startup or a view
@@ -484,10 +592,11 @@ holdings, or `equipment view uuid/UUID` for an exact item and its current holder
 and separate member-find/holder commands are outside the MVP.
 
 **Why can I not delete a record?** A member with an open loan or equipment currently on loan cannot be
-deleted. Return the relevant items first. Closed loans do not block deletion and are cleaned up with it.
+deleted. Return the relevant items first. Closed loans do not block deletion. They are retained for
+both soft-deleted members and equipment.
 
 **Can I register broken equipment?** Yes. DAMAGED/UNDER_REPAIR records are UNAVAILABLE and cannot be
-assigned. The MVP does not include editing condition or other existing record fields.
+assigned. Use `equipment edit uuid/UUID condition/GOOD` after repairing a unit. Member contact details can be changed with `member edit`.
 
 **Does an overdue loan close itself?** No. Record an actual return using `loans return`. A return later
 than expected is valid if it is no earlier than assignment and no later than the computer's local date.
@@ -501,7 +610,7 @@ Laplace folder at the configured data path, and launch the matching release ther
 backup until you have checked members, equipment and current loans on the other computer.
 
 **Where is Help?** Enter `help` or press F1. Use `exit` for normal shutdown; saved window preferences are
-reused within usable screen bounds. These utilities are separate from the eleven member, equipment
+reused within usable screen bounds. These utilities are separate from the seventeen member, equipment
 and loan commands, including `loans list`.
 
 The **Menu** contains **Help** and **Exit**. Help displays the address of the
@@ -510,9 +619,13 @@ use **Copy URL** to copy its address and open it in your browser.
 
 ## MVP limits
 
-The MVP excludes record editing, archiving/restoring deleted records, separate find/member-loans/holder
-commands, import/export, undo/redo, fuzzy search, user-selected sorting and automatic overdue notifications.
-Copying a backup file while the app
+The MVP supports member and equipment editing, soft deletion and restoration, plus search with filters
+and user-selected sorting. Batch equipment registration supports 1–100 physical units per
+`equipment add` command using `count/COUNT`; each unit receives its own UUID. Loan assignment and return
+also accept multiple equipment UUIDs in one command. Bulk editing, deletion and restoration are not supported.
+
+The MVP excludes separate find/member-loans/holder commands, import/export, undo/redo, fuzzy search
+and automatic overdue notifications. Copying a backup file while the app
 is closed is a file-management task, not an import/export command. Data is local to one operator;
 authentication and concurrent multi-user operation are not provided.
 
@@ -521,15 +634,23 @@ authentication and concurrent multi-user operation are not provided.
 | Task | Format |
 | --- | --- |
 | Add member | `member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL` |
+| Edit member | `member edit nus/NUS_ID [name/NAME] [phone/PHONE] [email/EMAIL]` |
 | List members | `member list` |
+| Search, filter and sort members | `member search [q/TEXT] [holding/HOLDING] [status/STATUS] [sort/FIELD] [order/ORDER]` |
 | View member and current holdings | `member view nus/NUS_ID` |
-| Delete member | `member delete nus/NUS_ID` |
-| Add equipment | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES]` |
+| Soft-delete member | `member delete nus/NUS_ID` |
+| Restore member | `member restore nus/NUS_ID` |
+| Add equipment | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES] [count/COUNT]` |
 | List equipment | `equipment list` |
+| Search, filter and sort equipment | `equipment search [q/TEXT] [category/TEXT] [condition/CONDITION] [availability/AVAILABILITY] [status/STATUS] [sort/FIELD] [order/ORDER]` |
 | View equipment and current holder | `equipment view uuid/UUID` |
+| Edit equipment | `equipment edit uuid/UUID [name/NAME] [category/CATEGORY] [condition/CONDITION] [notes/NOTES]` |
+| Restore equipment | `equipment restore uuid/UUID` |
 | Delete equipment | `equipment delete uuid/UUID` |
 | Open the Loans tab | `loans list` |
 | Assign equipment | `loans add uuid/UUID[,UUID...] nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |
 | Return equipment | `loans return uuid/UUID[,UUID...] returned/ACTUAL_RETURN_DATE [condition/CONDITION]` |
+
+See [search, filters and sorting](commands/search-and-planning.md) for accepted search parameter values.
 
 Application utilities: `help` (or F1) opens Help; `exit` closes Laplace.

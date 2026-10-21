@@ -167,7 +167,17 @@ public class AddCommandTest {
         }
 
         @Override
+        public void setMember(Member target, Member editedMember) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
         public void deleteMember(Member member) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void restoreMember(Member member) {
             throw new AssertionError("This method should not be called.");
         }
 
@@ -193,6 +203,16 @@ public class AddCommandTest {
 
         @Override
         public void deleteEquipment(Equipment equipment) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void setEquipment(Equipment target, Equipment edited) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void restoreEquipment(Equipment equipment) {
             throw new AssertionError("This method should not be called.");
         }
 

@@ -217,6 +217,14 @@ public class JsonAdaptedEquipmentTest {
         assertThrows(NullPointerException.class, () -> new JsonAdaptedEquipment((Equipment) null));
     }
 
+    @Test
+    public void setDeleted_nullReference_rejectsWithoutChangingStoredFlag() throws Exception {
+        JsonAdaptedEquipment adaptedEquipment = new JsonAdaptedEquipment(CAMERA.withDeleted(true));
+        assertThrows(IllegalArgumentException.class, "Equipment deleted must be a boolean.", () ->
+                adaptedEquipment.setDeleted(null));
+        assertEquals(CAMERA.withDeleted(true), adaptedEquipment.toModelType());
+    }
+
     private static JsonAdaptedEquipment equipmentWithCondition(String condition) {
         return new JsonAdaptedEquipment(VALID_UUID, VALID_NAME, VALID_CATEGORY, condition, "");
     }

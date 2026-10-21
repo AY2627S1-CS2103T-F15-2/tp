@@ -30,6 +30,7 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.member.NusId;
+import seedu.address.model.query.DirectoryQuery;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -72,21 +73,21 @@ public class MemberEquipmentRoutingIntegrationTest {
         assertEquals(4, storage.saves);
         assertReloadMatches();
         AddressBook beforeReads = new AddressBook(model.getAddressBook());
-        assertDisplay("member list", DisplayRequest.members());
-        assertDisplay("equipment list", DisplayRequest.equipment());
+        assertDisplay("member list", DisplayRequest.members(DirectoryQuery.all()));
+        assertDisplay("equipment list", DisplayRequest.equipment(DirectoryQuery.all()));
         assertDisplay("member view\tnus/a0000001x", DisplayRequest.memberDetails(FIRST_MEMBER));
         assertDisplay("equipment view uuid/" + first, DisplayRequest.equipmentDetails(first));
         assertEquals(beforeReads, model.getAddressBook());
-        assertEquals(8, storage.saves);
+        assertEquals(7, storage.saves);
         assertReloadMatches();
         assertDisplay("member delete nus/a0000001x", DisplayRequest.members());
         assertDisplay("equipment delete\tuuid/" + first, DisplayRequest.equipment());
-        assertFalse(model.hasMember(FIRST_MEMBER));
+        assertTrue(model.findMember(FIRST_MEMBER).orElseThrow().isDeleted());
         assertTrue(model.hasMember(SECOND_MEMBER));
-        assertFalse(model.hasEquipment(first));
+        assertTrue(model.findEquipment(first).orElseThrow().isDeleted());
         assertTrue(model.hasEquipment(second));
         assertEquals(1, model.getAddressBook().getPersonList().size());
-        assertEquals(10, storage.saves);
+        assertEquals(9, storage.saves);
         assertReloadMatches();
     }
 
@@ -142,7 +143,7 @@ public class MemberEquipmentRoutingIntegrationTest {
     }
 
     @Test
-    public void routes_viewsTrackRealLoanFixturesAndPermittedDeletionRemovesClosedHistory() throws Exception {
+    public void routes_viewsTrackRealLoanFixturesAndMemberDeletionRetainsClosedHistory() throws Exception {
         addMembers();
         UUID first = addEquipment();
         UUID second = addEquipment();
@@ -159,14 +160,14 @@ public class MemberEquipmentRoutingIntegrationTest {
         assertEquals(SECOND_MEMBER, model.findOpenLoan(second).orElseThrow().getMemberNusId());
         assertEquals(beforeViews, model.getAddressBook());
         assertDisplay("member delete nus/A0000001X", DisplayRequest.members());
-        assertEquals(1, model.getLoanList().size());
+        assertEquals(2, model.getLoanList().size());
         assertTrue(model.hasEquipment(first));
         model.closeLoan(second, ASSIGNED.plusDays(2));
         storage.saveAddressBook(model.getAddressBook());
         assertTrue(logic.execute("member view nus/A0000002X").getFeedbackToUser().contains("0 item(s)"));
         assertTrue(logic.execute("equipment view uuid/" + second).getFeedbackToUser().contains("AVAILABLE"));
         assertDisplay("equipment delete uuid/" + second, DisplayRequest.equipment());
-        assertTrue(model.getLoanList().isEmpty());
+        assertEquals(2, model.getLoanList().size());
         assertTrue(model.hasMember(SECOND_MEMBER));
         assertReloadMatches();
     }
@@ -187,16 +188,25 @@ public class MemberEquipmentRoutingIntegrationTest {
     }
 
     @Test
-    public void routes_legacyPersonCommands_preserveLaplaceData() throws Exception {
+    public void routes_retiredPersonCommands_preserveAllDataWithoutSaving() throws Exception {
         addMembers();
-        addEquipment();
-        AddressBook before = new AddressBook(model.getAddressBook());
-        assertDisplay("add n/Legacy Person p/98765432 e/legacy@example.com a/NUS", DisplayRequest.legacyPersons());
-        assertDisplay("find Legacy", DisplayRequest.legacyPersons());
-        assertEquals(1, model.getFilteredPersonList().size());
-        assertDisplay("delete 1", DisplayRequest.legacyPersons());
-        assertDisplay("list", DisplayRequest.legacyPersons());
-        assertEquals(before, model.getAddressBook());
+        UUID assigned = addEquipment();
+        UUID returned = addEquipment();
+        model.addLoan(new Loan(assigned, FIRST_MEMBER, ASSIGNED, ASSIGNED.plusDays(1), null));
+        model.addLoan(new Loan(returned, SECOND_MEMBER, ASSIGNED, ASSIGNED, ASSIGNED));
+        storage.saveAddressBook(model.getAddressBook());
+        for (boolean failOnSave : new boolean[] {false, true}) {
+            storage.saveFailure = failOnSave ? new IOException("Unexpected save of a rejected command") : null;
+            for (String input : new String[] {
+                "add n/Legacy Person p/98765432 e/legacy@example.com a/NUS", "edit 1 n/Changed Person",
+                "delete 1", "clear", "clear 3", "find Nobody", "list", "list members", " \tclear\t "
+            }) {
+                assertRejected(ParseException.class, input);
+            }
+            assertReloadMatches();
+        }
+        storage.saveFailure = null;
+        assertDisplay("member list", DisplayRequest.members(DirectoryQuery.all()));
         assertReloadMatches();
     }
 

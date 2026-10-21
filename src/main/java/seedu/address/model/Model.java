@@ -105,11 +105,26 @@ public interface Model {
     void addMember(Member member);
 
     /**
-     * Deletes a member by identity and removes their closed loan history.
+     * Replaces a stored member's details without changing their NUS ID or loan references.
      * @throws seedu.address.model.member.exceptions.MemberNotFoundException if the identity is unknown.
-     * @throws IllegalStateException if the member has an open loan.
+     * @throws IllegalArgumentException if the replacement changes the NUS ID or deletion state.
+     * @throws IllegalStateException if the stored member is deleted.
+     */
+    void setMember(Member target, Member editedMember);
+
+    /**
+     * Soft-deletes a member by identity while retaining their details and loan history.
+     * @throws seedu.address.model.member.exceptions.MemberNotFoundException if the identity is unknown.
+     * @throws IllegalStateException if the member is already deleted or has an open loan.
      */
     void deleteMember(Member member);
+
+    /**
+     * Restores a deleted member without a recovery deadline.
+     * @throws seedu.address.model.member.exceptions.MemberNotFoundException if the identity is unknown.
+     * @throws IllegalStateException if the member is already active.
+     */
+    void restoreMember(Member member);
 
     /**
      * Returns an unmodifiable live view of all members.
@@ -132,11 +147,21 @@ public interface Model {
     void addEquipment(Equipment equipment);
 
     /**
-     * Deletes equipment by UUID and removes its closed loan history.
+     * Soft-deletes equipment by UUID, retaining its details and closed loan history.
      * @throws seedu.address.model.equipment.exceptions.EquipmentNotFoundException if the UUID is unknown.
-     * @throws IllegalStateException if the equipment has an open loan.
+     * @throws IllegalStateException if the equipment is already deleted or has an open loan.
      */
     void deleteEquipment(Equipment equipment);
+
+    /**
+     * Edits active equipment, preserving UUID and lifecycle state.
+     */
+    void setEquipment(Equipment target, Equipment edited);
+
+    /**
+     * Restores deleted equipment, retaining UUID, details and history.
+     */
+    void restoreEquipment(Equipment equipment);
 
     /**
      * Returns an unmodifiable live view of all equipment.
@@ -180,7 +205,7 @@ public interface Model {
     ObservableList<Loan> getLoanList();
 
     /**
-     * Derives availability from equipment condition and whether it has an open loan.
+     * Returns UNAVAILABLE for deleted equipment; otherwise derives availability from condition and open loans.
      * @throws seedu.address.model.equipment.exceptions.EquipmentNotFoundException if the UUID is unknown.
      */
     Availability getAvailability(UUID uuid);

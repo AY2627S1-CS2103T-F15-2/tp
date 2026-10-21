@@ -9,13 +9,13 @@ Closed loans, their issue conditions, and their return conditions appear in
 the Loans panel and member/equipment details.
 
 Integration status: the return route dispatches to its real command parser through
-`LoansCommandParser`. Successful execution requests the affected equipment details.
+`LoansCommandParser`. A single return opens equipment details; a batch opens the Loans tab.
 Keith's application-shell integration and final GUI acceptance are tracked separately in issue #75.
 
 Format:
 
 ```text
-loans return uuid/UUID returned/DATE
+loans return uuid/UUID[,UUID...] returned/DATE [condition/CONDITION]
 ```
 
 Both parameters are required and may appear in either order. Family and subcommand names are
@@ -39,9 +39,11 @@ Missing, blank, repeated, malformed or unknown parameters and text before the fi
 are also rejected. Parameter-marker rules and the lack of quoting/escaping are the same as
 for [assignment](loans-add.md).
 
-Success closes the loan using an immutable replacement, preserves returned history and displays
-the affected equipment's details. The member no longer holds that item. Equipment in `GOOD` or
-`FAIR` condition becomes available; damaged or under-repair equipment stays unavailable.
+Success closes each loan using an immutable replacement and preserves returned history. A single
+return names its borrower and opens equipment details. Batch feedback lists the returned UUIDs
+without attributing all units to one borrower, and opens the Loans tab. Members no longer hold
+the returned units. Equipment in `GOOD` or `FAIR` condition becomes available; damaged or
+under-repair equipment stays unavailable.
 
 The read-only Loans tab shows open assignments and completed history, with identities, dates,
 and recorded conditions. Its

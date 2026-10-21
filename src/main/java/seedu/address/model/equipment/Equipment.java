@@ -20,17 +20,26 @@ public class Equipment {
     private final String category;
     private final Condition condition;
     private final String notes;
+    private final boolean deleted;
 
     /**
      * Constructs an {@code Equipment} item with the given details.
      */
     public Equipment(UUID uuid, String name, String category, Condition condition, String notes) {
+        this(uuid, name, category, condition, notes, false);
+    }
+
+    /**
+     * Constructs a retained physical unit with an explicit lifecycle state.
+     */
+    public Equipment(UUID uuid, String name, String category, Condition condition, String notes, boolean deleted) {
         requireAllNonNull(uuid, name, category, condition, notes);
         this.uuid = uuid;
         this.name = name;
         this.category = category;
         this.condition = condition;
         this.notes = notes;
+        this.deleted = deleted;
     }
 
     /** Validates and normalizes a newly entered equipment name; stored legacy descriptions remain readable. */
@@ -52,6 +61,17 @@ public class Equipment {
         String normalized = LaplaceText.normalize(value);
         checkArgument(LaplaceText.isPrintable(normalized, minimum, maximum), message);
         return normalized;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    /**
+     * Returns a copy with the requested lifecycle state and the same identity and details.
+     */
+    public Equipment withDeleted(boolean deleted) {
+        return new Equipment(uuid, name, category, condition, notes, deleted);
     }
 
     public UUID getUuid() {
@@ -96,12 +116,13 @@ public class Equipment {
                 && name.equals(otherEquipment.name)
                 && category.equals(otherEquipment.category)
                 && condition == otherEquipment.condition
-                && notes.equals(otherEquipment.notes);
+                && notes.equals(otherEquipment.notes)
+                && deleted == otherEquipment.deleted;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid, name, category, condition, notes);
+        return Objects.hash(uuid, name, category, condition, notes, deleted);
     }
 
     @Override
@@ -112,6 +133,7 @@ public class Equipment {
                 .add("category", category)
                 .add("condition", condition)
                 .add("notes", notes)
+                .add("deleted", deleted)
                 .toString();
     }
 }

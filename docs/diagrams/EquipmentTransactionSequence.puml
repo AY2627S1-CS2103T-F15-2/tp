@@ -1,0 +1,81 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName Arial
+hide footbox
+skinparam maxMessageSize 150
+skinparam ParticipantPadding 10
+
+participant ":LogicManager" as logic
+participant "live:ModelManager" as live
+participant "add:EquipmentAddCommand" as command
+participant "candidate:ModelManager" as candidate
+participant ":StorageManager" as storage
+
+note over logic, command
+  Parsing has returned command; command.isTransactional() is true.
+end note
+activate logic
+logic -> live : createTransactionSnapshot()
+activate live
+create candidate
+live -> candidate : ModelManager(getAddressBook(), getUserPrefs())
+activate candidate
+candidate --> live : candidate
+deactivate candidate
+live --> logic : candidate
+deactivate live
+logic -> command : execute(candidate)
+activate command
+command -> command : prepareUnits(candidate)
+activate command
+note right of command
+  Reserve all UUIDs before insertion.
+  Check stored and in-batch identities.
+  Up to 100 generation attempts per unit.
+end note
+command --> command : units
+deactivate command
+note right of command
+  Compute duplicate-description warning
+  once against the pre-insertion data.
+end note
+loop each prepared physical unit
+  command -> candidate : addEquipment(unit)
+  activate candidate
+  note over command, candidate
+    Delegates to root and equipment collection.
+    Only the isolated candidate changes.
+  end note
+  candidate --> command : return
+  deactivate candidate
+end
+command --> logic : result:CommandResult
+deactivate command
+logic -> candidate : getAddressBook()
+candidate --> logic : candidateData
+logic -> storage : saveAddressBook(candidateData)
+note over candidate, storage
+  JsonAddressBookStorage serializes first.
+  AtomicFileWriter writes and flushes a sibling file,
+  then atomically replaces the destination.
+end note
+alt save succeeds
+  storage --> logic : return
+  logic -> live : setAddressBook(candidateData)
+  activate live
+  note over live, command
+    resetData validates and publishes.
+    Existing observable root/views remain in use.
+  end note
+  live --> logic : return
+  deactivate live
+  [<-- logic : result (including typed DisplayRequest)
+else save throws IOException
+  storage --> logic : IOException
+  [<-- logic : CommandException with original cause
+  note over logic, live
+    No publication; live records and previous data file stay intact.
+  end note
+end
+deactivate logic
+@enduml

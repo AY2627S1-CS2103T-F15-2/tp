@@ -21,6 +21,7 @@ import seedu.address.model.loan.Loan;
 import seedu.address.model.loan.exceptions.DuplicateOpenLoanException;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
+import seedu.address.model.member.exceptions.MemberDeletedException;
 import seedu.address.model.member.exceptions.MemberNotFoundException;
 
 /** Assigns available physical units to a member in one transaction. */
@@ -31,7 +32,11 @@ public class LoanAddCommand extends Command {
             + "Dates must use yyyy-MM-dd.";
     public static final String MESSAGE_SUCCESS = "Assigned %1$s (%2$s) to %3$s (%4$s) on %5$s; expected return: %6$s.";
     public static final String MESSAGE_EQUIPMENT_NOT_FOUND = "No equipment with UUID %1$s exists.";
+    public static final String MESSAGE_DELETED = "Cannot assign deleted equipment %1$s. "
+            + "Use equipment restore uuid/%1$s first.";
     public static final String MESSAGE_MEMBER_NOT_FOUND = "No member with NUS ID %1$s exists.";
+    public static final String MESSAGE_MEMBER_DELETED = "Cannot assign equipment to deleted member %1$s. "
+            + "Use member restore nus/%1$s first.";
     public static final String MESSAGE_ASSIGNED = "Equipment %1$s is unavailable because it is assigned to %2$s.";
     public static final String MESSAGE_UNAVAILABLE = "Equipment %1$s is unavailable (condition: %2$s).";
     public static final String MESSAGE_FUTURE_ASSIGNMENT = "Assigned date cannot be after today (%1$s).";
@@ -89,6 +94,10 @@ public class LoanAddCommand extends Command {
         } catch (MemberNotFoundException exception) {
             throw new CommandException(String.format(MESSAGE_MEMBER_NOT_FOUND, memberNusId), exception);
         }
+        if (member.isDeleted()) {
+            throw new CommandException(String.format(MESSAGE_MEMBER_DELETED, memberNusId),
+                    new MemberDeletedException());
+        }
         LocalDate today = LocalDate.now(clock);
         if (assignedDate.isAfter(today)) {
             throw new CommandException(String.format(MESSAGE_FUTURE_ASSIGNMENT, today));
@@ -104,6 +113,9 @@ public class LoanAddCommand extends Command {
                 equipment = model.findEquipment(uuid).orElseThrow(EquipmentNotFoundException::new);
             } catch (EquipmentNotFoundException exception) {
                 throw new CommandException(String.format(MESSAGE_EQUIPMENT_NOT_FOUND, uuid), exception);
+            }
+            if (equipment.isDeleted()) {
+                throw new CommandException(String.format(MESSAGE_DELETED, uuid));
             }
             Availability availability = model.getAvailability(uuid);
             if (availability == Availability.ASSIGNED) {

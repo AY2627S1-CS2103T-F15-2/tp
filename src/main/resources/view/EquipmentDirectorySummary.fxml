@@ -21,12 +21,13 @@
             </HBox>
             <VBox spacing="16" styleClass="laplace-surface,directory-summary-box">
                 <Label text="LIST SUMMARY" styleClass="laplace-muted" />
+                <Label fx:id="criteria" wrapText="true" minWidth="0" />
                 <GridPane hgap="12" vgap="14" minWidth="0">
                     <columnConstraints>
                         <ColumnConstraints percentWidth="38" minWidth="0" />
                         <ColumnConstraints percentWidth="62" minWidth="0" hgrow="ALWAYS" />
                     </columnConstraints>
-                <Label text="Total items" styleClass="directory-key" wrapText="true" minWidth="0"
+                <Label text="Total (including deleted)" styleClass="directory-key" wrapText="true" minWidth="0"
                        GridPane.rowIndex="0" GridPane.columnIndex="0" />
                 <Label fx:id="totalCount" text="" wrapText="true" minWidth="0" maxWidth="Infinity"
                        GridPane.rowIndex="0" GridPane.columnIndex="1" />
@@ -55,6 +56,9 @@
                 <Label fx:id="selection" text="" wrapText="true" minWidth="0" maxWidth="Infinity"
                        GridPane.rowIndex="6" GridPane.columnIndex="1" />
                 </GridPane>
+                <Label text="INVENTORY BY CATEGORY / TYPE (ACTIVE ITEMS)" styleClass="laplace-muted"
+                       wrapText="true" minWidth="0" />
+                <Label fx:id="inventoryGroups" wrapText="true" minWidth="0" maxWidth="Infinity" />
             </VBox>
             <VBox fx:id="status" spacing="6" styleClass="laplace-success">
                 <Label fx:id="statusTitle" styleClass="directory-status-title" wrapText="true" minWidth="0" />

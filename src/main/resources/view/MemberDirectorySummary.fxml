@@ -21,6 +21,7 @@
             </HBox>
             <VBox spacing="16" styleClass="laplace-surface,directory-summary-box">
                 <Label text="LIST SUMMARY" styleClass="laplace-muted" />
+                <Label fx:id="criteria" wrapText="true" minWidth="0" />
                 <GridPane hgap="12" vgap="14" minWidth="0">
                     <columnConstraints>
                         <ColumnConstraints percentWidth="38" minWidth="0" />
@@ -42,6 +43,10 @@
                        GridPane.rowIndex="3" GridPane.columnIndex="0" />
                 <Label fx:id="selection" text="" wrapText="true" minWidth="0" maxWidth="Infinity"
                        GridPane.rowIndex="3" GridPane.columnIndex="1" />
+                <Label text="Deleted members" styleClass="directory-key" wrapText="true" minWidth="0"
+                       GridPane.rowIndex="4" GridPane.columnIndex="0" />
+                <Label fx:id="deletedCount" text="" wrapText="true" minWidth="0" maxWidth="Infinity"
+                       GridPane.rowIndex="4" GridPane.columnIndex="1" />
                 </GridPane>
             </VBox>
             <VBox fx:id="status" spacing="6" styleClass="laplace-success">

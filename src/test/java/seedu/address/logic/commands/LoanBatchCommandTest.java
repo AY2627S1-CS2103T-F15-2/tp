@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.LoanCommandTestData.CLOCK;
 import static seedu.address.logic.commands.LoanCommandTestData.FIRST_MEMBER;
 import static seedu.address.logic.commands.LoanCommandTestData.FIRST_UUID;
+import static seedu.address.logic.commands.LoanCommandTestData.SECOND_MEMBER;
 import static seedu.address.logic.commands.LoanCommandTestData.SECOND_UUID;
 import static seedu.address.logic.commands.LoanCommandTestData.TODAY;
 
@@ -22,6 +23,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.Condition;
+import seedu.address.model.loan.Loan;
 
 /** Covers batch commits and rollback boundaries across loans and equipment. */
 public class LoanBatchCommandTest {
@@ -53,6 +55,30 @@ public class LoanBatchCommandTest {
     }
 
     @Test
+    public void batchAssignment_deletedMemberOrSecondUnit_rejectsWithoutPartialLoan() {
+        ModelManager deletedMember = LoanCommandTestData.model();
+        deletedMember.deleteMember(SECOND_MEMBER);
+        AddressBook memberBefore = new AddressBook(deletedMember.getAddressBook());
+
+        CommandException memberError = assertThrows(CommandException.class, () ->
+                new LoanAddCommand(List.of(FIRST_UUID, SECOND_UUID), SECOND_MEMBER.getNusId(),
+                        TODAY, TODAY.plusDays(7), CLOCK).execute(deletedMember));
+        assertEquals(String.format(LoanAddCommand.MESSAGE_MEMBER_DELETED, SECOND_MEMBER.getNusId()),
+                memberError.getMessage());
+        assertEquals(memberBefore, deletedMember.getAddressBook());
+
+        ModelManager deletedEquipment = LoanCommandTestData.model();
+        deletedEquipment.deleteEquipment(deletedEquipment.findEquipment(SECOND_UUID).orElseThrow());
+        AddressBook equipmentBefore = new AddressBook(deletedEquipment.getAddressBook());
+
+        CommandException equipmentError = assertThrows(CommandException.class, () ->
+                new LoanAddCommand(List.of(FIRST_UUID, SECOND_UUID), FIRST_MEMBER.getNusId(),
+                        TODAY, TODAY.plusDays(7), CLOCK).execute(deletedEquipment));
+        assertEquals(String.format(LoanAddCommand.MESSAGE_DELETED, SECOND_UUID), equipmentError.getMessage());
+        assertEquals(equipmentBefore, deletedEquipment.getAddressBook());
+    }
+
+    @Test
     public void batchAssignment_emptyOrDuplicateIdentifiers_rejectsBeforeChangingModel() {
         ModelManager model = LoanCommandTestData.model();
         AddressBook before = new AddressBook(model.getAddressBook());
@@ -80,6 +106,23 @@ public class LoanBatchCommandTest {
         assertEquals(Condition.DAMAGED, model.findEquipment(FIRST_UUID).orElseThrow().getCondition());
         assertEquals(Condition.DAMAGED, model.findEquipment(SECOND_UUID).orElseThrow().getCondition());
         assertEquals(Availability.UNAVAILABLE, model.getAvailability(FIRST_UUID));
+    }
+
+    @Test
+    public void batchReturn_differentBorrowers_reportsUnitsWithoutIncorrectAttribution() throws Exception {
+        ModelManager model = LoanCommandTestData.model();
+        model.addLoan(LoanCommandTestData.openLoan());
+        model.addLoan(new Loan(SECOND_UUID, SECOND_MEMBER.getNusId(), TODAY.minusDays(2),
+                TODAY.plusDays(3), null));
+
+        CommandResult result = new LoanReturnCommand(List.of(FIRST_UUID, SECOND_UUID),
+                TODAY, null, CLOCK).execute(model);
+
+        assertEquals(String.format(LoanReturnCommand.MESSAGE_BATCH_SUCCESS, 2,
+                List.of(FIRST_UUID, SECOND_UUID), TODAY), result.getFeedbackToUser());
+        assertEquals(DisplayRequest.loans(), result.getDisplayRequest());
+        assertTrue(model.findOpenLoan(FIRST_UUID).isEmpty());
+        assertTrue(model.findOpenLoan(SECOND_UUID).isEmpty());
     }
 
     @Test

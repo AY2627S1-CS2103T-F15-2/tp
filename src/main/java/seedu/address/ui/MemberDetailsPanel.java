@@ -69,7 +69,11 @@ public class MemberDetailsPanel extends UiPart<Region> {
             return;
         }
         Member member = selected.orElseThrow();
-        text(content, "memberName", member.getName().fullName, "details-name");
+        MemberNameStyle.apply(text(content, "memberName", member.getName().fullName, "details-name"), member);
+        if (member.isDeleted()) {
+            status(content, "Deleted member. Restore at any time with member restore nus/" + selectedNusId + ".",
+                    false);
+        }
         field(content, "memberNusId", "NUS ID", member.getNusId());
         field(content, "phone", "Phone", member.getPhone());
         field(content, "email", "Email", member.getEmail());

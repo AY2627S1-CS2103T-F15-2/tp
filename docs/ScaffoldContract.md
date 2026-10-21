@@ -1,3 +1,9 @@
+> Legacy-command retirement amendment (21 October 2026): top-level `add`, `edit`, `delete`,
+> `clear`, `find`, and `list` are rejected. Earlier requirements below to preserve public person-command
+> routing are superseded. Stored persons, shared value types and legacy implementation/UI classes
+> remain for compatibility and later cleanup. See the
+> [current routing contract](DeveloperGuide.md#command-routing-and-legacy-compatibility).
+
 > v1.3.3 amendment: schema and existing constructor/getter contracts remain unchanged. New member
 > input uses member-specific value factories; saved legacy values remain readable without rewriting.
 > Model now supplies an isolated transaction snapshot; Logic commits its saved data through the existing
@@ -72,7 +78,9 @@ The implemented root model enforces the following contracts:
 - Preserve the legacy persons collection and all working person-command paths.
 - Reject a loan whose member or equipment identity does not exist.
 - Block deletion only while the member or equipment is referenced by an open loan.
-- Remove related closed loans after a permitted member or equipment deletion.
+- Retain soft-deleted members and all their loan history; reserve their identities.
+- Permit unlimited member restoration; reject open loans assigned to deleted members.
+- Remove related closed loans only after permitted equipment deletion.
 - Throw `EquipmentNotFoundException` when availability is requested for an unknown UUID.
 - Delegate the one-open-loan rule to `UniqueLoanList` and availability rules to `AvailabilityCalculator`.
 - Include every collection in reset, equality, hashing, and string output.
@@ -156,3 +164,20 @@ Each owner should avoid editing another row's files without coordinating first. 
 **B. Functional scaffold complete:** the collections, adapters, root model, and storage are implemented and connected. Only business-command placeholders may remain. A real integration test must add members and equipment through `ModelManager`, add and close loans, observe availability transitions, save and reload all identifiers, dates, and loan history, reject invalid references and prohibited deletions, and prove that rejected operations leave state unchanged.
 
 The integrated foundation now implements milestone B; its existing tests cover real model/storage behavior. This status does not imply that the v1.3 business commands, display consumers or GUI acceptance are complete. Those additions follow the staged handoff in [GuiCommandContract.md](GuiCommandContract.md).
+
+## Member lifecycle extension
+
+The member soft-delete branch supersedes earlier permanent-member-deletion behavior. A boolean
+`deleted` field retains the record indefinitely; missing legacy flags mean active, while explicit
+null and non-boolean values are rejected. `member restore` has no time limit. Details are in
+[the lifecycle contract](commands/member-restore.md). Member editing preserves lifecycle state and
+rejects deleted members until restoration.
+
+## Equipment maintenance update
+
+The equipment maintenance feature supersedes earlier permanent-equipment-deletion rules in this
+historical scaffold. Equipment now persists a `deleted` boolean (missing means false). Deletion requires
+no open loan and retains the unit and all closed history; restore has no time limit. Details edits keep
+the UUID and cannot change deletion state. Root validation rejects open loans to deleted equipment.
+Deleted units derive UNAVAILABLE and are excluded from active inventory totals. See the main UG/DG
+for current command, persistence and lifecycle behavior.

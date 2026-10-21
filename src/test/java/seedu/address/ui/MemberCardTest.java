@@ -1,6 +1,7 @@
 package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -12,6 +13,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
 import seedu.address.model.person.Email;
@@ -79,6 +82,31 @@ public class MemberCardTest {
                 assertTrue(label.getBoundsInParent().getMaxY() <= root.getHeight());
                 assertTrue(label.getBoundsInParent().getMaxX() <= root.getWidth());
             }
+        });
+    }
+
+    @Test
+    public void deletedName_longText_wrapsWithoutDisablingOrChangingStoredName() {
+        FxTestUtil.runAndWait(() -> {
+            String longName = "Long Member Name ".repeat(6).trim();
+            Member member = new Member(new NusId("A0123456X"), new Name(longName), new Phone("91234567"),
+                    new Email("alex@example.com"), true);
+            Region root = new MemberCard(member, 0).getRoot();
+            VBox container = new VBox(root);
+            new Scene(container, 210, 500);
+            container.applyCss();
+            container.resize(210, 500);
+            container.layout();
+            Label name = label(root, "name");
+            TextFlow flow = (TextFlow) name.getGraphic();
+            assertEquals(longName, member.getName().fullName);
+            assertEquals(longName + " (deleted)", name.getAccessibleText());
+            assertTrue(((Text) flow.getChildren().getFirst()).isStrikethrough());
+            assertTrue(root.getStyleClass().contains("deleted-member"));
+            assertFalse(root.isDisabled());
+            assertTrue(flow.getHeight() > name.getFont().getSize());
+            assertTrue(name.getHeight() + 0.1 >= name.prefHeight(name.getWidth()));
+            assertTrue(name.getBoundsInParent().getMaxX() <= root.getWidth());
         });
     }
 

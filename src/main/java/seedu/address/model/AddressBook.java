@@ -16,6 +16,7 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.equipment.UniqueEquipmentList;
+import seedu.address.model.equipment.exceptions.EquipmentDeletedException;
 import seedu.address.model.equipment.exceptions.EquipmentNotFoundException;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.loan.UniqueLoanList;
@@ -23,6 +24,7 @@ import seedu.address.model.loan.exceptions.OpenLoanNotFoundException;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
 import seedu.address.model.member.UniqueMemberList;
+import seedu.address.model.member.exceptions.MemberDeletedException;
 import seedu.address.model.member.exceptions.MemberNotFoundException;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.UniquePersonList;
@@ -226,31 +228,46 @@ public class AddressBook implements ReadOnlyAddressBook {
     }
 
     /**
-     * Removes a member by identity and its closed history, as required by the scaffold contract.
+     * Replaces member details while preserving the identity used by all loan references.
+     */
+    public void setMember(Member target, Member editedMember) {
+        requireNonNull(target);
+        requireNonNull(editedMember);
+        if (members == null) {
+            throw new MemberNotFoundException();
+        }
+        members.setMember(target, editedMember);
+    }
+
+    /**
+     * Soft-deletes a member by identity, preserving their details and closed loan history.
      * An open loan blocks deletion and leaves every collection unchanged.
      *
-     * @throws IllegalStateException if this member has an open loan.
+     * @throws IllegalStateException if this member is already deleted or has an open loan.
      */
     public void removeMember(Member member) {
         requireNonNull(member);
         NusId nusId = member.getNusId();
-        if (!hasMember(nusId)) {
-            throw new MemberNotFoundException();
+        Member stored = findMember(nusId).orElseThrow(MemberNotFoundException::new);
+        if (stored.isDeleted()) {
+            throw new MemberDeletedException();
         }
         if (!findOpenLoansForMember(nusId).isEmpty()) {
             throw new IllegalStateException("Cannot delete a member with an open loan");
         }
-        List<Loan> retainedLoans = getLoanList().stream()
-                .filter(loan -> !loan.getMemberNusId().equals(nusId)).toList();
-        if (loans != null) {
-            UniqueLoanList validatedLoans = requireNonNull(loanFactory.get());
-            validatedLoans.setLoans(retainedLoans);
+        members.setDeleted(nusId, true);
+    }
+
+    /**
+     * Restores a retained member without a time limit or changes to loan history.
+     */
+    public void restoreMember(Member member) {
+        requireNonNull(member);
+        Member stored = findMember(member.getNusId()).orElseThrow(MemberNotFoundException::new);
+        if (!stored.isDeleted()) {
+            throw new IllegalStateException("Member is not deleted.");
         }
-        // Drop references first, so synchronous deletion observers never see dangling closed loans.
-        if (loans != null) {
-            loans.setLoans(retainedLoans);
-        }
-        members.remove(member);
+        members.setDeleted(stored.getNusId(), false);
     }
 
     /**
@@ -278,31 +295,47 @@ public class AddressBook implements ReadOnlyAddressBook {
     }
 
     /**
-     * Removes equipment by identity and its closed history, as required by the scaffold contract.
-     * An open loan blocks deletion and leaves every collection unchanged.
-     *
-     * @throws IllegalStateException if this equipment has an open loan.
+     * Edits an active unit without changing its UUID or lifecycle state.
+     * Condition changes do not close loans; an open loan still determines availability.
+     */
+    public void setEquipment(Equipment target, Equipment edited) {
+        requireNonNull(target);
+        requireNonNull(edited);
+        Equipment stored = findEquipment(target.getUuid()).orElseThrow(EquipmentNotFoundException::new);
+        if (stored.isDeleted()) {
+            throw new EquipmentDeletedException();
+        }
+        if (edited.isDeleted()) {
+            throw new IllegalArgumentException("Use equipment delete to change lifecycle state.");
+        }
+        equipment.setEquipment(stored, edited);
+    }
+
+    /**
+     * Soft-deletes equipment without an open loan, retaining its identity and closed history.
      */
     public void removeEquipment(Equipment item) {
         requireNonNull(item);
-        UUID uuid = item.getUuid();
-        if (!hasEquipment(uuid)) {
-            throw new EquipmentNotFoundException();
+        Equipment stored = findEquipment(item.getUuid()).orElseThrow(EquipmentNotFoundException::new);
+        if (stored.isDeleted()) {
+            throw new EquipmentDeletedException();
         }
-        if (findOpenLoan(uuid).isPresent()) {
+        if (findOpenLoan(stored.getUuid()).isPresent()) {
             throw new IllegalStateException("Cannot delete equipment with an open loan");
         }
-        List<Loan> retainedLoans = getLoanList().stream()
-                .filter(loan -> !loan.getEquipmentUuid().equals(uuid)).toList();
-        if (loans != null) {
-            UniqueLoanList validatedLoans = requireNonNull(loanFactory.get());
-            validatedLoans.setLoans(retainedLoans);
+        equipment.setEquipment(stored, stored.withDeleted(true));
+    }
+
+    /**
+     * Restores a retained unit without a time limit or changes to its details and history.
+     */
+    public void restoreEquipment(Equipment item) {
+        requireNonNull(item);
+        Equipment stored = findEquipment(item.getUuid()).orElseThrow(EquipmentNotFoundException::new);
+        if (!stored.isDeleted()) {
+            throw new IllegalStateException("Equipment is not deleted.");
         }
-        // Drop references first, for the same reason as member deletion.
-        if (loans != null) {
-            loans.setLoans(retainedLoans);
-        }
-        equipment.remove(item);
+        equipment.setEquipment(stored, stored.withDeleted(false));
     }
 
     /**
@@ -384,11 +417,15 @@ public class AddressBook implements ReadOnlyAddressBook {
      * Checks references by identity for both open and closed loans.
      */
     private static void requireLoanReferences(Loan loan, List<Member> members, List<Equipment> equipment) {
-        if (members.stream().noneMatch(member -> member.getNusId().equals(loan.getMemberNusId()))) {
-            throw new MemberNotFoundException();
+        Member holder = members.stream().filter(member -> member.getNusId().equals(loan.getMemberNusId()))
+                .findFirst().orElseThrow(MemberNotFoundException::new);
+        if (loan.isOpen() && holder.isDeleted()) {
+            throw new MemberDeletedException();
         }
-        if (equipment.stream().noneMatch(item -> item.getUuid().equals(loan.getEquipmentUuid()))) {
-            throw new EquipmentNotFoundException();
+        Equipment item = equipment.stream().filter(unit -> unit.getUuid().equals(loan.getEquipmentUuid()))
+                .findFirst().orElseThrow(EquipmentNotFoundException::new);
+        if (loan.isOpen() && item.isDeleted()) {
+            throw new EquipmentDeletedException();
         }
     }
 

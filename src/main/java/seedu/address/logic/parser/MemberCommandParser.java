@@ -20,11 +20,15 @@ public class MemberCommandParser implements Parser<Command> {
         String subcommand = parts[0];
         String arguments = parts.length == 2 ? parts[1] : "";
         return switch (subcommand) {
+            case "search" -> new DirectorySearchCommandParser(true).parse(arguments);
             case "list" -> new MemberListCommandParser().parse(arguments);
             case "add" -> new MemberAddCommandParser().parse(arguments);
+            case "edit" -> new MemberEditCommandParser().parse(arguments);
             case "view" -> new MemberViewCommandParser().parse(arguments);
             case "delete" -> new MemberDeleteCommandParser().parse(arguments);
-            default -> throw new ParseException("Expected member subcommand: add, list, view, delete.");
+            case "restore" -> new MemberRestoreCommandParser().parse(arguments);
+            default -> throw new ParseException(
+                    "Expected member subcommand: add, edit, list, search, view, delete, restore.");
         };
     }
 }

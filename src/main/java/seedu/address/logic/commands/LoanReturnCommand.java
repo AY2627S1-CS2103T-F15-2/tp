@@ -27,6 +27,7 @@ public class LoanReturnCommand extends Command {
             + ": Parameters: uuid/UUID[,UUID...] returned/DATE [condition/CONDITION]\n"
             + "Dates must use yyyy-MM-dd.";
     public static final String MESSAGE_SUCCESS = "Returned %1$s (%2$s) from %3$s (%4$s) on %5$s.";
+    public static final String MESSAGE_BATCH_SUCCESS = "Returned %1$d units (%2$s) on %3$s.";
     public static final String MESSAGE_EQUIPMENT_NOT_FOUND = "No equipment with UUID %1$s exists.";
     public static final String MESSAGE_NO_OPEN_LOAN = "Equipment %1$s has no open loan to return.";
     public static final String MESSAGE_MEMBER_NOT_FOUND =
@@ -119,12 +120,13 @@ public class LoanReturnCommand extends Command {
             throw new CommandException("Could not return equipment: " + exception.getMessage(), exception);
         }
         UUID first = equipmentUuids.get(0);
-        String name = equipmentUuids.size() == 1 ? firstName : equipmentUuids.size() + " units";
         String identifiers = equipmentUuids.size() == 1 ? first.toString() : equipmentUuids.toString();
         DisplayRequest display = equipmentUuids.size() == 1
                 ? DisplayRequest.equipmentDetails(first) : DisplayRequest.loans();
-        return new CommandResult(String.format(MESSAGE_SUCCESS, name, identifiers, firstMemberName,
-                firstMemberId, returnedDate), display);
+        String feedback = equipmentUuids.size() == 1
+                ? String.format(MESSAGE_SUCCESS, firstName, identifiers, firstMemberName, firstMemberId, returnedDate)
+                : String.format(MESSAGE_BATCH_SUCCESS, equipmentUuids.size(), identifiers, returnedDate);
+        return new CommandResult(feedback, display);
     }
 
     @Override

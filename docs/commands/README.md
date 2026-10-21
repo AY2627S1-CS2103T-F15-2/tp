@@ -2,21 +2,31 @@
 
 ## Integration status
 
-The ten MVP routes and the additional `loans list` navigation command dispatch to concrete parsers.
+The ten MVP routes, `loans list` navigation, `member edit` and `member restore` dispatch to concrete parsers.
 Command execution uses the
 LogicManager persistence boundary. Merged #93 integrates the real shell and #95 activates all ten routes.
 Current MVP completion evidence is in [MvpCompletion.md](../gui/MvpCompletion.md); #75 remains the final gate.
 
+Member editing extends the MVP through an identity-preserving model replacement API. Its parser,
+transactional behavior and shell-refresh contract are documented in [Edit member](member-edit.md).
+Member soft-delete and unlimited restoration are supported. Archival remains outside scope.
+
 | Command | Syntax | Reference |
 | --- | --- | --- |
 | member add | `member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL` | [Add member](member-add.md) |
+| member edit | `member edit nus/NUS_ID [name/NAME] [phone/PHONE] [email/EMAIL]` | [Edit member](member-edit.md) |
+| member restore | `member restore nus/NUS_ID` | [Restore member](member-restore.md) |
 | member delete | `member delete nus/NUS_ID` | [Delete member](member-delete.md) |
 | member view | `member view nus/NUS_ID` | [View member](member-view.md) |
 | member list | `member list` | [List members](member-list.md) |
-| equipment add | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES]` | [Add equipment](equipment-add.md) |
+| member search | `member search [q/TEXT] [holding/VALUE] [status/active\|deleted\|all] [sort/FIELD] [order/VALUE]` | [Search and planning](search-and-planning.md) |
+| equipment add | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES] [count/COUNT]` | [Add equipment](equipment-add.md) |
+| equipment edit | `equipment edit uuid/UUID [name/NAME] [category/CATEGORY] [condition/CONDITION] [notes/NOTES]` | [Equipment maintenance](equipment-maintenance.md) |
+| equipment restore | `equipment restore uuid/UUID` | [Equipment maintenance](equipment-maintenance.md) |
 | equipment delete | `equipment delete uuid/UUID` | [Delete equipment](equipment-delete.md) |
 | equipment view | `equipment view uuid/UUID` | [View equipment](equipment-view.md) |
 | equipment list | `equipment list` | [List equipment](equipment-list.md) |
+| equipment search | `equipment search [q/TEXT] [category/TEXT] [condition/VALUE] [availability/VALUE] [status/active\|deleted\|all] [sort/FIELD] [order/VALUE]` | [Search and planning](search-and-planning.md) |
 | loans add | `loans add uuid/UUID nus/NUS_ID assigned/DATE expected/DATE` | [Assign equipment](loans-add.md) |
 | loans return | `loans return uuid/UUID returned/DATE` | [Return equipment](loans-return.md) |
 | loans list | `loans list` | [Open Loans tab](loans-list.md) |
@@ -28,18 +38,17 @@ nonblank preamble. Optional notes may be empty. Markers matching the agreed
 start/whitespace-delimited `[A-Za-z][A-Za-z0-9_-]*/` grammar are reserved even inside free
 text; there is no quoting or escaping. Ordinary embedded slashes and URLs remain text.
 
-The six Laplace mutation commands execute on an isolated snapshot. LogicManager atomically saves
+The seven Laplace mutation commands execute on an isolated snapshot. LogicManager atomically saves
 the candidate before publishing it through the existing live observable root. Parser/business
 rejection and save failures preserve all records; rejected operations do not save. Partial candidate
 writes and failed replacements preserve the prior data file and useful I/O causes. See
 [MVP fields and failure behavior](MvpFields.md) for normalization and ordered diagnostics.
 
-Existing person commands and data remain supported. `loans list` opens the existing Loans tab,
-a read-only presentation of current open loans. Closed records remain stored without a history presentation.
+`loans list` opens the Loans tab with current assignments and completed loan history.
 
 ## Loan rules
 
-Assignments require an existing member, existing AVAILABLE equipment, an assigned date
+Assignments require an existing active member, existing active AVAILABLE equipment, an assigned date
 on or before today, and an expected return on or after assignment. GOOD/FAIR equipment
 is available when it has no open loan; DAMAGED/UNDER_REPAIR items cannot be assigned.
 Expected returns may be after today. Returns require an open loan and its existing member,
@@ -48,7 +57,7 @@ a second return is rejected. Today uses the computer's local date when execution
 
 Successful operations request the corresponding typed directory/details view. Holder,
 holdings and availability are derived from current loans; closing retains immutable loan
-history. Open loans block deletion; permitted deletion removes associated closed history.
+history. Open loans block deletion; permitted deletion retains the record and its closed history for restoration.
 
 ## Integration verification
 
@@ -58,3 +67,6 @@ same-name identities, loan lifecycle/holdings/availability, invalid parameter an
 rejection without writes, and save-error propagation. The member/equipment routing and
 legacy person-command compatibility scenarios are also retained. Full GUI navigation, refresh and
 packaged-window acceptance remain tracked separately in milestone integration issue #75.
+
+Member deletion now retains records and history. See [Restore member](member-restore.md) for lifecycle,
+persistence and feature-integration guarantees. Equipment deletion remains unchanged.

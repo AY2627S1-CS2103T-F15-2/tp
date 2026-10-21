@@ -11,9 +11,11 @@ import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.equipment.exceptions.DuplicateEquipmentException;
+import seedu.address.model.equipment.exceptions.EquipmentDeletedException;
 import seedu.address.model.equipment.exceptions.EquipmentNotFoundException;
 import seedu.address.model.loan.exceptions.DuplicateOpenLoanException;
 import seedu.address.model.member.exceptions.DuplicateMemberException;
+import seedu.address.model.member.exceptions.MemberDeletedException;
 import seedu.address.model.member.exceptions.MemberNotFoundException;
 import seedu.address.model.person.Person;
 
@@ -99,6 +101,10 @@ class JsonSerializableAddressBook {
             throw new IllegalValueException(MESSAGE_MISSING_MEMBER, exception);
         } catch (EquipmentNotFoundException exception) {
             throw new IllegalValueException(MESSAGE_MISSING_EQUIPMENT, exception);
+        } catch (EquipmentDeletedException exception) {
+            throw new IllegalValueException("Open loan references deleted equipment.", exception);
+        } catch (MemberDeletedException exception) {
+            throw new IllegalValueException("Open loan references a deleted member.", exception);
         }
         return addressBook;
     }

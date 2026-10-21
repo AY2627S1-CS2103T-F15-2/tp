@@ -1,0 +1,51 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName Arial
+hide footbox
+skinparam maxMessageSize 150
+skinparam ParticipantPadding 10
+
+participant ":LogicManager" as logic
+participant ":AddressBookParser" as root
+participant ":EquipmentCommandParser" as family
+participant ":EquipmentAddCommandParser" as leaf
+
+[-> logic : execute(commandText)
+activate logic
+logic -> root : parseCommand(commandText)
+create family
+root -> family : new()
+root -> family : parse(arguments)
+create leaf
+family -> leaf : new()
+family -> leaf : parse(arguments)
+note over family, leaf
+  Shared grammar validates prefixes.
+  ParserUtil validates equipment fields.
+  parseCount checks 1..100; default is 1.
+end note
+alt valid input
+  create participant "add:EquipmentAddCommand" as command
+  leaf -> command : new(name, category,\ncondition, notes, count)
+  activate command
+  command --> leaf : command
+  deactivate command
+  leaf --> family : command
+  family --> root : command
+  root --> logic : command
+  ref over logic, command
+    Continue with EquipmentTransactionSequence:
+    snapshot, execute, save, publish
+  end ref
+else invalid input
+  leaf --> family : throws ParseException
+  family --> root : propagates ParseException
+  root --> logic : propagates ParseException
+  [<-- logic : ParseException
+end
+note over logic, leaf
+  No UUID generation, model mutation or file save during parsing.
+  Missing/unknown family or subcommand may fail earlier than the leaf parser.
+end note
+deactivate logic
+@enduml

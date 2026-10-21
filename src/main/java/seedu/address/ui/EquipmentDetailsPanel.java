@@ -64,8 +64,13 @@ public class EquipmentDetailsPanel extends UiPart<Region> {
             return;
         }
         Equipment item = selected.orElseThrow();
+        if (item.isDeleted()) {
+            status(content, "Deleted equipment. Restore at any time with equipment restore uuid/" + selectedUuid + ".",
+                    false);
+        }
         text(content, "equipmentName", item.getName(), "details-name");
         field(content, "equipmentUuid", "UUID", item.getUuid());
+        field(content, "equipmentStatus", "Status", item.isDeleted() ? "DELETED" : "ACTIVE");
         field(content, "category", "Category", item.getCategory());
         field(content, "condition", "Condition", item.getCondition());
         Availability availability;

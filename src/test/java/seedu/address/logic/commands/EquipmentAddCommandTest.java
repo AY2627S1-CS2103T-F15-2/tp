@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -18,6 +19,7 @@ import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.equipment.exceptions.DuplicateEquipmentException;
+import seedu.address.model.query.DirectoryQuery;
 
 public class EquipmentAddCommandTest {
 
@@ -111,7 +113,74 @@ public class EquipmentAddCommandTest {
     }
 
     @Test
+    public void execute_batchAllConditions_createsDistinctUnitsAndReturnsDirectory() throws Exception {
+        for (Condition condition : Condition.values()) {
+            ModelManager model = new ModelManager();
+            CommandResult result = new EquipmentAddCommand("Camera", "Photo", condition, "Shared notes", 3)
+                    .execute(model);
+            assertEquals(3, model.getEquipmentList().size());
+            assertEquals(3, model.getEquipmentList().stream().map(Equipment::getUuid).distinct().count());
+            assertEquals(DisplayRequest.equipment(DirectoryQuery.all()), result.getDisplayRequest());
+            assertTrue(result.getFeedbackToUser().startsWith("Added 3 equipment units: Camera"));
+            assertFalse(result.getFeedbackToUser().contains("Possible duplicate"));
+            for (Equipment unit : model.getEquipmentList()) {
+                assertEquals("Camera", unit.getName());
+                assertEquals("Photo", unit.getCategory());
+                assertEquals(condition, unit.getCondition());
+                assertEquals("Shared notes", unit.getNotes());
+                assertTrue(result.getFeedbackToUser().contains(unit.getUuid().toString()));
+                assertEquals(condition == Condition.GOOD || condition == Condition.FAIR
+                        ? Availability.AVAILABLE : Availability.UNAVAILABLE, model.getAvailability(unit.getUuid()));
+            }
+        }
+    }
+
+    @Test
+    public void execute_batchRetriesExistingAndReservedIdentities_warnsOnlyAboutExistingUnits() throws Exception {
+        ModelManager model = new ModelManager();
+        model.addEquipment(new Equipment(ID, "Camera", "Photo", Condition.GOOD, "Existing"));
+        UUID first = new UUID(0, 1);
+        UUID second = new UUID(0, 2);
+        UUID[] generated = {ID, first, first, second};
+        AtomicInteger calls = new AtomicInteger();
+        CommandResult result = new EquipmentAddCommand("Camera", "Photo", Condition.GOOD, "", 2, () ->
+                generated[calls.getAndIncrement()]).execute(model);
+        assertEquals(4, calls.get());
+        assertEquals(3, model.getEquipmentList().size());
+        assertTrue(result.getFeedbackToUser().contains("Possible duplicate(s): " + ID + "."));
+        assertEquals("Existing", model.findEquipment(ID).orElseThrow().getNotes());
+    }
+
+    @Test
+    public void execute_batchGenerationFailsAfterFirstReservation_doesNotAddAnyUnits() {
+        for (boolean nullIdentity : new boolean[] {false, true}) {
+            ModelManager model = new ModelManager();
+            AtomicInteger calls = new AtomicInteger();
+            EquipmentAddCommand command = new EquipmentAddCommand("Camera", "Photo", Condition.GOOD, "", 2, () ->
+                    calls.getAndIncrement() == 0 || !nullIdentity ? ID : null);
+            CommandException failure = assertThrows(CommandException.class, () -> command.execute(model));
+            assertEquals(EquipmentAddCommand.MESSAGE_COLLISION, failure.getMessage());
+            assertEquals(nullIdentity ? 2 : 1 + EquipmentAddCommand.MAX_UUID_ATTEMPTS, calls.get());
+            assertTrue(model.getEquipmentList().isEmpty());
+        }
+    }
+
+    @Test
+    public void execute_maximumBatch_generatesAllIdentities() throws Exception {
+        ModelManager model = new ModelManager();
+        AtomicInteger calls = new AtomicInteger();
+        new EquipmentAddCommand("Camera", "Photo", Condition.GOOD, "", EquipmentAddCommand.MAX_COUNT, () ->
+                new UUID(0, calls.incrementAndGet())).execute(model);
+        assertEquals(EquipmentAddCommand.MAX_COUNT, model.getEquipmentList().size());
+        assertEquals(EquipmentAddCommand.MAX_COUNT, calls.get());
+    }
+
+    @Test
     public void constructor_invalidArguments_rejectsMisuse() {
+        for (int count : new int[] {0, -1, EquipmentAddCommand.MAX_COUNT + 1, Integer.MAX_VALUE}) {
+            assertThrows(IllegalArgumentException.class, () ->
+                    new EquipmentAddCommand("Camera", "Photo", Condition.GOOD, "", count));
+        }
         assertThrows(NullPointerException.class, () -> new EquipmentAddCommand(null, "Photo", Condition.GOOD, ""));
         assertThrows(NullPointerException.class, () -> new EquipmentAddCommand("Camera", null, Condition.GOOD, ""));
         assertThrows(NullPointerException.class, () -> new EquipmentAddCommand("Camera", "Photo", null, ""));
@@ -134,6 +203,8 @@ public class EquipmentAddCommandTest {
         assertEquals(command, command);
         assertEquals(command, same);
         assertEquals(command.hashCode(), same.hashCode());
+        assertEquals(command, new EquipmentAddCommand("Camera", "Photo", Condition.GOOD, "", 1));
+        assertNotEquals(command, new EquipmentAddCommand("Camera", "Photo", Condition.GOOD, "", 2));
         assertNotEquals(command, null);
         assertNotEquals(command, "Camera");
         assertNotEquals(command, new EquipmentAddCommand("Other", "Photo", Condition.GOOD, ""));

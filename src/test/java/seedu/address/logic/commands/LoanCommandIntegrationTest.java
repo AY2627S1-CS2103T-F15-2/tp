@@ -114,8 +114,10 @@ public class LoanCommandIntegrationTest {
                 TODAY, Condition.GOOD, null), closed);
         assertEquals(Availability.AVAILABLE, returned.getAvailability(FIRST_UUID));
         returned.deleteMember(FIRST_MEMBER);
-        assertEquals(List.of(SECOND_MEMBER), returned.getMemberList());
-        assertEquals(List.of(assignedSnapshot.getLoanList().get(0)), returned.getLoanList());
+        assertTrue(returned.findMember(FIRST_MEMBER.getNusId()).orElseThrow().isDeleted());
+        assertEquals(2, returned.getMemberList().size());
+        assertEquals(2, returned.getLoanList().size());
+        assertEquals(closed, returned.getLoanList().get(1));
         storage.saveAddressBook(returned.getAddressBook());
         assertEquals(returned.getAddressBook(), reload(storage).getAddressBook());
     }

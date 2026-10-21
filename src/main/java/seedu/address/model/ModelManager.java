@@ -129,8 +129,18 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public void setMember(Member target, Member editedMember) {
+        addressBook.setMember(target, editedMember);
+    }
+
+    @Override
     public void deleteMember(Member member) {
         addressBook.removeMember(member);
+    }
+
+    @Override
+    public void restoreMember(Member member) {
+        addressBook.restoreMember(member);
     }
 
     @Override
@@ -156,6 +166,16 @@ public class ModelManager implements Model {
     @Override
     public void deleteEquipment(Equipment equipment) {
         addressBook.removeEquipment(equipment);
+    }
+
+    @Override
+    public void setEquipment(Equipment target, Equipment edited) {
+        addressBook.setEquipment(target, edited);
+    }
+
+    @Override
+    public void restoreEquipment(Equipment equipment) {
+        addressBook.restoreEquipment(equipment);
     }
 
     @Override
@@ -203,7 +223,8 @@ public class ModelManager implements Model {
         requireNonNull(uuid);
         Equipment equipment = addressBook.findEquipment(uuid).orElseThrow(EquipmentNotFoundException::new);
         boolean hasOpenLoan = addressBook.findOpenLoan(uuid).isPresent();
-        return AvailabilityCalculator.calculate(equipment.getCondition(), hasOpenLoan);
+        return equipment.isDeleted() ? Availability.UNAVAILABLE
+                : AvailabilityCalculator.calculate(equipment.getCondition(), hasOpenLoan);
     }
 
     //=========== Filtered Person List Accessors =============================================================

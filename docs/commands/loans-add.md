@@ -7,13 +7,13 @@ The condition of each unit at assignment is recorded in its loan history. The
 existing single-UUID form continues to work.
 
 Integration status: the assignment route dispatches to its real command parser through
-`LoansCommandParser`. Successful execution requests the affected equipment details.
+`LoansCommandParser`. A single assignment opens equipment details; a batch opens the Loans tab.
 Keith's application-shell integration and final GUI acceptance are tracked separately in issue #75.
 
 Format:
 
 ```text
-loans add uuid/UUID nus/NUS_ID assigned/DATE expected/DATE
+loans add uuid/UUID[,UUID...] nus/NUS_ID assigned/DATE expected/DATE
 ```
 
 All four parameters are required and may appear in any order. Family and subcommand names are
@@ -28,14 +28,14 @@ Example for the available sample camera and Jamie Lim:
 loans add uuid/550e8400-e29b-41d4-a716-446655440000 nus/A0234567R assigned/2026-10-13 expected/2026-10-20
 ```
 
-The member and equipment must exist at execution time. Equipment must be `AVAILABLE`: it has no
-open loan and its condition is `GOOD` or `FAIR`. Already assigned, damaged and under-repair items
+The member and every equipment unit must exist and be active at execution time. Equipment must be
+`AVAILABLE`: it has no open loan and its condition is `GOOD` or `FAIR`. Already assigned, damaged and under-repair items
 cannot be issued. The assignment date must be no later than today, and the expected return date
 must be on or after assignment. An expected return date in the future is valid. Today is evaluated
 using your computer's local date when the command executes.
 
-Success records an open loan and displays the affected equipment's details. Holder, member
-holdings and availability are derived from that loan. Invalid input or a failed validation leaves
+Success records the open loans and displays equipment details for one unit or the Loans tab for a batch.
+Holder, member holdings and availability are derived from those loans. Invalid input or a failed validation leaves
 all records unchanged.
 
 Missing, blank, repeated, malformed or unknown parameters and text before the first parameter
@@ -43,9 +43,6 @@ are errors. A parameter marker starts at the beginning of input or after whitesp
 `[A-Za-z][A-Za-z0-9_-]*/`. These markers are reserved even inside free text; quoting and escaping
 are unsupported. URLs such as `https://example.com` and slashes inside ordinary words are not
 parameter markers.
-
-The existing command pipeline saves successful mutations. If saving fails, the application reports
-the error; it does not promise to undo an already completed change in memory.
 
 Assignment is staged and atomically persisted before live publication. A failed save leaves all
 collections and saved bytes unchanged. See [MVP fields](MvpFields.md) for canonical UUIDs, exact
