@@ -47,6 +47,7 @@
         "design": "Design",
         "architecture": "Architecture",
         "ui-component": "UI component",
+        "tab-completion": "Tab completion",
         "logic-component": "Logic component",
         "model-component": "Model component",
         "storage-component": "Storage component",
@@ -66,6 +67,7 @@
         "appendix-instructions-for-manual-testing": "Appendix: Instructions for manual testing",
         "launch-and-shutdown": "Launch and shutdown",
         "grouped-equipment-command-assistance-and-appearance": "Grouped equipment, command assistance and appearance",
+        "tab-completion-across-current-commands": "Tab completion across current commands",
         "rejection-of-retired-commands": "Rejection of retired commands",
         "adding-a-batch-of-equipment": "Adding a batch of equipment",
         "editing-deleting-and-restoring-equipment": "Editing, deleting and restoring equipment",
@@ -138,6 +140,7 @@
       "headings": {
         "testing-guide": "Testing guide",
         "running-tests": "Running tests",
+        "autocomplete-checks": "Autocomplete checks",
         "types-of-tests": "Types of tests"
       },
       "headingKeywords": {}
@@ -148,6 +151,7 @@
       "headings": {
         "laplace-user-guide": "Laplace User Guide",
         "quick-start": "Quick start",
+        "completing-commands-and-fields-with-tab": "Completing commands and fields with Tab",
         "sample-records-on-first-launch": "Sample records on first launch",
         "using-the-window": "Using the window",
         "appearance-mode-dark-and-mode-light": "Appearance: mode dark and mode light",
