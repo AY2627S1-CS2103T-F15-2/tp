@@ -34,8 +34,7 @@ text; there is no quoting or escaping. Ordinary embedded slashes and URLs remain
 the candidate before publishing it through the existing live observable root. Parser/business
 rejection and save failures preserve all records; rejected operations do not save. Partial candidate
 writes and failed replacements preserve the prior data file and useful I/O causes. See
-<a href="/tp/commands/MvpFields.html">MVP fields and failure behavior</a> for normalization and ordered diagnostics.</p> <p>Existing person commands and data remain supported. <code class="hljs inline no-lang">loans list</code> opens the existing Loans tab,
-a read-only presentation of current open loans. Closed records remain stored without a history presentation.</p> <h2 id="loan-rules">Loan rules<a class="fa fa-anchor" href="#loan-rules" onclick="event.stopPropagation()"></a></h2> <p>Assignments require an existing member, existing AVAILABLE equipment, an assigned date
+<a href="/tp/commands/MvpFields.html">MVP fields and failure behavior</a> for normalization and ordered diagnostics.</p> <p><code class="hljs inline no-lang">loans list</code> opens the Loans tab with current assignments and completed loan history.</p> <h2 id="loan-rules">Loan rules<a class="fa fa-anchor" href="#loan-rules" onclick="event.stopPropagation()"></a></h2> <p>Assignments require an existing active member, existing active AVAILABLE equipment, an assigned date
 on or before today, and an expected return on or after assignment. GOOD/FAIR equipment
 is available when it has no open loan; DAMAGED/UNDER_REPAIR items cannot be assigned.
 Expected returns may be after today. Returns require an open loan and its existing member,
@@ -48,7 +47,7 @@ same-name identities, loan lifecycle/holdings/availability, invalid parameter an
 rejection without writes, and save-error propagation. The member/equipment routing and
 legacy person-command compatibility scenarios are also retained. Full GUI navigation, refresh and
 packaged-window acceptance remain tracked separately in milestone integration issue #75.</p> <p>Member deletion now retains records and history. See <a href="/tp/commands/member-restore.html">Restore member</a> for lifecycle,
-persistence and feature-integration guarantees. Equipment deletion remains unchanged.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Wed, 21 Oct 2026, 16:50:18 GMT+8]</small></div></footer><!--]--></div>
+persistence and feature-integration guarantees. Equipment deletion remains unchanged.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Wed, 21 Oct 2026, 22:10:22 GMT+8]</small></div></footer><!--]--></div>
 </body><script src="/tp/markbind/js/bootstrap-utility.min.js"></script>
 <script src="/tp/markbind/js/polyfill.min.js"></script>
 <script src="/tp/markbind/js/vue.global.prod.min.js"></script>
