@@ -161,6 +161,17 @@ Availability, holders and inventory totals are derived, never persisted as indep
 one-open-loan-per-unit rule. `UniqueEquipmentList` checks UUID uniqueness and identity-preserving
 replacement. These responsibilities keep editing and restoration from breaking loan references.
 
+#### Loan workflow and history
+
+The following class diagram traces batch assignment and return from their parsers to the
+model, JSON adapter and history views. It lists the loan-facing methods relevant to this
+workflow; shared infrastructure and unrelated methods are omitted. `AddressBook` validates
+each batch in a candidate root, while `UniqueLoanList` retains completed loans and rejects
+a second open loan for the same equipment UUID. `MemberDetailsPanel` and
+`EquipmentDetailsPanel` both call `LoanHistoryContent.add` for their selected identity.
+
+<puml src="diagrams/LoanWorkflowClassDiagram.puml" alt="Loan workflow and history class diagram" />
+
 #### Inherited person model
 
 The following diagrams describe the retained AB3 person model and an inherited alternative design;
