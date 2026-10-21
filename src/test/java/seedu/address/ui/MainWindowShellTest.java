@@ -33,6 +33,7 @@ import javafx.scene.control.MenuButton;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TitledPane;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
@@ -106,6 +107,50 @@ public class MainWindowShellTest {
             window.dispose();
             window.getPrimaryStage().hide();
         });
+    }
+
+    @Test
+    public void contextActions_prepareCommandsAndFollowIdentityWhileResetIsExplicit() {
+        FxTestUtil.runAndWait(() -> {
+            submit("member search q/alex");
+            submit("member view nus/" + id(1));
+            TitledPane commands = (TitledPane) node("directorySummaryPlaceholder").lookup(".titled-pane");
+            commands.setAnimated(false);
+            commands.setExpanded(true);
+            layout();
+            int executed = logic.commands.size();
+            action("Use command").fire();
+            assertTrue(field().getText().startsWith("member edit nus/" + id(1)));
+            assertEquals(executed, logic.commands.size());
+            action("View equipment").fire();
+            assertEquals(new UUID(0, 1).toString(), detailLabel("equipmentUuid"));
+            commands = (TitledPane) node("directorySummaryPlaceholder").lookup(".titled-pane");
+            commands.setAnimated(false);
+            commands.setExpanded(true);
+            layout();
+            executed = logic.commands.size();
+            action("Use command").fire();
+            assertTrue(field().getText().startsWith("equipment edit uuid/" + new UUID(0, 1)));
+            assertEquals(executed, logic.commands.size());
+            action("View member").fire();
+            assertEquals(id(1).value, detailLabel("memberNusId"));
+            action("Back to results").fire();
+            assertTrue(label("queryContext").contains("alex"));
+            action("Reset search").fire();
+            assertEquals("Filters: All records", label("queryContext"));
+            submit("equipment search q/Camera 1");
+            rows().fireEvent(key(KeyCode.ENTER));
+            action("Back to results").fire();
+            assertTrue(label("queryContext").contains("camera 1"));
+            action("Reset search").fire();
+            assertEquals("Filters: All records", label("queryContext"));
+        });
+    }
+
+    private Button action(String caption) {
+        return window.getPrimaryStage().getScene().getRoot().lookupAll(".button").stream()
+                .map(node -> (Button) node).filter(button -> button.getText().equals(caption))
+                .findFirst().orElseThrow();
     }
 
     @Test
