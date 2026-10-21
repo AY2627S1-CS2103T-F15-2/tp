@@ -116,12 +116,16 @@ public class LoanPanelTest {
             equipmentFilter.setText(SECOND_UUID.toString());
             assertEquals("0", ((Label) panel.getRoot().lookup("#openCount")).getText());
             assertEquals("0", ((Label) panel.getRoot().lookup("#closedCount")).getText());
+            Label emptyOpenLoans = (Label) section(panel, "openLoans").getChildren().get(0);
+            assertEquals("No open loans match these filters.", emptyOpenLoans.getText());
             equipmentFilter.setText(FIRST_UUID.toString());
             assertEquals(List.of(FIRST_UUID), equipmentIds(panel, "openLoans"));
             assertEquals("1", ((Label) panel.getRoot().lookup("#openCount")).getText());
             memberFilter.setText("NO_MATCH");
             assertEquals("0", ((Label) panel.getRoot().lookup("#openCount")).getText());
             assertEquals("0", ((Label) panel.getRoot().lookup("#closedCount")).getText());
+            emptyOpenLoans = (Label) section(panel, "openLoans").getChildren().get(0);
+            assertEquals("No open loans match these filters.", emptyOpenLoans.getText());
         });
     }
 

@@ -74,7 +74,10 @@ public class LoanPanel extends UiPart<Region> {
                         .thenComparing(Loan::getAssignedDate).thenComparing(loan -> loan.getEquipmentUuid().toString()))
                 .toList();
         openCount.setText(Integer.toString(open.size()));
-        refreshSection(openLoans, open, "No open loans. Available equipment is ready to assign.");
+        boolean hasFilter = !memberFilter.getText().isBlank() || !equipmentFilter.getText().isBlank();
+        String openEmptyMessage = hasFilter ? "No open loans match these filters."
+                : "No open loans. Available equipment is ready to assign.";
+        refreshSection(openLoans, open, openEmptyMessage);
         closedCount.setText(Integer.toString(closed.size()));
         refreshSection(closedLoans, closed, "No completed loans match these filters.");
     }
