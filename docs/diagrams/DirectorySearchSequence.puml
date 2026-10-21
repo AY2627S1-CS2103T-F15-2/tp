@@ -1,0 +1,59 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as Logic LOGIC_COLOR
+participant "command:DirectorySearchCommand" as Search LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "model:Model" as Model MODEL_COLOR
+participant "query:DirectoryQuery" as Query MODEL_COLOR
+end box
+
+[-> Logic : execute("member search q/alice sort/name")
+activate Logic
+note over Logic, Query
+Parsing omitted: query and command
+have been constructed from valid input.
+end note
+
+Logic -> Search : isTransactional()
+activate Search
+Search --> Logic : false
+deactivate Search
+
+Logic -> Search : execute(model)
+activate Search
+Search -> Model : getAddressBook()
+activate Model
+Model --> Search : data
+deactivate Model
+
+Search -> Query : members(data)
+activate Query
+note right of Query
+Filter by status, text, and holdings;
+sort a snapshot of matching members.
+end note
+Query --> Search : matchingMembers
+deactivate Query
+
+note over Search
+Count matchingMembers and construct result
+with DisplayRequest.members(query).
+end note
+Search --> Logic : result
+deactivate Search
+
+Logic -> Search : isReadOnly()
+activate Search
+Search --> Logic : true
+deactivate Search
+note over Logic
+Return before persistence.
+end note
+[<-- Logic : result
+deactivate Logic
+@enduml

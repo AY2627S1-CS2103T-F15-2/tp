@@ -174,6 +174,46 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Directory search and inventory planning
+
+`MemberCommandParser` and `EquipmentCommandParser` delegate `search` arguments to
+`DirectorySearchCommandParser`. It validates the allowed prefixes and sort fields, then constructs
+an immutable `DirectoryQuery` and a `DirectorySearchCommand` for the requested directory.
+Search defaults to active records; `status/deleted` and `status/all` expose retained records.
+
+The sequence below shows successful execution of `member search q/alice sort/name`.
+Parsing, collection iteration, and result-object construction are omitted to focus on
+the read-only command path. `data` is the `ReadOnlyAddressBook` returned by the model.
+
+<puml src="diagrams/DirectorySearchSequence.puml" alt="Read-only member search execution and query-carrying result" />
+
+`DirectorySearchCommand` counts matches using `DirectoryQuery`, then returns a `CommandResult`
+containing `DisplayRequest.members(query)` or `DisplayRequest.equipment(query)`. Since the command
+is read-only, `LogicManager` returns without creating a transaction snapshot or saving data.
+Equipment queries additionally use `Model.getAvailability` to derive availability from current state.
+
+`MainWindow` passes the same query to the directory list and its summary before refreshing them.
+Both evaluate the query against current data, keeping displayed rows and matching counts consistent.
+Sorting affects returned snapshots rather than stored records. Navigation requests without a query
+preserve the current criteria; explicit list commands pass `DirectoryQuery.all()` to reset them.
+After mutations, the shell refreshes the views with their retained queries and recovers selection by
+NUS ID or equipment UUID when possible.
+
+Inventory planning is computed by `InventoryGroups.summarize`, called from the equipment summary.
+The activity diagram below shows how it derives availability counts without storing aggregates.
+
+<puml src="diagrams/InventoryPlanningActivity.puml" alt="Grouping active equipment units and deriving inventory availability counts" />
+
+Each group uses a pair of normalized category and name values, keeping the two keys separate even
+when either contains a display separator. Every eligible physical unit contributes once using its
+own UUID for availability lookup. Groups are returned in category/name order, with missing availability
+counts shown as zero. Deleted equipment is excluded, and the caller supplies any additional eligibility
+predicate. The equipment summary accepts all active units for grouping, so inventory totals remain
+independent of directory search filters. These summaries preserve individual equipment identities
+and do not introduce a stored quantity field.
+
+<!-- Nguyen Anh Duy used OpenAI Codex to assist with this section and its two PlantUML diagrams. -->
+
 ### Adding multiple physical equipment units
 
 `EquipmentAddCommandParser` accepts optional `count/` through `LaplaceArgumentParser`, retaining its

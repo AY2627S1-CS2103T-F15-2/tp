@@ -1,0 +1,26 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+start
+:Create empty counts ordered by
+normalized category and name;
+while (More equipment units?) is (yes)
+    :Read next physical unit;
+    if (Active and accepted by
+    the eligibility predicate?) then (yes)
+        :Form group key from normalized
+        category and name as separate values;
+        :Look up current availability
+        using the unit's UUID;
+        :Increment that availability count
+        in the unit's group;
+    else (no)
+    endif
+endwhile (no)
+:Format groups in category/name order
+with available, assigned, unavailable counts
+(zero for absent availability states);
+:Return summary lines;
+stop
+@enduml
