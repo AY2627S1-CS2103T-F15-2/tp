@@ -11,16 +11,17 @@ import seedu.address.model.equipment.Equipment;
 import seedu.address.model.equipment.exceptions.EquipmentNotFoundException;
 
 /**
- * Deletes a stored equipment item by UUID, delegating loan integrity to the model.
+ * Soft-deletes a stored unit by UUID, retaining details and loan history.
  */
 public class EquipmentDeleteCommand extends Command {
 
     public static final String COMMAND_WORD = "equipment delete";
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Deletes equipment without an open loan. Parameters: uuid/UUID\n"
+            + ": Soft-deletes equipment without an open loan; retains details and history. Parameters: uuid/UUID\n"
             + "Example: equipment delete uuid/550e8400-e29b-41d4-a716-446655440000";
     public static final String MESSAGE_SUCCESS = "Deleted equipment %1$s: %2$s.";
     public static final String MESSAGE_NOT_FOUND = "No equipment with UUID %1$s exists.";
+    public static final String MESSAGE_DELETED = "Equipment %s is already deleted.";
     public static final String MESSAGE_OPEN_LOAN =
             "Cannot delete %1$s because it is assigned to %2$s. Return the item first.";
 
@@ -43,6 +44,9 @@ public class EquipmentDeleteCommand extends Command {
         requireNonNull(model);
         try {
             Equipment equipment = model.findEquipment(targetUuid).orElseThrow(EquipmentNotFoundException::new);
+            if (equipment.isDeleted()) {
+                throw new CommandException(String.format(MESSAGE_DELETED, targetUuid));
+            }
             String blockedMessage = model.findOpenLoan(targetUuid)
                     .map(loan -> String.format(MESSAGE_OPEN_LOAN, targetUuid, loan.getMemberNusId()))
                     .orElse("Could not delete equipment " + targetUuid + ".");

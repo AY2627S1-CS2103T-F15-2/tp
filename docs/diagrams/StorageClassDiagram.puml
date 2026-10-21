@@ -1,59 +1,36 @@
 @startuml
 !include style.puml
-skinparam classAttributeFontColor #FFFFFF
-skinparam classAttributeIconSize 0
 skinparam arrowThickness 1.1
 skinparam arrowColor STORAGE_COLOR
 skinparam classBackgroundColor STORAGE_COLOR
 
-title Member deletion state in the JSON snapshot
-
 package Storage as StoragePackage {
-    class Storage <<interface>>
-    class StorageManager
-    class JsonUserPrefsStorage
-    class JsonAddressBookStorage
-    class JsonSerializableAddressBook
-    class JsonAdaptedMember {
-        -nusId: String {readOnly}
-        -name: String {readOnly}
-        -phone: String {readOnly}
-        -email: String {readOnly}
-        -deleted: boolean
-        ~setDeleted(value: JsonNode): void
-        +toModelType(): Member
-    }
-    class JsonAdaptedEquipment
-    class JsonAdaptedLoan
-    class JsonAdaptedPerson
-    class JsonAdaptedTag
-}
-package Model as ModelPackage {
-    class Member MODEL_COLOR
-}
-show JsonAdaptedMember members
 
-StorageManager ..|> Storage
-StorageManager --> "1" JsonUserPrefsStorage
-StorageManager --> "1" JsonAddressBookStorage
+Class "<<interface>>\nStorage" as Storage
+Class StorageManager
+
+package "UserPrefs Storage" #F4F6F6{
+Class JsonUserPrefsStorage
+}
+
+package "AddressBook Storage" #F4F6F6{
+Class JsonAddressBookStorage
+Class JsonSerializableAddressBook
+Class JsonAdaptedPerson
+Class JsonAdaptedTag
+}
+
+}
+
+Class HiddenOutside #FFFFFF
+HiddenOutside ..> Storage
+
+StorageManager .up.|> Storage
+StorageManager -down-> "1" JsonUserPrefsStorage
+StorageManager -down-> "1" JsonAddressBookStorage
+
 JsonAddressBookStorage ..> JsonSerializableAddressBook
-JsonSerializableAddressBook --> "0..*\n-members" JsonAdaptedMember
-JsonSerializableAddressBook --> "0..*\n-equipment" JsonAdaptedEquipment
-JsonSerializableAddressBook --> "0..*\n-loans" JsonAdaptedLoan
-JsonSerializableAddressBook --> "0..*\n-persons" JsonAdaptedPerson
-JsonAdaptedPerson --> "0..*\n-tags" JsonAdaptedTag
-JsonAdaptedMember ..> Member : reconstructs with deletion flag
+JsonSerializableAddressBook --> "*" JsonAdaptedPerson
+JsonAdaptedPerson --> "*" JsonAdaptedTag
 
-note right of JsonAdaptedMember
-  Persist deleted as a JSON boolean.
-  Missing legacy field defaults to false.
-  Explicit null and non-boolean values are rejected.
-end note
-note bottom of StoragePackage
-  The persons and tags adapters are legacy support.
-  Retain active and deleted members and closed loans.
-  Validate entities before loading loan references.
-  Closed loans may reference deleted members;
-  open loans may not.
-end note
 @enduml

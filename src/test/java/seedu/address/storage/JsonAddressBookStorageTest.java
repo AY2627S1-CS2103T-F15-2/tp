@@ -145,7 +145,7 @@ public class JsonAddressBookStorageTest {
         storage.saveAddressBook(restored);
         AddressBook afterDeletion = new AddressBook(storage.readAddressBook().orElseThrow());
         assertEquals(restored, afterDeletion);
-        assertTrue(afterDeletion.getLoanList().isEmpty());
+        assertEquals(original.getLoanList().size(), afterDeletion.getLoanList().size());
         assertEquals(original.getPersonList(), afterDeletion.getPersonList());
     }
 

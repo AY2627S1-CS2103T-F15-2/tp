@@ -1,7 +1,6 @@
 # MVP fields and failure behavior
 
-These rules apply to newly entered Laplace commands. Existing person commands retain their
-original rules. Previously saved member/equipment values remain readable and are not normalized
+These rules apply to newly entered Laplace commands. The old top-level person commands are retired. Previously saved member/equipment values remain readable and are not normalized
 or rewritten merely by loading the file.
 
 | Field | New Laplace input |
@@ -12,6 +11,7 @@ or rewritten merely by loading the file.
 | Equipment name | 1-100 printable Unicode characters after normalization. |
 | Category | 1-50 printable Unicode characters after normalization. |
 | Notes | Optional, including explicit empty `notes/`; at most 300 printable Unicode characters. Line breaks become spaces through both full-command parsing and pasted command input. |
+| Equipment count | Optional `count/`, default 1. ASCII digits representing an integer from 1 to 100; leading zeros accepted. Blank, signed, fractional, out-of-range and repeated values are rejected. |
 | NUS ID | One ASCII letter, seven digits and an optional final ASCII letter. Stored uppercase; exact normalized lookup. |
 | Equipment UUID | Exactly 8-4-4-4-12 hexadecimal characters with hyphens. Case-insensitive input; lowercase output. Abbreviated Java UUID forms are rejected. |
 | Condition | Exactly `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`, ignoring case. Space/hyphen aliases are rejected. |
@@ -39,16 +39,18 @@ even inside text values. No quoting or escaping is introduced; embedded slashes 
 
 ## Persistence and presentation
 
-All six Laplace mutation commands execute against an isolated model snapshot. Storage serializes the complete
+Laplace mutation commands execute against an isolated model snapshot. Storage serializes the complete
 candidate before creating a private sibling file, flushes that file and atomically replaces the destination.
 Only then does LogicManager publish the candidate through the existing live observable root. A write or
 replacement failure preserves all records and the prior data file; a later successful command cannot persist
 a failed operation. The original I/O cause is retained. Unsupported atomic replacement fails safely rather
 than falling back to truncating/copying over the destination. Panels and individual commands never save.
 
-Equipment creation generates UUIDs during execution. Collisions are silently retried up to 100 attempts;
-a broken/null source or exhausted bound fails without adding or saving anything. Success returns the actual
-new UUID. The normal source remains random version 4 UUIDs.
+Equipment creation generates UUIDs during execution. Collisions with existing records or identities in the
+same batch are silently retried up to 100 attempts per unit. All identities are reserved before insertion;
+a null source or exhausted bound fails without adding or saving anything. A later insertion or save failure
+discards the isolated candidate, preserving the live state. Success returns all generated UUIDs. The normal
+source remains random version 4 UUIDs; a batch is persisted once as separate equipment records.
 
 Member holdings contain only open loans, ordered by expected return date, normalized equipment name and
 canonical UUID. Equipment directories retain category/name/UUID ordering. Switching detail identity resets
@@ -56,7 +58,7 @@ the scroll position; background refresh preserves it. Inconsistent references pr
 instead of an incomplete holdings list.
 
 Loans shows current open assignments only, with exact member/equipment navigation and dates. Closed records
-remain in the model/JSON for return integrity and existing deletion cleanup; there is no history presentation.
+remain in the model/JSON through deletion/restoration; there is no history presentation.
 
 The command input replaces pasted tabs and line-break characters with spaces before JavaFX
 can strip them. CRLF occupies two input spaces to preserve edit offsets; text value normalization
@@ -64,3 +66,9 @@ collapses those spaces before validation/storage. Full-command parsing also acce
 arguments, preserving field boundaries and reserved-marker errors. Rejected pasted input stays
 available for correction. Deletion refusal reports the actual open-item count/current holder;
 reassignment names the current holder, and successful deletion includes the stored record name.
+
+Equipment edits require an exact UUID and at least one changed detail. UUIDs and lifecycle state cannot
+be edited. A blank `notes/` clears notes. Descriptive and condition edits are permitted during a loan;
+ASSIGNED still takes precedence until return. Deleted units must be restored before editing or lending.
+The persisted equipment `deleted` flag defaults to false when absent and rejects null/non-booleans.
+Deletion retains closed history and blocks open loans; restoration has no time limit.

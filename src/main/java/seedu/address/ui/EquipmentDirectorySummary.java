@@ -15,12 +15,22 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.equipment.exceptions.EquipmentNotFoundException;
+import seedu.address.model.query.DirectoryQuery;
+import seedu.address.model.query.InventoryGroups;
 
 /** Read-only equipment directory summary with freshly derived availability on every refresh. */
 public class EquipmentDirectorySummary extends UiPart<Region> {
 
     private final ReadOnlyAddressBook data;
     private final Function<UUID, Availability> availabilityLookup;
+    private DirectoryQuery query = DirectoryQuery.all();
+
+    @FXML
+    private Label sortOrder;
+    @FXML
+    private Label criteria;
+    @FXML
+    private Label inventoryGroups;
 
     @FXML
     private Label countBadge;
@@ -52,6 +62,11 @@ public class EquipmentDirectorySummary extends UiPart<Region> {
         refresh(Optional.empty());
     }
 
+    /** Sets transient criteria; the parent refreshes once after coordinating both directory components. */
+    public void setQuery(DirectoryQuery query) {
+        this.query = requireNonNull(query);
+    }
+
     /** Refreshes counts, derived availability and selection; no collection writes or listeners are installed. */
     public void refresh(Optional<UUID> selected) {
         requireNonNull(selected);
@@ -62,6 +77,9 @@ public class EquipmentDirectorySummary extends UiPart<Region> {
         }
         int unknown = 0;
         for (Equipment equipment : data.getEquipmentList()) {
+            if (equipment.isDeleted()) {
+                continue;
+            }
             try {
                 Availability availability = requireNonNull(availabilityLookup.apply(equipment.getUuid()));
                 counts.merge(availability, 1, Integer::sum);
@@ -71,7 +89,13 @@ public class EquipmentDirectorySummary extends UiPart<Region> {
         }
         countBadge.setText(count + " ITEMS");
         totalCount.setText(Integer.toString(count));
-        displayedCount.setText(Integer.toString(count));
+        int displayed = query.equipment(data, availabilityLookup).size();
+        displayedCount.setText(Integer.toString(displayed));
+        sortOrder.setText(query.sortDescription(false));
+        criteria.setText(query.description());
+        inventoryGroups.setText(unknown == 0 ? String.join("\n",
+                InventoryGroups.summarize(data, availabilityLookup, item -> true))
+                : "Inventory groups unavailable: inconsistent equipment data.");
         availableCount.setText(Integer.toString(counts.get(Availability.AVAILABLE)));
         assignedCount.setText(Integer.toString(counts.get(Availability.ASSIGNED)));
         unavailableCount.setText(Integer.toString(counts.get(Availability.UNAVAILABLE)));
@@ -84,8 +108,11 @@ public class EquipmentDirectorySummary extends UiPart<Region> {
         status.getStyleClass().add(unknown == 0 ? "laplace-success" : "laplace-error");
         statusTitle.setText(unknown > 0 ? "Inconsistent equipment data"
                 : count == 0 ? "No equipment yet" : "All equipment displayed");
+        if (unknown == 0 && displayed != count) {
+            statusTitle.setText("Showing " + displayed + " matching equipment items");
+        }
         statusMessage.setText(unknown > 0 ? "Availability could not be determined for " + unknown + " item(s)."
                 : count == 0 ? "Add an item with equipment add name/NAME category/CATEGORY condition/CONDITION."
-                : "Availability reflects current condition and open loans.");
+                : "Availability counts and inventory groups include active units only; total includes deleted units.");
     }
 }

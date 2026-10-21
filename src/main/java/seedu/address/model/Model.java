@@ -146,11 +146,21 @@ public interface Model {
     void addEquipment(Equipment equipment);
 
     /**
-     * Deletes equipment by UUID and removes its closed loan history.
+     * Soft-deletes equipment by UUID, retaining its details and closed loan history.
      * @throws seedu.address.model.equipment.exceptions.EquipmentNotFoundException if the UUID is unknown.
-     * @throws IllegalStateException if the equipment has an open loan.
+     * @throws IllegalStateException if the equipment is already deleted or has an open loan.
      */
     void deleteEquipment(Equipment equipment);
+
+    /**
+     * Edits active equipment, preserving UUID and lifecycle state.
+     */
+    void setEquipment(Equipment target, Equipment edited);
+
+    /**
+     * Restores deleted equipment, retaining UUID, details and history.
+     */
+    void restoreEquipment(Equipment equipment);
 
     /**
      * Returns an unmodifiable live view of all equipment.
@@ -188,7 +198,7 @@ public interface Model {
     ObservableList<Loan> getLoanList();
 
     /**
-     * Derives availability from equipment condition and whether it has an open loan.
+     * Returns UNAVAILABLE for deleted equipment; otherwise derives availability from condition and open loans.
      * @throws seedu.address.model.equipment.exceptions.EquipmentNotFoundException if the UUID is unknown.
      */
     Availability getAvailability(UUID uuid);

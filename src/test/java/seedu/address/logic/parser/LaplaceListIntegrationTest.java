@@ -34,6 +34,7 @@ import seedu.address.model.member.NusId;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.query.DirectoryQuery;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -70,13 +71,13 @@ public class LaplaceListIntegrationTest {
     @Test
     public void execute_listRoutes_preservesAndReloadsAllDataThroughRealStorage() throws Exception {
         AddressBook before = new AddressBook(model.getAddressBook());
-        assertEquals(new CommandResult("Listed 2 active members.", DisplayRequest.members()),
+        assertEquals(new CommandResult("Listed 2 active members.", DisplayRequest.members(DirectoryQuery.all())),
                 logic.execute("member\tlist \t"));
-        assertEquals(new CommandResult("Listed 2 equipment items.", DisplayRequest.equipment()),
+        assertEquals(new CommandResult("Listed 2 equipment items.", DisplayRequest.equipment(DirectoryQuery.all())),
                 logic.execute("equipment list"));
         assertEquals(new CommandResult("Showing current loans.", DisplayRequest.loans()),
                 logic.execute("loans list"));
-        assertEquals(3, storage.saves);
+        assertEquals(2, storage.saves);
         assertEquals(before, model.getAddressBook());
         assertTrue(model.getFilteredPersonList().isEmpty());
         ModelManager reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
@@ -115,8 +116,9 @@ public class LaplaceListIntegrationTest {
             }
         };
         LogicManager failingLogic = new LogicManager(model, failingStorage);
+        org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> failingLogic.execute("equipment list"));
         AddressBook before = new AddressBook(model.getAddressBook());
-        for (String route : new String[] {"member list", "equipment list", "loans list"}) {
+        for (String route : new String[] {"member list", "loans list"}) {
             CommandException failure = org.junit.jupiter.api.Assertions.assertThrows(CommandException.class, () ->
                     failingLogic.execute(route));
             assertSame(cause, failure.getCause());

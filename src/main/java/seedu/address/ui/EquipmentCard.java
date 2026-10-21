@@ -32,7 +32,7 @@ public class EquipmentCard extends UiPart<Region> {
     /** Renders caller-supplied availability and holder without querying or mutating the model. */
     public EquipmentCard(Equipment equipment, Availability availability, Optional<Member> holder) {
         super(validateInput(equipment, availability, holder));
-        name.setText(equipment.getName());
+        name.setText(equipment.getName() + (equipment.isDeleted() ? " [DELETED]" : ""));
         category.setText("Category: " + equipment.getCategory());
         uuid.setText("UUID: " + equipment.getUuid());
         condition.setText("Condition: " + equipment.getCondition());

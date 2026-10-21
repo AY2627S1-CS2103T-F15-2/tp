@@ -65,6 +65,18 @@ public class UniqueEquipmentList {
     }
 
     /**
+     * Replaces a unit in place without changing its UUID, preserving collection order.
+     */
+    public void setEquipment(Equipment target, Equipment replacement) {
+        requireAllNonNull(target, replacement);
+        if (!target.getUuid().equals(replacement.getUuid())) {
+            throw new IllegalArgumentException("Equipment UUID cannot change.");
+        }
+        int index = indexOf(target.getUuid()).orElseThrow(EquipmentNotFoundException::new);
+        internalList.set(index, replacement);
+    }
+
+    /**
      * Replaces the contents of this list with {@code equipment}.
      * {@code equipment} must not contain duplicate UUIDs. The supplied list is copied and is not retained.
      * A rejected replacement leaves this list unchanged.

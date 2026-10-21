@@ -7,6 +7,8 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.equipment.Condition;
@@ -31,6 +33,7 @@ class JsonAdaptedEquipment {
     private final String category;
     private final String condition;
     private final String notes;
+    private boolean deleted;
 
     /**
      * Constructs a {@code JsonAdaptedEquipment} with the given equipment details.
@@ -56,6 +59,18 @@ class JsonAdaptedEquipment {
         category = source.getCategory();
         condition = source.getCondition().name();
         notes = source.getNotes();
+        deleted = source.isDeleted();
+    }
+
+    /**
+     * Validates an explicit deletion flag; absent legacy fields default to false.
+     */
+    @JsonSetter("deleted")
+    void setDeleted(JsonNode value) {
+        if (value == null || !value.isBoolean()) {
+            throw new IllegalArgumentException("Equipment deleted must be a boolean.");
+        }
+        deleted = value.booleanValue();
     }
 
     /**
@@ -89,7 +104,7 @@ class JsonAdaptedEquipment {
         }
         final Condition modelCondition = parseCondition(condition);
         final String modelNotes = notes == null ? "" : notes;
-        return new Equipment(modelUuid, name, category, modelCondition, modelNotes);
+        return new Equipment(modelUuid, name, category, modelCondition, modelNotes, deleted);
     }
 
     private static UUID parseUuid(String rawUuid) throws IllegalValueException {

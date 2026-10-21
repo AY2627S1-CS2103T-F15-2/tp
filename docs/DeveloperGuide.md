@@ -13,7 +13,8 @@
 
 ## **Acknowledgements**
 
-* _{List the sources of reused or adapted ideas, code, documentation, and third-party libraries here, with links to the originals.}_
+* Laplace evolves the course-provided [AddressBook-Level3 starter](https://github.com/NUS-CS2103-AY2627-S1/tp).
+
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -50,7 +51,8 @@ The bulk of the app's work is done by the following four components:
 
 **How the architecture components interact with each other**
 
-The *Sequence Diagram* below shows how the components interact with each other for the scenario where the user issues the command `delete 1`.
+The *Sequence Diagram* below is an inherited AB3 example using `delete 1`. That command is now rejected;
+see [command routing and legacy compatibility](#command-routing-and-legacy-compatibility) for current behavior.
 
 <puml src="diagrams/ArchitectureSequenceDiagram.puml" width="574" />
 
@@ -86,11 +88,11 @@ The `UI` component,
 
 **API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/logic/Logic.java)
 
-Here's a (partial) class diagram of the `Logic` component:
+The following inherited class diagram shows the AB3 `Logic` structure; its person-command routes are retired:
 
 <puml src="diagrams/LogicClassDiagram.puml" width="550"/>
 
-The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
+The sequence diagram below is a historical AB3 example of `execute("delete 1")`, not a supported Laplace flow.
 
 <puml src="diagrams/DeleteSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `delete 1` Command" />
 
@@ -100,24 +102,66 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 </box>
 
 
-How the `Logic` component works:
+#### Command routing and legacy compatibility
 
-1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
-1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).<br>
-   Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
-1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
+`LogicManager.execute()` first calls `AddressBookParser.parseCommand()`. The root parser accepts
+`member`, `equipment`, and `loans`, delegating to their family parsers and then the appropriate leaf
+parser (for example, `EquipmentCommandParser` and `EquipmentAddCommandParser`). It also accepts
+`help` and `exit`. Family and leaf parsers remain responsible for validating subcommands and arguments.
 
-Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
+The retired top-level words `add`, `edit`, `delete`, `clear`, `find`, and `list` now reach the existing
+unknown-command branch and throw `ParseException("Unknown command.")`. In particular, `list members`
+is rejected; the supported command is `member list`. Rejection occurs before a command is constructed
+or executed, before a transaction snapshot is created, and before storage is called.
+
+For supported commands, `LogicManager` executes transactional mutations on an isolated model snapshot,
+saves that candidate state, and publishes it to the live root only after saving succeeds. Commands
+marked `isReadOnly()` return without saving. This retirement does not change those execution rules.
+
+`AddressBook` is still the shared root for persons, members, equipment, and loans. Its name and the
+`getAddressBook()`/`saveAddressBook()` APIs do not identify disposable person-only behavior. Existing
+JSON `persons` data is retained and round-trips when supported commands save. Person value classes
+used by members, legacy command/parser implementations and their unit tests, and the legacy UI panel
+remain for a separate dependency-aware cleanup. Removing public routes does not remove stored records.
+
+The inherited parser diagram below documents the remaining AB3 classes, not the active root dispatch:
 
 <puml src="diagrams/ParserClasses.puml" width="600"/>
 
-How the parsing works:
-* When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
-* All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
-
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/model/Model.java)
+
+#### Equipment and loan model
+
+The following diagram shows the equipment-related subset of the current model. Member/person
+collections, preferences, JavaFX collection wrappers and interfaces are omitted to keep its scope clear.
+Solid arrows show stored references; the dashed loan-to-equipment arrow describes UUID resolution,
+not an object reference stored inside `Loan`.
+
+<puml src="diagrams/EquipmentModel.puml" alt="Equipment model, retained identities and loan references" />
+
+`AddressBook` creates equipment/loan containers lazily, hence the `0..1` multiplicities. A null container
+means an empty collection to callers. The `0..*` multiplicity at each collection end of the value
+associations accounts for immutable objects shared across transaction snapshots; it does not mean
+one physical unit has several UUIDs. Equipment collections hold distinct UUIDs, and editing replaces a
+value at its existing position. Ordinary associations are used instead of composition because immutable
+values can outlive or be shared by their containers.
+
+| Relationship or rule | Meaning in a valid root dataset |
+| --- | --- |
+| Loan → equipment | Each loan's `equipmentUuid` resolves to exactly one retained equipment record. A unit can have zero or more historical loans, with at most one open loan. |
+| Loan → member (omitted from diagram) | Each loan's `memberNusId` resolves to one retained member. A member may have multiple open or closed loans. |
+| Identity and details | UUID identifies a physical unit. Name/category determine a derived inventory group; matching descriptions do not merge identities. |
+| Lifecycle | Deleted records retain UUIDs, details and closed loans. Open loans cannot reference deleted equipment or deleted members. |
+| Availability | `ModelManager` returns UNAVAILABLE for deleted units; otherwise the calculator returns ASSIGNED for an open loan, AVAILABLE for GOOD/FAIR, and UNAVAILABLE for DAMAGED/UNDER_REPAIR. |
+
+Availability, holders and inventory totals are derived, never persisted as independent fields.
+`AvailabilityCalculator` only accepts condition and open-loan state; the deletion check belongs to
+`ModelManager`. `AddressBook` validates cross-record references, while `UniqueLoanList` enforces the
+one-open-loan-per-unit rule. `UniqueEquipmentList` checks UUID uniqueness and identity-preserving
+replacement. These responsibilities keep editing and restoration from breaking loan references.
+
+#### Member model
 
 <puml src="diagrams/ModelClassDiagram.puml" alt="Member model with immutable details and deletion state" />
 
@@ -139,34 +183,23 @@ retaining collection position, reserved identities and historical loan reference
 list remains observable and includes deleted records. The model also retains user preferences through
 `UserPrefs` and `ReadOnlyUserPrefs`.
 
-<puml src="diagrams/MemberLifecycleDiagram.puml" alt="Member editing, soft-delete and unlimited restore" />
+Deletion is blocked while a member has outstanding loans. Deleted members remain visible and
+recoverable indefinitely; editing and new loans require restoration first. Restoration has no expiry
+or automatic purge. Mutations use the existing transactional save-before-publish pipeline.
 
-The state diagram follows a logical member record identified by its stable NUS ID, rather than the
-lifetime of one immutable Java object. Transition labels use `event [guard] / effect` notation.
-Deletion is blocked while a member has outstanding loans. A deleted member remains visible and
-recoverable indefinitely; editing, new loans and repeated deletion are rejected. Restoration has no
-time limit, expiry or automatic purge. These mutations use the existing transactional save-before-publish
-pipeline: validation and persistence failures preserve live state and the previous saved file.
-
-These are implementation design diagrams. Their notation follows the
-[course modeling chapter](https://nus-cs2103-ay2627-s1.github.io/website/se-book-adapted/chapters/modeling.html).
-Class diagrams show selected structure; the state diagram separately describes lifecycle behavior.
+The diagram follows the [course modeling notation](https://nus-cs2103-ay2627-s1.github.io/website/se-book-adapted/chapters/modeling.html)
+and shows selected structure; lifecycle behavior is explained in the text above.
 
 ### Storage component
 
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
-<puml src="diagrams/StorageClassDiagram.puml" alt="JSON storage of member deletion state" />
+<puml src="diagrams/StorageClassDiagram.puml" width="550" />
 
 The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
-
-Member JSON includes a `deleted` boolean. Missing fields in legacy saves default to `false`; explicit
-null and non-boolean values are rejected. Snapshots retain deleted members and their closed loan
-history. Loading validates member identities before loan references, rejecting open loans whose member
-is deleted while accepting valid closed references.
 
 ### Common classes
 
@@ -178,7 +211,101 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Adding multiple physical equipment units
+
+`EquipmentAddCommandParser` accepts optional `count/` through `LaplaceArgumentParser`, retaining its
+left-to-right validation and duplicate-prefix checks. Counts default to 1 and must be ASCII digits with
+a numeric value from 1 to `EquipmentAddCommand.MAX_COUNT` (100). The command constructor also validates
+the range for direct callers. The cap bounds accidental bulk creation and feedback size.
+
+`EquipmentAddCommand` reserves all identities before inserting units. A local set prevents duplicate
+UUIDs within the batch; `Model.hasEquipment` excludes already-stored UUIDs. Each unit has a bounded
+100-attempt generation budget. The command computes an advisory duplicate-description warning against
+the pre-batch records, then inserts units into the candidate model supplied by `LogicManager`.
+
+The existing transactional path saves that candidate once and publishes only after success. Generation
+failure leaves the candidate untouched; insertion or persistence failure discards the candidate without
+changing live records. No quantity field, batch entity, persistence migration, or new model API is added.
+
+Count 1 preserves existing feedback and `equipmentDetails(uuid)` navigation. Larger batches report all
+new UUIDs and return `DisplayRequest.equipment(DirectoryQuery.all())`, resetting prior filters/sorting
+so the newly created units can be found. Availability remains derived from each unit's condition/loans.
+
+#### Equipment-add parsing
+
+The parsing sequence below traces a valid `equipment add ... count/2` request and leaf-parser
+rejection. `AddressBookParser` selects the family, `EquipmentCommandParser` selects the operation,
+and `EquipmentAddCommandParser` applies the shared grammar and validators before constructing the
+command. Parsing is separate from UUID generation and does not access or mutate the live model.
+
+<puml src="diagrams/EquipmentAddSequence.puml" alt="Equipment add parsing and validation sequence" />
+
+The diagram omits shared-validator lifelines and command-constructor normalization calls. The parser
+returns a command; it does not execute it. Missing/unknown family or subcommand errors stop earlier in
+the chain. Neither a parser failure nor invalid count creates a transaction snapshot or saves data.
+
+#### Equipment-add execution and publication
+
+The next sequence starts after successful parsing. `Model.createTransactionSnapshot()` creates a new
+`ModelManager` with independent collection containers. Immutable entity values may be shared until a
+command replaces them. `EquipmentAddCommand.execute(candidate)` prepares the complete batch before
+inserting any unit. The diagram abbreviates the root/collection delegation and the repeated read-only
+UUID checks; these occur on the candidate, not on the live model.
+
+<puml src="diagrams/EquipmentTransactionSequence.puml" alt="Equipment batch execution, atomic save and failure path" />
+
+The `CommandResult` exists before saving, but `LogicManager` returns it to the UI only after successful
+persistence and publication. Count 1 requests exact-unit details; larger batches request the full
+equipment directory. Observable refreshes resolve current data by identity after publication.
+
+The shown failure alternative is an `IOException` during saving. Serialization/write/replacement
+failure prevents publication; partial writes affect only a private temporary file, and unsupported
+atomic replacement fails rather than falling back to truncation. Temporary-file cleanup is attempted
+on failure. The existing data file remains intact; a first failed save need not leave a data file.
+Validation, UUID-generation and command-execution failures occur before the save call and are omitted
+from the successful execution path shown. A failure after candidate insertion still discards that
+candidate, so a later successful command cannot accidentally save a failed batch.
+
+Editing, soft deletion and restoration use the same snapshot/save/publish boundary with different
+command bodies. Equipment list/search are read-only and do not follow this mutation sequence.
+These diagrams describe a single-user command transaction, not concurrent-writer coordination or an
+undo/redo implementation.
+
+### Equipment editing, deletion and restoration
+
+Each `Equipment` is an immutable physical unit. `EquipmentEditCommand` builds a replacement with the
+stored UUID and any supplied details. `AddressBook.setEquipment` permits only active-to-active edits;
+`UniqueEquipmentList.setEquipment` checks UUID equality and replaces the value at the same index.
+Name/category changes affect derived inventory groups, never sibling units. Unspecified legacy text
+is retained verbatim; new text uses equipment-add validation. Notes can be cleared explicitly.
+
+`AddressBook.removeEquipment` now marks a unit deleted after checking that no open loan exists.
+`restoreEquipment` clears the flag. Both retain UUID, details and closed loans. This supersedes the
+historical scaffold's permanent deletion. Member and equipment restoration have no time limit.
+
+<puml src="diagrams/EquipmentLifecycle.puml" alt="Equipment lifecycle with stable UUID and retained history" />
+
+Lifecycle is separate from condition and loan status. Editing condition while loaned is allowed:
+ASSIGNED remains derived from the open loan; on return the edited condition controls availability.
+Deleted units derive UNAVAILABLE, cannot receive open loans, and are excluded from inventory totals.
+Root loan validation applies this invariant both to new loans and complete dataset replacement/loading.
+
+`JsonAdaptedEquipment` writes a boolean `deleted`. An absent flag defaults to false for earlier files;
+explicit null and non-boolean values fail loading. Closed loans may reference deleted equipment.
+All maintenance commands are transactional: execute against a snapshot, save atomically, then publish.
+No-change/rejected edits and failed writes leave live state and previously saved bytes unchanged.
+
+Directory queries share `DirectoryQuery.Status` across members and equipment. Equipment search defaults
+to active; `status/deleted|all` exposes retained units. List resets to all states and does not save.
+Cards label deleted units; details show lifecycle state and a restore command. Edit/restore navigate to
+the same UUID, retaining query criteria even if that unit no longer matches. Total counts include deleted
+units; availability counts and inventory groups include active units only. Closed history remains stored,
+with no new history-view UI in this feature.
+
 ### \[Proposed\] Undo/redo feature
+
+The following inherited AB3 proposal uses retired person commands as examples. It is not implemented
+Laplace behavior and needs redesign for the current domain before implementation.
 
 #### Proposed Implementation
 
@@ -305,13 +432,13 @@ These requirements consolidate the [team's project notes](https://docs.google.co
 
 * **MVP baseline:** Add, list, view, and delete members and equipment; identify members by NUS ID and equipment by a generated UUID; issue and return individual items; show holdings and holders; validate input and preserve consistency on failure.
 * **Broader requirements:** Editing, archiving, recovery, import/export, search and filtering, summaries, batch operations, condition recording at handover, histories, and undo/redo remain documented below even if they are not delivered this semester.
-* **Deletion and retention:** The MVP permanently deletes an eligible record and its closed loans. The proposed 30-day recovery and historical lookup requirements need a revised retention policy before implementation: recoverable records and their linked loans must be retained for recovery, and archived members must retain their history. The MVP deletion behavior does not satisfy these future requirements.
+* **Deletion and retention:** Members and equipment are soft-deleted only without open loans. Records and closed history are retained; restoration has no time limit. This supersedes the original permanent-deletion and proposed 30-day recovery policies. A dedicated history view remains future work.
 * **Single-user boundary:** Import/export supports the same user's local records and backups. The earlier idea of handing a snapshot to another EXCO member is retained as a considered use of export, but is excluded from the course product's regular operations. Shared datasets, concurrent users, and member self-service are outside scope.
 
 ### User stories
 
 Priorities: High (must have) — `* * *`; Medium (nice to have) — `* *`; Low (lower-priority candidate) — `*`.
-Priority expresses product importance, not implementation status. **MVP** denotes the Week 6 baseline; **Future** denotes a requirement outside that baseline, without a delivery commitment. US01–US41 retain the numbering of the Week 5 stories; US42–US45 make supporting requirements explicit.
+Priority expresses product importance, not implementation status. **MVP** denotes the Week 6 baseline; **Future** denotes a requirement outside that baseline, without a delivery commitment. **Implemented** marks an addition now available beyond that baseline. US01–US41 retain the numbering of the Week 5 stories; US42–US45 make supporting requirements explicit.
 
 | ID | Priority | Scope | As a … | I want to … | So that I can … |
 |----|----------|-------|--------|-------------|----------------|
@@ -324,17 +451,17 @@ Priority expresses product importance, not implementation status. **MVP** denote
 | US07 | `* *` | Future | CCA EXCO member | edit a member's details while keeping their identifier stable | keep corrected or changed information accurate without breaking loan references. |
 | US08 | `* *` | Future | CCA EXCO member | archive an inactive member | keep the active list relevant while retaining historical records. |
 | US09 | `* * *` | MVP | CCA EXCO member | delete a member record created in error when it has no outstanding equipment | remove unwanted records without losing track of a current holder. |
-| US10 | `* *` | Future | CCA EXCO member | restore a deleted member within 30 days of deletion | recover from an accidental deletion. |
+| US10 | `* *` | Implemented | CCA EXCO member | restore a retained deleted member without a time limit | recover from an accidental deletion. |
 | US11 | `* *` | Future | CCA EXCO member | filter and sort members by a chosen field | focus on the people relevant to my current task. |
 | US12 | `* *` | Future | busy CCA EXCO member | find members using incomplete queries or approximate names | retrieve the right record quickly even when I do not know the exact identifier. |
 | US13 | `* * *` | MVP | CCA EXCO member adding data | have duplicate NUS IDs rejected with an explanation | avoid conflicting records for the same member. |
 | US14 | `* * *` | MVP | CCA EXCO member | add one equipment item with an automatically generated unique UUID | track each newly acquired physical unit separately. |
-| US15 | `*` | Future | CCA EXCO member receiving a batch | add several units of the same equipment type in one operation | record a delivery without repeating the same entry process. |
+| US15 | `*` | Implemented | CCA EXCO member receiving a batch | add several units of the same equipment type in one operation | record a delivery without repeating the same entry process. |
 | US16 | `* * *` | MVP | CCA EXCO member | list all active equipment and its availability | review the current inventory at a glance. |
 | US17 | `* * *` | MVP | CCA EXCO member | view one equipment item's full details | verify its identity, condition, and recorded information. |
-| US18 | `* *` | Future | CCA EXCO member | edit an equipment record while retaining its UUID | keep item information accurate without breaking loan references. |
+| US18 | `* *` | Implemented | CCA EXCO member | edit an equipment record while retaining its UUID | keep item information accurate without breaking loan references. |
 | US19 | `* * *` | MVP | CCA EXCO member | delete an equipment record created in error when it is not on loan | remove unwanted entries without losing track of an issued item. |
-| US20 | `* *` | Future | CCA EXCO member | restore a deleted equipment record within 30 days of deletion | recover from an accidental deletion. |
+| US20 | `* *` | Implemented | CCA EXCO member | restore a retained deleted equipment record without a time limit | recover from an accidental deletion. |
 | US21 | `* *` | Future | CCA EXCO member | filter and sort equipment by category, condition, or availability | identify suitable items for my current task. |
 | US22 | `* *` | Future | busy CCA EXCO member | find equipment using incomplete queries or approximate names | locate an item even when I do not know its UUID. |
 | US23 | `* *` | Future | CCA EXCO member planning an activity | see counts of available, assigned, and unavailable units of an equipment type | decide whether there is enough equipment without counting manually. |
@@ -390,15 +517,16 @@ Use case ends.
 
 Names, phone numbers, or email addresses shared by different NUS IDs do not by themselves constitute duplicates.
 
-#### UC02: Register an equipment item
+#### UC02: Register physical equipment units
 
-**Scope:** MVP. **Related stories:** US14, US17, US41, US45.
+**Scope:** Implemented. **Related stories:** US14, US15, US17, US41, US45.
 
 **MSS**
 
-1. The EXCO member provides the item's name, category, condition, and optional notes.
-2. Laplace validates the details and generates a UUID that is not already in use.
-3. Laplace saves the item and shows its UUID, details, and derived availability.
+1. The EXCO member provides the units' name, category, condition, optional notes, and optional count.
+2. Laplace validates the details and count (default 1, range 1-100), then reserves a distinct UUID per unit.
+3. Laplace saves all units in one transaction and reports their UUIDs and derived availability.
+   One unit opens details; a batch opens the unfiltered equipment directory.
 
 Use case ends.
 
@@ -408,7 +536,7 @@ Use case ends.
     * 2a1. Laplace explains what needs correcting.
     * Use case resumes at step 1.
 * 2b. Laplace cannot generate a unique identifier.
-    * 2b1. Laplace reports the failure without adding an item.
+    * 2b1. Laplace reports the failure without adding any units.
     * Use case ends.
 
 Matching descriptions are permitted: each physical unit receives its own UUID. An item in `DAMAGED` or `UNDER_REPAIR` condition may be registered but is unavailable for issue.
@@ -483,7 +611,7 @@ Passing the expected return date never closes a loan automatically. A return aft
 1. The EXCO member requests the member list or equipment list, according to the kind of record to remove.
 2. Laplace shows the requested records and their identifiers.
 3. The EXCO member requests deletion of one record using its NUS ID or UUID, respectively.
-4. Laplace verifies that the record has no open loans, permanently deletes it and its associated closed loans, and confirms the deletion.
+4. Laplace verifies that the record has no open loans, marks it deleted while retaining its details and closed loans, and confirms the deletion.
 
 Use case ends.
 
@@ -498,7 +626,21 @@ Use case ends.
     * 4b1. Laplace refuses deletion and explains that the outstanding items must first be returned.
     * Use case ends without deletion. The EXCO member may complete UC04 and start UC05 again.
 
-This is the MVP deletion policy. The future recovery and history stories require the retention changes described under Product scope.
+Already-deleted records are rejected without a save. To recover a record, find it with a `status/deleted`
+search, then issue `member restore nus/NUS_ID` or `equipment restore uuid/UUID`. Laplace clears the
+flag, saves and opens its details. Unknown/already-active records fail without changes. Recovery has no
+time limit; equipment condition is preserved. Closed history remains retained throughout.
+
+#### UC05a: Edit equipment details
+
+**Scope:** Implemented. **Related story:** US18.
+
+1. The EXCO member views a physical unit and supplies its UUID with one or more edited details.
+2. Laplace validates the fields and requires an active unit and an actual change.
+3. Laplace replaces the details under the same UUID, saves and displays the updated unit.
+
+Invalid fields, unknown UUIDs, deleted units and no-change edits leave the dataset unchanged. An open
+loan permits details/condition edits and retains its reference; save failure preserves the previous state.
 
 #### UC06: Import records after reviewing a preview
 
@@ -617,8 +759,8 @@ These are acceptance targets for the intended product, not measurements of the c
 | Overdue loan | An open loan whose expected return date is before the computer's local date. This definition does not imply automatic notifications. |
 | Active record | A member or equipment record included in normal lists, rather than archived or deleted. Active equipment can still be assigned or unavailable. |
 | Archive | A proposed operation that removes an inactive member from the active list while preserving their record and history. |
-| Delete | In the MVP, permanent removal of a record and its closed loans, allowed only without open loans. Future 30-day recovery requires retaining deleted data instead. |
-| Restore | Either proposed recovery of a deleted record within 30 days, or replacement of the entire dataset from a complete snapshot; the context identifies which operation applies. |
+| Delete | Marking a retained record deleted, allowed only without open loans. Its identity, details and closed history remain stored. |
+| Restore | Reactivating a retained deleted member or equipment unit without a time limit, preserving identity and history. |
 | Snapshot | A complete local export of Laplace's persistent records and their relationships at a point in time, used as a backup. It differs from importing selected member or equipment records. |
 | Fuzzy search | Proposed matching of incomplete or approximate text against records; distinct from the MVP's exact identifier lookup. |
 | Atomic operation | An operation whose changes succeed together or leave the preceding consistent state intact. |
@@ -654,22 +796,54 @@ testers are expected to do more *exploratory* testing.
 
 1. _{ more test cases … }_
 
-### Deleting a person
+### Rejection of retired commands
 
-1. Deleting a person while all persons are being shown
+1. Run the JAR from a separate empty writable folder to get sample members, equipment and loans.
+   Use only this temporary dataset for these checks. Run `member list`, `equipment list`, and
+   `loans list`; record the identities and counts. Copy the saved data file for comparison if present.
+2. Enter each of `add`, `edit 1 name/Changed`, `delete 1`, `clear`, `clear 3`, `find Alex`, `list`,
+   and `list members`. Expected: `Unknown command.`; the current view/selection and all records stay
+   unchanged. An existing data file must remain byte-for-byte unchanged; rejected input must not
+   create a data file if none existed.
+3. Run `member list`, `equipment list`, and `loans list` again. Expected: normal directory navigation
+   and the same records and loan identities as before. These supported controls are separate from
+   the rejected-input file comparison above.
+4. Restart the application. Expected: saved records still load normally. Existing JSON files with a
+   `persons` array remain readable; no migration or removal of that array is required by this change.
 
-    1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+### Adding a batch of equipment
 
-    1. Test case: `delete 1`<br>
-       Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+1. In a separate temporary dataset, run
+   `equipment add name/Batch Test Camera category/Photography condition/GOOD count/3 notes/Shared kit`.
+   Expected: three new rows with distinct UUIDs, AVAILABLE status and identical supplied details;
+   feedback lists all three UUIDs and the full equipment directory opens.
+2. Repeat without `count/`, then with `count/1`. Each command adds one unit and opens its details.
+3. Try `count/0`, `count/-1`, `count/101`, `count/1.5`, a blank `count/`, and `count/2 count/3`.
+   Expected: an error, no new records, and no save. Correct the input and retry.
+4. Run `equipment search q/NoMatchingBatch`, then add a valid batch. Expected: the old filter resets
+   and the directory includes the new units. Repeating a batch retains distinct UUIDs and warns about
+   pre-existing matching units, not the new units within the same batch.
+5. Exit and relaunch from the same folder. Expected: all units retain their original UUIDs and details.
+   Use `equipment view uuid/UUID` with each actual generated UUID to verify independently.
 
-    1. Test case: `delete 0`<br>
-       Expected: No person is deleted. The status message shows error details.
+### Editing, deleting and restoring equipment
 
-    1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-       Expected: Similar to previous.
-
-1. _{ more test cases … }_
+1. Add two matching units with `equipment add name/Maintenance Camera category/Photography condition/GOOD count/2`.
+   Record both UUIDs as A and B. Replace these placeholders in all following commands.
+2. Run `equipment edit uuid/A name/Updated Camera condition/FAIR notes/Checked` then `equipment edit uuid/A notes/`.
+   Expect A's UUID unchanged, updated details and cleared notes; B remains unchanged. Restart and verify.
+3. Try `equipment edit uuid/A`, `equipment edit uuid/A name/`, and a no-change edit. Expect an error and no save.
+4. Assign A to an active test member with valid dates. Edit its condition to DAMAGED: expect ASSIGNED until
+   return, then UNAVAILABLE. Attempt deletion while assigned: expect refusal and no record/history changes.
+5. Return A, then `equipment delete uuid/A`. Expect a retained `[DELETED]` row in `equipment list`, no new
+   loans permitted, and exclusion from active search/inventory totals. `equipment search status/deleted`
+   should find it. Restart: the flag, UUID, details and closed loan records must remain in the saved data.
+6. Try editing/deleting A again: expect rejection. Run `equipment restore uuid/A`: expect the same UUID
+   and details, still DAMAGED/UNAVAILABLE. Repeating restore is rejected. Repair with an edit to GOOD and
+   verify that assigning a new loan succeeds. B must remain unchanged throughout.
+7. Check `equipment search status/all`, direct UUID navigation and query refresh after rename/restore.
+   Automated transaction tests separately inject partial writes/failed atomic moves; do not simulate
+   filesystem failures against a real user dataset.
 
 ### Saving data
 

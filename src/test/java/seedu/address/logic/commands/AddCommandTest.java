@@ -206,6 +206,16 @@ public class AddCommandTest {
         }
 
         @Override
+        public void setEquipment(Equipment target, Equipment edited) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void restoreEquipment(Equipment equipment) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
         public ObservableList<Equipment> getEquipmentList() {
             throw new AssertionError("This method should not be called.");
         }
