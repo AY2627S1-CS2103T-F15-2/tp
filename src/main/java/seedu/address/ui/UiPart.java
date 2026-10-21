@@ -65,6 +65,7 @@ public abstract class UiPart<T> {
      */
     private void loadFxmlFile(URL location, T root) {
         requireNonNull(location);
+        LaplaceFonts.register();
         fxmlLoader.setLocation(location);
         fxmlLoader.setController(this);
         fxmlLoader.setRoot(root);

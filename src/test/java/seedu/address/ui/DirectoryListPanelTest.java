@@ -287,7 +287,7 @@ public class DirectoryListPanelTest {
             MemberListPanel members = new MemberListPanel(model.getAddressBook(), unused -> { });
             EquipmentListPanel equipment = new EquipmentListPanel(model.getAddressBook(), model::getAvailability,
                     unused -> { });
-            assertTrue(((Label) rows(members).getPlaceholder()).getText().contains("member add"));
+            assertEquals("No members yet", ((Label) rows(members).getPlaceholder()).getText());
             assertTrue(((Label) rows(equipment).getPlaceholder()).getText().contains("equipment add"));
             assertTrue(members.getSelection().isEmpty());
             assertTrue(equipment.getSelection().isEmpty());

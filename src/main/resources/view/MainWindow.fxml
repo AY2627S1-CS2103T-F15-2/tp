@@ -19,21 +19,22 @@
       <stylesheets><URL value="@LaplaceTheme.css" /></stylesheets>
       <VBox styleClass="laplace-root">
         <HBox styleClass="laplace-header" alignment="CENTER_LEFT">
-          <Label text="Laplace" styleClass="laplace-title" />
-          <MenuButton text="Menu" mnemonicParsing="false" styleClass="laplace-navigation">
-            <items>
-              <MenuItem fx:id="helpMenuItem" text="Help" onAction="#handleHelp" />
-              <MenuItem text="Light mode" onAction="#handleLightMode" />
-              <MenuItem text="Dark mode" onAction="#handleDarkMode" />
-              <MenuItem text="Exit" onAction="#handleExit" />
-            </items>
-          </MenuButton>
-          <Region HBox.hgrow="ALWAYS" />
+          <Label fx:id="wordmark" text="Laplace" styleClass="laplace-wordmark" />
           <Button fx:id="membersNavigation" text="Members" onAction="#handleMembers"
                   styleClass="laplace-navigation" />
           <Button fx:id="equipmentNavigation" text="Equipment" onAction="#handleEquipment"
                   styleClass="laplace-navigation" />
-          <Button fx:id="loansNavigation" text="Loans" onAction="#handleLoans" styleClass="laplace-navigation" />
+          <Button fx:id="loansNavigation" text="Loans" onAction="#handleLoans"
+                  styleClass="laplace-navigation" />
+          <Region HBox.hgrow="ALWAYS" />
+          <Button fx:id="modeButton" text="Dark mode" onAction="#handleToggleMode"
+                  styleClass="laplace-navigation" />
+          <MenuButton text="Menu" mnemonicParsing="false" styleClass="laplace-navigation">
+            <items>
+              <MenuItem fx:id="helpMenuItem" text="Help" onAction="#handleHelp" />
+              <MenuItem text="Exit" onAction="#handleExit" />
+            </items>
+          </MenuButton>
         </HBox>
         <VBox styleClass="laplace-content" spacing="8" VBox.vgrow="ALWAYS">
           <HBox fx:id="directoryContext" spacing="8" alignment="CENTER_LEFT">

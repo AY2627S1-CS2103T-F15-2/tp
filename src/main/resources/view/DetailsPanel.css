@@ -11,26 +11,18 @@
     -fx-padding: 12;
 }
 
-.details-name {
-    -fx-font-size: 24px;
-    -fx-font-weight: bold;
-}
-
-.details-section-title {
-    -fx-font-size: 18px;
-    -fx-font-weight: bold;
-}
-
+.details-name,
+.details-section-title,
 .details-caption {
-    -fx-font-weight: bold;
+    -fx-padding: 0 2 0 0;
 }
 
 .details-holding {
     -fx-padding: 12;
     -fx-background-color: -laplace-inset;
     -fx-border-color: -laplace-border;
-    -fx-border-radius: 3;
-    -fx-background-radius: 3;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
 }
 
 .details-status {

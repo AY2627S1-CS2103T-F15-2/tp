@@ -3,11 +3,6 @@
     -fx-padding: 10;
 }
 
-.directory-list .directory-list-title {
-    -fx-font-weight: bold;
-    -fx-font-size: 19px;
-}
-
 .directory-list .directory-selection-hint {
-    -fx-font-size: 12px;
+    -fx-text-fill: -laplace-muted;
 }

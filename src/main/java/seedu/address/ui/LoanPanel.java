@@ -125,16 +125,16 @@ public class LoanPanel extends UiPart<Region> {
         identities.add(equipmentColumn, 0, 0);
         identities.add(memberColumn, 0, 1);
         identities.widthProperty().addListener((unused, previous, width) -> {
-            boolean wide = width.doubleValue() >= 650;
+            boolean isWide = width.doubleValue() >= 650;
             identities.getColumnConstraints().clear();
-            for (int i = 0; i < (wide ? 2 : 1); i++) {
+            for (int i = 0; i < (isWide ? 2 : 1); i++) {
                 ColumnConstraints column = new ColumnConstraints();
-                column.setPercentWidth(wide ? 50 : 100);
+                column.setPercentWidth(isWide ? 50 : 100);
                 column.setMinWidth(0);
                 identities.getColumnConstraints().add(column);
             }
-            GridPane.setColumnIndex(memberColumn, wide ? 1 : 0);
-            GridPane.setRowIndex(memberColumn, wide ? 0 : 1);
+            GridPane.setColumnIndex(memberColumn, isWide ? 1 : 0);
+            GridPane.setRowIndex(memberColumn, isWide ? 0 : 1);
         });
         Button prepareReturn = new Button("Prepare return command");
         prepareReturn.setOnAction(event -> onUse.accept("loans return uuid/" + loan.getEquipmentUuid()

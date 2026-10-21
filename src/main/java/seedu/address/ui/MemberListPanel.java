@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -85,9 +86,10 @@ public class MemberListPanel extends UiPart<Region> {
                 ? (rows.getItems().size() - deleted) + " active"
                         + (deleted == 0 ? "" : " \u00b7 " + deleted + " deleted")
                 : rows.getItems().size() + " of " + data.getMemberList().size() + " shown");
-        Label emptyState = new Label(data.getMemberList().isEmpty() ? "No members yet. Use member add to get started."
+        Label emptyState = new Label(data.getMemberList().isEmpty() ? "No members yet"
                 : "No matching members. Use member list to reset the search.");
         emptyState.setWrapText(true);
+        emptyState.setAlignment(Pos.CENTER);
         emptyState.setMaxWidth(Double.MAX_VALUE);
         emptyState.setMinWidth(0);
         rows.setPlaceholder(emptyState);

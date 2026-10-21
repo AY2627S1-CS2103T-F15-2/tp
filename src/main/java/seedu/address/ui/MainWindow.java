@@ -104,6 +104,8 @@ public class MainWindow extends UiPart<Stage> {
     @FXML
     private Button loansNavigation;
     @FXML
+    private Button modeButton;
+    @FXML
     private MenuItem helpMenuItem;
     @FXML
     private HBox directoryContext;
@@ -287,31 +289,17 @@ public class MainWindow extends UiPart<Stage> {
         directoryContext.setManaged(directoryView);
         queryContext.setText(directoryView ? "Filters: " + (memberView ? members.getQuery() : equipment.getQuery())
                 .description() : "");
-        boolean details = request.getType() == DisplayRequest.Type.MEMBER_DETAILS
+        boolean isDetailsView = request.getType() == DisplayRequest.Type.MEMBER_DETAILS
                 || request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS
                 || request.getType() == DisplayRequest.Type.EQUIPMENT_GROUP;
-        backToResults.setVisible(details);
-        backToResults.setManaged(details);
+        backToResults.setVisible(isDetailsView);
+        backToResults.setManaged(isDetailsView);
         directory.setVisible(directoryView);
         directory.setManaged(directoryView);
         singlePanelPlaceholder.setVisible(!directoryView);
         singlePanelPlaceholder.setManaged(!directoryView);
         if (directoryView) {
-            directoryListPlaceholder.getChildren().setAll(memberView ? members.getRoot() : equipment.getRoot());
-            if (request.getType() == DisplayRequest.Type.MEMBER_DETAILS) {
-                memberDetails.showMember(request.getMemberNusId().orElseThrow());
-                directorySummaryPlaceholder.getChildren().setAll(memberDetails.getRoot());
-            } else if (request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS) {
-                equipmentDetails.showUnit(request.getEquipmentUuid().orElseThrow(), equipment.getQuery());
-                directorySummaryPlaceholder.getChildren().setAll(equipmentDetails);
-            } else if (request.getType() == DisplayRequest.Type.EQUIPMENT_GROUP) {
-                equipmentDetails.showGroup(request.getEquipmentGroup().orElseThrow(), equipment.getQuery());
-                equipment.selectGroup(request.getEquipmentGroup().orElseThrow());
-                directorySummaryPlaceholder.getChildren().setAll(equipmentDetails);
-            } else {
-                directorySummaryPlaceholder.getChildren().setAll(memberView
-                        ? memberSummary.getRoot() : equipmentSummary.getRoot());
-            }
+            mountDirectory(request, memberView);
         } else {
             singlePanelPlaceholder.getChildren().setAll(request.getType() == DisplayRequest.Type.LOANS
                     ? loans.getRoot() : personListPanel.getRoot());
@@ -322,6 +310,27 @@ public class MainWindow extends UiPart<Stage> {
         setActive(equipmentNavigation, equipmentView);
         setActive(loansNavigation, request.getType() == DisplayRequest.Type.LOANS);
         refreshSummaries();
+    }
+
+    /**
+     * Mounts the directory and its requested summary, group or exact-identity details.
+     */
+    private void mountDirectory(DisplayRequest request, boolean memberView) {
+        directoryListPlaceholder.getChildren().setAll(memberView ? members.getRoot() : equipment.getRoot());
+        if (request.getType() == DisplayRequest.Type.MEMBER_DETAILS) {
+            memberDetails.showMember(request.getMemberNusId().orElseThrow());
+            directorySummaryPlaceholder.getChildren().setAll(memberDetails.getRoot());
+        } else if (request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS) {
+            equipmentDetails.showUnit(request.getEquipmentUuid().orElseThrow(), equipment.getQuery());
+            directorySummaryPlaceholder.getChildren().setAll(equipmentDetails);
+        } else if (request.getType() == DisplayRequest.Type.EQUIPMENT_GROUP) {
+            equipmentDetails.showGroup(request.getEquipmentGroup().orElseThrow(), equipment.getQuery());
+            equipment.selectGroup(request.getEquipmentGroup().orElseThrow());
+            directorySummaryPlaceholder.getChildren().setAll(equipmentDetails);
+        } else {
+            directorySummaryPlaceholder.getChildren().setAll(memberView
+                    ? memberSummary.getRoot() : equipmentSummary.getRoot());
+        }
     }
 
     private void setActive(Button button, boolean active) {
@@ -346,6 +355,7 @@ public class MainWindow extends UiPart<Stage> {
 
     @FXML
     private void handleLoans() {
+        loans.refresh();
         display(DisplayRequest.loans());
         commandBox.requestFocus();
     }
@@ -422,9 +432,9 @@ public class MainWindow extends UiPart<Stage> {
                         && screen.getVisualBounds().contains(settings.getWindowCoordinates().getX(),
                                 settings.getWindowCoordinates().getY()))
                 .findFirst().orElse(Screen.getPrimary()).getVisualBounds();
-        boolean firstRun = settings.withDarkMode(false).equals(new GuiSettings());
-        double width = Math.min(bounds.getWidth(), Math.max(760, firstRun ? 1100 : settings.getWindowWidth()));
-        double height = Math.min(bounds.getHeight(), Math.max(500, firstRun ? 700 : settings.getWindowHeight()));
+        boolean isFirstRun = settings.withDarkMode(false).equals(new GuiSettings());
+        double width = Math.min(bounds.getWidth(), Math.max(760, isFirstRun ? 1100 : settings.getWindowWidth()));
+        double height = Math.min(bounds.getHeight(), Math.max(500, isFirstRun ? 700 : settings.getWindowHeight()));
         primaryStage.setMinWidth(Math.min(760, bounds.getWidth()));
         primaryStage.setMinHeight(Math.min(500, bounds.getHeight()));
         primaryStage.setWidth(width);
@@ -441,23 +451,22 @@ public class MainWindow extends UiPart<Stage> {
      * Applies the same palette to the shell and its separate help window.
      */
     private void applyAppearance() {
-        boolean dark = logic.getGuiSettings().isDarkMode();
+        boolean isDark = logic.getGuiSettings().isDarkMode();
         for (Stage stage : List.of(primaryStage, helpWindow.getRoot())) {
             stage.getScene().getRoot().getStyleClass().remove("dark");
-            if (dark) {
+            if (isDark) {
                 stage.getScene().getRoot().getStyleClass().add("dark");
             }
         }
+        modeButton.setText(isDark ? "Light mode" : "Dark mode");
     }
 
+    /**
+     * Switches between the two persisted appearances. The button names the mode it will apply.
+     */
     @FXML
-    private void handleDarkMode() {
-        activate("mode dark");
-    }
-
-    @FXML
-    private void handleLightMode() {
-        activate("mode light");
+    private void handleToggleMode() {
+        activate(logic.getGuiSettings().isDarkMode() ? "mode light" : "mode dark");
     }
 
     /**

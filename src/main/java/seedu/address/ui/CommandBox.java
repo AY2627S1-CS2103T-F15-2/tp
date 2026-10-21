@@ -43,7 +43,7 @@ public class CommandBox extends UiPart<Region> {
         super(FXML);
         this.commandExecutor = requireNonNull(commandExecutor);
         commandTextField.addEventFilter(KeyEvent.KEY_PRESSED, this::handleKeyPressed);
-        commandTextField.setPromptText("Type a command · Ctrl+Space completes · ↑ history");
+        commandTextField.setPromptText("Enter your command here");
         // TextField otherwise removes pasted line breaks and joins adjacent words. Replacing each
         // character separately preserves edit offsets; field parsers collapse runs where appropriate.
         commandTextField.setTextFormatter(new TextFormatter<>(change -> {

@@ -43,14 +43,38 @@ public class LaplaceThemeTest {
             root.applyCss();
             root.layout();
 
-            assertBackground(root, "#EEF1F3");
+            assertBackground(root, "#f6f8fa");
             assertBackground((Region) root.lookup("#surface"), "#FFFFFF");
-            assertBackground((Region) root.lookup("#success"), "#E8F5E9");
-            assertBackground((Region) root.lookup("#error"), "#FDECEC");
-            assertEquals(Color.web("#37474F"), ((Label) root.lookup("#title")).getTextFill());
+            assertBackground((Region) root.lookup("#success"), "#dafbe1");
+            assertBackground((Region) root.lookup("#error"), "#ffebe9");
+            assertEquals(Color.web("#1f2328"), ((Label) root.lookup("#title")).getTextFill());
             ListCell<?> selected = rows.lookupAll(".list-cell").stream()
                     .map(node -> (ListCell<?>) node).filter(ListCell::isSelected).findFirst().orElseThrow();
-            assertBackground(selected, "#E3F2FD");
+            assertBackground(selected, "#ddf4ff");
+        });
+    }
+
+    @Test
+    public void typography_dynamicControlsAndStyleChanges_followCssWithoutInstalledFonts() {
+        FxTestUtil.runAndWait(() -> {
+            LaplaceFonts.register();
+            LaplaceFonts.register();
+            VBox root = new VBox();
+            root.getStyleClass().add("laplace-root");
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getThemeUrl());
+            root.applyCss();
+            Label label = new Label("Member Directory");
+            root.getChildren().add(label);
+            label.getStyleClass().add("directory-list-title");
+            root.applyCss();
+            assertEquals(18, label.getFont().getSize());
+            assertTrue(label.getFont().getStyle().contains("Bold"));
+            label.getStyleClass().setAll("label", "identity-value");
+            root.applyCss();
+            assertEquals("IBM Plex Mono", label.getFont().getFamily());
+            assertEquals(13, label.getFont().getSize());
+            assertNotNull(getClass().getResource("/fonts/OFL.txt"));
         });
     }
 

@@ -1,7 +1,5 @@
 .loan-panel {
     -fx-background-color: -laplace-canvas;
-    -fx-font-family: "System";
-    -fx-font-size: 15px;
 }
 
 .loan-panel .scroll-pane,
@@ -18,8 +16,7 @@
 }
 
 .loan-title {
-    -fx-font-size: 22px;
-    -fx-font-weight: bold;
+    -fx-padding: 0 2 0 0;
 }
 
 .loan-panel .loan-subtitle,
@@ -30,29 +27,27 @@
 .loan-section {
     -fx-background-color: -laplace-surface;
     -fx-border-color: -laplace-border;
-    -fx-border-radius: 3;
-    -fx-background-radius: 3;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
     -fx-padding: 0;
 }
 
 .loan-section-title {
-    -fx-font-size: 19px;
-    -fx-font-weight: bold;
+    -fx-padding: 0 2 0 0;
 }
 
 .loan-panel .loan-count {
     -fx-background-color: -laplace-selection;
     -fx-text-fill: -laplace-link;
-    -fx-background-radius: 12;
+    -fx-background-radius: 0;
     -fx-padding: 3 10;
-    -fx-font-weight: bold;
 }
 
 .loan-row {
     -fx-background-color: -laplace-surface;
     -fx-border-color: -laplace-border;
-    -fx-border-radius: 3;
-    -fx-background-radius: 3;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
     -fx-padding: 12;
 }
 
@@ -70,7 +65,7 @@
 
 .loan-identity-link:focused {
     -fx-border-color: -laplace-focus;
-    -fx-border-radius: 2;
+    -fx-border-radius: 0;
 }
 
 .loan-identity-link:disabled {
@@ -80,8 +75,7 @@
 
 .loan-status {
     -fx-padding: 3 8;
-    -fx-background-radius: 3;
-    -fx-font-weight: bold;
+    -fx-background-radius: 0;
 }
 
 .loan-open-status {

@@ -10,13 +10,13 @@ import seedu.address.model.Model;
 public class ModeCommand extends Command {
     public static final String COMMAND_WORD = "mode";
     public static final String MESSAGE_USAGE = "mode: Changes appearance. Usage: mode dark or mode light";
-    private final boolean dark;
+    private final boolean isDark;
 
     /**
      * Creates an appearance command for the specified mode.
      */
-    public ModeCommand(boolean dark) {
-        this.dark = dark;
+    public ModeCommand(boolean isDark) {
+        this.isDark = isDark;
     }
 
     @Override
@@ -27,7 +27,7 @@ public class ModeCommand extends Command {
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
-        model.setGuiSettings(model.getGuiSettings().withDarkMode(dark));
-        return new CommandResult("Appearance: " + (dark ? "dark" : "light") + ".", DisplayRequest.unchanged());
+        model.setGuiSettings(model.getGuiSettings().withDarkMode(isDark));
+        return new CommandResult("Appearance: " + (isDark ? "dark" : "light") + ".", DisplayRequest.unchanged());
     }
 }

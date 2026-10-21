@@ -48,8 +48,8 @@ public class HelpWindow extends UiPart<Stage> {
         super(FXML, root);
         helpMessage.setText(HELP_MESSAGE);
         for (String example : CommandCatalog.EXAMPLES) {
-            boolean template = example.matches(".*\\b(NAME|NUS_ID|UUID|PHONE|EMAIL|TEXT|CATEGORY|NOTES|YYYY).*");
-            examples.getChildren().add(new CommandPreview(example, template, command -> {
+            boolean isTemplate = example.matches(".*\\b(NAME|NUS_ID|UUID|PHONE|EMAIL|TEXT|CATEGORY|NOTES|YYYY).*");
+            examples.getChildren().add(new CommandPreview(example, isTemplate, command -> {
                 onUse.accept(command);
                 hide();
             }));

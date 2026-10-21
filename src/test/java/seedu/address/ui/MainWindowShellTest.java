@@ -27,6 +27,7 @@ import javafx.event.ActionEvent;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Labeled;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuButton;
@@ -43,6 +44,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
@@ -154,7 +156,7 @@ public class MainWindowShellTest {
     }
 
     @Test
-    public void appearance_commandsAndMenu_preserveFiltersDataAndSavedPreference() throws Exception {
+    public void appearance_commandsAndModeButton_preserveFiltersDataAndSavedPreference() throws Exception {
         FxTestUtil.runAndWait(() -> {
             submit("equipment search availability/available");
             String criteria = label("queryContext");
@@ -164,7 +166,7 @@ public class MainWindowShellTest {
             assertTrue(window.getPrimaryStage().getScene().getRoot().getStyleClass().contains("dark"));
             assertEquals(criteria, label("queryContext"));
             assertEquals(saves, storage.saves);
-            assertEquals(Color.web("#151C23"), ((Region) window.getPrimaryStage().getScene().getRoot())
+            assertEquals(Color.web("#0d1117"), ((Region) window.getPrimaryStage().getScene().getRoot())
                     .getBackground().getFills().getFirst().getFill());
             render("dark-equipment", 1100, 700);
             submit("equipment view uuid/" + new UUID(0, 1));
@@ -181,14 +183,14 @@ public class MainWindowShellTest {
             helpRoot.applyCss();
             helpRoot.layout();
             writeSnapshot(helpRoot, "dark-help", 720, 600);
-            MenuButton menu = (MenuButton) window.getPrimaryStage().getScene().lookup(".menu-button");
-            menu.getItems().stream().filter(item -> item.getText().equals("Light mode"))
-                    .findFirst().orElseThrow().fire();
+            assertEquals("Light mode", button("modeButton").getText());
+            button("modeButton").fire();
             assertFalse(model.getGuiSettings().isDarkMode());
+            assertEquals("Dark mode", button("modeButton").getText());
             assertFalse(help.getScene().getRoot().getStyleClass().contains("dark"));
-            menu.getItems().stream().filter(item -> item.getText().equals("Dark mode"))
-                    .findFirst().orElseThrow().fire();
+            button("modeButton").fire();
             assertTrue(model.getGuiSettings().isDarkMode());
+            assertEquals("Light mode", button("modeButton").getText());
             submit("exit");
             assertTrue(model.getGuiSettings().isDarkMode());
         });
@@ -218,6 +220,7 @@ public class MainWindowShellTest {
             units.getSelectionModel().selectFirst();
             render("grouped-unit", 1280, 720);
             render("grouped-unit", 760, 500);
+            render("grouped-unit", 853, 440);
         });
     }
 
@@ -226,7 +229,7 @@ public class MainWindowShellTest {
         FxTestUtil.runAndWait(() -> {
             int saves = storage.saves;
             submit("member search q/alex holding/yes sort/id order/desc");
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals(1, rows().getItems().size());
             assertEquals("1", detailLabel("displayedCount"));
             assertTrue(detailLabel("criteria").contains("alex"));
@@ -276,11 +279,11 @@ public class MainWindowShellTest {
             assertEquals(1, rows().getItems().size());
             String criteria = detailLabel("criteria");
             submit("equipment search availability/not-valid");
-            assertEquals("Error", label("feedbackStatus"));
+            assertEquals("Error", feedbackStatus());
             assertEquals("equipment search availability/not-valid", field().getText());
             assertEquals(criteria, detailLabel("criteria"));
             submit("loans return uuid/" + new UUID(0, 1) + " returned/2026-01-02");
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals(2, rows().getItems().size());
             assertEquals(new UUID(0, 1).toString(), detailLabel("equipmentUuid"));
             submit("equipment search availability/available");
@@ -301,7 +304,7 @@ public class MainWindowShellTest {
             int saves = storage.saves;
             int dispatches = logic.commands.size();
             submit("member delete nus/" + id(2));
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals(saves + 1, storage.saves);
             assertEquals(dispatches + 1, logic.commands.size());
             assertEquals(List.of(id(3)), rows().getItems().stream()
@@ -311,7 +314,7 @@ public class MainWindowShellTest {
             assertEquals("1", detailLabel("displayedCount"));
             assertTrue(detailLabel("selection").contains(id(3).value));
             submit("member delete nus/" + id(3));
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertTrue(rows().getItems().isEmpty());
             assertEquals(criteria, detailLabel("criteria"));
             assertEquals(sort, detailLabel("sortOrder"));
@@ -333,7 +336,7 @@ public class MainWindowShellTest {
         FxTestUtil.runAndWait(() -> {
             submit("equipment search status/active sort/id");
             submit("equipment edit uuid/" + target + " name/Updated Camera condition/DAMAGED notes/Repair lens");
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals(target.toString(), detailLabel("equipmentUuid"));
             assertEquals("Updated Camera", detailLabel("equipmentName"));
             assertEquals("Repair lens", detailLabel("notes"));
@@ -380,7 +383,7 @@ public class MainWindowShellTest {
             int saves = storage.saves;
             int dispatches = logic.commands.size();
             submit("equipment delete uuid/" + target);
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals(saves + 1, storage.saves);
             assertEquals(dispatches + 1, logic.commands.size());
             assertTrue(rows().getItems().isEmpty());
@@ -404,7 +407,7 @@ public class MainWindowShellTest {
             String criteria = detailLabel("criteria");
             String sort = detailLabel("sortOrder");
             submit("member delete nus/" + id(2));
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals(1, rows().getItems().size());
             assertTrue(((Member) rows().getItems().getFirst()).isDeleted());
             assertEquals(criteria, detailLabel("criteria"));
@@ -419,9 +422,9 @@ public class MainWindowShellTest {
             render("search-deleted-members", 1100, 700);
             render("search-deleted-members", 760, 500);
             submit("member view nus/" + id(2));
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             submit("member restore nus/" + id(2));
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals("Jamie Lim", detailLabel("memberName"));
             assertTrue(rows().getItems().isEmpty());
             submit("member search q/jamie status/deleted");
@@ -466,7 +469,7 @@ public class MainWindowShellTest {
                     int saves = storage.saves;
                     int dispatches = logic.commands.size();
                     field().fireEvent(new ActionEvent());
-                    assertEquals("Success", label("feedbackStatus"), feedback());
+                    assertEquals("Success", feedbackStatus(), feedback());
                     assertEquals("First line Second line", detailLabel("notes"));
                     assertEquals(saves + 1, storage.saves);
                     assertEquals(dispatches + 1, logic.commands.size());
@@ -539,15 +542,24 @@ public class MainWindowShellTest {
             AddressBook before = new AddressBook(model.getAddressBook());
             button("equipmentNavigation").fire();
             assertTrue(node("equipmentNavigation").getStyleClass().contains("laplace-navigation-active"));
-            assertEquals("Ready", label("feedbackStatus"));
+            assertEquals("Ready", feedbackStatus());
             assertTrue(button("equipmentNavigation").getAccessibleText().contains("current view"));
             button("loansNavigation").fire();
             assertTrue(node("openLoans") != null);
             assertEquals("1", label("openCount"));
             button("membersNavigation").fire();
             MenuButton menu = (MenuButton) window.getPrimaryStage().getScene().getRoot().lookup(".menu-button");
-            assertEquals(List.of("Help", "Light mode", "Dark mode", "Exit"),
+            assertEquals(List.of("Help", "Exit"),
                     menu.getItems().stream().map(item -> item.getText()).toList());
+            HBox header = (HBox) button("membersNavigation").getParent();
+            assertEquals(List.of("Laplace", "Members", "Equipment", "Loans", "Dark mode", "Menu"),
+                    header.getChildren().stream().filter(child -> child instanceof Labeled)
+                            .map(child -> ((Labeled) child).getText()).toList());
+            assertEquals("Laplace", window.getPrimaryStage().getTitle());
+            assertEquals("IBM Plex Mono", field().getFont().getFamily());
+            assertTrue(((Label) node("countBadge")).getFont().getStyle().contains("Bold"));
+            Label queryLabel = (Label) node("queryContext");
+            assertEquals(javafx.scene.text.Font.getDefault().getFamily(), queryLabel.getFont().getFamily());
             reject("list");
             assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
             reject("list members");
@@ -570,13 +582,13 @@ public class MainWindowShellTest {
             assertTrue(logic.commands.isEmpty());
             submit("equipment list unexpected");
             assertEquals("equipment list unexpected", field().getText());
-            assertEquals("Error", label("feedbackStatus"));
+            assertEquals("Error", feedbackStatus());
             assertTrue(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
             assertTrue(label("selection").contains("A0000001X"));
             assertEquals(before, model.getAddressBook());
             submit("equipment list");
             assertEquals("", field().getText());
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals(2, logic.commands.size());
             assertEquals(0, storage.saves);
         });
@@ -608,7 +620,7 @@ public class MainWindowShellTest {
                     false, false, false, false, false, false, false, false, false, true, null));
             rows().fireEvent(key(KeyCode.ENTER));
             assertEquals(List.of("member view nus/A0000001X", "member view nus/A0000001X"), logic.commands);
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals("A0000001X", detailLabel("memberNusId"));
             assertTrue(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
             button("loansNavigation").fire();
@@ -620,7 +632,7 @@ public class MainWindowShellTest {
             }
             assertEquals(4, logic.commands.size());
             assertTrue(logic.commands.contains("equipment view uuid/" + new UUID(0, 1)));
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertTrue(node("detailsTitle") != null);
             assertEquals(4, storage.saves);
         });
@@ -664,7 +676,7 @@ public class MainWindowShellTest {
             rows().requestFocus();
             storage.fail = true;
             rows().fireEvent(key(KeyCode.SPACE));
-            assertEquals("Error", label("feedbackStatus"));
+            assertEquals("Error", feedbackStatus());
             assertEquals(rows(), window.getPrimaryStage().getScene().getFocusOwner());
             rows().fireEvent(new KeyEvent(KeyEvent.KEY_TYPED, " ", " ", KeyCode.UNDEFINED,
                     false, false, false, false));
@@ -700,7 +712,7 @@ public class MainWindowShellTest {
             rows().fireEvent(key(KeyCode.SPACE));
             Node focusBeforeDisposal = window.getPrimaryStage().getScene().getFocusOwner();
             assertEquals(rows(), focusBeforeDisposal);
-            assertEquals("Error", label("feedbackStatus"));
+            assertEquals("Error", feedbackStatus());
 
             window.dispose();
             rows().fireEvent(new KeyEvent(KeyEvent.KEY_RELEASED, "", "", KeyCode.SPACE,
@@ -1000,7 +1012,7 @@ public class MainWindowShellTest {
             AddressBook before = new AddressBook(model.getAddressBook());
             storage.fail = true;
             submit("member delete nus/A0000002X");
-            assertEquals("Error", label("feedbackStatus"));
+            assertEquals("Error", feedbackStatus());
             assertEquals("member delete nus/A0000002X", field().getText());
             assertEquals(field(), window.getPrimaryStage().getScene().getFocusOwner());
             assertEquals("A0000002X", detailLabel("memberNusId"));
@@ -1028,7 +1040,7 @@ public class MainWindowShellTest {
             storage.fail = true;
             for (String input : List.of("clear", "add n/Test Person p/91234567 e/test@example.com a/Test Address")) {
                 submit(input);
-                assertEquals("Error", label("feedbackStatus"));
+                assertEquals("Error", feedbackStatus());
                 assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
                 assertEquals(input, field().getText());
                 assertEquals(field(), window.getPrimaryStage().getScene().getFocusOwner());
@@ -1151,11 +1163,11 @@ public class MainWindowShellTest {
                     "member view nus/A0000001X", "list", "member list")) {
                 submit(input);
                 session.add("INPUT: " + (input.isBlank() ? "<whitespace only>" : input));
-                session.add("STATUS: " + label("feedbackStatus"));
+                session.add("STATUS: " + feedbackStatus());
                 session.add("OUTPUT: " + feedback());
                 session.add("RETAINED INPUT: " + field().getText());
                 if (input.equals("list")) {
-                    assertEquals("Error", label("feedbackStatus"));
+                    assertEquals("Error", feedbackStatus());
                     assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
                     assertEquals(input, field().getText());
                 }
@@ -1371,7 +1383,7 @@ public class MainWindowShellTest {
             Region card = (Region) node("directoryListPlaceholder").lookup(".deleted-member");
             assertFalse(card.isDisabled());
             Label name = (Label) card.lookup("#name");
-            assertEquals(Color.web("#526672"), name.getTextFill());
+            assertEquals(Color.web("#59636e"), name.getTextFill());
             TextFlow flow = (TextFlow) name.getGraphic();
             Text value = (Text) flow.getChildren().getFirst();
             Text suffix = (Text) flow.getChildren().getLast();
@@ -1401,7 +1413,7 @@ public class MainWindowShellTest {
         FxTestUtil.runAndWait(() -> {
             showMemberDetails(id(1));
             submit("member edit nus/" + id(1) + " name/Zelda Updated phone/98765432 email/zelda@example.com");
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals("Zelda Updated", detailLabel("memberName"));
             assertEquals(id(1), ((Member) rows().getSelectionModel().getSelectedItem()).getNusId());
             assertEquals(id(1), ((Member) rows().getItems().getLast()).getNusId());
@@ -1427,7 +1439,7 @@ public class MainWindowShellTest {
         int saves = storage.saves;
         int dispatched = logic.commands.size();
         submit(command);
-        assertEquals("Success", label("feedbackStatus"), command + ": " + feedback());
+        assertEquals("Success", feedbackStatus(), command + ": " + feedback());
         assertEquals("", field().getText(), command);
         assertEquals(saves + (command.equals("equipment list") ? 0 : 1), storage.saves, command);
         assertEquals(dispatched + 1, logic.commands.size(), command);
@@ -1445,7 +1457,7 @@ public class MainWindowShellTest {
             String json = Files.exists(storage.getAddressBookFilePath())
                     ? Files.readString(storage.getAddressBookFilePath()) : null;
             submit(command);
-            assertEquals("Error", label("feedbackStatus"), command);
+            assertEquals("Error", feedbackStatus(), command);
             assertEquals(command, field().getText(), command);
             assertEquals(field(), window.getPrimaryStage().getScene().getFocusOwner(), command);
             assertEquals(before, model.getAddressBook(), command);
@@ -1464,7 +1476,7 @@ public class MainWindowShellTest {
     /** Records actual pipeline outcomes for the checked lifecycle transcript. */
     private void recordOutcome(String command) {
         session.add("INPUT: " + command);
-        session.add("STATUS: " + label("feedbackStatus"));
+        session.add("STATUS: " + feedbackStatus());
         session.add("OUTPUT: " + feedback());
         session.add("RETAINED INPUT: " + field().getText());
         session.add("SUCCESSFUL SAVES: " + storage.saves);
@@ -1494,13 +1506,13 @@ public class MainWindowShellTest {
     /** Uses the same real family route and autosave as command input. */
     private void showMemberDetails(NusId identity) {
         submit("member view nus/" + identity.value);
-        assertEquals("Success", label("feedbackStatus"));
+        assertEquals("Success", feedbackStatus());
     }
 
     /** Uses the actual equipment parser, command, model and storage pipeline. */
     private void showEquipmentDetails(UUID identity) {
         submit("equipment view uuid/" + identity);
-        assertEquals("Success", label("feedbackStatus"));
+        assertEquals("Success", feedbackStatus());
     }
 
     private String detailLabel(String id) {
@@ -1526,6 +1538,13 @@ public class MainWindowShellTest {
 
     private String label(String id) {
         return ((Label) node(id)).getText();
+    }
+
+    /**
+     * Returns the visible status independently of the result color.
+     */
+    private String feedbackStatus() {
+        return label("feedbackStatus");
     }
 
     private Node node(String id) {
