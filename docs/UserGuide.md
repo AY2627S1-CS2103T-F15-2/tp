@@ -344,7 +344,7 @@ during creation or saving commits no new units. There is no stored quantity repl
 equipment list
 ```
 
-Show every equipment item, ordered by normalized **category, name, then UUID**. Rows expose the UUID,
+Show every equipment item, including retained deleted units, ordered by normalized **category, name, then UUID**. Rows expose the UUID,
 name, category, condition, derived availability and current holder when assigned. An unassigned item has
 no current holder. Identical descriptions remain separate rows.
 
@@ -365,7 +365,7 @@ Example: `equipment view uuid/550e8400-e29b-41d4-a716-446655440000`.
 Uppercase hexadecimal letters identify the same UUID. You must use the complete UUID; shortened forms
 and partial matching are not supported.
 
-Details show the full UUID, name, category, condition, notes and derived availability. An open loan also
+Details show the full UUID, name, category, condition, notes, lifecycle status and derived availability. An open loan also
 shows the holder's NUS ID, name, phone and email, plus assignment and expected return dates. The matching
 equipment row is selected when its list is visible. Long notes wrap and scroll with the details.
 
@@ -381,6 +381,24 @@ validation error. Missing/repeated/unknown parameters are rejected. An open loan
 member produces an inconsistent-data error instead of incomplete holder information. Failure leaves the
 previous view and selection unchanged.
 
+### Edit equipment: `equipment edit`
+
+```text
+equipment edit uuid/UUID [name/NAME] [category/CATEGORY] [condition/CONDITION] [notes/NOTES]
+```
+
+Supply the exact UUID and at least one field to change. Unspecified fields keep their existing values;
+`notes/` with no value clears notes. Names, categories, conditions and notes follow the same validation
+as equipment add. Duplicate/unknown parameters and unchanged edits are rejected without saving.
+
+Example: `equipment edit uuid/550e8400-e29b-41d4-a716-446655440000 condition/DAMAGED notes/Lens needs repair`.
+
+Only that physical unit changes. Its UUID and loan references remain intact; matching siblings are
+unaffected. Changing the name/category changes its inventory group. You may edit a loaned unit,
+including its condition: it remains ASSIGNED until returned, after which its new condition determines
+availability. This does not record a separate condition-at-handover history. Deleted units must first
+be restored. Success opens the edited unit's details; failed validation or saving changes nothing.
+
 ### Delete equipment: `equipment delete`
 
 ```text
@@ -389,10 +407,11 @@ equipment delete uuid/UUID
 
 Example: `equipment delete uuid/550e8400-e29b-41d4-a716-446655440000`.
 
-Permanently delete one exact item **only when it has no open loan**. Its condition does not prevent
-deletion. Success removes the item and its associated closed loans, leaving unrelated records intact.
-Feedback includes the identity and name: `Deleted equipment UUID: EQUIPMENT_NAME.` The equipment
-directory appears with a surviving selection or an empty state; deleted-item details disappear.
+Soft-delete one exact item **only when it has no open loan**. Its condition does not prevent deletion.
+The unit, UUID, details and closed loans are retained. Feedback includes the identity and name:
+`Deleted equipment UUID: EQUIPMENT_NAME.` The equipment directory appears with its existing filters.
+Deleted units remain visible in all-record lists, labeled `[DELETED]`; active-only searches exclude them.
+They cannot be assigned and are excluded from inventory group and availability totals.
 
 | Situation | Result or correction |
 | --- | --- |
@@ -401,7 +420,25 @@ directory appears with a surviving selection or an empty state; deleted-item det
 | UUID or syntax is invalid | Correct the full UUID/required prefix and retry. |
 | Saving fails | The item and loan records remain unchanged. Correct file access and retry. |
 
-Deleting one UUID never deletes other items with the same description. Deletion cannot be undone.
+Deleting one UUID never deletes other items with the same description. Repeated deletion is rejected.
+
+### Restore equipment: `equipment restore`
+
+```text
+equipment restore uuid/UUID
+```
+
+Find retained units with `equipment search status/deleted` or `equipment list`, then restore one exact
+UUID. There is no restoration time limit. The unit retains its identity, condition, notes and closed loan
+history. A restored DAMAGED or UNDER_REPAIR unit remains UNAVAILABLE; GOOD/FAIR units become AVAILABLE.
+Success opens its details. Unknown UUIDs, already-active units, invalid syntax and save failures do not
+change records. Records permanently removed by older versions require an earlier backup to recover.
+
+Equipment search defaults to active units. Use `status/active`, `status/deleted` or `status/all` alongside
+other search filters; values are case-insensitive. Deleted units have derived UNAVAILABLE status, so
+`equipment search status/deleted availability/available` returns no matches. `equipment list` resets
+filters and includes both states. Total counts include retained units; availability counts and inventory
+groups cover active units only. Deleted equipment can still be opened with `equipment view uuid/UUID`.
 
 ### Open the Loans tab: `loans list`
 
@@ -504,7 +541,7 @@ on or after 20 September 2026; choose valid actual dates for your own operation.
 6. Return it: `loans return uuid/UUID returned/2026-09-20`.
 7. View both records again. The member has no current holding for this item; the GOOD item is AVAILABLE.
 8. If these were erroneous/test records, remove them with `equipment delete uuid/UUID` and
-   `member delete nus/E0678901C`. Equipment deletion is permanent; member deletion is recoverable with `member restore`.
+   `member delete nus/E0678901C`. Both deletions retain records; use `equipment restore` or `member restore` to recover them.
 
 ## Saving, file access and recovery
 
@@ -518,15 +555,15 @@ before copying them into the matching locations beside the JAR. Data is not auto
 from the old working folder. Moving only the JAR to a new empty folder starts a separate sample dataset.
 When running development classes with Gradle, runtime files remain relative to the project working folder.
 
-For the seven Laplace mutation commands, a failed save leaves the live records and previously saved data
+For Laplace mutation commands, a failed save leaves the live records and previously saved data
 unchanged. An error is not a successful addition, deletion, assignment or return. The command remains
 available for correction. Fix the folder/file access problem, then retry. Do not repeatedly resubmit a
 successful command: duplicate members, already-assigned items and repeated returns are rejected.
 
 Data includes members, equipment and open/closed loan records. Availability and holders are derived;
 do not try to maintain separate holder/availability fields. Member deletion retains the record,
-its `deleted` boolean and closed loans for unlimited restoration. Equipment deletion remains permanent
-and removes that equipment's closed loans. Older saves without a member `deleted` field load as active;
+its `deleted` boolean and closed loans for unlimited restoration. Equipment follows the same policy.
+Older member/equipment records without a `deleted` field load as active;
 explicit null or non-boolean values are invalid. Do not open lifecycle-aware data in an older release
 that may discard deletion state.
 
@@ -546,10 +583,10 @@ and separate member-find/holder commands are outside the MVP.
 
 **Why can I not delete a record?** A member with an open loan or equipment currently on loan cannot be
 deleted. Return the relevant items first. Closed loans do not block deletion. They are retained for
-soft-deleted members; equipment deletion still removes that equipment's closed loans.
+both soft-deleted members and equipment.
 
 **Can I register broken equipment?** Yes. DAMAGED/UNDER_REPAIR records are UNAVAILABLE and cannot be
-assigned. Equipment editing is not included. Member contact details can be changed with `member edit`.
+assigned. Use `equipment edit uuid/UUID condition/GOOD` after repairing a unit. Member contact details can be changed with `member edit`.
 
 **Does an overdue loan close itself?** No. Record an actual return using `loans return`. A return later
 than expected is valid if it is no earlier than assignment and no later than the computer's local date.
@@ -591,6 +628,8 @@ authentication and concurrent multi-user operation are not provided.
 | Add equipment | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES] [count/COUNT]` |
 | List equipment | `equipment list` |
 | View equipment and current holder | `equipment view uuid/UUID` |
+| Edit equipment | `equipment edit uuid/UUID [name/NAME] [category/CATEGORY] [condition/CONDITION] [notes/NOTES]` |
+| Restore equipment | `equipment restore uuid/UUID` |
 | Delete equipment | `equipment delete uuid/UUID` |
 | Open the Loans tab | `loans list` |
 | Assign equipment | `loans add uuid/UUID nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |

@@ -19,7 +19,7 @@ escaping are unsupported, following the shared Laplace grammar.
 
 The command resolves the actual stored item through Model, then calls `deleteEquipment`.
 It does not scan or mutate collection views or clean up loans itself. The root permits
-deletion only when the item has no open loan and removes that item's closed history.
+deletion only when the item has no open loan and retains that item and all its closed history.
 Other items, members, legacy persons and unrelated loans remain intact. Items with
 identical descriptions but different UUIDs remain independent.
 
@@ -45,7 +45,7 @@ failure and fresh-reload evidence is in [MvpCompletion.md](../gui/MvpCompletion.
 
 Tests cover canonical identity, identical physical-item descriptions, actual stored-entity
 delegation, null misuse, unknown/deleted UUIDs, blocked open loans with existing history,
-permitted deletion and removal of only related history, and preservation after JSON reload.
+permitted soft deletion with retained history, and preservation after JSON reload.
 Invalid inputs are interleaved with a return and valid deletions to check subsequent state.
 Legacy persons and unrelated open loans/derived availability are retained. No saved user
 data is read or overwritten.
@@ -59,3 +59,8 @@ Run the focused component checks with Java 25:
 Run the full normal `./gradlew check coverage shadowJar` and `./.github/run-checks.sh`
 before handoff. Routed deletion, failed-save preservation, selection recovery and reload are covered
 by the current combined suite; remaining native/CI acceptance is recorded in #75.
+
+Deletion sets `deleted: true`; repeated deletion is rejected. Use `equipment restore uuid/UUID` to
+reactivate the same unit without a time limit. Deleted rows remain visible in `equipment list` and
+`equipment search status/deleted`; search defaults to active records. See
+[Equipment maintenance](equipment-maintenance.md) for editing and restoration.

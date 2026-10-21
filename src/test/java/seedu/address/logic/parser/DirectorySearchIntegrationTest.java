@@ -70,7 +70,7 @@ public class DirectorySearchIntegrationTest {
         assertEquals("Found 1 members.", logic.execute("member search").getFeedbackToUser());
         assertEquals("Found 1 members.", logic.execute("member search status/DELETED").getFeedbackToUser());
         assertEquals("Found 2 members.", logic.execute("member search status/all").getFeedbackToUser());
-        assertEquals(DirectoryQuery.MemberStatus.ACTIVE,
+        assertEquals(DirectoryQuery.Status.ACTIVE,
                 logic.execute("member search").getDisplayRequest().getQuery().orElseThrow().status());
         assertEquals(1, storage.saves);
         assertTrue(java.util.Arrays.equals(saved, Files.readAllBytes(storage.getAddressBookFilePath())));
@@ -107,7 +107,8 @@ public class DirectorySearchIntegrationTest {
                 "equipment search availability/free", "equipment search sort/held", "equipment search q/x unknown/y",
                 "equipment search category/", "equipment search sort/", "equipment search order/",
                 "member search status/archived", "member search status/", "member search status/all status/active",
-                "equipment search status/active")) {
+                "equipment search status/archived", "equipment search status/",
+                "equipment search status/all status/active")) {
             assertThrows(ParseException.class, () -> logic.execute(input));
             assertEquals(before, model.getAddressBook());
             assertEquals(0, storage.saves);

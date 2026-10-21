@@ -97,8 +97,9 @@ public class DirectorySummaryTest {
             assertTrue(label(panel, "selection").contains(selected.toString()));
             model.deleteEquipment(model.findEquipment(selected).orElseThrow());
             panel.refresh(Optional.of(selected));
-            assertLabel(panel, "selection", "Equipment no longer exists: " + selected);
-            assertLabel(panel, "totalCount", "3");
+            assertTrue(label(panel, "selection").contains(selected.toString()));
+            assertLabel(panel, "availableCount", "1");
+            assertLabel(panel, "totalCount", "4");
             panel.refresh(Optional.empty());
             assertLabel(panel, "selection", "No equipment selected");
         });

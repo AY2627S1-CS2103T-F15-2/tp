@@ -78,16 +78,16 @@ public class MemberEquipmentRoutingIntegrationTest {
         assertDisplay("member view\tnus/a0000001x", DisplayRequest.memberDetails(FIRST_MEMBER));
         assertDisplay("equipment view uuid/" + first, DisplayRequest.equipmentDetails(first));
         assertEquals(beforeReads, model.getAddressBook());
-        assertEquals(8, storage.saves);
+        assertEquals(7, storage.saves);
         assertReloadMatches();
         assertDisplay("member delete nus/a0000001x", DisplayRequest.members());
         assertDisplay("equipment delete\tuuid/" + first, DisplayRequest.equipment());
         assertTrue(model.findMember(FIRST_MEMBER).orElseThrow().isDeleted());
         assertTrue(model.hasMember(SECOND_MEMBER));
-        assertFalse(model.hasEquipment(first));
+        assertTrue(model.findEquipment(first).orElseThrow().isDeleted());
         assertTrue(model.hasEquipment(second));
         assertEquals(1, model.getAddressBook().getPersonList().size());
-        assertEquals(10, storage.saves);
+        assertEquals(9, storage.saves);
         assertReloadMatches();
     }
 
@@ -167,7 +167,7 @@ public class MemberEquipmentRoutingIntegrationTest {
         assertTrue(logic.execute("member view nus/A0000002X").getFeedbackToUser().contains("0 item(s)"));
         assertTrue(logic.execute("equipment view uuid/" + second).getFeedbackToUser().contains("AVAILABLE"));
         assertDisplay("equipment delete uuid/" + second, DisplayRequest.equipment());
-        assertEquals(1, model.getLoanList().size());
+        assertEquals(2, model.getLoanList().size());
         assertTrue(model.hasMember(SECOND_MEMBER));
         assertReloadMatches();
     }

@@ -168,6 +168,16 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public void setEquipment(Equipment target, Equipment edited) {
+        addressBook.setEquipment(target, edited);
+    }
+
+    @Override
+    public void restoreEquipment(Equipment equipment) {
+        addressBook.restoreEquipment(equipment);
+    }
+
+    @Override
     public ObservableList<Equipment> getEquipmentList() {
         return addressBook.getEquipmentList();
     }
@@ -202,7 +212,8 @@ public class ModelManager implements Model {
         requireNonNull(uuid);
         Equipment equipment = addressBook.findEquipment(uuid).orElseThrow(EquipmentNotFoundException::new);
         boolean hasOpenLoan = addressBook.findOpenLoan(uuid).isPresent();
-        return AvailabilityCalculator.calculate(equipment.getCondition(), hasOpenLoan);
+        return equipment.isDeleted() ? Availability.UNAVAILABLE
+                : AvailabilityCalculator.calculate(equipment.getCondition(), hasOpenLoan);
     }
 
     //=========== Filtered Person List Accessors =============================================================

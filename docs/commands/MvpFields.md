@@ -58,7 +58,7 @@ the scroll position; background refresh preserves it. Inconsistent references pr
 instead of an incomplete holdings list.
 
 Loans shows current open assignments only, with exact member/equipment navigation and dates. Closed records
-remain in the model/JSON for return integrity and existing deletion cleanup; there is no history presentation.
+remain in the model/JSON through deletion/restoration; there is no history presentation.
 
 The command input replaces pasted tabs and line-break characters with spaces before JavaFX
 can strip them. CRLF occupies two input spaces to preserve edit offsets; text value normalization
@@ -66,3 +66,9 @@ collapses those spaces before validation/storage. Full-command parsing also acce
 arguments, preserving field boundaries and reserved-marker errors. Rejected pasted input stays
 available for correction. Deletion refusal reports the actual open-item count/current holder;
 reassignment names the current holder, and successful deletion includes the stored record name.
+
+Equipment edits require an exact UUID and at least one changed detail. UUIDs and lifecycle state cannot
+be edited. A blank `notes/` clears notes. Descriptive and condition edits are permitted during a loan;
+ASSIGNED still takes precedence until return. Deleted units must be restored before editing or lending.
+The persisted equipment `deleted` flag defaults to false when absent and rejects null/non-booleans.
+Deletion retains closed history and blocks open loans; restoration has no time limit.

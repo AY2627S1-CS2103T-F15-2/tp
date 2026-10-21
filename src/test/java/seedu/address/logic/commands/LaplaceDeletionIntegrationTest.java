@@ -1,7 +1,6 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.DeletionTestData.FIRST_EQUIPMENT;
@@ -59,7 +58,7 @@ public class LaplaceDeletionIntegrationTest {
     }
 
     @Test
-    public void equipmentDelete_closedHistory_saveReloadPreservesOnlyUnrelatedData() throws Exception {
+    public void equipmentDelete_closedHistory_saveReloadPreservesRetainedUnitAndHistory() throws Exception {
         ModelManager model = DeletionTestData.model();
         model.addLoan(DeletionTestData.loan(FIRST_EQUIPMENT, FIRST_MEMBER, false));
         Loan retained = DeletionTestData.loan(SECOND_EQUIPMENT, SECOND_MEMBER, true);
@@ -71,9 +70,10 @@ public class LaplaceDeletionIntegrationTest {
         storage.saveAddressBook(model.getAddressBook());
         ModelManager reloaded = reload(storage);
         assertEquals(model.getAddressBook(), reloaded.getAddressBook());
-        assertFalse(reloaded.hasEquipment(FIRST_EQUIPMENT.getUuid()));
-        assertEquals(List.of(SECOND_EQUIPMENT), reloaded.getEquipmentList());
-        assertEquals(List.of(retained), reloaded.getLoanList());
+        assertTrue(reloaded.findEquipment(FIRST_EQUIPMENT.getUuid()).orElseThrow().isDeleted());
+        assertEquals(List.of(FIRST_EQUIPMENT.withDeleted(true), SECOND_EQUIPMENT), reloaded.getEquipmentList());
+        assertEquals(List.of(DeletionTestData.loan(FIRST_EQUIPMENT, FIRST_MEMBER, false), retained),
+                reloaded.getLoanList());
         assertEquals(Availability.ASSIGNED, reloaded.getAvailability(SECOND_EQUIPMENT.getUuid()));
     }
 
@@ -139,8 +139,10 @@ public class LaplaceDeletionIntegrationTest {
         parser.parse("uuid/" + SECOND_EQUIPMENT.getUuid()).execute(model);
         storage.saveAddressBook(model.getAddressBook());
         assertEquals(model.getAddressBook(), reload(storage).getAddressBook());
-        assertEquals(List.of(), model.getEquipmentList());
-        assertEquals(List.of(), model.getLoanList());
+        assertEquals(List.of(FIRST_EQUIPMENT.withDeleted(true), SECOND_EQUIPMENT.withDeleted(true)),
+                model.getEquipmentList());
+        assertEquals(List.of(DeletionTestData.loan(FIRST_EQUIPMENT, FIRST_MEMBER, true)
+                .withReturnedDate(RETURNED)), model.getLoanList());
         assertEquals(List.of(FIRST_MEMBER, SECOND_MEMBER), model.getMemberList());
     }
 

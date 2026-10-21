@@ -16,7 +16,7 @@
 * Laplace evolves the course-provided [AddressBook-Level3 starter](https://github.com/NUS-CS2103-AY2627-S1/tp).
 * For retirement of the legacy command routes, Arjo Das used OpenAI Codex to assist with planning,
   implementation, regression tests, and documentation.
-* Arjo Das also used OpenAI Codex for equipment batch-add planning, implementation, tests, and documentation.
+* Arjo Das also used OpenAI Codex for equipment batch-add and identity-preserving equipment maintenance planning, implementation, tests, lifecycle UML, and documentation.
   These acknowledgements describe those changes only.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -194,6 +194,37 @@ Count 1 preserves existing feedback and `equipmentDetails(uuid)` navigation. Lar
 new UUIDs and return `DisplayRequest.equipment(DirectoryQuery.all())`, resetting prior filters/sorting
 so the newly created units can be found. Availability remains derived from each unit's condition/loans.
 
+### Equipment editing, deletion and restoration
+
+Each `Equipment` is an immutable physical unit. `EquipmentEditCommand` builds a replacement with the
+stored UUID and any supplied details. `AddressBook.setEquipment` permits only active-to-active edits;
+`UniqueEquipmentList.setEquipment` checks UUID equality and replaces the value at the same index.
+Name/category changes affect derived inventory groups, never sibling units. Unspecified legacy text
+is retained verbatim; new text uses equipment-add validation. Notes can be cleared explicitly.
+
+`AddressBook.removeEquipment` now marks a unit deleted after checking that no open loan exists.
+`restoreEquipment` clears the flag. Both retain UUID, details and closed loans. This supersedes the
+historical scaffold's permanent deletion. Member and equipment restoration have no time limit.
+
+<puml src="diagrams/EquipmentLifecycle.puml" alt="Equipment lifecycle with stable UUID and retained history" />
+
+Lifecycle is separate from condition and loan status. Editing condition while loaned is allowed:
+ASSIGNED remains derived from the open loan; on return the edited condition controls availability.
+Deleted units derive UNAVAILABLE, cannot receive open loans, and are excluded from inventory totals.
+Root loan validation applies this invariant both to new loans and complete dataset replacement/loading.
+
+`JsonAdaptedEquipment` writes a boolean `deleted`. An absent flag defaults to false for earlier files;
+explicit null and non-boolean values fail loading. Closed loans may reference deleted equipment.
+All maintenance commands are transactional: execute against a snapshot, save atomically, then publish.
+No-change/rejected edits and failed writes leave live state and previously saved bytes unchanged.
+
+Directory queries share `DirectoryQuery.Status` across members and equipment. Equipment search defaults
+to active; `status/deleted|all` exposes retained units. List resets to all states and does not save.
+Cards label deleted units; details show lifecycle state and a restore command. Edit/restore navigate to
+the same UUID, retaining query criteria even if that unit no longer matches. Total counts include deleted
+units; availability counts and inventory groups include active units only. Closed history remains stored,
+with no new history-view UI in this feature.
+
 ### \[Proposed\] Undo/redo feature
 
 The following inherited AB3 proposal uses retired person commands as examples. It is not implemented
@@ -324,7 +355,7 @@ These requirements consolidate the [team's project notes](https://docs.google.co
 
 * **MVP baseline:** Add, list, view, and delete members and equipment; identify members by NUS ID and equipment by a generated UUID; issue and return individual items; show holdings and holders; validate input and preserve consistency on failure.
 * **Broader requirements:** Editing, archiving, recovery, import/export, search and filtering, summaries, batch operations, condition recording at handover, histories, and undo/redo remain documented below even if they are not delivered this semester.
-* **Deletion and retention:** The MVP permanently deletes an eligible record and its closed loans. The proposed 30-day recovery and historical lookup requirements need a revised retention policy before implementation: recoverable records and their linked loans must be retained for recovery, and archived members must retain their history. The MVP deletion behavior does not satisfy these future requirements.
+* **Deletion and retention:** Members and equipment are soft-deleted only without open loans. Records and closed history are retained; restoration has no time limit. This supersedes the original permanent-deletion and proposed 30-day recovery policies. A dedicated history view remains future work.
 * **Single-user boundary:** Import/export supports the same user's local records and backups. The earlier idea of handing a snapshot to another EXCO member is retained as a considered use of export, but is excluded from the course product's regular operations. Shared datasets, concurrent users, and member self-service are outside scope.
 
 ### User stories
@@ -343,7 +374,7 @@ Priority expresses product importance, not implementation status. **MVP** denote
 | US07 | `* *` | Future | CCA EXCO member | edit a member's details while keeping their identifier stable | keep corrected or changed information accurate without breaking loan references. |
 | US08 | `* *` | Future | CCA EXCO member | archive an inactive member | keep the active list relevant while retaining historical records. |
 | US09 | `* * *` | MVP | CCA EXCO member | delete a member record created in error when it has no outstanding equipment | remove unwanted records without losing track of a current holder. |
-| US10 | `* *` | Future | CCA EXCO member | restore a deleted member within 30 days of deletion | recover from an accidental deletion. |
+| US10 | `* *` | Implemented | CCA EXCO member | restore a retained deleted member without a time limit | recover from an accidental deletion. |
 | US11 | `* *` | Future | CCA EXCO member | filter and sort members by a chosen field | focus on the people relevant to my current task. |
 | US12 | `* *` | Future | busy CCA EXCO member | find members using incomplete queries or approximate names | retrieve the right record quickly even when I do not know the exact identifier. |
 | US13 | `* * *` | MVP | CCA EXCO member adding data | have duplicate NUS IDs rejected with an explanation | avoid conflicting records for the same member. |
@@ -351,9 +382,9 @@ Priority expresses product importance, not implementation status. **MVP** denote
 | US15 | `*` | Implemented | CCA EXCO member receiving a batch | add several units of the same equipment type in one operation | record a delivery without repeating the same entry process. |
 | US16 | `* * *` | MVP | CCA EXCO member | list all active equipment and its availability | review the current inventory at a glance. |
 | US17 | `* * *` | MVP | CCA EXCO member | view one equipment item's full details | verify its identity, condition, and recorded information. |
-| US18 | `* *` | Future | CCA EXCO member | edit an equipment record while retaining its UUID | keep item information accurate without breaking loan references. |
+| US18 | `* *` | Implemented | CCA EXCO member | edit an equipment record while retaining its UUID | keep item information accurate without breaking loan references. |
 | US19 | `* * *` | MVP | CCA EXCO member | delete an equipment record created in error when it is not on loan | remove unwanted entries without losing track of an issued item. |
-| US20 | `* *` | Future | CCA EXCO member | restore a deleted equipment record within 30 days of deletion | recover from an accidental deletion. |
+| US20 | `* *` | Implemented | CCA EXCO member | restore a retained deleted equipment record without a time limit | recover from an accidental deletion. |
 | US21 | `* *` | Future | CCA EXCO member | filter and sort equipment by category, condition, or availability | identify suitable items for my current task. |
 | US22 | `* *` | Future | busy CCA EXCO member | find equipment using incomplete queries or approximate names | locate an item even when I do not know its UUID. |
 | US23 | `* *` | Future | CCA EXCO member planning an activity | see counts of available, assigned, and unavailable units of an equipment type | decide whether there is enough equipment without counting manually. |
@@ -503,7 +534,7 @@ Passing the expected return date never closes a loan automatically. A return aft
 1. The EXCO member requests the member list or equipment list, according to the kind of record to remove.
 2. Laplace shows the requested records and their identifiers.
 3. The EXCO member requests deletion of one record using its NUS ID or UUID, respectively.
-4. Laplace verifies that the record has no open loans, permanently deletes it and its associated closed loans, and confirms the deletion.
+4. Laplace verifies that the record has no open loans, marks it deleted while retaining its details and closed loans, and confirms the deletion.
 
 Use case ends.
 
@@ -518,7 +549,21 @@ Use case ends.
     * 4b1. Laplace refuses deletion and explains that the outstanding items must first be returned.
     * Use case ends without deletion. The EXCO member may complete UC04 and start UC05 again.
 
-This is the MVP deletion policy. The future recovery and history stories require the retention changes described under Product scope.
+Already-deleted records are rejected without a save. To recover a record, find it with a `status/deleted`
+search, then issue `member restore nus/NUS_ID` or `equipment restore uuid/UUID`. Laplace clears the
+flag, saves and opens its details. Unknown/already-active records fail without changes. Recovery has no
+time limit; equipment condition is preserved. Closed history remains retained throughout.
+
+#### UC05a: Edit equipment details
+
+**Scope:** Implemented. **Related story:** US18.
+
+1. The EXCO member views a physical unit and supplies its UUID with one or more edited details.
+2. Laplace validates the fields and requires an active unit and an actual change.
+3. Laplace replaces the details under the same UUID, saves and displays the updated unit.
+
+Invalid fields, unknown UUIDs, deleted units and no-change edits leave the dataset unchanged. An open
+loan permits details/condition edits and retains its reference; save failure preserves the previous state.
 
 #### UC06: Import records after reviewing a preview
 
@@ -637,8 +682,8 @@ These are acceptance targets for the intended product, not measurements of the c
 | Overdue loan | An open loan whose expected return date is before the computer's local date. This definition does not imply automatic notifications. |
 | Active record | A member or equipment record included in normal lists, rather than archived or deleted. Active equipment can still be assigned or unavailable. |
 | Archive | A proposed operation that removes an inactive member from the active list while preserving their record and history. |
-| Delete | In the MVP, permanent removal of a record and its closed loans, allowed only without open loans. Future 30-day recovery requires retaining deleted data instead. |
-| Restore | Either proposed recovery of a deleted record within 30 days, or replacement of the entire dataset from a complete snapshot; the context identifies which operation applies. |
+| Delete | Marking a retained record deleted, allowed only without open loans. Its identity, details and closed history remain stored. |
+| Restore | Reactivating a retained deleted member or equipment unit without a time limit, preserving identity and history. |
 | Snapshot | A complete local export of Laplace's persistent records and their relationships at a point in time, used as a backup. It differs from importing selected member or equipment records. |
 | Fuzzy search | Proposed matching of incomplete or approximate text against records; distinct from the MVP's exact identifier lookup. |
 | Atomic operation | An operation whose changes succeed together or leave the preceding consistent state intact. |
@@ -703,6 +748,25 @@ testers are expected to do more *exploratory* testing.
    pre-existing matching units, not the new units within the same batch.
 5. Exit and relaunch from the same folder. Expected: all units retain their original UUIDs and details.
    Use `equipment view uuid/UUID` with each actual generated UUID to verify independently.
+
+### Editing, deleting and restoring equipment
+
+1. Add two matching units with `equipment add name/Maintenance Camera category/Photography condition/GOOD count/2`.
+   Record both UUIDs as A and B. Replace these placeholders in all following commands.
+2. Run `equipment edit uuid/A name/Updated Camera condition/FAIR notes/Checked` then `equipment edit uuid/A notes/`.
+   Expect A's UUID unchanged, updated details and cleared notes; B remains unchanged. Restart and verify.
+3. Try `equipment edit uuid/A`, `equipment edit uuid/A name/`, and a no-change edit. Expect an error and no save.
+4. Assign A to an active test member with valid dates. Edit its condition to DAMAGED: expect ASSIGNED until
+   return, then UNAVAILABLE. Attempt deletion while assigned: expect refusal and no record/history changes.
+5. Return A, then `equipment delete uuid/A`. Expect a retained `[DELETED]` row in `equipment list`, no new
+   loans permitted, and exclusion from active search/inventory totals. `equipment search status/deleted`
+   should find it. Restart: the flag, UUID, details and closed loan records must remain in the saved data.
+6. Try editing/deleting A again: expect rejection. Run `equipment restore uuid/A`: expect the same UUID
+   and details, still DAMAGED/UNAVAILABLE. Repeating restore is rejected. Repair with an edit to GOOD and
+   verify that assigning a new loan succeeds. B must remain unchanged throughout.
+7. Check `equipment search status/all`, direct UUID navigation and query refresh after rename/restore.
+   Automated transaction tests separately inject partial writes/failed atomic moves; do not simulate
+   filesystem failures against a real user dataset.
 
 ### Saving data
 

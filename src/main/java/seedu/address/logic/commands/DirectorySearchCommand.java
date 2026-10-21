@@ -10,7 +10,7 @@ public class DirectorySearchCommand extends Command {
     public static final String MEMBER_USAGE = "member search [q/TEXT] [holding/any|yes|no]"
             + " [status/active|deleted|all] [sort/name|id|held] [order/asc|desc]";
     public static final String EQUIPMENT_USAGE = "equipment search [q/TEXT] [category/TEXT]"
-            + " [condition/CONDITION] [availability/AVAILABLE|ASSIGNED|UNAVAILABLE]"
+            + " [condition/CONDITION] [availability/AVAILABLE|ASSIGNED|UNAVAILABLE] [status/active|deleted|all]"
             + " [sort/category|name|id|condition|availability] [order/asc|desc]";
 
     private final boolean members;

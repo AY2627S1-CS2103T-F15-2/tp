@@ -29,6 +29,8 @@ public class LoanAddCommand extends Command {
             + "Dates must use yyyy-MM-dd.";
     public static final String MESSAGE_SUCCESS = "Assigned %1$s (%2$s) to %3$s (%4$s) on %5$s; expected return: %6$s.";
     public static final String MESSAGE_EQUIPMENT_NOT_FOUND = "No equipment with UUID %1$s exists.";
+    public static final String MESSAGE_DELETED = "Cannot assign deleted equipment %1$s. "
+            + "Use equipment restore uuid/%1$s first.";
     public static final String MESSAGE_MEMBER_NOT_FOUND = "No member with NUS ID %1$s exists.";
     public static final String MESSAGE_ASSIGNED =
             "Equipment %1$s is unavailable because it is assigned to %2$s.";
@@ -67,6 +69,9 @@ public class LoanAddCommand extends Command {
         requireNonNull(model);
         try {
             Equipment equipment = model.findEquipment(equipmentUuid).orElseThrow(EquipmentNotFoundException::new);
+            if (equipment.isDeleted()) {
+                throw new CommandException(String.format(MESSAGE_DELETED, equipmentUuid));
+            }
             Member member = model.findMember(memberNusId).orElseThrow(MemberNotFoundException::new);
             if (member.isDeleted()) {
                 throw new MemberDeletedException();

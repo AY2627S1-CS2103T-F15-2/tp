@@ -24,8 +24,11 @@ public class EquipmentCommandParser implements Parser<Command> {
             case "list" -> new EquipmentListCommandParser().parse(arguments);
             case "add" -> new EquipmentAddCommandParser().parse(arguments);
             case "view" -> new EquipmentViewCommandParser().parse(arguments);
+            case "edit" -> new EquipmentEditCommandParser().parse(arguments);
+            case "restore" -> new EquipmentRestoreCommandParser().parse(arguments);
             case "delete" -> new EquipmentDeleteCommandParser().parse(arguments);
-            default -> throw new ParseException("Expected equipment subcommand: add, list, search, view, delete.");
+            default -> throw new ParseException(
+                    "Expected equipment subcommand: add, list, search, view, edit, delete, restore.");
         };
     }
 }

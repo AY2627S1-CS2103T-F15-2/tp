@@ -172,3 +172,12 @@ The member soft-delete branch supersedes earlier permanent-member-deletion behav
 null and non-boolean values are rejected. `member restore` has no time limit. Details are in
 [the lifecycle contract](commands/member-restore.md). Member editing preserves lifecycle state and
 rejects deleted members until restoration.
+
+## Equipment maintenance update
+
+The equipment maintenance feature supersedes earlier permanent-equipment-deletion rules in this
+historical scaffold. Equipment now persists a `deleted` boolean (missing means false). Deletion requires
+no open loan and retains the unit and all closed history; restore has no time limit. Details edits keep
+the UUID and cannot change deletion state. Root validation rejects open loans to deleted equipment.
+Deleted units derive UNAVAILABLE and are excluded from active inventory totals. See the main UG/DG
+for current command, persistence and lifecycle behavior.

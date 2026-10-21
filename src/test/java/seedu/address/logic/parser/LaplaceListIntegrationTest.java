@@ -77,7 +77,7 @@ public class LaplaceListIntegrationTest {
                 logic.execute("equipment list"));
         assertEquals(new CommandResult("Showing current loans.", DisplayRequest.loans()),
                 logic.execute("loans list"));
-        assertEquals(3, storage.saves);
+        assertEquals(2, storage.saves);
         assertEquals(before, model.getAddressBook());
         assertTrue(model.getFilteredPersonList().isEmpty());
         ModelManager reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
@@ -116,8 +116,9 @@ public class LaplaceListIntegrationTest {
             }
         };
         LogicManager failingLogic = new LogicManager(model, failingStorage);
+        org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> failingLogic.execute("equipment list"));
         AddressBook before = new AddressBook(model.getAddressBook());
-        for (String route : new String[] {"member list", "equipment list", "loans list"}) {
+        for (String route : new String[] {"member list", "loans list"}) {
             CommandException failure = org.junit.jupiter.api.Assertions.assertThrows(CommandException.class, () ->
                     failingLogic.execute(route));
             assertSame(cause, failure.getCause());
