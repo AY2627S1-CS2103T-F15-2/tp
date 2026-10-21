@@ -100,8 +100,8 @@ To explore without changing the sample records:
   to refresh the labels. Completed loan history remains retained internally and is not a user-facing list.
 - **Last result** sits above the command feedback and stays after switching tabs. A green box is a
   successful command, a red box is an error, and the box is neutral before the first command.
-  **Ready**, **Success** and **Error** also identify the status in text. **Details**
-  expands the complete feedback and **Copy** includes all UUIDs from batch creation.
+  The heading displays only **Last result**; assistive text includes the status and full message.
+  **Details** expands the complete feedback and **Copy** includes all UUIDs from batch creation.
 - The command input, identifiers and command examples use IBM Plex Mono. **↑/↓** browse up to 100 recent submissions in this session,
   preserving an unfinished draft. **Ctrl+Space** offers command-name or parameter-prefix completion at
   the end of the input. Choose an entry to insert it; **Escape** dismisses suggestions. Tab retains normal

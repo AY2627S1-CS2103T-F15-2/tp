@@ -59,7 +59,7 @@ public class CommandPreview extends VBox {
         use.setOnAction(event -> onUse.accept(command));
         FlowPane actions = new FlowPane(8, 6, copyButton("Copy", command), use);
         Label hint = new Label(isTemplate ? "Replace uppercase placeholders (template)"
-                : "Use command, then press Enter in the command box.");
+                : "Press Enter to execute (ready)");
         hint.setWrapText(true);
         hint.getStyleClass().add("laplace-muted");
         getChildren().addAll(code, actions, hint);

@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -18,9 +17,6 @@ public class ResultDisplay extends UiPart<Region> {
 
     @FXML
     private TextArea resultDisplay;
-
-    @FXML
-    private Label feedbackStatus;
 
     @FXML
     private HBox feedbackActions;
@@ -38,14 +34,13 @@ public class ResultDisplay extends UiPart<Region> {
     }
 
     /**
-     * Shows success or failure with a visible status and a distinct background.
+     * Shows status through the background and exposes status plus the full message to assistive technology.
      */
     public void setFeedbackToUser(String feedbackToUser, boolean isError) {
         requireNonNull(feedbackToUser);
         getRoot().getStyleClass().removeAll("laplace-success", "laplace-error", "laplace-neutral");
         getRoot().getStyleClass().add(isError ? "laplace-error" : "laplace-success");
-        feedbackStatus.setText(isError ? "Error" : "Success");
-        resultDisplay.setAccessibleText(feedbackStatus.getText() + ": " + feedbackToUser);
+        resultDisplay.setAccessibleText((isError ? "Error: " : "Success: ") + feedbackToUser);
         resultDisplay.setText(feedbackToUser);
         resultDisplay.setPrefHeight(38);
         Button expand = new Button("Details");
@@ -63,7 +58,6 @@ public class ResultDisplay extends UiPart<Region> {
      */
     public void setReady(String message) {
         setFeedbackToUser(message);
-        feedbackStatus.setText("Ready");
         resultDisplay.setAccessibleText("Ready: " + message);
         getRoot().getStyleClass().remove("laplace-success");
         getRoot().getStyleClass().add("laplace-neutral");

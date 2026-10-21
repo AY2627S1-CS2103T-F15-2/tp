@@ -105,10 +105,17 @@ preserved together; equipment/member/loan schemas are unchanged.
 
 Tests exercise actual FXML/CSS on the shared JavaFX thread, command/storage routing, identity preservation,
 filter scope, date boundaries, clipboard text, theme changes and preference compatibility. UI snapshots
-are written under `build/reports/laplace` for visual review. Interface text uses the platform's system font;
-command text and identifiers use bundled IBM Plex Mono. `LaplaceFonts` registers the two packaged faces
-once before FXML loading. CSS controls sizes and weights, including dynamically created controls;
-there are no per-node font listeners or hard-coded platform font names.
+are written under `build/reports/laplace` for visual review. Command text and identifiers use bundled
+IBM Plex Mono. `LaplaceFonts` registers those faces once and applies interface fonts by full face name:
+Helvetica/Helvetica Bold, then Arial/Arial Bold or Segoe UI/Segoe UI Bold when unavailable, with a system
+fallback. This bypasses JavaFX family/weight substitution that can clip bold interface glyphs.
+The helper owns interface sizes and weights; CSS owns colors, layout and monospace text. It observes
+new children, graphics and label style changes so dynamic rows and headings receive the same treatment.
+Tests check resolved face names as well as rendered layouts; checking only a Bold style is insufficient.
+
+The feedback heading displays only Last result; the box carries neutral/success/error color, and assistive
+text contains the status plus the entire message. Ready command previews say `Press Enter to execute (ready)`;
+templates say `Replace uppercase placeholders (template)`. Copy and Use command still never execute a command.
 
 ### Logic component
 

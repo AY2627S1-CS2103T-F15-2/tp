@@ -557,9 +557,8 @@ public class MainWindowShellTest {
                             .map(child -> ((Labeled) child).getText()).toList());
             assertEquals("Laplace", window.getPrimaryStage().getTitle());
             assertEquals("IBM Plex Mono", field().getFont().getFamily());
-            assertTrue(((Label) node("countBadge")).getFont().getStyle().contains("Bold"));
-            Label queryLabel = (Label) node("queryContext");
-            assertEquals(javafx.scene.text.Font.getDefault().getFamily(), queryLabel.getFont().getFamily());
+            LaplaceThemeTest.assertInterfaceFace((Label) node("countBadge"), true);
+            LaplaceThemeTest.assertInterfaceFace((Label) node("queryContext"), false);
             reject("list");
             assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
             reject("list members");
@@ -1541,10 +1540,10 @@ public class MainWindowShellTest {
     }
 
     /**
-     * Returns the visible status independently of the result color.
+     * Returns the assistive status while the visible heading remains only Last result.
      */
     private String feedbackStatus() {
-        return label("feedbackStatus");
+        return node("resultDisplay").getAccessibleText().split(": ", 2)[0];
     }
 
     private Node node(String id) {

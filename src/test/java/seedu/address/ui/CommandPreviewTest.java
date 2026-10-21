@@ -10,11 +10,23 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
 import seedu.address.testutil.FxTestUtil;
 
 class CommandPreviewTest {
+    @Test
+    void hints_readyAndTemplate_keepApprovedWording() {
+        FxTestUtil.runAndWait(() -> {
+            CommandPreview ready = new CommandPreview("member list", false, unused -> { });
+            CommandPreview template = new CommandPreview("member view nus/NUS_ID", true, unused -> { });
+            assertEquals("Press Enter to execute (ready)", ((Label) ready.getChildren().getLast()).getText());
+            Label templateHint = (Label) template.getChildren().getLast();
+            assertEquals("Replace uppercase placeholders (template)", templateHint.getText());
+        });
+    }
+
     @Test
     void actions_preserveExactUnicodeCommandAndOnlyPrepareOnUse() {
         FxTestUtil.runAndWait(() -> {

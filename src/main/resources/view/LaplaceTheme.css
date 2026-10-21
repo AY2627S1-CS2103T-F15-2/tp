@@ -61,7 +61,6 @@
 
 /* Shared palette and component styles. Legacy compatibility styles remain scoped. */
 .laplace-root {
-    -fx-font-family: "System";
     -fx-font-size: 14px;
     -fx-background-color: -laplace-canvas;
     -fx-base: -laplace-surface;
@@ -459,58 +458,4 @@
 .laplace-root .table-view {
     -fx-background-radius: 0;
     -fx-border-radius: 0;
-}
-
-/* Keep typography in CSS so dynamic controls and style changes inherit it normally. */
-.laplace-title {
-    -fx-font-size: 22px;
-    -fx-font-weight: bold;
-}
-.laplace-wordmark {
-    -fx-font-size: 21px;
-    -fx-font-weight: bold;
-}
-.laplace-muted {
-    -fx-font-size: 12px;
-}
-.laplace-count-badge {
-    -fx-font-size: 12px;
-    -fx-font-weight: bold;
-}
-.directory-list-title {
-    -fx-font-size: 18px;
-    -fx-font-weight: bold;
-}
-.directory-selection-hint {
-    -fx-font-size: 11px;
-}
-.member-name, .equipment-name {
-    -fx-font-size: 15px;
-    -fx-font-weight: bold;
-}
-.loan-title {
-    -fx-font-size: 21px;
-    -fx-font-weight: bold;
-}
-.loan-section-title {
-    -fx-font-size: 18px;
-    -fx-font-weight: bold;
-}
-.details-name {
-    -fx-font-size: 23px;
-    -fx-font-weight: bold;
-}
-.details-section-title {
-    -fx-font-size: 17px;
-    -fx-font-weight: bold;
-}
-.equipment-group-card .details-section-title {
-    -fx-font-size: 15px;
-}
-.directory-key, .directory-status-title, .details-caption, .loan-count, .loan-status {
-    -fx-font-weight: bold;
-}
-.table-view .column-header .label {
-    -fx-font-size: 13px;
-    -fx-font-weight: bold;
 }

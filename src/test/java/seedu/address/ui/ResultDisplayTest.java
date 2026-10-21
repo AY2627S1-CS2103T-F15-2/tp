@@ -10,7 +10,6 @@ import java.util.HashMap;
 import org.junit.jupiter.api.Test;
 
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
@@ -49,10 +48,13 @@ public class ResultDisplayTest {
         FxTestUtil.runAndWait(() -> {
             ResultDisplay display = new ResultDisplay();
             TextArea area = (TextArea) display.getRoot().lookup("#resultDisplay");
+            assertEquals(null, display.getRoot().lookup("#feedbackStatus"));
+            assertEquals("Last result", ((javafx.scene.control.Label) display.getRoot()
+                    .getChildrenUnmodifiable().getFirst()).getText());
+            assertTrue(area.getAccessibleText().startsWith("Ready: "));
             String longError = "Invalid command\n".repeat(100);
             display.setFeedbackToUser(longError, true);
             assertEquals(longError, area.getText());
-            assertEquals("Error", ((Label) display.getRoot().lookup("#feedbackStatus")).getText());
             assertEquals("Error: " + longError, area.getAccessibleText());
             assertTrue(area.isWrapText());
             assertFalse(area.isEditable());
@@ -61,7 +63,6 @@ public class ResultDisplayTest {
             assertThrows(NullPointerException.class, () -> display.setFeedbackToUser(null, false));
             assertEquals(longError, area.getText());
             display.setFeedbackToUser("Listed members");
-            assertEquals("Success", ((Label) display.getRoot().lookup("#feedbackStatus")).getText());
             assertEquals("Success: Listed members", area.getAccessibleText());
             assertEquals("Listed members", area.getText());
             assertTrue(display.getRoot().getStyleClass().contains("laplace-success"));

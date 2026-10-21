@@ -5,10 +5,7 @@
 <?import javafx.scene.layout.VBox?>
 <VBox spacing="4" styleClass="laplace-feedback,laplace-neutral"
       xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-  <HBox spacing="8" alignment="CENTER_LEFT">
-    <Label text="Last result" styleClass="laplace-muted" />
-    <Label fx:id="feedbackStatus" text="Ready" styleClass="laplace-muted" />
-  </HBox>
+  <Label text="Last result" styleClass="laplace-muted" />
   <HBox spacing="10" alignment="CENTER_LEFT">
     <TextArea fx:id="resultDisplay" editable="false" wrapText="true" HBox.hgrow="ALWAYS" prefHeight="38"
               minHeight="0" minWidth="0" accessibleText="Ready" />
