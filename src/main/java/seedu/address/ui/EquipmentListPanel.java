@@ -117,16 +117,18 @@ public class EquipmentListPanel extends UiPart<Region> {
      */
     public void select(Optional<UUID> selected) {
         requireNonNull(selected);
-        if (getSelection().equals(selected)) {
+        Optional<Equipment> unit = selected.flatMap(id -> data.getEquipmentList().stream()
+                .filter(item -> item.getUuid().equals(id)).findFirst());
+        Optional<InventoryGroups.Group> group = unit.flatMap(item -> rows.getItems().stream()
+                .filter(row -> row.key().equals(InventoryGroups.keyOf(item))).findFirst());
+        Optional<UUID> currentUuid = unit.map(Equipment::getUuid);
+        // An unchanged UUID may now belong to a different group, or no visible group.
+        if (getSelection().equals(currentUuid) && getSelectedGroup().equals(group.map(InventoryGroups.Group::key))) {
             return;
         }
         rows.getSelectionModel().clearSelection();
-        selectedUuid = null;
-        selected.flatMap(id -> data.getEquipmentList().stream().filter(unit -> unit.getUuid().equals(id)).findFirst())
-                .ifPresent(unit -> {
-                    selectGroup(InventoryGroups.keyOf(unit));
-                    selectedUuid = unit.getUuid();
-                });
+        group.ifPresent(row -> rows.getSelectionModel().select(row));
+        selectedUuid = currentUuid.orElse(null);
     }
 
     /**

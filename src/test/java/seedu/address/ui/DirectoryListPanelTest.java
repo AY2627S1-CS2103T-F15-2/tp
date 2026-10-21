@@ -36,6 +36,7 @@ import seedu.address.model.member.NusId;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.query.DirectoryQuery;
 import seedu.address.model.query.InventoryGroups;
 import seedu.address.testutil.FxTestUtil;
 
@@ -84,6 +85,57 @@ public class DirectoryListPanelTest {
             assertTrue(callbacks.isEmpty());
             assertEquals(before, model.getAddressBook());
             assertEquals("1 groups · 3 matching units / 3 retained", label(panel.getRoot(), "countLabel"));
+        });
+    }
+
+    @Test
+    public void equipment_editSelectedUnit_followsCurrentNameAndCategoryWithoutActivating() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = model();
+            List<InventoryGroups.Key> callbacks = new ArrayList<>();
+            EquipmentListPanel panel = new EquipmentListPanel(model.getAddressBook(), model::getAvailability,
+                    callbacks::add);
+            UUID uuid = new UUID(0, 1);
+            panel.select(Optional.of(uuid));
+            for (Equipment edited : List.of(
+                    new Equipment(uuid, "Tripod", "Photography", Condition.GOOD, ""),
+                    new Equipment(uuid, "Tripod", "Accessories", Condition.GOOD, ""))) {
+                model.setEquipment(model.findEquipment(uuid).orElseThrow(), edited);
+                panel.refresh();
+                panel.select(Optional.of(uuid));
+                assertEquals(Optional.of(uuid), panel.getSelection());
+                assertEquals(Optional.of(InventoryGroups.keyOf(edited)), panel.getSelectedGroup());
+                assertEquals(2, rows(panel).getItems().size());
+                assertTrue(callbacks.isEmpty());
+            }
+        });
+    }
+
+    @Test
+    public void equipment_editOutsideFilter_clearsOldGroupAndRetainsUnitUntilFilterReset() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = model();
+            List<InventoryGroups.Key> callbacks = new ArrayList<>();
+            EquipmentListPanel panel = new EquipmentListPanel(model.getAddressBook(), model::getAvailability,
+                    callbacks::add);
+            panel.setQuery(new DirectoryQuery("", "Photography", null, null,
+                    DirectoryQuery.Holding.ANY, DirectoryQuery.Sort.DEFAULT, false));
+            panel.refresh();
+            UUID uuid = new UUID(0, 1);
+            panel.select(Optional.of(uuid));
+            Equipment edited = new Equipment(uuid, "Camera", "Accessories", Condition.GOOD, "");
+            model.setEquipment(model.findEquipment(uuid).orElseThrow(), edited);
+            panel.refresh();
+            panel.select(Optional.of(uuid));
+            assertEquals(Optional.of(uuid), panel.getSelection());
+            assertTrue(panel.getSelectedGroup().isEmpty());
+            assertEquals(1, rows(panel).getItems().size());
+            panel.setQuery(DirectoryQuery.all());
+            panel.refresh();
+            panel.select(Optional.of(uuid));
+            assertEquals(Optional.of(InventoryGroups.keyOf(edited)), panel.getSelectedGroup());
+            assertEquals(Optional.of(uuid), panel.getSelection());
+            assertTrue(callbacks.isEmpty());
         });
     }
 
