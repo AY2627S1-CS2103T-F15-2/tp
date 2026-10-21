@@ -1,51 +1,51 @@
-Autocomplete review-fix verification - 20 October 2026
+Autocomplete master-parity verification - 21 October 2026
 PR: https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/112
-Integrated team master: 9885bb1e9995a7a780b5de8b46e6dcf9649a4c9d (member editing)
+Integrated team master: a66a1067df155176807f3515b30831aeb8712952
 Working folder: /Users/keith/Desktop/CS2103T/tp
-Platform: Darwin arm64
-openjdk version "25.0.3" 2026-04-21 LTS
-OpenJDK Runtime Environment Zulu25.34+17-CA (build 25.0.3+9-LTS)
-OpenJDK 64-Bit Server VM Zulu25.34+17-CA (build 25.0.3+9-LTS, mixed mode, sharing)
+Platform: Darwin arm64; Java: Zulu 25.0.3+9-LTS
 
-Review findings reproduced before production fixes:
-- Field boundary: expected member add name/Alex phone/91234567;
-  actual member add name/Alex email/91234567.
-- Member editing: member ed returned no completion (NoSuchElementException in the regression).
+Command: ./gradlew test check coverage shadowJar --console plain
+Result: PASS; 852 tests, 0 failures, 0 errors, 0 skipped
+Main/test Checkstyle: PASS
+Documentation: npm --prefix docs ci; npm --prefix docs run build; PASS
+Rendered user/developer completion sections reviewed in browser.
 
-Fixes:
-- Return no completion when the caret is at the start of an existing field marker.
-- Register member edit and its nus/, name/, phone/, email/ fields.
-- Use member names for both member add and member edit value suggestions.
-- Cover applied replacements and real key events; preserve original field values and model state.
-
-Command: ./gradlew clean test check coverage shadowJar --console plain
-Result: PASS
-JUnit: 765 tests, 0 failures, 0 errors, 0 skipped
+Audit: all 19 accepted commands (7 member, 7 equipment, 3 loan, help, exit).
+Concrete parser prefix constants checked against completion fields by regression test.
+Search filters, lifecycle status, applicable sort fields and order values round-trip through parser.
+Restoration, equipment editing, count/ and return condition/ included.
+Batch UUID replacement preserves adjacent entries/spaces/fields and omits listed identities.
+Stored searchable values are suggested case-insensitively; retired AB3 routes are omitted.
+New member IDs, dates, numeric counts and free-form notes remain manual.
 
 Feature coverage (not whole-repository coverage):
-seedu/address/ui/CommandBox
-  INSTRUCTION: 95 covered; 0 missed
-  BRANCH: 4 covered; 0 missed
-  LINE: 29 covered; 0 missed
+seedu/address/logic/completion/Completion
+  INSTRUCTION: 15 covered; 0 missed
+  LINE: 3 covered; 0 missed
+seedu/address/logic/completion/CompletionService
+  INSTRUCTION: 981 covered; 0 missed
+  BRANCH: 110 covered; 0 missed
+  LINE: 149 covered; 0 missed
 seedu/address/ui/CompletionController
   INSTRUCTION: 212 covered; 0 missed
   BRANCH: 26 covered; 0 missed
   LINE: 45 covered; 0 missed
+seedu/address/ui/CommandBox
+  INSTRUCTION: 95 covered; 0 missed
+  BRANCH: 4 covered; 0 missed
+  LINE: 29 covered; 0 missed
 seedu/address/ui/MainWindow.fillInnerParts
   INSTRUCTION: 270 covered; 0 missed
   BRANCH: 4 covered; 0 missed
   LINE: 34 covered; 0 missed
-seedu/address/logic/completion/CompletionService
-  INSTRUCTION: 695 covered; 0 missed
-  BRANCH: 76 covered; 0 missed
-  LINE: 114 covered; 0 missed
-seedu/address/logic/completion/Completion
-  INSTRUCTION: 15 covered; 0 missed
-  LINE: 3 covered; 0 missed
+seedu/address/logic/parser/DirectorySearchCommandParser.<clinit>
+  INSTRUCTION: 41 covered; 0 missed
+  LINE: 8 covered; 0 missed
 
-Mounted-shell keyboard session: PASS; boundary no-op and member-edit fields/values verified.
-Packaged-JAR session: PASS; actual member edit executed and saved exactly once on Enter.
-Tab does not dispatch, save, or mutate records.
+Mounted-shell keyboard session: PASS; real parser/logic/model/JSON storage.
+Completed search, batch registration, loans and restoration execute only on Enter.
+Packaged-JAR keyboard session: PASS; production code loaded from built JAR; JSON reload matches.
+Tab does not execute commands, save or mutate records.
 Native foreground focus notifications use a deterministic JavaFX test double.
 Repository checks: PASS, with existing docs/AboutUs.md trailing-whitespace warning.
 Hosted CI is separate from this local verification.

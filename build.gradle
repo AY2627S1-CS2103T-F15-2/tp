@@ -120,6 +120,7 @@ tasks.register('autocompleteCoverageVerification') {
         def classes = document.getElementsByTagName('class')
         def required = autocompleteClasses.collectEntries { [(it): null] }
         required['seedu/address/ui/MainWindow'] = ['fillInnerParts']
+        required['seedu/address/logic/parser/DirectorySearchCommandParser'] = ['<clinit>']
         required.each { className, methodNames ->
             def node = (0..<classes.length).collect { classes.item(it) }
                     .find { it.getAttribute('name') == className }

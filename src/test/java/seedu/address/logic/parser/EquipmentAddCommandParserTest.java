@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,10 +20,10 @@ public class EquipmentAddCommandParserTest {
     @Test
     public void parse_allParameterOrdersAndTabs_preservesPunctuationAndNotes() throws Exception {
         List<String> fields = List.of("name/Canon EOS-R50 (kit) / 2", "category/Photo & video",
-                "condition/good", "notes/See https://example.com/a/b");
+                "condition/good", "notes/See https://example.com/a/b", "count/3");
         for (List<String> order : permutations(fields)) {
             assertEquals(new EquipmentAddCommand("Canon EOS-R50 (kit) / 2", "Photo & video", Condition.GOOD,
-                    "See https://example.com/a/b"), parser.parse("\t" + String.join("\t", order) + "  "));
+                    "See https://example.com/a/b", 3), parser.parse("\t" + String.join("\t", order) + "  "));
         }
     }
 
@@ -62,6 +63,32 @@ public class EquipmentAddCommandParserTest {
             assertThrows(ParseException.class, () -> parser.parse(invalid));
         }
         assertThrows(NullPointerException.class, () -> parser.parse(null));
+    }
+
+    @Test
+    public void parse_countBoundariesAndDefault_acceptsValidCounts() throws Exception {
+        String fields = "name/Camera category/Photo condition/GOOD";
+        assertEquals(parser.parse(fields), parser.parse(fields + " count/1"));
+        for (String count : List.of("2", "100", "003")) {
+            assertEquals(new EquipmentAddCommand("Camera", "Photo", Condition.GOOD, "", Integer.parseInt(count)),
+                    parser.parse(fields + " count/" + count));
+        }
+    }
+
+    @Test
+    public void parse_invalidOrRepeatedCount_reportsFirstErrorWithUsage() {
+        for (String count : List.of("", "0", "-1", "+2", "1.5", "1e2", "101", "2147483648", "two", "1 2", "３")) {
+            ParseException error = assertThrows(ParseException.class, () -> parser.parse(
+                    "count/" + count + " name/Camera category/Photo condition/GOOD"));
+            assertTrue(error.getMessage().startsWith(EquipmentAddCommand.MESSAGE_INVALID_COUNT));
+            assertTrue(error.getMessage().contains(EquipmentAddCommand.MESSAGE_USAGE));
+        }
+        ParseException repeated = assertThrows(ParseException.class, () -> parser.parse("count/2 count/3"));
+        assertTrue(repeated.getMessage().startsWith("Repeated parameter: count/"));
+        ParseException first = assertThrows(ParseException.class, () -> parser.parse("count/0 unknown/value"));
+        assertTrue(first.getMessage().startsWith(EquipmentAddCommand.MESSAGE_INVALID_COUNT));
+        ParseException unknown = assertThrows(ParseException.class, () -> parser.parse("unknown/value count/0"));
+        assertTrue(unknown.getMessage().startsWith("Unknown parameter: unknown/"));
     }
 
     private static List<List<String>> permutations(List<String> fields) {

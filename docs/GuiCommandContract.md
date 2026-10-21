@@ -1,3 +1,9 @@
+> Legacy-command retirement amendment (21 October 2026): top-level `add`, `edit`, `delete`,
+> `clear`, `find`, and `list` are rejected. Earlier requirements below to preserve public person-command
+> routing are superseded. Stored persons, shared value types and legacy implementation/UI classes
+> remain for compatibility and later cleanup. See the
+> [current routing contract](DeveloperGuide.md#command-routing-and-legacy-compatibility).
+
 > v1.3.3 amendment: [MVP fields](commands/MvpFields.md) and [completion evidence](gui/MvpCompletion.md)
 > supersede older component handoff assumptions below. #93/#95 are merged; validation, transactions,
 > holdings order and open-only Loans now follow the detailed MVP specification.
@@ -152,8 +158,9 @@ Command display results are fixed:
 | member delete | members() |
 | member view | memberDetails(requested NUS ID) |
 | member list | members() |
-| equipment add | equipmentDetails(generated UUID) |
-| equipment delete | equipment() |
+| equipment add | Count 1: equipmentDetails(generated UUID); count > 1: equipment with DirectoryQuery.all() |
+| equipment edit or equipment restore | equipmentDetails(affected UUID) |
+| equipment delete | equipment(); retains records, current query and eligible selection |
 | equipment view | equipmentDetails(requested UUID) |
 | equipment list | equipment() |
 | loans add or loans return | equipmentDetails(affected UUID) |
@@ -223,3 +230,11 @@ The shell registers listeners once on members, equipment, loans and the existing
 
 The existing Model, ModelManager, AddressBook, ReadOnlyAddressBook, collection and storage contracts are frozen. A discovered defect in someone else's module requires a small separate coordinated fix, not an opportunistic rewrite. Outside Keith's explicitly assigned minimal graphical-runtime work, do not alter build dependencies/CI. Do not alter another owner's global CSS, shared fixtures, or domain semantics to make one feature easier. Ask only for a concrete unresolved contract conflict; continue independent work meanwhile.
 
+
+## Equipment maintenance update
+
+Equipment cards mark deleted units with `[DELETED]`; details expose ACTIVE/DELETED and a restore hint.
+`equipment list` is read-only and resets to all records. Equipment search defaults to active units and
+accepts `status/active|deleted|all`. Total includes retained units; availability totals and inventory
+groups count active units only. Edit/restore details resolve the same UUID even if it no longer matches
+the retained directory query. All panels refresh from published model data, without extra commands.

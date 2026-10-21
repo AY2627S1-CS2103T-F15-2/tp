@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.equipment.Availability;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.member.Member;
@@ -146,11 +147,21 @@ public interface Model {
     void addEquipment(Equipment equipment);
 
     /**
-     * Deletes equipment by UUID and removes its closed loan history.
+     * Soft-deletes equipment by UUID, retaining its details and closed loan history.
      * @throws seedu.address.model.equipment.exceptions.EquipmentNotFoundException if the UUID is unknown.
-     * @throws IllegalStateException if the equipment has an open loan.
+     * @throws IllegalStateException if the equipment is already deleted or has an open loan.
      */
     void deleteEquipment(Equipment equipment);
+
+    /**
+     * Edits active equipment, preserving UUID and lifecycle state.
+     */
+    void setEquipment(Equipment target, Equipment edited);
+
+    /**
+     * Restores deleted equipment, retaining UUID, details and history.
+     */
+    void restoreEquipment(Equipment equipment);
 
     /**
      * Returns an unmodifiable live view of all equipment.
@@ -163,6 +174,9 @@ public interface Model {
      * A second open loan for the same equipment throws DuplicateOpenLoanException.
      */
     void addLoan(Loan loan);
+
+    /** Adds all loans together, leaving the model unchanged if any loan is invalid. */
+    void addLoans(List<Loan> loans);
 
     /**
      * Returns the open loan for this equipment UUID, or an empty Optional if none exists.
@@ -182,13 +196,16 @@ public interface Model {
      */
     void closeLoan(UUID equipmentUuid, LocalDate returnedDate);
 
+    /** Closes the named loans together and applies the observed equipment condition when supplied. */
+    void returnLoans(List<UUID> equipmentUuids, LocalDate returnedDate, Condition returnCondition);
+
     /**
      * Returns an unmodifiable live view of all loans, including closed history.
      */
     ObservableList<Loan> getLoanList();
 
     /**
-     * Derives availability from equipment condition and whether it has an open loan.
+     * Returns UNAVAILABLE for deleted equipment; otherwise derives availability from condition and open loans.
      * @throws seedu.address.model.equipment.exceptions.EquipmentNotFoundException if the UUID is unknown.
      */
     Availability getAvailability(UUID uuid);

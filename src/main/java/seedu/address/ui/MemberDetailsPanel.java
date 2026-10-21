@@ -92,6 +92,8 @@ public class MemberDetailsPanel extends UiPart<Region> {
                 .setMaxWidth(Region.USE_PREF_SIZE);
         if (loans.isEmpty()) {
             status(content, "This member currently holds no equipment.", false);
+            LoanHistoryContent.add(content, data.getLoanList().stream()
+                    .filter(loan -> loan.getMemberNusId().equals(selectedNusId)).toList());
             return;
         }
         VBox holdings = new VBox(12);
@@ -103,6 +105,8 @@ public class MemberDetailsPanel extends UiPart<Region> {
                         .toLowerCase(Locale.ROOT))
                 .thenComparing(loan -> loan.getEquipmentUuid().toString()))
                 .forEach(loan -> addHolding(holdings, holdingEquipment(loan), loan));
+        LoanHistoryContent.add(content, data.getLoanList().stream()
+                .filter(loan -> loan.getMemberNusId().equals(selectedNusId)).toList());
     }
 
     /** Resolves a prevalidated loan without detaching its dates from the corresponding physical item. */

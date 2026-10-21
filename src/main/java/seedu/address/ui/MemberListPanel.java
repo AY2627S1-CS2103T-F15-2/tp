@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -13,16 +14,17 @@ import javafx.scene.control.ListView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Region;
-import seedu.address.commons.util.LaplaceSortOrder;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
+import seedu.address.model.query.DirectoryQuery;
 
 /** Sorted read-only member rows. Only explicit user activation invokes the callback. */
 public class MemberListPanel extends UiPart<Region> {
 
     private final ReadOnlyAddressBook data;
     private final Consumer<NusId> onSelect;
+    private DirectoryQuery query = DirectoryQuery.all();
 
     @FXML
     private Label countLabel;
@@ -44,14 +46,27 @@ public class MemberListPanel extends UiPart<Region> {
         refresh();
     }
 
+    /** Sets transient criteria; the parent refreshes once after coordinating both directory components. */
+    public void setQuery(DirectoryQuery query) {
+        this.query = requireNonNull(query);
+    }
+
+    /** Returns a fresh sorted query snapshot for identity-preserving shell selection recovery. */
+    public List<Member> getDisplayedItems() {
+        return query.members(data);
+    }
+
     /** Rebuilds real card snapshots, preserving an existing identity without invoking the callback. */
     public void refresh() {
         Optional<NusId> selected = getSelection();
-        rows.getItems().setAll(data.getMemberList().stream().sorted(LaplaceSortOrder.MEMBERS).toList());
+        rows.getItems().setAll(getDisplayedItems());
         long deleted = rows.getItems().stream().filter(Member::isDeleted).count();
-        countLabel.setText((rows.getItems().size() - deleted) + " active"
-                + (deleted == 0 ? "" : " · " + deleted + " deleted"));
-        Label emptyState = new Label("No members yet. Use member add to get started.");
+        countLabel.setText(query.equals(DirectoryQuery.all())
+                ? (rows.getItems().size() - deleted) + " active"
+                        + (deleted == 0 ? "" : " \u00b7 " + deleted + " deleted")
+                : rows.getItems().size() + " of " + data.getMemberList().size() + " shown");
+        Label emptyState = new Label(data.getMemberList().isEmpty() ? "No members yet. Use member add to get started."
+                : "No matching members. Use member list to reset the search.");
         emptyState.setWrapText(true);
         emptyState.setMaxWidth(Double.MAX_VALUE);
         emptyState.setMinWidth(0);

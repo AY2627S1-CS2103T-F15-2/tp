@@ -298,7 +298,7 @@ public class ModelManagerTest {
         assertTrue(modelManager.findMember(MEMBER_ID).orElseThrow().isDeleted());
         assertEquals(List.of(LOAN.withReturnedDate(RETURNED_DATE)), loans);
         modelManager.deleteEquipment(EQUIPMENT);
-        assertTrue(equipment.isEmpty());
+        assertEquals(List.of(EQUIPMENT.withDeleted(true)), equipment);
     }
 
     @Test
@@ -341,13 +341,13 @@ public class ModelManagerTest {
     }
 
     @Test
-    public void deleteEquipment_realRoot_removesClosedHistoryByIdentity() {
+    public void deleteEquipment_realRoot_retainsClosedHistoryByIdentity() {
         modelManager.addMember(MEMBER);
         modelManager.addEquipment(EQUIPMENT);
         modelManager.addLoan(LOAN.withReturnedDate(RETURNED_DATE));
         modelManager.deleteEquipment(new Equipment(EQUIPMENT_ID, "Renamed", "Other", Condition.FAIR, "Updated"));
-        assertFalse(modelManager.hasEquipment(EQUIPMENT_ID));
-        assertTrue(modelManager.getLoanList().isEmpty());
+        assertTrue(modelManager.findEquipment(EQUIPMENT_ID).orElseThrow().isDeleted());
+        assertEquals(List.of(LOAN.withReturnedDate(RETURNED_DATE)), modelManager.getLoanList());
         assertEquals(List.of(MEMBER), modelManager.getMemberList());
     }
 

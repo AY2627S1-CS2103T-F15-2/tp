@@ -25,6 +25,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.equipment.Availability;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.member.Member;
@@ -206,12 +207,27 @@ public class AddCommandTest {
         }
 
         @Override
+        public void setEquipment(Equipment target, Equipment edited) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void restoreEquipment(Equipment equipment) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
         public ObservableList<Equipment> getEquipmentList() {
             throw new AssertionError("This method should not be called.");
         }
 
         @Override
         public void addLoan(Loan loan) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void addLoans(List<Loan> loans) {
             throw new AssertionError("This method should not be called.");
         }
 
@@ -227,6 +243,11 @@ public class AddCommandTest {
 
         @Override
         public void closeLoan(UUID equipmentUuid, LocalDate returnedDate) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void returnLoans(List<UUID> equipmentUuids, LocalDate returnedDate, Condition returnCondition) {
             throw new AssertionError("This method should not be called.");
         }
 

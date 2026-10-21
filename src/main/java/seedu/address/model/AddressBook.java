@@ -13,8 +13,10 @@ import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.equipment.UniqueEquipmentList;
+import seedu.address.model.equipment.exceptions.EquipmentDeletedException;
 import seedu.address.model.equipment.exceptions.EquipmentNotFoundException;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.loan.UniqueLoanList;
@@ -293,31 +295,47 @@ public class AddressBook implements ReadOnlyAddressBook {
     }
 
     /**
-     * Removes equipment by identity and its closed history, as required by the scaffold contract.
-     * An open loan blocks deletion and leaves every collection unchanged.
-     *
-     * @throws IllegalStateException if this equipment has an open loan.
+     * Edits an active unit without changing its UUID or lifecycle state.
+     * Condition changes do not close loans; an open loan still determines availability.
+     */
+    public void setEquipment(Equipment target, Equipment edited) {
+        requireNonNull(target);
+        requireNonNull(edited);
+        Equipment stored = findEquipment(target.getUuid()).orElseThrow(EquipmentNotFoundException::new);
+        if (stored.isDeleted()) {
+            throw new EquipmentDeletedException();
+        }
+        if (edited.isDeleted()) {
+            throw new IllegalArgumentException("Use equipment delete to change lifecycle state.");
+        }
+        equipment.setEquipment(stored, edited);
+    }
+
+    /**
+     * Soft-deletes equipment without an open loan, retaining its identity and closed history.
      */
     public void removeEquipment(Equipment item) {
         requireNonNull(item);
-        UUID uuid = item.getUuid();
-        if (!hasEquipment(uuid)) {
-            throw new EquipmentNotFoundException();
+        Equipment stored = findEquipment(item.getUuid()).orElseThrow(EquipmentNotFoundException::new);
+        if (stored.isDeleted()) {
+            throw new EquipmentDeletedException();
         }
-        if (findOpenLoan(uuid).isPresent()) {
+        if (findOpenLoan(stored.getUuid()).isPresent()) {
             throw new IllegalStateException("Cannot delete equipment with an open loan");
         }
-        List<Loan> retainedLoans = getLoanList().stream()
-                .filter(loan -> !loan.getEquipmentUuid().equals(uuid)).toList();
-        if (loans != null) {
-            UniqueLoanList validatedLoans = requireNonNull(loanFactory.get());
-            validatedLoans.setLoans(retainedLoans);
+        equipment.setEquipment(stored, stored.withDeleted(true));
+    }
+
+    /**
+     * Restores a retained unit without a time limit or changes to its details and history.
+     */
+    public void restoreEquipment(Equipment item) {
+        requireNonNull(item);
+        Equipment stored = findEquipment(item.getUuid()).orElseThrow(EquipmentNotFoundException::new);
+        if (!stored.isDeleted()) {
+            throw new IllegalStateException("Equipment is not deleted.");
         }
-        // Remove equipment references before observers can see the item disappear.
-        if (loans != null) {
-            loans.setLoans(retainedLoans);
-        }
-        equipment.remove(item);
+        equipment.setEquipment(stored, stored.withDeleted(false));
     }
 
     /**
@@ -327,6 +345,16 @@ public class AddressBook implements ReadOnlyAddressBook {
         requireNonNull(loan);
         requireLoanReferences(loan, getMemberList(), getEquipmentList());
         getLoanStorage().add(loan);
+    }
+
+    /** Adds an entire batch through a private copy so failures cannot publish partial loans. */
+    public void addLoans(List<Loan> newLoans) {
+        List<Loan> replacement = List.copyOf(requireNonNull(newLoans));
+        AddressBook candidate = new AddressBook(this);
+        for (Loan loan : replacement) {
+            candidate.addLoan(loan);
+        }
+        resetData(candidate);
     }
 
     /**
@@ -357,6 +385,34 @@ public class AddressBook implements ReadOnlyAddressBook {
         loans.closeLoan(equipmentUuid, returnedDate);
     }
 
+    /** Completes a batch and updates equipment condition as a single validated root replacement. */
+    public void returnLoans(List<UUID> equipmentUuids, LocalDate returnedDate, Condition returnCondition) {
+        List<UUID> identifiers = List.copyOf(requireNonNull(equipmentUuids));
+        requireNonNull(returnedDate);
+        if (identifiers.isEmpty() || identifiers.stream().distinct().count() != identifiers.size()) {
+            throw new IllegalArgumentException("Return batch must contain distinct equipment UUIDs");
+        }
+        AddressBook candidate = new AddressBook(this);
+        List<Loan> replacements = new java.util.ArrayList<>(candidate.getLoanList());
+        List<Equipment> equipmentReplacements = new java.util.ArrayList<>(candidate.getEquipmentList());
+        for (UUID uuid : identifiers) {
+            Loan open = candidate.findOpenLoan(uuid).orElseThrow(OpenLoanNotFoundException::new);
+            Equipment item = candidate.findEquipment(uuid).orElseThrow(EquipmentNotFoundException::new);
+            Loan closed = open.withReturnedDate(returnedDate, returnCondition);
+            replacements.set(replacements.indexOf(open), closed);
+            if (returnCondition != null) {
+                int index = equipmentReplacements.indexOf(item);
+                equipmentReplacements.set(index, new Equipment(uuid, item.getName(), item.getCategory(),
+                        returnCondition, item.getNotes()));
+            }
+        }
+        candidate.getLoanStorage().setLoans(replacements);
+        if (returnCondition != null) {
+            candidate.getEquipmentStorage().setEquipment(equipmentReplacements);
+        }
+        resetData(candidate);
+    }
+
     /**
      * Checks references by identity for both open and closed loans.
      */
@@ -366,8 +422,10 @@ public class AddressBook implements ReadOnlyAddressBook {
         if (loan.isOpen() && holder.isDeleted()) {
             throw new MemberDeletedException();
         }
-        if (equipment.stream().noneMatch(item -> item.getUuid().equals(loan.getEquipmentUuid()))) {
-            throw new EquipmentNotFoundException();
+        Equipment item = equipment.stream().filter(unit -> unit.getUuid().equals(loan.getEquipmentUuid()))
+                .findFirst().orElseThrow(EquipmentNotFoundException::new);
+        if (loan.isOpen() && item.isDeleted()) {
+            throw new EquipmentDeletedException();
         }
     }
 

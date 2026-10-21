@@ -8,6 +8,11 @@ import seedu.address.model.Model;
  */
 public abstract class Command {
 
+    /** Pure queries bypass persistence and must not create mutation/history entries. */
+    public boolean isReadOnly() {
+        return false;
+    }
+
     /** Returns whether this command stages Laplace record changes until persistence succeeds. */
     public boolean isTransactional() {
         return false;

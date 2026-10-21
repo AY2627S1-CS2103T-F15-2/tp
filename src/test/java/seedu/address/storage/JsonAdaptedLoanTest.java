@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.member.NusId;
 
@@ -107,11 +108,13 @@ public class JsonAdaptedLoanTest {
     }
 
     @Test
-    public void jsonRoundTrip_openAndClosedLoans_preservesExactlyFiveFields() throws Exception {
+    public void jsonRoundTrip_openAndClosedLoans_preservesConditionFields() throws Exception {
         for (Loan loan : List.of(OPEN, OPEN.withReturnedDate(LocalDate.parse(EXPECTED)))) {
             String json = JsonUtil.toJsonString(new JsonAdaptedLoan(loan));
             JsonNode fields = new ObjectMapper().readTree(json);
-            assertEquals(5, fields.size());
+            assertEquals(7, fields.size());
+            assertTrue(fields.get("issueCondition").isNull());
+            assertTrue(fields.get("returnCondition").isNull());
             assertEquals(EQUIPMENT_UUID, fields.get("equipmentUuid").asText());
             assertEquals(MEMBER_ID, fields.get("memberNusId").asText());
             assertEquals(ASSIGNED, fields.get("assignedDate").asText());
@@ -124,6 +127,20 @@ public class JsonAdaptedLoanTest {
             assertFalse(fields.has("availability"));
             assertEquals(loan, JsonUtil.fromJsonString(json, JsonAdaptedLoan.class).toModelType());
         }
+    }
+
+    @Test
+    public void jsonRoundTrip_recordedConditions_preservesBothHistoricalValues() throws Exception {
+        Loan completed = new Loan(OPEN.getEquipmentUuid(), OPEN.getMemberNusId(), OPEN.getAssignedDate(),
+                OPEN.getExpectedReturnDate(), LocalDate.parse(EXPECTED), Condition.GOOD, Condition.DAMAGED);
+        String json = JsonUtil.toJsonString(new JsonAdaptedLoan(completed));
+        JsonNode fields = new ObjectMapper().readTree(json);
+
+        assertEquals("GOOD", fields.get("issueCondition").asText());
+        assertEquals("DAMAGED", fields.get("returnCondition").asText());
+        assertEquals(completed, JsonUtil.fromJsonString(json, JsonAdaptedLoan.class).toModelType());
+        assertThrows(IllegalValueException.class, () -> new JsonAdaptedLoan(EQUIPMENT_UUID, MEMBER_ID,
+                ASSIGNED, EXPECTED, EXPECTED, "BROKEN", "GOOD").toModelType());
     }
 
     @Test

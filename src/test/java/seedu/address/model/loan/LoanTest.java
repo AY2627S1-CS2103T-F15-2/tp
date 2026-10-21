@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.member.NusId;
 
 public class LoanTest {
@@ -65,6 +66,12 @@ public class LoanTest {
     public void constructor_returnedDateBeforeAssignedDate_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () ->
                 new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE, ASSIGNED_DATE.minusDays(1)));
+    }
+
+    @Test
+    public void constructor_openLoanWithReturnCondition_rejectsInconsistentHistory() {
+        assertThrows(IllegalArgumentException.class, () -> new Loan(UUID_ONE, NUS_ID,
+                ASSIGNED_DATE, EXPECTED_DATE, null, Condition.GOOD, Condition.DAMAGED));
     }
 
     @Test
@@ -123,11 +130,28 @@ public class LoanTest {
     }
 
     @Test
+    public void equals_closedLoans_distinguishesReturnDateAndRecordedConditions() {
+        Loan loan = new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE,
+                RETURNED_DATE, Condition.GOOD, Condition.FAIR);
+        Loan copy = new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE,
+                RETURNED_DATE, Condition.GOOD, Condition.FAIR);
+
+        assertEquals(loan, copy);
+        assertEquals(loan.hashCode(), copy.hashCode());
+        assertFalse(loan.equals(new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE,
+                RETURNED_DATE.plusDays(1), Condition.GOOD, Condition.FAIR)));
+        assertFalse(loan.equals(new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE,
+                RETURNED_DATE, Condition.DAMAGED, Condition.FAIR)));
+        assertFalse(loan.equals(new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE,
+                RETURNED_DATE, Condition.GOOD, Condition.DAMAGED)));
+    }
+
+    @Test
     public void toStringMethod() {
         Loan loan = new Loan(UUID_ONE, NUS_ID, ASSIGNED_DATE, EXPECTED_DATE, RETURNED_DATE);
         String expected = Loan.class.getCanonicalName() + "{equipmentUuid=" + UUID_ONE
                 + ", memberNusId=A0123456X, assignedDate=2026-10-01, expectedReturnDate=2026-10-15"
-                + ", returnedDate=2026-10-12}";
+                + ", returnedDate=2026-10-12, issueCondition=null, returnCondition=null}";
 
         assertEquals(expected, loan.toString());
     }

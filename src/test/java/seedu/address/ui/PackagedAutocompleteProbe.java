@@ -11,6 +11,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
+import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -69,7 +70,29 @@ public final class PackagedAutocompleteProbe {
                 {"member edit email/alex", "member edit email/alex@example.com"},
                 {"equipment add category/pho", "equipment add category/Photography"},
                 {"equipment add condition/g", "equipment add condition/GOOD"},
-                {"member add nus/A", "member add nus/A"}
+                {"member res", "member restore"},
+                    {"member restore n", "member restore nus/"},
+                    {"member se", "member search"},
+                    {"member search holding/y", "member search holding/YES"},
+                    {"member search sort/he", "member search sort/HELD"},
+                    {"equipment ed", "equipment edit"},
+                    {"equipment edit co", "equipment edit condition/"},
+                    {"equipment res", "equipment restore"},
+                    {"equipment restore u", "equipment restore uuid/"},
+                    {"equipment search av", "equipment search availability/"},
+                    {"equipment search availability/av", "equipment search availability/AVAILABLE"},
+                    {"equipment search status/de", "equipment search status/DELETED"},
+                    {"equipment search order/de", "equipment search order/desc"},
+                    {"equipment add cou", "equipment add count/"},
+                    {"loans return co", "loans return condition/"},
+                    {"loans return condition/fa", "loans return condition/FAIR"},
+                    {"loans add uuid/00000000-0000-0000-0000-000000000001,00000000",
+                        "loans add uuid/00000000-0000-0000-0000-000000000001,"
+                            + "00000000-0000-0000-0000-000000000002"},
+                    {"loans return uuid/00000000-0000-0000-0000-000000000001,  ",
+                        "loans return uuid/00000000-0000-0000-0000-000000000001,  "
+                            + "00000000-0000-0000-0000-000000000002"},
+                    {"member add nus/A", "member add nus/A"}
             };
             for (String[] example : examples) {
                 field.setText(example[0]);
@@ -127,6 +150,13 @@ public final class PackagedAutocompleteProbe {
             check(model.findMember(ViewTestData.ALEX.getNusId()).orElseThrow().getPhone().value.equals("98765432"),
                     "Member edit must update the selected member");
             session.add("ENTER: member edit nus/A0123456X phone/98765432; commands=2, saves=2, input cleared.");
+            try {
+                check(model.getAddressBook().equals(storage.readAddressBook().orElseThrow()),
+                        "Reloaded JSON must match the completed edit");
+                session.add("RELOAD: JSON matches the live model after completed edit.");
+            } catch (DataLoadingException failure) {
+                throw new AssertionError("Could not reload packaged test data", failure);
+            }
         } finally {
             window.dispose();
             window.getPrimaryStage().hide();

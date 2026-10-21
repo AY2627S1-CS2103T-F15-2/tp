@@ -3,6 +3,7 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import seedu.address.model.Model;
+import seedu.address.model.query.DirectoryQuery;
 
 /** Requests the complete member directory without modifying domain data or collection order. */
 public class MemberListCommand extends Command {
@@ -22,6 +23,6 @@ public class MemberListCommand extends Command {
             feedback += " " + deleted + " deleted member(s) remain visible.";
         }
         return new CommandResult(feedback,
-                DisplayRequest.members());
+                DisplayRequest.members(DirectoryQuery.all()));
     }
 }

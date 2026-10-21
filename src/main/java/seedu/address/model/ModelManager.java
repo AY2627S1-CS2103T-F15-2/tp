@@ -16,6 +16,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.AvailabilityCalculator;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.equipment.exceptions.EquipmentNotFoundException;
 import seedu.address.model.loan.Loan;
@@ -168,6 +169,16 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public void setEquipment(Equipment target, Equipment edited) {
+        addressBook.setEquipment(target, edited);
+    }
+
+    @Override
+    public void restoreEquipment(Equipment equipment) {
+        addressBook.restoreEquipment(equipment);
+    }
+
+    @Override
     public ObservableList<Equipment> getEquipmentList() {
         return addressBook.getEquipmentList();
     }
@@ -175,6 +186,11 @@ public class ModelManager implements Model {
     @Override
     public void addLoan(Loan loan) {
         addressBook.addLoan(loan);
+    }
+
+    @Override
+    public void addLoans(List<Loan> loans) {
+        addressBook.addLoans(loans);
     }
 
     @Override
@@ -193,6 +209,11 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public void returnLoans(List<UUID> equipmentUuids, LocalDate returnedDate, Condition returnCondition) {
+        addressBook.returnLoans(equipmentUuids, returnedDate, returnCondition);
+    }
+
+    @Override
     public ObservableList<Loan> getLoanList() {
         return addressBook.getLoanList();
     }
@@ -202,7 +223,8 @@ public class ModelManager implements Model {
         requireNonNull(uuid);
         Equipment equipment = addressBook.findEquipment(uuid).orElseThrow(EquipmentNotFoundException::new);
         boolean hasOpenLoan = addressBook.findOpenLoan(uuid).isPresent();
-        return AvailabilityCalculator.calculate(equipment.getCondition(), hasOpenLoan);
+        return equipment.isDeleted() ? Availability.UNAVAILABLE
+                : AvailabilityCalculator.calculate(equipment.getCondition(), hasOpenLoan);
     }
 
     //=========== Filtered Person List Accessors =============================================================

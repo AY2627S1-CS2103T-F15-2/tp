@@ -1,13 +1,23 @@
 package seedu.address.logic.completion;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.parser.AddressBookParser;
+import seedu.address.logic.parser.CliSyntax;
+import seedu.address.logic.parser.Prefix;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.testutil.ViewTestData;
@@ -34,14 +44,15 @@ public class CompletionServiceTest {
     public void complete_commandWordsAndSubcommands_usesParserSpellingAndStableOrder() {
         assertCandidates("mem", "member");
         assertCandidates("member ad", "add");
-        assertCandidates("member ", "add", "delete", "edit", "list", "view");
-        assertCandidates("equipment ", "add", "delete", "list", "view");
+        assertCandidates("member ", "add", "delete", "edit", "list", "restore", "search", "view");
+        assertCandidates("equipment ", "add", "delete", "edit", "list", "restore", "search", "view");
         assertCandidates("loans ", "add", "list", "return");
-        for (String word : List.of("add", "edit", "delete", "clear", "find", "list", "exit", "help",
+        for (String word : List.of("exit", "help",
                 "member", "equipment", "loans")) {
             assertCandidates(word, word);
         }
-        for (String input : List.of("MEM", "xyz", "member zz", "help ", "member unknown ", "member list ",
+        for (String input : List.of("add", "edit", "delete", "clear", "find", "list", "MEM", "xyz",
+                "member zz", "help ", "member unknown ", "member list ",
                 "equipment list ", "loans list ")) {
             assertTrue(service.complete(input, input.length(), model.getAddressBook()).isEmpty(), input);
         }
@@ -52,7 +63,7 @@ public class CompletionServiceTest {
         Completion gap = service.complete("member   list", 7, model.getAddressBook()).orElseThrow();
         assertEquals(7, gap.start());
         assertEquals(7, gap.end());
-        assertEquals(List.of("add", "delete", "edit", "list", "view"), gap.candidates());
+        assertEquals(List.of("add", "delete", "edit", "list", "restore", "search", "view"), gap.candidates());
     }
 
     @Test
@@ -60,9 +71,9 @@ public class CompletionServiceTest {
         assertCandidates("member add na", "name/");
         assertCandidates("member add ", "email/", "name/", "nus/", "phone/");
         assertCandidates("member add name/Alex ", "email/", "nus/", "phone/");
-        assertCandidates("equipment add ", "category/", "condition/", "name/", "notes/");
+        assertCandidates("equipment add ", "category/", "condition/", "count/", "name/", "notes/");
         assertCandidates("loans add ", "assigned/", "expected/", "nus/", "uuid/");
-        assertCandidates("loans return ", "returned/", "uuid/");
+        assertCandidates("loans return ", "condition/", "returned/", "uuid/");
         assertCandidates("member view n", "nus/");
         assertCandidates("member delete n", "nus/");
         assertCandidates("equipment view u", "uuid/");
@@ -141,12 +152,119 @@ public class CompletionServiceTest {
     public void complete_liveData_afterDeletionAndAdditionReflectsCurrentRoot() {
         assertCandidates("equipment add name/", "Camera", "Speaker");
         model.deleteEquipment(ViewTestData.SPEAKER);
-        assertCandidates("equipment add name/", "Camera");
-        model.addEquipment(ViewTestData.SPEAKER);
+        assertCandidates("equipment add name/", "Camera", "Speaker");
+        assertTrue(model.findEquipment(ViewTestData.SPEAKER.getUuid()).orElseThrow().isDeleted());
+        model.restoreEquipment(model.findEquipment(ViewTestData.SPEAKER.getUuid()).orElseThrow());
         assertCandidates("equipment add name/", "Camera", "Speaker");
         assertEquals(2, model.getMemberList().size());
         assertEquals(3, model.getEquipmentList().size());
         assertTrue(model.getLoanList().isEmpty());
+    }
+
+    @Test
+    public void complete_routesAndFields_matchEveryCurrentFamilyParser() throws Exception {
+        for (String family : List.of("Member", "Equipment", "Loans")) {
+            String source = Files.readString(Path.of("src/main/java/seedu/address/logic/parser/"
+                    + family + "CommandParser.java"));
+            Set<String> accepted = Pattern.compile("case \"([^\"]+)\"").matcher(source).results()
+                    .map(match -> match.group(1)).collect(Collectors.toSet());
+            assertEquals(accepted, Set.copyOf(proposal(family.toLowerCase() + " ").candidates()), family);
+            var routes = Pattern.compile("case \"([^\"]+)\" -> new ([A-Za-z]+)\\(").matcher(source);
+            while (routes.find()) {
+                String parserName = routes.group(2);
+                if (parserName.equals("DirectorySearchCommandParser")) {
+                    continue;
+                }
+                String leaf = Files.readString(Path.of("src/main/java/seedu/address/logic/parser/"
+                        + parserName + ".java"));
+                Set<String> symbols = Pattern.compile("PREFIX_[A-Z_]+").matcher(leaf).results()
+                        .map(match -> match.group()).collect(Collectors.toSet());
+                Set<String> fields = new HashSet<>();
+                for (String symbol : symbols) {
+                    fields.add(((Prefix) CliSyntax.class.getField(symbol).get(null)).getPrefix());
+                }
+                String input = family.toLowerCase() + " " + routes.group(1) + " ";
+                List<String> candidates = service.complete(input, input.length(), model.getAddressBook())
+                        .map(Completion::candidates).orElse(List.of());
+                assertEquals(fields, Set.copyOf(candidates), input);
+            }
+        }
+        assertCandidates("m", "member");
+        assertCandidates("e", "equipment", "exit");
+        assertCandidates("h", "help");
+        assertCandidates("l", "loans");
+    }
+
+    @Test
+    public void complete_newMasterFieldsAndOptions_roundTripThroughActualParser() {
+        assertCandidates("member restore ", "nus/");
+        assertCandidates("equipment restore ", "uuid/");
+        assertCandidates("equipment edit ", "category/", "condition/", "name/", "notes/", "uuid/");
+        assertCandidates("member search ", "holding/", "order/", "q/", "sort/", "status/");
+        assertCandidates("equipment search ", "availability/", "category/", "condition/", "order/", "q/",
+                "sort/", "status/");
+        assertCandidates("member restore nus/a012", "A0123456X");
+        assertCandidates("equipment edit name/ca", "Camera");
+        assertCandidates("equipment restore uuid/00000000-0000-0000-0000-000000000003",
+                "00000000-0000-0000-0000-000000000003");
+        assertCandidates("member search sort/", "DEFAULT", "HELD", "ID", "NAME");
+        assertCandidates("equipment search sort/", "AVAILABILITY", "CATEGORY", "CONDITION", "DEFAULT", "ID", "NAME");
+        assertCandidates("member search holding/", "ANY", "NO", "YES");
+        assertCandidates("equipment search availability/", "ASSIGNED", "AVAILABLE", "UNAVAILABLE");
+        assertCandidates("member search status/", "ACTIVE", "ALL", "DELETED");
+        assertCandidates("equipment search order/", "asc", "desc");
+        assertCandidates("member search status/de", "DELETED");
+        assertCandidates("equipment search condition/un", "UNDER_REPAIR");
+        AddressBookParser parser = new AddressBookParser();
+        for (String command : List.of("member search", "equipment search")) {
+            for (String prefix : proposal(command + " ").candidates()) {
+                if (prefix.equals("q/") || prefix.equals("category/")) {
+                    continue;
+                }
+                String input = command + " " + prefix;
+                for (String value : proposal(input).candidates()) {
+                    assertDoesNotThrow(() -> parser.parseCommand(input + value), input + value);
+                }
+            }
+        }
+        assertTrue(service.complete("equipment add count/2", 21, model.getAddressBook()).isEmpty());
+    }
+
+    @Test
+    public void complete_searchQueries_reusesEverySearchableStoredField() {
+        assertCandidates("member search q/alex t", "Alex Tan");
+        assertCandidates("member search q/a012", "A0123456X");
+        assertCandidates("member search q/91", "91234567");
+        assertCandidates("member search q/other@", "other@example.com");
+        assertCandidates("equipment search q/ca", "Camera");
+        assertCandidates("equipment search q/pho", "Photography");
+        assertCandidates("equipment search q/spare", "Spare battery included.");
+        assertCandidates("equipment search q/00000000-0000-0000-0000-000000000001",
+                "00000000-0000-0000-0000-000000000001");
+        String text = "equipment search q/spare junk   status/deleted";
+        Completion completion = service.complete(text, text.indexOf(" junk"), model.getAddressBook()).orElseThrow();
+        assertEquals("equipment search q/Spare battery included.   status/deleted", apply(text, completion));
+    }
+
+    @Test
+    public void complete_batchLoanIdentities_preservesNeighborsAndExcludesRepeatedEntries() {
+        String first = ViewTestData.CAMERA.getUuid().toString();
+        String second = ViewTestData.OTHER_CAMERA.getUuid().toString();
+        String third = ViewTestData.SPEAKER.getUuid().toString();
+        assertCandidates("loans add uuid/" + first + ",", second, third);
+        assertCandidates("loans add uuid/" + first + ",  ", second, third);
+        assertCandidates("loans return uuid/" + first + ", " + second + ",", third);
+        String text = "loans return uuid/" + first + ", 00000000junk  , " + third + " returned/2026-01-08";
+        int caret = text.indexOf("junk");
+        Completion completion = service.complete(text, caret, model.getAddressBook()).orElseThrow();
+        assertEquals("loans return uuid/" + first + ", " + second + "  , " + third + " returned/2026-01-08",
+                apply(text, completion));
+        String withLaterComma = "loans add uuid/00000000 nus/A0123456X,anything";
+        assertTrue(service.complete(withLaterComma, "loans add uuid/00000000".length(),
+                model.getAddressBook()).isPresent());
+        assertCandidates("loans return condition/g", "GOOD");
+        String exhausted = "loans return uuid/" + first + "," + second + "," + third + ",";
+        assertTrue(service.complete(exhausted, exhausted.length(), model.getAddressBook()).isEmpty());
     }
 
     private Completion proposal(String text) {

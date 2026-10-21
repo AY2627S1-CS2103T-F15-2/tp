@@ -1,3 +1,9 @@
+> Legacy-command retirement amendment (21 October 2026): top-level `add`, `edit`, `delete`,
+> `clear`, `find`, and `list` are rejected. Earlier requirements below to preserve public person-command
+> routing are superseded. Stored persons, shared value types and legacy implementation/UI classes
+> remain for compatibility and later cleanup. See the
+> [current routing contract](DeveloperGuide.md#command-routing-and-legacy-compatibility).
+
 > v1.3.3 amendment: schema and existing constructor/getter contracts remain unchanged. New member
 > input uses member-specific value factories; saved legacy values remain readable without rewriting.
 > Model now supplies an isolated transaction snapshot; Logic commits its saved data through the existing
@@ -166,3 +172,12 @@ The member soft-delete branch supersedes earlier permanent-member-deletion behav
 null and non-boolean values are rejected. `member restore` has no time limit. Details are in
 [the lifecycle contract](commands/member-restore.md). Member editing preserves lifecycle state and
 rejects deleted members until restoration.
+
+## Equipment maintenance update
+
+The equipment maintenance feature supersedes earlier permanent-equipment-deletion rules in this
+historical scaffold. Equipment now persists a `deleted` boolean (missing means false). Deletion requires
+no open loan and retains the unit and all closed history; restore has no time limit. Details edits keep
+the UUID and cannot change deletion state. Root validation rejects open loans to deleted equipment.
+Deleted units derive UNAVAILABLE and are excluded from active inventory totals. See the main UG/DG
+for current command, persistence and lifecycle behavior.

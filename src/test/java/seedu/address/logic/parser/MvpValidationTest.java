@@ -1,7 +1,6 @@
 package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -23,10 +22,12 @@ import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
+import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.PersonBuilder;
 
 /** MVP input boundaries, command-reading order, and exact compatibility of previously stored values. */
 public class MvpValidationTest {
@@ -219,6 +220,9 @@ public class MvpValidationTest {
         Member legacy = new Member(new NusId("A0000001X"), new Name("Member  123"), new Phone("123"),
                 new Email("UPPER@EXAMPLE.COM"));
         model.addMember(legacy);
+        Person legacyPerson = new PersonBuilder().withName("Legacy 123").withPhone("123")
+                .withEmail("UPPER@EXAMPLE.COM").build();
+        model.addPerson(legacyPerson);
         Equipment old = new Equipment(new UUID(0, 1), "n".repeat(150), "c".repeat(60),
                 Condition.GOOD, "n".repeat(500));
         model.addEquipment(old);
@@ -236,10 +240,9 @@ public class MvpValidationTest {
         assertEquals(bytes, Files.readString(disk.getAddressBookFilePath()));
         assertTrue(restored.getMemberList().contains(legacy));
         assertTrue(restored.getEquipmentList().contains(old));
-        logic.execute("add n/Legacy 123 p/123 e/UPPER@EXAMPLE.COM a/NUS");
-        assertEquals("123", model.getFilteredPersonList().getFirst().getPhone().value);
-        assertEquals("UPPER@EXAMPLE.COM", model.getFilteredPersonList().getFirst().getEmail().value);
-        assertFalse(restored.getMemberList().isEmpty());
+        assertEquals(legacyPerson, restored.getPersonList().getFirst());
+        assertEquals("123", restored.getPersonList().getFirst().getPhone().value);
+        assertEquals("UPPER@EXAMPLE.COM", restored.getPersonList().getFirst().getEmail().value);
     }
 
     private void assertFirst(String command, String prefix) {

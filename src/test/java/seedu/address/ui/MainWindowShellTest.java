@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -129,13 +130,35 @@ public class MainWindowShellTest {
                     {"equipment view uuid/00000000-0000-0000-0000-000000000001",
                         "equipment view uuid/00000000-0000-0000-0000-000000000001"},
                     {"member add unknown/value", "member add unknown/value"},
+                    {"member res", "member restore"},
+                    {"member restore n", "member restore nus/"},
+                    {"member se", "member search"},
+                    {"member search holding/y", "member search holding/YES"},
+                    {"member search sort/he", "member search sort/HELD"},
+                    {"equipment ed", "equipment edit"},
+                    {"equipment edit co", "equipment edit condition/"},
+                    {"equipment res", "equipment restore"},
+                    {"equipment restore u", "equipment restore uuid/"},
+                    {"equipment search av", "equipment search availability/"},
+                    {"equipment search availability/av", "equipment search availability/AVAILABLE"},
+                    {"equipment search status/de", "equipment search status/DELETED"},
+                    {"equipment search order/de", "equipment search order/desc"},
+                    {"equipment add cou", "equipment add count/"},
+                    {"loans return co", "loans return condition/"},
+                    {"loans return condition/fa", "loans return condition/FAIR"},
+                    {"loans add uuid/00000000-0000-0000-0000-000000000001,00000000",
+                        "loans add uuid/00000000-0000-0000-0000-000000000001,"
+                            + "00000000-0000-0000-0000-000000000002"},
+                    {"loans return uuid/00000000-0000-0000-0000-000000000001,  ",
+                        "loans return uuid/00000000-0000-0000-0000-000000000001,  "
+                            + "00000000-0000-0000-0000-000000000002"},
                     {"member add nus/A", "member add nus/A"},
                     {"loans add assigned/2026", "loans add assigned/2026"}
                 };
                 for (String[] example : examples) {
+                    field().requestFocus();
                     field().setText(example[0]);
                     field().positionCaret(example[0].length());
-                    field().requestFocus();
                     completeKey(false, example[1]);
                 }
                 field().setText("member ");
@@ -177,7 +200,30 @@ public class MainWindowShellTest {
                 assertEquals(saves + 1, storage.saves);
                 assertEquals("Jamie Lim", model.findMember(id(1)).orElseThrow().getName().fullName);
                 recordOutcome("member edit nus/A0000001X name/Jamie Lim [Enter]");
-                session.add("PASS: boundary preserved; member editing completed and executed; later input usable.");
+                completeAndSubmit("member search holding/n", "member search holding/NO");
+                completeAndSubmit("equipment edit uuid/" + new UUID(0, 2) + " condition/fa",
+                        "equipment edit uuid/" + new UUID(0, 2) + " condition/FAIR");
+                int count = model.getEquipmentList().size();
+                completeAndSubmit("equipment add name/Batch Camera category/Photo count/2 condition/g",
+                        "equipment add name/Batch Camera category/Photo count/2 condition/GOOD");
+                assertEquals(count + 2, model.getEquipmentList().size());
+                String assignment = "loans add uuid/" + new UUID(0, 2)
+                        + " assigned/2026-01-01 expected/2026-01-02 nus/";
+                completeAndSubmit(assignment + "a0000001", assignment + "A0000001X");
+                String returns = "loans return uuid/" + new UUID(0, 1) + "," + new UUID(0, 2)
+                        + " returned/2026-01-02 condition/";
+                completeAndSubmit(returns + "g", returns + "GOOD");
+                assertTrue(model.findOpenLoan(new UUID(0, 1)).isEmpty());
+                assertTrue(model.findOpenLoan(new UUID(0, 2)).isEmpty());
+                succeed("equipment delete uuid/" + new UUID(0, 2));
+                completeAndSubmit("equipment restore uuid/00000000-0000-0000-0000-000000000002",
+                        "equipment restore uuid/00000000-0000-0000-0000-000000000002");
+                assertFalse(model.findEquipment(new UUID(0, 2)).orElseThrow().isDeleted());
+                succeed("member delete nus/" + id(3));
+                completeAndSubmit("member restore nus/a0000003", "member restore nus/A0000003X");
+                assertFalse(model.findMember(id(3)).orElseThrow().isDeleted());
+                assertEquals(model.getAddressBook(), assertDoesNotThrow(() -> storage.readAddressBook()).orElseThrow());
+                session.add("PASS: search, batch registration, loan return and restoration persisted/reloaded.");
             });
         } catch (AssertionError failure) {
             session.add("FAIL: " + failure.getMessage());
@@ -186,6 +232,18 @@ public class MainWindowShellTest {
             Files.createDirectories(transcript.getParent());
             Files.write(transcript, session);
         }
+    }
+
+    /** Submits the completed text through JavaFX Enter and records the parser/storage outcome. */
+    private void completeAndSubmit(String input, String expected) {
+        field().requestFocus();
+        field().setText(input);
+        field().positionCaret(input.length());
+        completeKey(false, expected);
+        field().fireEvent(key(KeyCode.ENTER));
+        assertEquals("", field().getText());
+        assertEquals("Success", label("feedbackStatus"));
+        recordOutcome(expected + " [Enter]");
     }
 
     /** Records a Tab event and checks text, dispatch/save counts, and all model collections. */
@@ -203,6 +261,231 @@ public class MainWindowShellTest {
         assertEquals(saves, storage.saves);
         assertEquals(before, model.getAddressBook());
         session.add("CHECK: no command execution, save, or model mutation.");
+    }
+
+    @Test
+    public void equipmentBatchAdd_resetsSearchAndShowsAllUnitsAfterOneSave() {
+        FxTestUtil.runAndWait(() -> {
+            int originalCount = model.getEquipmentList().size();
+            submit("equipment search q/NoMatchingBatch");
+            assertEquals(0, rows().getItems().size());
+            succeed("equipment add name/Batch Camera category/Photo condition/GOOD count/3");
+            assertEquals(originalCount + 3, rows().getItems().size());
+            assertTrue(button("equipmentNavigation").getStyleClass().contains("laplace-navigation-active"));
+            assertTrue(feedback().startsWith("Added 3 equipment units: Batch Camera"));
+            assertEquals(1, storage.saves);
+        });
+    }
+
+    @Test
+    public void search_realCommandInput_filtersSortsRetainsCriteriaAndResetsWithList() {
+        FxTestUtil.runAndWait(() -> {
+            int saves = storage.saves;
+            submit("member search q/alex holding/yes sort/id order/desc");
+            assertEquals("Success", label("feedbackStatus"));
+            assertEquals(1, rows().getItems().size());
+            assertEquals("1", detailLabel("displayedCount"));
+            assertTrue(detailLabel("criteria").contains("alex"));
+            assertTrue(detailLabel("sortOrder").contains("descending"));
+            assertEquals(saves, storage.saves);
+            submit("member view nus/A0000001X");
+            assertEquals(1, rows().getItems().size());
+            submit("member search q/no matches");
+            assertTrue(rows().getItems().isEmpty());
+            assertEquals("0", detailLabel("displayedCount"));
+            assertTrue(((Label) rows().getPlaceholder()).getText().contains("member list"));
+            render("search-empty", 760, 500);
+            submit("member list");
+            assertEquals(3, rows().getItems().size());
+            assertEquals("3", detailLabel("displayedCount"));
+            submit("equipment search category/photo availability/available sort/id order/desc");
+            assertEquals(1, rows().getItems().size());
+            assertEquals(new UUID(0, 2), ((Equipment) rows().getItems().getFirst()).getUuid());
+            assertEquals("1", detailLabel("displayedCount"));
+            assertTrue(detailLabel("inventoryGroups").contains("\"photography\" / \"camera 1\""));
+            render("search-equipment", 1100, 700);
+            render("search-equipment", 760, 500);
+            int dispatches = logic.commands.size();
+            rows().fireEvent(key(KeyCode.ENTER));
+            assertEquals(dispatches + 1, logic.commands.size());
+            assertEquals(new UUID(0, 2).toString(), detailLabel("equipmentUuid"));
+            assertEquals(1, rows().getItems().size());
+            submit("equipment search sort/id order/desc");
+            assertEquals(new UUID(0, 3), ((Equipment) rows().getItems().getFirst()).getUuid());
+            submit("equipment list");
+            assertEquals(new UUID(0, 1), ((Equipment) rows().getItems().getFirst()).getUuid());
+        });
+    }
+
+    @Test
+    public void search_loanMutationRefreshAndInvalidInput_preserveQueryAndCorrection() {
+        FxTestUtil.runAndWait(() -> {
+            submit("equipment search availability/available");
+            assertEquals(1, rows().getItems().size());
+            String criteria = detailLabel("criteria");
+            submit("equipment search availability/not-valid");
+            assertEquals("Error", label("feedbackStatus"));
+            assertEquals("equipment search availability/not-valid", field().getText());
+            assertEquals(criteria, detailLabel("criteria"));
+            submit("loans return uuid/" + new UUID(0, 1) + " returned/2026-01-02");
+            assertEquals("Success", label("feedbackStatus"));
+            assertEquals(2, rows().getItems().size());
+            assertEquals(new UUID(0, 1).toString(), detailLabel("equipmentUuid"));
+            submit("equipment search availability/available");
+            assertEquals("2", detailLabel("displayedCount"));
+            assertTrue(detailLabel("inventoryGroups").contains("\"camera 1\": 1 available"));
+        });
+    }
+
+    @Test
+    public void search_memberDeletion_preservesFiltersSortAndSelectionUntilExplicitListReset() {
+        FxTestUtil.runAndWait(() -> {
+            submit("member search q/member holding/no sort/id order/desc");
+            assertEquals(List.of(id(3), id(2)), rows().getItems().stream()
+                    .map(item -> ((Member) item).getNusId()).toList());
+            String criteria = detailLabel("criteria");
+            String sort = detailLabel("sortOrder");
+            submit("member view nus/" + id(2));
+            int saves = storage.saves;
+            int dispatches = logic.commands.size();
+            submit("member delete nus/" + id(2));
+            assertEquals("Success", label("feedbackStatus"));
+            assertEquals(saves + 1, storage.saves);
+            assertEquals(dispatches + 1, logic.commands.size());
+            assertEquals(List.of(id(3)), rows().getItems().stream()
+                    .map(item -> ((Member) item).getNusId()).toList());
+            assertEquals(criteria, detailLabel("criteria"));
+            assertEquals(sort, detailLabel("sortOrder"));
+            assertEquals("1", detailLabel("displayedCount"));
+            assertTrue(detailLabel("selection").contains(id(3).value));
+            submit("member delete nus/" + id(3));
+            assertEquals("Success", label("feedbackStatus"));
+            assertTrue(rows().getItems().isEmpty());
+            assertEquals(criteria, detailLabel("criteria"));
+            assertEquals(sort, detailLabel("sortOrder"));
+            assertEquals("0", detailLabel("displayedCount"));
+            assertEquals("No member selected", detailLabel("selection"));
+            assertEquals(model.getAddressBook(), assertDoesNotThrow(() -> storage.readAddressBook()).orElseThrow());
+            submit("member list");
+            assertEquals(3, rows().getItems().size());
+            assertEquals("1", detailLabel("activeCount"));
+            assertEquals("2", detailLabel("deletedCount"));
+            assertEquals("All records", detailLabel("criteria"));
+            assertEquals("Name (A-Z), then NUS ID", detailLabel("sortOrder"));
+        });
+    }
+
+    @Test
+    public void equipmentMaintenance_editDeleteRestore_refreshesDetailsSearchCountsAndSavedIdentity() throws Exception {
+        UUID target = new UUID(0, 2);
+        FxTestUtil.runAndWait(() -> {
+            submit("equipment search status/active sort/id");
+            submit("equipment edit uuid/" + target + " name/Updated Camera condition/DAMAGED notes/Repair lens");
+            assertEquals("Success", label("feedbackStatus"));
+            assertEquals(target.toString(), detailLabel("equipmentUuid"));
+            assertEquals("Updated Camera", detailLabel("equipmentName"));
+            assertEquals("Repair lens", detailLabel("notes"));
+            assertEquals("UNAVAILABLE", detailLabel("availability"));
+            submit("equipment delete uuid/" + target);
+            assertEquals(2, rows().getItems().size());
+            assertEquals("1", detailLabel("unavailableCount"));
+            submit("equipment search status/deleted");
+            assertEquals(1, rows().getItems().size());
+            assertTrue(((Equipment) rows().getItems().getFirst()).isDeleted());
+            submit("equipment view uuid/" + target);
+            assertEquals("DELETED", detailLabel("equipmentStatus"));
+            assertEquals("Repair lens", detailLabel("notes"));
+            submit("equipment restore uuid/" + target);
+            assertEquals("ACTIVE", detailLabel("equipmentStatus"));
+            assertEquals(target.toString(), detailLabel("equipmentUuid"));
+            assertEquals("UNAVAILABLE", detailLabel("availability"));
+            assertTrue(rows().getItems().isEmpty());
+            submit("equipment search status/active");
+            assertEquals(3, rows().getItems().size());
+            assertEquals("2", detailLabel("unavailableCount"));
+            assertEquals(model.getAddressBook(), assertDoesNotThrow(() -> storage.readAddressBook()).orElseThrow());
+        });
+        reloadFreshShell();
+        FxTestUtil.runAndWait(() -> {
+            submit("equipment view uuid/" + target);
+            assertEquals("Updated Camera", detailLabel("equipmentName"));
+            assertEquals("ACTIVE", detailLabel("equipmentStatus"));
+            assertEquals("DAMAGED", detailLabel("condition"));
+            render("equipment-maintenance", 1100, 700);
+        });
+    }
+
+    @Test
+    public void search_equipmentDeletion_preservesAllCriteriaAndZeroMatchesUntilExplicitListReset() {
+        FxTestUtil.runAndWait(() -> {
+            UUID target = new UUID(0, 2);
+            submit("equipment search q/camera category/photo condition/good availability/available"
+                    + " sort/id order/desc");
+            assertEquals(1, rows().getItems().size());
+            String criteria = detailLabel("criteria");
+            String sort = detailLabel("sortOrder");
+            submit("equipment view uuid/" + target);
+            int saves = storage.saves;
+            int dispatches = logic.commands.size();
+            submit("equipment delete uuid/" + target);
+            assertEquals("Success", label("feedbackStatus"));
+            assertEquals(saves + 1, storage.saves);
+            assertEquals(dispatches + 1, logic.commands.size());
+            assertTrue(rows().getItems().isEmpty());
+            assertEquals(criteria, detailLabel("criteria"));
+            assertEquals(sort, detailLabel("sortOrder"));
+            assertEquals("0", detailLabel("displayedCount"));
+            assertEquals("No equipment selected", detailLabel("selection"));
+            assertEquals(model.getAddressBook(), assertDoesNotThrow(() -> storage.readAddressBook()).orElseThrow());
+            submit("equipment list");
+            assertEquals(3, rows().getItems().size());
+            assertEquals("All records", detailLabel("criteria"));
+            assertEquals("Category, name, then UUID", detailLabel("sortOrder"));
+        });
+    }
+
+    @Test
+    public void search_deletedMembers_remainDiscoverableAndRestoreUpdatesQueryCountsAndPersistence() throws Exception {
+        FxTestUtil.runAndWait(() -> {
+            submit("member search q/jamie status/all sort/id order/desc");
+            assertEquals(1, rows().getItems().size());
+            String criteria = detailLabel("criteria");
+            String sort = detailLabel("sortOrder");
+            submit("member delete nus/" + id(2));
+            assertEquals("Success", label("feedbackStatus"));
+            assertEquals(1, rows().getItems().size());
+            assertTrue(((Member) rows().getItems().getFirst()).isDeleted());
+            assertEquals(criteria, detailLabel("criteria"));
+            assertEquals(sort, detailLabel("sortOrder"));
+            assertEquals("2", detailLabel("activeCount"));
+            assertEquals("1", detailLabel("deletedCount"));
+            assertEquals("1", detailLabel("displayedCount"));
+            assertTrue(detailLabel("selection").contains("(deleted)"));
+            submit("member search q/jamie status/deleted sort/id order/desc");
+            assertEquals(1, rows().getItems().size());
+            assertTrue(detailLabel("criteria").contains("DELETED"));
+            render("search-deleted-members", 1100, 700);
+            render("search-deleted-members", 760, 500);
+            submit("member view nus/" + id(2));
+            assertEquals("Success", label("feedbackStatus"));
+            submit("member restore nus/" + id(2));
+            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Jamie Lim", detailLabel("memberName"));
+            assertTrue(rows().getItems().isEmpty());
+            submit("member search q/jamie status/deleted");
+            assertEquals("0", detailLabel("displayedCount"));
+            assertEquals("3", detailLabel("activeCount"));
+            assertEquals("0", detailLabel("deletedCount"));
+            submit("member list");
+            assertEquals(3, rows().getItems().size());
+            assertEquals("All records", detailLabel("criteria"));
+        });
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+        reloadFreshShell();
+        FxTestUtil.runAndWait(() -> {
+            assertFalse(model.findMember(id(2)).orElseThrow().isDeleted());
+            assertEquals(3, rows().getItems().size());
+        });
     }
 
     @Test
@@ -277,7 +560,7 @@ public class MainWindowShellTest {
     }
 
     @Test
-    public void navigation_tabsAndMenu_exposesHelpExitAndPreservesLegacyTypedRoute() {
+    public void navigation_tabsAndMenu_exposesHelpExitAndRejectsLegacyTypedRoutes() {
         FxTestUtil.runAndWait(() -> {
             model.addPerson(new PersonBuilder().withName("Legacy Person").build());
             AddressBook before = new AddressBook(model.getAddressBook());
@@ -291,20 +574,14 @@ public class MainWindowShellTest {
             button("membersNavigation").fire();
             MenuButton menu = (MenuButton) window.getPrimaryStage().getScene().getRoot().lookup(".menu-button");
             assertEquals(List.of("Help", "Exit"), menu.getItems().stream().map(item -> item.getText()).toList());
-            submit("list");
-            assertTrue(window.getPersonListPanel().getRoot().getParent() != null);
-            layout();
-            assertEquals(1, ((ListView<?>) node("personListView")).getItems().size());
-            assertTrue(node("personListView").lookupAll(".label").stream()
-                    .filter(item -> item instanceof Label).map(item -> ((Label) item).getText())
-                    .anyMatch(text -> text.contains("Legacy Person")));
-            ListCell<?> personCell = node("personListView").lookupAll(".list-cell").stream()
-                    .map(item -> (ListCell<?>) item).filter(item -> !item.isEmpty()).findFirst().orElseThrow();
-            assertEquals(Color.web("#3C3E3F"), personCell.getBackground().getFills().getFirst().getFill());
-            assertEquals(Color.WHITE, ((Label) personCell.getGraphic().lookup("#name")).getTextFill());
-            assertFalse(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
-            assertEquals(List.of("equipment list", "member list", "list"), logic.commands);
-            assertEquals(3, storage.saves);
+            reject("list");
+            assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
+            reject("list members");
+            assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
+            assertTrue(window.getPersonListPanel().getRoot().getParent() == null);
+            assertTrue(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
+            assertEquals(List.of("equipment list", "member list", "list", "list members"), logic.commands);
+            assertEquals(1, storage.saves);
             assertEquals(before, model.getAddressBook());
         });
     }
@@ -327,7 +604,7 @@ public class MainWindowShellTest {
             assertEquals("", field().getText());
             assertEquals("Success", label("feedbackStatus"));
             assertEquals(2, logic.commands.size());
-            assertEquals(1, storage.saves);
+            assertEquals(0, storage.saves);
         });
     }
 
@@ -573,8 +850,8 @@ public class MainWindowShellTest {
             logic.nextResult = new CommandResult("Controlled target", DisplayRequest.equipmentDetails(new UUID(0, 2)));
             submit("controlled detail result");
             ModelManager replacement = sample();
-            replacement.deleteEquipment(replacement.findEquipment(new UUID(0, 2)).orElseThrow());
-            replacement.addEquipment(new Equipment(new UUID(0, 2), "Renamed Camera", "Photography",
+            replacement.setEquipment(replacement.findEquipment(new UUID(0, 2)).orElseThrow(),
+                    new Equipment(new UUID(0, 2), "Renamed Camera", "Photography",
                     Condition.GOOD, ""));
             model.setAddressBook(replacement.getAddressBook());
         });
@@ -584,7 +861,8 @@ public class MainWindowShellTest {
             model.deleteEquipment(model.findEquipment(new UUID(0, 2)).orElseThrow());
         });
         FxTestUtil.runAndWait(() -> {
-            assertFalse(label("selection").contains(new UUID(0, 2).toString()));
+            assertEquals("DELETED", detailLabel("equipmentStatus"));
+            assertEquals("Renamed Camera", detailLabel("equipmentName"));
             assertEquals(1, logic.commands.size());
         });
     }
@@ -600,8 +878,8 @@ public class MainWindowShellTest {
             model.getEquipmentList().forEach(replacement::addEquipment);
             model.getLoanList().forEach(replacement::addLoan);
             model.setAddressBook(replacement);
-            model.deleteEquipment(model.findEquipment(new UUID(0, 2)).orElseThrow());
-            model.addEquipment(new Equipment(new UUID(0, 2), "Camera 1", "Photography", Condition.GOOD,
+            model.setEquipment(model.findEquipment(new UUID(0, 2)).orElseThrow(),
+                    new Equipment(new UUID(0, 2), "Camera 1", "Photography", Condition.GOOD,
                     "Keep the lens cap on.\nCase included."));
             model.addLoan(new Loan(new UUID(0, 2), id(1), LocalDate.of(2026, 1, 1),
                     LocalDate.of(2026, 1, 3), null));
@@ -765,24 +1043,26 @@ public class MainWindowShellTest {
     }
 
     @Test
-    public void storageFailure_realLegacyMutation_reportsFailureAndRefreshesActualMemory() {
+    public void storageFailure_retiredCommands_preserveMemoryAndDoNotCreateDataFile() {
         FxTestUtil.runAndWait(() -> {
+            AddressBook before = new AddressBook(model.getAddressBook());
+            Object selected = rows().getSelectionModel().getSelectedItem();
             storage.fail = true;
-            submit("add n/Test Person p/91234567 e/test@example.com a/Test Address");
-            assertEquals("Error", label("feedbackStatus"));
-            assertTrue(feedback().contains("Could not save data"));
-            assertTrue(field().getText().startsWith("add"));
-            assertTrue(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
-            assertEquals(1, model.getFilteredPersonList().size());
-            assertFalse(Files.exists(temporaryDirectory.resolve("laplace.json")));
-            button("equipmentNavigation").fire();
-            assertTrue(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
-        });
-        FxTestUtil.runAndWait(() -> {
-            assertEquals(1, ((ListView<?>) window.getPersonListPanel().getRoot().lookup("#personListView"))
-                    .getItems().size());
+            for (String input : List.of("clear", "add n/Test Person p/91234567 e/test@example.com a/Test Address")) {
+                submit(input);
+                assertEquals("Error", label("feedbackStatus"));
+                assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
+                assertEquals(input, field().getText());
+                assertEquals(field(), window.getPrimaryStage().getScene().getFocusOwner());
+                assertTrue(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
+                assertEquals(selected, rows().getSelectionModel().getSelectedItem());
+                assertEquals(before, model.getAddressBook());
+                assertEquals(0, storage.saves);
+                assertFalse(Files.exists(temporaryDirectory.resolve("laplace.json")));
+            }
             storage.fail = false;
-            submit("list");
+            succeed("member list");
+            assertEquals(before, model.getAddressBook());
             assertTrue(Files.exists(temporaryDirectory.resolve("laplace.json")));
         });
     }
@@ -896,13 +1176,18 @@ public class MainWindowShellTest {
                 session.add("STATUS: " + label("feedbackStatus"));
                 session.add("OUTPUT: " + feedback());
                 session.add("RETAINED INPUT: " + field().getText());
+                if (input.equals("list")) {
+                    assertEquals("Error", label("feedbackStatus"));
+                    assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
+                    assertEquals(input, field().getText());
+                }
             }
             button("loansNavigation").fire();
             session.add("Loans tab: " + label("openCount") + " open; closed history is not presented.");
             session.add("Commands executed: " + logic.commands);
             session.add("Successful saves: " + storage.saves);
             assertEquals(6, logic.commands.size());
-            assertEquals(5, storage.saves);
+            assertEquals(3, storage.saves);
         });
         Path path = Path.of("build", "reports", "laplace", "shell-session.txt");
         Files.createDirectories(path.getParent());
@@ -982,18 +1267,18 @@ public class MainWindowShellTest {
             assertEquals(null, node("detailsTitle"));
             succeed("equipment view uuid/" + items[0]);
             succeed("equipment delete uuid/" + items[0]);
-            assertEquals(items[1], ((Equipment) rows().getSelectionModel().getSelectedItem()).getUuid());
+            assertEquals(items[0], ((Equipment) rows().getSelectionModel().getSelectedItem()).getUuid());
             assertEquals(null, node("detailsTitle"));
             button("loansNavigation").fire();
             assertEquals("0", label("openCount"));
             assertEquals(null, node("historyCount"));
-            assertEquals(1, model.getLoanList().size());
+            assertEquals(2, model.getLoanList().size());
         });
         reloadFreshShell();
         FxTestUtil.runAndWait(() -> {
             assertEquals(2, model.getMemberList().size());
-            assertEquals(1, model.getEquipmentList().size());
-            assertEquals(1, model.getLoanList().size());
+            assertEquals(2, model.getEquipmentList().size());
+            assertEquals(2, model.getLoanList().size());
             succeed("member list");
             succeed("member view nus/A0000002X");
             assertEquals("other@example.com", detailLabel("email"));
@@ -1164,7 +1449,7 @@ public class MainWindowShellTest {
         submit(command);
         assertEquals("Success", label("feedbackStatus"), command + ": " + feedback());
         assertEquals("", field().getText(), command);
-        assertEquals(saves + 1, storage.saves, command);
+        assertEquals(saves + (command.equals("equipment list") ? 0 : 1), storage.saves, command);
         assertEquals(dispatched + 1, logic.commands.size(), command);
         recordOutcome(command);
     }

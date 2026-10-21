@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ASSIGNED_DATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_CATEGORY;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_CONDITION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_COUNT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EQUIPMENT_UUID;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EXPECTED_RETURN_DATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_MEMBER_EMAIL;
@@ -12,6 +13,14 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_MEMBER_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTES;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NUS_ID;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RETURNED_DATE;
+import static seedu.address.logic.parser.DirectorySearchCommandParser.AVAILABILITY;
+import static seedu.address.logic.parser.DirectorySearchCommandParser.CATEGORY;
+import static seedu.address.logic.parser.DirectorySearchCommandParser.CONDITION;
+import static seedu.address.logic.parser.DirectorySearchCommandParser.HOLDING;
+import static seedu.address.logic.parser.DirectorySearchCommandParser.ORDER;
+import static seedu.address.logic.parser.DirectorySearchCommandParser.QUERY;
+import static seedu.address.logic.parser.DirectorySearchCommandParser.SORT;
+import static seedu.address.logic.parser.DirectorySearchCommandParser.STATUS;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,18 +34,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import seedu.address.logic.commands.AddCommand;
-import seedu.address.logic.commands.ClearCommand;
-import seedu.address.logic.commands.DeleteCommand;
-import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EquipmentAddCommand;
 import seedu.address.logic.commands.EquipmentDeleteCommand;
+import seedu.address.logic.commands.EquipmentEditCommand;
 import seedu.address.logic.commands.EquipmentListCommand;
+import seedu.address.logic.commands.EquipmentRestoreCommand;
 import seedu.address.logic.commands.EquipmentViewCommand;
 import seedu.address.logic.commands.ExitCommand;
-import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
-import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.LoanAddCommand;
 import seedu.address.logic.commands.LoanListCommand;
 import seedu.address.logic.commands.LoanReturnCommand;
@@ -44,10 +49,13 @@ import seedu.address.logic.commands.MemberAddCommand;
 import seedu.address.logic.commands.MemberDeleteCommand;
 import seedu.address.logic.commands.MemberEditCommand;
 import seedu.address.logic.commands.MemberListCommand;
+import seedu.address.logic.commands.MemberRestoreCommand;
 import seedu.address.logic.commands.MemberViewCommand;
 import seedu.address.logic.parser.Prefix;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.Condition;
+import seedu.address.model.query.DirectoryQuery;
 
 /** Computes suggestions from parser vocabulary and a live read-only root, without executing commands. */
 public final class CompletionService {
@@ -61,18 +69,23 @@ public final class CompletionService {
             Map.entry(MemberViewCommand.COMMAND_WORD, List.of(PREFIX_NUS_ID)),
             Map.entry(MemberDeleteCommand.COMMAND_WORD, List.of(PREFIX_NUS_ID)),
             Map.entry(MemberListCommand.COMMAND_WORD, List.of()),
+            Map.entry(MemberRestoreCommand.COMMAND_WORD, List.of(PREFIX_NUS_ID)),
+            Map.entry("member search", List.of(QUERY, HOLDING, STATUS, SORT, ORDER)),
             Map.entry(EquipmentAddCommand.COMMAND_WORD,
-                    List.of(PREFIX_MEMBER_NAME, PREFIX_CATEGORY, PREFIX_CONDITION, PREFIX_NOTES)),
+                    List.of(PREFIX_MEMBER_NAME, PREFIX_CATEGORY, PREFIX_CONDITION, PREFIX_NOTES, PREFIX_COUNT)),
+            Map.entry(EquipmentEditCommand.COMMAND_WORD,
+                    List.of(PREFIX_EQUIPMENT_UUID, PREFIX_MEMBER_NAME, PREFIX_CATEGORY,
+                            PREFIX_CONDITION, PREFIX_NOTES)),
+            Map.entry(EquipmentRestoreCommand.COMMAND_WORD, List.of(PREFIX_EQUIPMENT_UUID)),
+            Map.entry("equipment search", List.of(QUERY, CATEGORY, CONDITION, AVAILABILITY, STATUS, SORT, ORDER)),
             Map.entry(EquipmentViewCommand.COMMAND_WORD, List.of(PREFIX_EQUIPMENT_UUID)),
             Map.entry(EquipmentDeleteCommand.COMMAND_WORD, List.of(PREFIX_EQUIPMENT_UUID)),
             Map.entry(EquipmentListCommand.COMMAND_WORD, List.of()),
             Map.entry(LoanAddCommand.COMMAND_WORD,
                     List.of(PREFIX_EQUIPMENT_UUID, PREFIX_NUS_ID, PREFIX_ASSIGNED_DATE, PREFIX_EXPECTED_RETURN_DATE)),
-            Map.entry(LoanReturnCommand.COMMAND_WORD, List.of(PREFIX_EQUIPMENT_UUID, PREFIX_RETURNED_DATE)),
+            Map.entry(LoanReturnCommand.COMMAND_WORD,
+                    List.of(PREFIX_EQUIPMENT_UUID, PREFIX_RETURNED_DATE, PREFIX_CONDITION)),
             Map.entry(LoanListCommand.COMMAND_WORD, List.of()),
-            Map.entry(AddCommand.COMMAND_WORD, List.of()), Map.entry(EditCommand.COMMAND_WORD, List.of()),
-            Map.entry(DeleteCommand.COMMAND_WORD, List.of()), Map.entry(ClearCommand.COMMAND_WORD, List.of()),
-            Map.entry(FindCommand.COMMAND_WORD, List.of()), Map.entry(ListCommand.COMMAND_WORD, List.of()),
             Map.entry(ExitCommand.COMMAND_WORD, List.of()), Map.entry(HelpCommand.COMMAND_WORD, List.of()));
 
     /**
@@ -153,7 +166,11 @@ public final class CompletionService {
         int replacementStart = tokenStart;
         Stream<String> available = allowed.stream().filter(prefix -> !prefix.equals(fragment))
                 .filter(prefix -> !seen.contains(prefix) || text.startsWith(prefix, replacementStart));
-        Optional<Completion> prefix = suggest(tokenStart, tokenEnd, fragment, available, false);
+        // Spaces after a batch separator still belong to the next UUID, rather than a new field.
+        boolean isBatchEntry = command.startsWith("loans ")
+                && text.substring(argumentsStart, caret).stripTrailing().endsWith(",");
+        Optional<Completion> prefix = isBatchEntry ? Optional.empty()
+                : suggest(tokenStart, tokenEnd, fragment, available, false);
         if (prefix.isPresent()) {
             return prefix;
         }
@@ -167,6 +184,9 @@ public final class CompletionService {
                 while (end > caret && Character.isWhitespace(text.charAt(end - 1))) {
                     end--;
                 }
+                if (command.startsWith("loans ") && markers.get(i).equals(PREFIX_EQUIPMENT_UUID.getPrefix())) {
+                    return loanIdentity(text, start, end, caret, data);
+                }
                 return suggest(start, end, text.substring(start, caret),
                         values(command, markers.get(i), data), true);
             }
@@ -174,7 +194,26 @@ public final class CompletionService {
         return Optional.empty();
     }
 
-    /** New identities, dates, and free-form notes deliberately have no value suggestions. */
+    /** Completes one batch entry while preserving neighboring UUIDs and excluding identities already listed. */
+    private Optional<Completion> loanIdentity(String text, int start, int end, int caret, ReadOnlyAddressBook data) {
+        int entryStart = Math.max(start, text.lastIndexOf(',', caret - 1) + 1);
+        int comma = text.indexOf(',', caret);
+        int entryEnd = comma < 0 ? end : Math.min(end, comma);
+        String neighbors = text.substring(start, entryStart) + text.substring(entryEnd, end);
+        Set<String> used = new HashSet<>(Arrays.stream(neighbors.split(","))
+                .map(String::strip).map(value -> value.toLowerCase(Locale.ROOT)).toList());
+        while (entryStart < caret && Character.isWhitespace(text.charAt(entryStart))) {
+            entryStart++;
+        }
+        while (entryEnd > caret && Character.isWhitespace(text.charAt(entryEnd - 1))) {
+            entryEnd--;
+        }
+        return suggest(entryStart, entryEnd, text.substring(entryStart, caret),
+                data.getEquipmentList().stream().map(item -> item.getUuid().toString())
+                        .filter(uuid -> !used.contains(uuid)), true);
+    }
+
+    /** New identities, dates, counts, and free-form notes remain manual; finite options use parser enum values. */
     private Stream<String> values(String command, String prefix, ReadOnlyAddressBook data) {
         switch (prefix) {
             case "nus/":
@@ -197,6 +236,29 @@ public final class CompletionService {
                 return data.getEquipmentList().stream().map(equipment -> equipment.getCategory());
             case "condition/":
                 return Arrays.stream(Condition.values()).map(Condition::name);
+            case "availability/":
+                return Arrays.stream(Availability.values()).map(Availability::name);
+            case "holding/":
+                return Arrays.stream(DirectoryQuery.Holding.values()).map(Enum::name);
+            case "status/":
+                return Arrays.stream(DirectoryQuery.Status.values()).map(Enum::name);
+            case "sort/":
+                Set<DirectoryQuery.Sort> allowed = command.startsWith("member ")
+                        ? Set.of(DirectoryQuery.Sort.DEFAULT, DirectoryQuery.Sort.NAME,
+                                DirectoryQuery.Sort.ID, DirectoryQuery.Sort.HELD)
+                        : Set.of(DirectoryQuery.Sort.DEFAULT, DirectoryQuery.Sort.NAME, DirectoryQuery.Sort.ID,
+                                DirectoryQuery.Sort.CATEGORY, DirectoryQuery.Sort.CONDITION,
+                                DirectoryQuery.Sort.AVAILABILITY);
+                return allowed.stream().map(Enum::name);
+            case "order/":
+                return Stream.of("asc", "desc");
+            case "q/":
+                if (command.startsWith("member ")) {
+                    return data.getMemberList().stream().flatMap(member -> Stream.of(member.getNusId().value,
+                            member.getName().fullName, member.getPhone().value, member.getEmail().value));
+                }
+                return data.getEquipmentList().stream().flatMap(item -> Stream.of(item.getUuid().toString(),
+                        item.getName(), item.getCategory(), item.getNotes())).filter(value -> !value.isBlank());
             default:
                 return Stream.empty();
         }

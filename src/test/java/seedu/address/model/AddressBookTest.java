@@ -186,7 +186,7 @@ public class AddressBookTest {
         addressBook.removeMember(sameMember);
         addressBook.removeEquipment(sameEquipment);
         assertTrue(addressBook.findMember(MEMBER_ID).orElseThrow().isDeleted());
-        assertTrue(addressBook.getEquipmentList().isEmpty());
+        assertTrue(addressBook.findEquipment(EQUIPMENT_ID).orElseThrow().isDeleted());
     }
 
     @Test
@@ -243,6 +243,37 @@ public class AddressBookTest {
     }
 
     @Test
+    public void returnLoans_emptyOrDuplicateIdentifiers_leaveRootUnchanged() {
+        AddressBook root = new AddressBook();
+        root.addMember(MEMBER);
+        root.addEquipment(EQUIPMENT);
+        root.addLoan(OPEN_LOAN);
+        AddressBook before = new AddressBook(root);
+
+        assertThrows(IllegalArgumentException.class, () -> root.returnLoans(List.of(), RETURN_DATE, null));
+        assertThrows(IllegalArgumentException.class, () -> root.returnLoans(
+                List.of(EQUIPMENT_ID, EQUIPMENT_ID), RETURN_DATE, Condition.DAMAGED));
+        assertEquals(before, root);
+    }
+
+    @Test
+    public void returnLoans_withoutObservedCondition_preservesEquipmentAndClosesBothLoans() {
+        AddressBook root = new AddressBook();
+        root.addMember(MEMBER);
+        root.addEquipment(EQUIPMENT);
+        root.addEquipment(OTHER_EQUIPMENT);
+        root.addLoan(OPEN_LOAN);
+        root.addLoan(new Loan(OTHER_EQUIPMENT.getUuid(), MEMBER_ID, ASSIGNED_DATE, RETURN_DATE, null));
+
+        root.returnLoans(List.of(EQUIPMENT_ID, OTHER_EQUIPMENT.getUuid()), RETURN_DATE, null);
+
+        assertTrue(root.getLoanList().stream().noneMatch(Loan::isOpen));
+        assertTrue(root.getLoanList().stream().allMatch(loan -> loan.getReturnCondition().isEmpty()));
+        assertEquals(Condition.GOOD, root.findEquipment(EQUIPMENT_ID).orElseThrow().getCondition());
+        assertEquals(Condition.FAIR, root.findEquipment(OTHER_EQUIPMENT.getUuid()).orElseThrow().getCondition());
+    }
+
+    @Test
     public void deletion_openReferences_blocksBothEntitiesWithoutMutation() {
         populateReferences(addressBook);
         addressBook.addLoan(OPEN_LOAN);
@@ -257,7 +288,7 @@ public class AddressBookTest {
     }
 
     @Test
-    public void deletion_closedReferences_retainsMemberHistoryAndRemovesEquipmentHistory() {
+    public void deletion_closedReferences_retainsMemberAndEquipmentHistory() {
         populateReferences(addressBook);
         Loan unrelated = new Loan(OTHER_EQUIPMENT.getUuid(), OTHER_MEMBER.getNusId(),
                 ASSIGNED_DATE, RETURN_DATE, RETURN_DATE);
@@ -267,7 +298,7 @@ public class AddressBookTest {
         addressBook.removeMember(MEMBER);
         equipmentDeletion.removeEquipment(EQUIPMENT);
         assertEquals(List.of(CLOSED_LOAN, unrelated), addressBook.getLoanList());
-        assertEquals(List.of(unrelated), equipmentDeletion.getLoanList());
+        assertEquals(List.of(CLOSED_LOAN, unrelated), equipmentDeletion.getLoanList());
         assertTrue(addressBook.hasEquipment(EQUIPMENT_ID));
         assertTrue(equipmentDeletion.hasMember(MEMBER_ID));
     }
@@ -293,7 +324,7 @@ public class AddressBookTest {
         assertTrue(memberObservations.stream().allMatch(Boolean::booleanValue));
         assertTrue(equipmentObservations.stream().allMatch(Boolean::booleanValue));
         assertEquals(2, addressBook.getLoanList().size());
-        assertEquals(1, equipmentDeletion.getLoanList().size());
+        assertEquals(2, equipmentDeletion.getLoanList().size());
     }
 
     @Test
@@ -633,7 +664,7 @@ public class AddressBookTest {
         assertEquals(List.of(CLOSED_LOAN), real.getLoanList());
         assertEquals(List.of(OPEN_LOAN), before.getLoanList());
         real.removeEquipment(EQUIPMENT);
-        assertTrue(real.getLoanList().isEmpty());
+        assertEquals(List.of(CLOSED_LOAN), real.getLoanList());
         real.removeMember(MEMBER);
         assertTrue(real.findMember(MEMBER_ID).orElseThrow().isDeleted());
     }
@@ -835,6 +866,15 @@ public class AddressBookTest {
         public void remove(Equipment item) {
             Equipment stored = findByUuid(item.getUuid()).orElseThrow(EquipmentNotFoundException::new);
             values.remove(stored);
+        }
+
+        @Override
+        public void setEquipment(Equipment target, Equipment replacement) {
+            Equipment stored = findByUuid(target.getUuid()).orElseThrow(EquipmentNotFoundException::new);
+            if (!target.getUuid().equals(replacement.getUuid())) {
+                throw new IllegalArgumentException("Equipment UUID cannot change.");
+            }
+            values.set(values.indexOf(stored), replacement);
         }
 
         @Override

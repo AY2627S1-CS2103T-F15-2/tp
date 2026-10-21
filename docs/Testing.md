@@ -37,9 +37,11 @@ modified mounting method. Missing classes, methods, reports or line counters fai
 Straight-line code has no branch counter in JaCoCo; no executable feature code is excluded.
 
 `CompletionServiceTest` checks command vocabulary, prefix/value contexts, multiword replacement,
-invalid input and current model data, including the merged `member edit` vocabulary and member-only
-name suggestions. Direct service, JavaFX input and packaged-JAR regressions verify that Tab at the start
-of an existing field marker leaves its marker and value unchanged. `CompletionControllerTest` dispatches JavaFX key events and checks
+invalid input and current model data. A parser-route contract test checks every accepted family subcommand.
+Search option suggestions are parsed by the actual command parser; tests cover lifecycle fields, batch
+UUID neighbors and duplicates, searchable values and member-only name suggestions. Direct service, JavaFX
+input and packaged-JAR regressions verify that Tab at the start of an existing field marker leaves its
+marker and value unchanged. `CompletionControllerTest` dispatches JavaFX key events and checks
 cycling, modifier keys, selections and focus traversal. Its focus-field test double also drives JavaFX's
 protected focus setter because macOS foreground activation is not deterministic in a test runner.
 

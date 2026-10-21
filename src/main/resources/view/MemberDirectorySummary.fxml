@@ -21,6 +21,7 @@
             </HBox>
             <VBox spacing="16" styleClass="laplace-surface,directory-summary-box">
                 <Label text="LIST SUMMARY" styleClass="laplace-muted" />
+                <Label fx:id="criteria" wrapText="true" minWidth="0" />
                 <GridPane hgap="12" vgap="14" minWidth="0">
                     <columnConstraints>
                         <ColumnConstraints percentWidth="38" minWidth="0" />

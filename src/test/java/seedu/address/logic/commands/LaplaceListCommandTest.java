@@ -18,15 +18,16 @@ import seedu.address.model.member.NusId;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.query.DirectoryQuery;
 
 public class LaplaceListCommandTest {
 
     @Test
     public void execute_emptyModel_reportsZeroAndDirectoryTarget() throws Exception {
         ModelManager model = new ModelManager();
-        assertEquals(new CommandResult("Listed 0 active members.", DisplayRequest.members()),
+        assertEquals(new CommandResult("Listed 0 active members.", DisplayRequest.members(DirectoryQuery.all())),
                 new MemberListCommand().execute(model));
-        assertEquals(new CommandResult("Listed 0 equipment items.", DisplayRequest.equipment()),
+        assertEquals(new CommandResult("Listed 0 equipment items.", DisplayRequest.equipment(DirectoryQuery.all())),
                 new EquipmentListCommand().execute(model));
     }
 
@@ -46,9 +47,9 @@ public class LaplaceListCommandTest {
         CommandResult members = new MemberListCommand().execute(model);
         CommandResult equipment = new EquipmentListCommand().execute(model);
         assertEquals("Listed 2 active members.", members.getFeedbackToUser());
-        assertEquals(DisplayRequest.members(), members.getDisplayRequest());
+        assertEquals(DisplayRequest.members(DirectoryQuery.all()), members.getDisplayRequest());
         assertEquals("Listed 2 equipment items.", equipment.getFeedbackToUser());
-        assertEquals(DisplayRequest.equipment(), equipment.getDisplayRequest());
+        assertEquals(DisplayRequest.equipment(DirectoryQuery.all()), equipment.getDisplayRequest());
         assertFalse(members.isExit());
         assertFalse(members.isShowHelp());
         assertFalse(equipment.isExit());
@@ -56,6 +57,21 @@ public class LaplaceListCommandTest {
         assertEquals(before, model.getAddressBook());
         assertEquals(List.of(later, first), model.getMemberList());
         assertEquals(List.of(second, one), model.getEquipmentList());
+    }
+
+    @Test
+    public void execute_retainedDeletedMembers_countsActiveSeparatelyAndExplicitlyResetsToAllRows() {
+        ModelManager model = new ModelManager();
+        Member first = new Member(new NusId("A0000001X"), new Name("Alex"),
+                new Phone("91234567"), new Email("alex@example.com"));
+        model.addMember(first);
+        model.deleteMember(first);
+        AddressBook before = new AddressBook(model.getAddressBook());
+        CommandResult result = new MemberListCommand().execute(model);
+        assertEquals("Listed 0 active members. 1 deleted member(s) remain visible.", result.getFeedbackToUser());
+        assertEquals(DisplayRequest.members(DirectoryQuery.all()), result.getDisplayRequest());
+        assertEquals(1, result.getDisplayRequest().getQuery().orElseThrow().members(model.getAddressBook()).size());
+        assertEquals(before, model.getAddressBook());
     }
 
     @Test

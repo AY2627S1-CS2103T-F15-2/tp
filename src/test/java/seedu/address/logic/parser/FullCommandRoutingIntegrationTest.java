@@ -34,6 +34,7 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
+import seedu.address.model.query.DirectoryQuery;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -70,15 +71,15 @@ public class FullCommandRoutingIntegrationTest {
     }
 
     @Test
-    public void allTenRoutes_memberDeletionRetainsHistoryAndEquipmentDeletionRemovesIt() throws Exception {
+    public void allTenRoutes_memberAndEquipmentDeletionRetainsHistory() throws Exception {
         LocalDate assigned = LocalDate.now().minusDays(3);
         LocalDate expected = assigned.plusDays(10);
         LocalDate returned = assigned.plusDays(1);
         assertNotEquals(firstItem, secondItem);
         assertEquals(2, model.getMemberList().size());
         assertEquals(2, model.getEquipmentList().size());
-        execute("member list", DisplayRequest.members());
-        execute("equipment list", DisplayRequest.equipment());
+        execute("member list", DisplayRequest.members(DirectoryQuery.all()));
+        execute("equipment list", DisplayRequest.equipment(DirectoryQuery.all()));
         execute("member view nus/a0000001x", DisplayRequest.memberDetails(FIRST));
         execute("equipment view uuid/" + firstItem, DisplayRequest.equipmentDetails(firstItem));
         execute("loans\tadd\texpected/" + expected + " nus/ a0000001x assigned/ " + assigned
@@ -116,7 +117,7 @@ public class FullCommandRoutingIntegrationTest {
         execute("member delete nus/" + FIRST, DisplayRequest.members());
         assertEquals(2, model.getLoanList().size());
         execute("equipment delete uuid/" + firstItem, DisplayRequest.equipment());
-        assertTrue(model.getLoanList().isEmpty());
+        assertEquals(2, model.getLoanList().size());
         assertTrue(model.hasMember(SECOND));
         assertTrue(model.hasEquipment(secondItem));
         assertEquals(1, model.getAddressBook().getPersonList().size());
@@ -267,7 +268,7 @@ public class FullCommandRoutingIntegrationTest {
     private CommandResult execute(String input, DisplayRequest display) throws Exception {
         int saves = storage.saves;
         CommandResult result = logic.execute(input);
-        assertEquals(saves + 1, storage.saves, input);
+        assertEquals(saves + (input.equals("equipment list") ? 0 : 1), storage.saves, input);
         if (display != null) {
             assertEquals(display, result.getDisplayRequest(), input);
         }

@@ -20,6 +20,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.model.ModelManager;
+import seedu.address.model.equipment.Equipment;
 import seedu.address.testutil.FxTestUtil;
 import seedu.address.testutil.ViewTestData;
 
@@ -41,7 +42,7 @@ public class CompletionControllerTest {
             key(field, KeyCode.TAB, false, false, false, false);
             assertEquals("member add", field.getText());
             assertEquals(field.getText().length(), field.getCaretPosition());
-            for (String candidate : List.of("delete", "edit", "list", "view", "add")) {
+            for (String candidate : List.of("delete", "edit", "list", "restore", "search", "view", "add")) {
                 key(field, KeyCode.TAB, false, false, false, false);
                 assertEquals("member " + candidate, field.getText());
             }
@@ -71,15 +72,22 @@ public class CompletionControllerTest {
             type(field, "equipment add name/");
             tab(field);
             assertEquals("equipment add name/Camera", field.getText());
-            model.deleteEquipment(ViewTestData.CAMERA);
-            model.deleteEquipment(ViewTestData.OTHER_CAMERA);
-            // The old candidate disappears; completing the actual input has no match.
+            var original = ViewTestData.CAMERA;
+            var renamed = new Equipment(original.getUuid(), "Tripod",
+                    original.getCategory(), original.getCondition(), original.getNotes());
+            model.setEquipment(original, renamed);
+            // A changed snapshot resets cycling, so the surviving Camera match remains selected.
             tab(field);
             assertEquals("equipment add name/Camera", field.getText());
             type(field, "equipment add name/");
             tab(field);
+            assertEquals("equipment add name/Camera", field.getText());
+            tab(field);
             assertEquals("equipment add name/Speaker", field.getText());
-            model.addEquipment(ViewTestData.CAMERA);
+            model.deleteEquipment(ViewTestData.OTHER_CAMERA);
+            tab(field);
+            assertEquals("equipment add name/Speaker", field.getText());
+            model.setEquipment(renamed, original);
             type(field, "equipment add name/");
             tab(field);
             assertEquals("equipment add name/Camera", field.getText());
