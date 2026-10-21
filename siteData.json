@@ -53,6 +53,7 @@
         "common-classes": "Common classes",
         "implementation": "Implementation",
         "adding-multiple-physical-equipment-units": "Adding multiple physical equipment units",
+        "equipment-editing-deletion-and-restoration": "Equipment editing, deletion and restoration",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
@@ -66,6 +67,7 @@
         "launch-and-shutdown": "Launch and shutdown",
         "rejection-of-retired-commands": "Rejection of retired commands",
         "adding-a-batch-of-equipment": "Adding a batch of equipment",
+        "editing-deleting-and-restoring-equipment": "Editing, deleting and restoring equipment",
         "saving-data": "Saving data"
       },
       "headingKeywords": {}
@@ -89,7 +91,8 @@
         "shared-display-contract-owned-by-nicholas": "Shared display contract owned by Nicholas",
         "shared-parsing-and-sorting-contracts-owned-by-duy": "Shared parsing and sorting contracts owned by Duy",
         "gui-component-contracts-and-ownership": "GUI component contracts and ownership",
-        "ownership-of-shared-files": "Ownership of shared files"
+        "ownership-of-shared-files": "Ownership of shared files",
+        "equipment-maintenance-update": "Equipment maintenance update"
       },
       "headingKeywords": {}
     },
@@ -112,7 +115,8 @@
         "parser-contracts": "Parser contracts",
         "ownership-and-handoff": "Ownership and handoff",
         "completion-milestones": "Completion milestones",
-        "member-lifecycle-extension": "Member lifecycle extension"
+        "member-lifecycle-extension": "Member lifecycle extension",
+        "equipment-maintenance-update": "Equipment maintenance update"
       },
       "headingKeywords": {}
     },
@@ -159,7 +163,9 @@
         "add-equipment-equipment-add": "Add equipment: equipment add",
         "list-equipment-equipment-list": "List equipment: equipment list",
         "view-equipment-and-its-holder-equipment-view": "View equipment and its holder: equipment view",
+        "edit-equipment-equipment-edit": "Edit equipment: equipment edit",
         "delete-equipment-equipment-delete": "Delete equipment: equipment delete",
+        "restore-equipment-equipment-restore": "Restore equipment: equipment restore",
         "open-the-loans-tab-loans-list": "Open the Loans tab: loans list",
         "assign-equipment-loans-add": "Assign equipment: loans add",
         "return-equipment-loans-return": "Return equipment: loans return",
@@ -211,6 +217,13 @@
       "src": "commands/equipment-list.md",
       "headings": {
         "equipment-list": "Equipment list"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "commands/equipment-maintenance.md",
+      "headings": {
+        "edit-and-restore-equipment": "Edit and restore equipment"
       },
       "headingKeywords": {}
     },

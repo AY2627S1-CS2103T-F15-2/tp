@@ -37,22 +37,25 @@ by the member lifecycle feature. Active and deleted totals are separate from the
 </span></code></pre><p>Default sorting is normalized name then NUS ID. <code class="hljs inline no-lang">sort/id</code> orders NUS IDs; <code class="hljs inline no-lang">sort/held</code> orders current
 holding counts. Ties use default ordering. Descending reverses the complete deterministic order.
 Equal names never merge distinct members.</p> <h2 id="equipment">Equipment<a class="fa fa-anchor" href="#equipment" onclick="event.stopPropagation()"></a></h2> <pre><code class="hljs text"><span>equipment search [q/TEXT] [category/TEXT] [condition/CONDITION]
-</span><span>                 [availability/AVAILABLE|ASSIGNED|UNAVAILABLE]
+</span><span>                 [availability/AVAILABLE|ASSIGNED|UNAVAILABLE] [status/active|deleted|all]
 </span><span>                 [sort/category|name|id|condition|availability] [order/asc|desc]
 </span></code></pre><p><code class="hljs inline no-lang">q/</code> matches UUID, name, category or notes. <code class="hljs inline no-lang">category/</code> matches a category substring, case-insensitively.
 Condition and availability are exact values, case-insensitive. Conditions are GOOD, FAIR, DAMAGED
-and UNDER_REPAIR, including the existing space/hyphen aliases. Filters combine with AND. Search
+and UNDER_REPAIR; space/hyphen aliases are not accepted. Filters combine with AND. Search
 does not correct spelling or interpret regular expressions.</p> <pre><code class="hljs text"><span>equipment search q/camera category/photo availability/available
-</span><span>equipment search condition/under-repair sort/name
+</span><span>equipment search condition/under_repair sort/name
 </span><span>equipment search sort/availability order/desc
 </span></code></pre><p>Default/category sorting is normalized category, name, then full UUID. Other sorts use their named
 field followed by the default comparator. Conditions/availability sort alphabetically by enum name.
-Every physical UUID remains a separate row, including units with identical descriptions.</p> <h2 id="input-refresh-and-navigation">Input, refresh and navigation<a class="fa fa-anchor" href="#input-refresh-and-navigation" onclick="event.stopPropagation()"></a></h2> <p>Parameters are optional, but supplied values cannot be blank. Repeated/unknown prefixes, nonblank
+Every physical UUID remains a separate row, including units with identical descriptions.
+Search defaults to <code class="hljs inline no-lang">status/active</code>; use <code class="hljs inline no-lang">status/deleted</code> to find retained units or <code class="hljs inline no-lang">status/all</code> for both.
+Deleted units are UNAVAILABLE, labeled in the directory, and can be viewed/restored by UUID.
+The directory total includes deleted units, but availability counts and inventory groups exclude them.</p> <h2 id="input-refresh-and-navigation">Input, refresh and navigation<a class="fa fa-anchor" href="#input-refresh-and-navigation" onclick="event.stopPropagation()"></a></h2> <p>Parameters are optional, but supplied values cannot be blank. Repeated/unknown prefixes, nonblank
 preamble, invalid enum/order values and sorts for the other directory fail. <code class="hljs inline no-lang">sort/default</code> explicitly
 selects the default comparator. Parameter order is free. Existing reserved-prefix grammar applies:
 whitespace-delimited <code class="hljs inline no-lang">name/</code>-style tokens are parameters even inside free text, with no quoting or
-escaping. Ordinary URLs/embedded slashes remain text.</p> <p>The left list and Displayed count reflect the query. Total/active, overall availability and inventory
-groups describe all inventory. Criteria and order are visible in the summary. Zero results shows a
+escaping. Ordinary URLs/embedded slashes remain text.</p> <p>The left list and Displayed count reflect the query. Equipment Total includes all retained units;
+overall availability and inventory groups describe all active equipment. Criteria and order are visible in the summary. Zero results shows a
 reset hint. Opening details retains the filtered list. Refresh reevaluates queries against current
 data, including loan-only changes, without executing row callbacks. Errors retain criteria and input
 for correction. List commands clear filters.
@@ -89,7 +92,7 @@ team master has the integrated member lifecycle contracts. When later transfer/h
 Command/LogicManager/MainWindow, retain query dispatch and the no-save/no-history query boundary.
 The member parser and diagnostic retain <code class="hljs inline no-lang">search</code>, <code class="hljs inline no-lang">edit</code> and <code class="hljs inline no-lang">restore</code>. No unmerged teammate
 implementation is copied into this branch. Other owners&#39; feature acceptance remains separate from
-this search/planning PR.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Wed, 21 Oct 2026, 12:50:22 GMT+8]</small></div></footer><!--]--></div>
+this search/planning PR.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Wed, 21 Oct 2026, 14:32:15 GMT+8]</small></div></footer><!--]--></div>
 </body><script src="/tp/markbind/js/bootstrap-utility.min.js"></script>
 <script src="/tp/markbind/js/polyfill.min.js"></script>
 <script src="/tp/markbind/js/vue.global.prod.min.js"></script>

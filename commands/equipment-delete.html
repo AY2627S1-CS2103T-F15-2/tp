@@ -29,7 +29,7 @@ Row numbers and equipment names cannot identify a physical item.
 Whitespace-delimited <code class="hljs inline no-lang">[A-Za-z][A-Za-z0-9_-]*/</code> tokens are reserved markers; quoting and
 escaping are unsupported, following the shared Laplace grammar.</p> <p>The command resolves the actual stored item through Model, then calls <code class="hljs inline no-lang">deleteEquipment</code>.
 It does not scan or mutate collection views or clean up loans itself. The root permits
-deletion only when the item has no open loan and removes that item&#39;s closed history.
+deletion only when the item has no open loan and retains that item and all its closed history.
 Other items, members, legacy persons and unrelated loans remain intact. Items with
 identical descriptions but different UUIDs remain independent.</p> <p>Success produces <code class="hljs inline no-lang">Deleted equipment UUID: EQUIPMENT_NAME.</code> with the stored name/actual UUID and
 <code class="hljs inline no-lang">DisplayRequest.equipment()</code>. Unknown UUIDs and open-loan references produce CommandException
@@ -40,13 +40,16 @@ atomically saves it and only then publishes through the existing live root. Pars
 never saves; write/replacement failures preserve every record and the old file. Current routed,
 failure and fresh-reload evidence is in <a href="/tp/gui/MvpCompletion.html">MvpCompletion.md</a>.</p> <h2 id="verification">Verification<a class="fa fa-anchor" href="#verification" onclick="event.stopPropagation()"></a></h2> <p>Tests cover canonical identity, identical physical-item descriptions, actual stored-entity
 delegation, null misuse, unknown/deleted UUIDs, blocked open loans with existing history,
-permitted deletion and removal of only related history, and preservation after JSON reload.
+permitted soft deletion with retained history, and preservation after JSON reload.
 Invalid inputs are interleaved with a return and valid deletions to check subsequent state.
 Legacy persons and unrelated open loans/derived availability are retained. No saved user
 data is read or overwritten.</p> <p>Run the focused component checks with Java 25:</p> <pre><code class="hljs sh"><span>./gradlew <span class="hljs-built_in">test</span> --tests <span class="hljs-string">&#39;*EquipmentDeleteCommand*&#39;</span> --tests <span class="hljs-string">&#39;*LaplaceDeletionIntegrationTest&#39;</span>
 </span></code></pre><p>Run the full normal <code class="hljs inline no-lang">./gradlew check coverage shadowJar</code> and <code class="hljs inline no-lang">./.github/run-checks.sh</code>
 before handoff. Routed deletion, failed-save preservation, selection recovery and reload are covered
-by the current combined suite; remaining native/CI acceptance is recorded in #75.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Wed, 21 Oct 2026, 12:50:22 GMT+8]</small></div></footer><!--]--></div>
+by the current combined suite; remaining native/CI acceptance is recorded in #75.</p> <p>Deletion sets <code class="hljs inline no-lang">deleted: true</code>; repeated deletion is rejected. Use <code class="hljs inline no-lang">equipment restore uuid/UUID</code> to
+reactivate the same unit without a time limit. Deleted rows remain visible in <code class="hljs inline no-lang">equipment list</code> and
+<code class="hljs inline no-lang">equipment search status/deleted</code>; search defaults to active records. See
+<a href="/tp/commands/equipment-maintenance.html">Equipment maintenance</a> for editing and restoration.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Wed, 21 Oct 2026, 14:32:15 GMT+8]</small></div></footer><!--]--></div>
 </body><script src="/tp/markbind/js/bootstrap-utility.min.js"></script>
 <script src="/tp/markbind/js/polyfill.min.js"></script>
 <script src="/tp/markbind/js/vue.global.prod.min.js"></script>

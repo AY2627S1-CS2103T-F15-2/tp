@@ -1,0 +1,21 @@
+@startuml
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName Arial
+hide empty description
+
+[*] --> Active : add / generate UUID
+Active --> Deleted : delete [no open loan] / set deleted = true
+Deleted --> Active : restore / set deleted = false
+
+note right of Active
+  Edits preserve UUID and active state.
+  Open loans allow details/condition edits.
+  Availability stays ASSIGNED until return.
+end note
+note right of Deleted
+  UUID, details and closed loans retained.
+  New loans and edits rejected.
+  Restore has no time limit.
+end note
+@enduml
