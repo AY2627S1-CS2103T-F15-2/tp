@@ -98,3 +98,79 @@ shadowJar {
 }
 
 defaultTasks 'clean', 'test'
+
+// This feature must cover its UI wiring as well as the isolated completion engine.
+def autocompleteClasses = [
+    'seedu/address/logic/completion/Completion',
+    'seedu/address/logic/completion/CompletionService',
+    'seedu/address/ui/CompletionController',
+    'seedu/address/ui/CommandBox'
+]
+
+tasks.register('autocompleteCoverageVerification') {
+    dependsOn coverage
+    doLast {
+        File report = coverage.reports.xml.outputLocation.get().asFile
+        if (!report.isFile()) {
+            throw new GradleException('Missing autocomplete coverage report: ' + report)
+        }
+        def factory = javax.xml.parsers.DocumentBuilderFactory.newInstance()
+        factory.setFeature('http://apache.org/xml/features/nonvalidating/load-external-dtd', false)
+        def document = factory.newDocumentBuilder().parse(report)
+        def classes = document.getElementsByTagName('class')
+        def required = autocompleteClasses.collectEntries { [(it): null] }
+        required['seedu/address/ui/MainWindow'] = ['fillInnerParts']
+        required['seedu/address/logic/parser/DirectorySearchCommandParser'] = ['<clinit>']
+        required.each { className, methodNames ->
+            def node = (0..<classes.length).collect { classes.item(it) }
+                    .find { it.getAttribute('name') == className }
+            if (node == null) {
+                throw new GradleException('Missing coverage class: ' + className)
+            }
+            def elements = methodNames == null ? [node] : methodNames.collect { methodName ->
+                def methods = node.getElementsByTagName('method')
+                def method = (0..<methods.length).collect { methods.item(it) }
+                        .find { it.getAttribute('name') == methodName }
+                if (method == null) {
+                    throw new GradleException('Missing coverage method: ' + className + '.' + methodName)
+                }
+                method
+            }
+            elements.each { element ->
+                def counters = element.childNodes
+                def directCounters = (0..<counters.length).collect { counters.item(it) }
+                        .findAll { it.nodeName == 'counter' }
+                ['INSTRUCTION', 'LINE', 'BRANCH'].each { counterType ->
+                    def counter = directCounters.find { it.getAttribute('type') == counterType }
+                    // JaCoCo omits BRANCH only for straight-line code; other counters are required.
+                    if (counter == null && counterType != 'BRANCH') {
+                        throw new GradleException('Missing ' + counterType + ' coverage: ' + className)
+                    }
+                    if (counter != null && counter.getAttribute('missed').toInteger() != 0) {
+                        throw new GradleException('Autocomplete requires 100% ' + counterType + ': '
+                                + className + '.' + element.getAttribute('name'))
+                    }
+                }
+            }
+        }
+        logger.lifecycle('Autocomplete coverage: 100% instructions, lines and branches, including UI wiring.')
+    }
+}
+
+check.dependsOn autocompleteCoverageVerification
+
+// Run the keyboard smoke test against the packaged classes/FXML, with matching platform natives first.
+tasks.register('verifyPackagedAutocomplete', JavaExec) {
+    dependsOn shadowJar, testClasses
+    classpath = configurations.javafxTestRuntime + files(shadowJar.archiveFile) + sourceSets.test.output
+    mainClass = 'seedu.address.ui.PackagedAutocompleteProbe'
+    jvmArgs '--limit-modules=java.se,jdk.unsupported', '--enable-native-access=ALL-UNNAMED'
+    workingDir layout.buildDirectory.dir('packaged-autocomplete-sandbox')
+    doFirst {
+        workingDir.mkdirs()
+        args layout.buildDirectory.file('reports/laplace/packaged-autocomplete-session.txt').get().asFile.absolutePath,
+                shadowJar.archiveFile.get().asFile.absolutePath
+    }
+}
+
+check.dependsOn verifyPackagedAutocomplete

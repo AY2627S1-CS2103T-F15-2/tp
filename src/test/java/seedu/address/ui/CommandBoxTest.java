@@ -137,6 +137,11 @@ public class CommandBoxTest {
                 assertTrue(executed.isEmpty());
                 field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.SPACE, false, true, false, false));
                 assertTrue(menu.isShowing());
+                // Popup navigation must not fall through to session-history replacement.
+                String prepared = field.getText();
+                field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.F6, false, false, false, false));
+                assertEquals(prepared, field.getText());
+                assertTrue(executed.isEmpty());
                 field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ESCAPE, false, false, false, false));
                 assertFalse(menu.isShowing());
                 field.positionCaret(2);

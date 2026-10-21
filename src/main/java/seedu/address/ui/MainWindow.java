@@ -160,7 +160,7 @@ public class MainWindow extends UiPart<Stage> {
                 id -> activate("member view nus/" + id.value),
                 command -> commandBox.prepare(command), Clock.systemDefaultZone());
         resultDisplay = new ResultDisplay();
-        commandBox = new CommandBox(this::executeCommand);
+        commandBox = new CommandBox(this::executeCommand, logic::getAddressBook);
         commandBoxPlaceholder.getChildren().setAll(commandBox.getRoot());
         resultDisplayPlaceholder.getChildren().setAll(resultDisplay.getRoot());
         statusbarPlaceholder.getChildren().setAll(new StatusBarFooter(dataFilePath).getRoot());
