@@ -10,10 +10,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TitledPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import seedu.address.commons.util.LaplaceText;
@@ -28,6 +31,8 @@ import seedu.address.model.member.NusId;
 /** Read-only member details and current holdings, resolved afresh on each refresh. */
 public class MemberDetailsPanel extends UiPart<Region> {
     private final ReadOnlyAddressBook data;
+    private final Consumer<String> onUse;
+    private final Consumer<UUID> onNavigate;
     private final Function<UUID, Availability> availabilityLookup;
     private NusId selectedNusId;
 
@@ -36,8 +41,16 @@ public class MemberDetailsPanel extends UiPart<Region> {
 
     /** Creates an initially unselected panel from non-null read-only dependencies. */
     public MemberDetailsPanel(ReadOnlyAddressBook data, Function<UUID, Availability> availabilityLookup) {
+        this(data, availabilityLookup, unused -> { }, unused -> { });
+    }
+
+    /** Creates details with explicit command preparation and related-record navigation callbacks. */
+    public MemberDetailsPanel(ReadOnlyAddressBook data, Function<UUID, Availability> availabilityLookup,
+            Consumer<String> onUse, Consumer<UUID> onNavigate) {
         super("MemberDetailsPanel.fxml");
         this.data = requireNonNull(data);
+        this.onUse = requireNonNull(onUse);
+        this.onNavigate = requireNonNull(onNavigate);
         this.availabilityLookup = requireNonNull(availabilityLookup);
         refresh();
     }
@@ -74,6 +87,17 @@ public class MemberDetailsPanel extends UiPart<Region> {
             status(content, "Deleted member. Restore at any time with member restore nus/" + selectedNusId + ".",
                     false);
         }
+        VBox commands = new VBox(8);
+        String target = " nus/" + member.getNusId();
+        if (member.isDeleted()) {
+            commands.getChildren().add(new CommandPreview("member restore" + target, false, onUse));
+        } else {
+            commands.getChildren().addAll(new CommandPreview("member edit" + target + " name/NAME", true, onUse),
+                    new CommandPreview("member delete" + target, false, onUse));
+        }
+        TitledPane actions = new TitledPane("Commands for this member", commands);
+        actions.setExpanded(false);
+        content.getChildren().add(actions);
         field(content, "memberNusId", "NUS ID", member.getNusId());
         field(content, "phone", "Phone", member.getPhone());
         field(content, "email", "Email", member.getEmail());
@@ -116,6 +140,9 @@ public class MemberDetailsPanel extends UiPart<Region> {
         row.setMinWidth(0);
         row.getStyleClass().add("details-holding");
         text(row, "equipmentName", item.getName(), "details-section-title");
+        Button view = new Button("View equipment");
+        view.setOnAction(event -> onNavigate.accept(item.getUuid()));
+        row.getChildren().add(view);
         field(row, "equipmentUuid", "UUID", item.getUuid());
         field(row, "category", "Category", item.getCategory());
         field(row, "condition", "Condition", item.getCondition());

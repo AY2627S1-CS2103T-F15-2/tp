@@ -1,5 +1,6 @@
 package seedu.address.ui;
 
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import javafx.fxml.FXML;
@@ -7,6 +8,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
 
@@ -27,14 +29,29 @@ public class HelpWindow extends UiPart<Stage> {
     @FXML
     private Label helpMessage;
 
+    @FXML
+    private VBox examples;
+
     /**
      * Creates a new HelpWindow.
      *
      * @param root Stage to use as the root of the HelpWindow.
      */
     public HelpWindow(Stage root) {
+        this(root, unused -> { });
+    }
+
+    /** Creates a reference whose examples can prepare commands in the main window. */
+    public HelpWindow(Stage root, Consumer<String> onUse) {
         super(FXML, root);
         helpMessage.setText(HELP_MESSAGE);
+        for (String example : CommandCatalog.EXAMPLES) {
+            boolean template = example.matches(".*\\b(NAME|NUS_ID|UUID|PHONE|EMAIL|TEXT|CATEGORY|NOTES|YYYY).*");
+            examples.getChildren().add(new CommandPreview(example, template, command -> {
+                onUse.accept(command);
+                hide();
+            }));
+        }
     }
 
     /**
@@ -97,6 +114,8 @@ public class HelpWindow extends UiPart<Stage> {
         final Clipboard clipboard = Clipboard.getSystemClipboard();
         final ClipboardContent url = new ClipboardContent();
         url.putString(USERGUIDE_URL);
-        clipboard.setContent(url);
+        if (clipboard.setContent(url)) {
+            copyButton.setText("Copied");
+        }
     }
 }

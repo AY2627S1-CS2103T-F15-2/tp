@@ -108,7 +108,7 @@ public class MainWindow extends UiPart<Stage> {
         this.logic = requireNonNull(logic);
         this.dataFilePath = requireNonNull(dataFilePath);
         data = requireNonNull(logic.getAddressBook());
-        helpWindow = new HelpWindow();
+        helpWindow = new HelpWindow(new Stage(), command -> commandBox.prepare(command));
         setWindowDefaultSize(logic.getGuiSettings());
         directory.widthProperty().addListener((unused, previous, current) -> directory.setDividerPositions(0.28));
         helpMenuItem.setAccelerator(KeyCombination.valueOf("F1"));
@@ -134,8 +134,10 @@ public class MainWindow extends UiPart<Stage> {
                 id -> activate("equipment view uuid/" + id));
         memberSummary = new MemberDirectorySummary(data);
         equipmentSummary = new EquipmentDirectorySummary(data, logic::getAvailability);
-        memberDetails = new MemberDetailsPanel(data, logic::getAvailability);
-        equipmentDetails = new EquipmentDetailsPanel(data, logic::getAvailability);
+        memberDetails = new MemberDetailsPanel(data, logic::getAvailability,
+                command -> commandBox.prepare(command), id -> activate("equipment view uuid/" + id));
+        equipmentDetails = new EquipmentDetailsPanel(data, logic::getAvailability,
+                command -> commandBox.prepare(command), id -> activate("member view nus/" + id));
         loans = new LoanPanel(data, id -> activate("equipment view uuid/" + id),
                 id -> activate("member view nus/" + id.value));
         resultDisplay = new ResultDisplay();

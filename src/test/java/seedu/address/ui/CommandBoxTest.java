@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import javafx.event.ActionEvent;
 import javafx.scene.Scene;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -83,6 +85,27 @@ public class CommandBoxTest {
             field.redo();
             assertEquals("notes/First  Second tail", field.getText());
             assertEquals(19, field.getCaretPosition());
+        });
+    }
+
+    @Test
+    public void history_andPreparedCommands_preserveDraftWithoutExecution() {
+        FxTestUtil.runAndWait(() -> {
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("Success");
+            });
+            TextField field = field(box);
+            box.prepare("equipment list");
+            assertTrue(executed.isEmpty());
+            field.fireEvent(new ActionEvent());
+            box.prepare("member search q/draft");
+            field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.UP, false, false, false, false));
+            assertEquals("equipment list", field.getText());
+            field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.DOWN, false, false, false, false));
+            assertEquals("member search q/draft", field.getText());
+            assertEquals(List.of("equipment list"), executed);
         });
     }
 

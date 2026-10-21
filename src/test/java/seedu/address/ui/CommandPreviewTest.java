@@ -1,0 +1,52 @@
+package seedu.address.ui;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
+import javafx.scene.control.Button;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.DataFormat;
+import seedu.address.testutil.FxTestUtil;
+
+class CommandPreviewTest {
+    @Test
+    void actions_preserveExactUnicodeCommandAndOnlyPrepareOnUse() {
+        FxTestUtil.runAndWait(() -> {
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            HashMap<DataFormat, Object> previous = new HashMap<>();
+            clipboard.getContentTypes().forEach(format -> previous.put(format, clipboard.getContent(format)));
+            try {
+                String command = "equipment add name/Caméra α category/Photo condition/GOOD notes/With  strap";
+                List<String> prepared = new ArrayList<>();
+                CommandPreview preview = new CommandPreview(command, false, prepared::add);
+                Button copy = preview.lookupAll(".button").stream().map(node -> (Button) node)
+                        .filter(button -> button.getText().equals("Copy")).findFirst().orElseThrow();
+                copy.fire();
+                assertEquals(command, clipboard.getString());
+                assertEquals("Copied", copy.getText());
+                assertTrue(prepared.isEmpty());
+                preview.lookupAll(".button").stream().map(node -> (Button) node)
+                        .filter(button -> button.getText().equals("Use command")).findFirst().orElseThrow().fire();
+                assertEquals(List.of(command), prepared);
+            } finally {
+                clipboard.setContent(previous);
+            }
+        });
+    }
+
+    @Test
+    void completion_commandNamesAndUnusedPrefixes_preservesValues() {
+        assertEquals(List.of("equipment add "), CommandCatalog.complete("equipment ad"));
+        assertEquals(List.of("equipment add name/Camera category/"),
+                CommandCatalog.complete("equipment add name/Camera cat"));
+        assertTrue(CommandCatalog.complete("equipment add name/Camera na").isEmpty());
+        assertTrue(CommandCatalog.complete("equipment add notes/keep").isEmpty());
+        assertTrue(CommandCatalog.complete("unknown").isEmpty());
+    }
+}

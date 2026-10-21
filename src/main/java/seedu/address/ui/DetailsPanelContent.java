@@ -1,5 +1,7 @@
 package seedu.address.ui;
 
+import java.util.Set;
+
 import javafx.scene.control.Label;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -40,7 +42,12 @@ final class DetailsPanelContent {
         field.getColumnConstraints().addAll(key, data);
         field.getStyleClass().add("details-field");
         field.add(label(id + "Caption", caption, "laplace-muted", "details-caption"), 0, 0);
-        field.add(label(id, value.toString(), "details-value"), 1, 0);
+        Label valueLabel = label(id, value.toString(), "details-value");
+        if (Set.of("UUID", "NUS ID", "Phone", "Email").contains(caption)) {
+            field.add(new VBox(4, valueLabel, CommandPreview.copyButton("Copy " + caption, value.toString())), 1, 0);
+        } else {
+            field.add(valueLabel, 1, 0);
+        }
         parent.getChildren().add(field);
     }
 

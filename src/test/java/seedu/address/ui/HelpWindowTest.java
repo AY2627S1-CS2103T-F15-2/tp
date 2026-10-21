@@ -27,6 +27,7 @@ public class HelpWindowTest {
             }
             try {
                 HelpWindow help = new HelpWindow();
+                help.getRoot().getScene().getRoot().applyCss();
                 String expected = "https://ay2627s1-cs2103t-f15-2.github.io/tp/UserGuide.html";
                 Label message = (Label) help.getRoot().getScene().lookup("#helpMessage");
                 assertEquals("Refer to the user guide: " + expected, message.getText());

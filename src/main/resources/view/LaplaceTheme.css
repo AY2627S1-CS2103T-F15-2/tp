@@ -256,3 +256,25 @@
     -fx-background-radius: 4;
     -fx-text-fill: #37474F;
 }
+
+.command-preview {
+    -fx-padding: 10;
+    -fx-background-color: #F3F6F8;
+    -fx-background-radius: 4;
+}
+
+.command-code Text {
+    -fx-font-family: "monospace";
+    -fx-font-size: 15px;
+    -fx-fill: #37474F;
+}
+
+.command-code .command-prefix {
+    -fx-fill: #075C9E;
+    -fx-font-weight: bold;
+}
+
+.laplace-root .button {
+    -fx-padding: 6 10;
+    -fx-cursor: hand;
+}
