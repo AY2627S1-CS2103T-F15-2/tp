@@ -63,7 +63,7 @@
         "glossary": "Glossary",
         "appendix-instructions-for-manual-testing": "Appendix: Instructions for manual testing",
         "launch-and-shutdown": "Launch and shutdown",
-        "deleting-a-person": "Deleting a person",
+        "rejection-of-retired-commands": "Rejection of retired commands",
         "saving-data": "Saving data"
       },
       "headingKeywords": {}
@@ -143,6 +143,7 @@
         "sample-records-on-first-launch": "Sample records on first launch",
         "using-the-window": "Using the window",
         "command-format-and-feedback": "Command format and feedback",
+        "unsupported-addressbook-commands": "Unsupported AddressBook commands",
         "shared-field-rules": "Shared field rules",
         "availability": "Availability",
         "correcting-common-errors": "Correcting common errors",
