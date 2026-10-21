@@ -33,6 +33,7 @@ public class ModelManager implements Model {
     private final AddressBook addressBook;
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
+    private AddressBookHistory history = new AddressBookHistory();
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -40,6 +41,14 @@ public class ModelManager implements Model {
     public ModelManager(ReadOnlyAddressBook addressBook, ReadOnlyUserPrefs userPrefs) {
         this(userPrefs, new AddressBook(requireNonNull(addressBook)));
         logger.fine("Initializing with address book: " + addressBook + " and user prefs " + userPrefs);
+    }
+
+    /**
+     * Copies candidate records and preferences while sharing only immutable history with the live model.
+     */
+    ModelManager(ReadOnlyAddressBook addressBook, ReadOnlyUserPrefs userPrefs, AddressBookHistory history) {
+        this(addressBook, userPrefs);
+        this.history = requireNonNull(history);
     }
 
     /**
@@ -80,6 +89,53 @@ public class ModelManager implements Model {
     @Override
     public void setAddressBook(ReadOnlyAddressBook addressBook) {
         this.addressBook.resetData(addressBook);
+        history = new AddressBookHistory();
+    }
+
+    @Override
+    public void publishTransaction(Model candidate) {
+        requireNonNull(candidate);
+        AddressBookHistory candidateHistory = requireNonNull(candidate.getAddressBookHistory());
+        addressBook.resetData(candidate.getAddressBook());
+        history = candidateHistory;
+    }
+
+    @Override
+    public AddressBookHistory getAddressBookHistory() {
+        return history;
+    }
+
+    @Override
+    public void recordAddressBook(ReadOnlyAddressBook previous, String description) {
+        history = history.record(previous, addressBook, description);
+    }
+
+    @Override
+    public boolean canUndoAddressBook() {
+        return history.canUndo();
+    }
+
+    @Override
+    public boolean canRedoAddressBook() {
+        return history.canRedo();
+    }
+
+    @Override
+    public String undoAddressBook() {
+        String description = history.getUndoDescription();
+        AddressBookHistory restored = history.undo();
+        addressBook.resetData(restored.getCurrentState());
+        history = restored;
+        return description;
+    }
+
+    @Override
+    public String redoAddressBook() {
+        String description = history.getRedoDescription();
+        AddressBookHistory restored = history.redo();
+        addressBook.resetData(restored.getCurrentState());
+        history = restored;
+        return description;
     }
 
     @Override

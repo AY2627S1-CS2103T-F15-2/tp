@@ -339,97 +339,66 @@ the same UUID, retaining query criteria even if that unit no longer matches. Tot
 units; availability counts and inventory groups include active units only. The Loans tab and entity
 details show the retained completed loan history.
 
-### \[Proposed\] Undo/redo feature
+### Undo/redo feature
 
-The following inherited AB3 proposal uses retired person commands as examples. It is not implemented
-Laplace behavior and needs redesign for the current domain before implementation.
+The CLI commands `undo` and `redo` restore complete record states within the current session.
+`AddressBookHistory` is an immutable value owned by `ModelManager`, composed with the existing
+`AddressBook` rather than replacing or subclassing its observable root. It retains at most ten
+reversible changes (eleven snapshots). Each snapshot has independent collection containers for
+members, physical equipment, loans and retained legacy persons; immutable entity values may be shared.
 
-#### Proposed Implementation
+The first successful mutation records both the preceding state and the candidate state. Later mutations
+append a snapshot and a short action description, such as `equipment add`, without retaining command
+parameter values in the description. Once ten changes are retained, the oldest change and its preceding
+snapshot are discarded. A batch creation, issue or return is one history entry regardless of unit count.
 
-The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as an `addressBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
+#### Transaction and persistence boundary
 
-* `VersionedAddressBook#commit()` -- Saves the current address book state in its history.
-* `VersionedAddressBook#undo()` -- Restores the previous address book state from its history.
-* `VersionedAddressBook#redo()` -- Restores a previously undone address book state from its history.
+1. `AddressBookParser` routes bare `undo`/`redo` through their no-argument parsers. Both reject extra
+   text and prefixes using `LaplaceArgumentParser`.
+2. `LogicManager` creates an isolated candidate through `Model.createTransactionSnapshot()`. Candidate
+   records and preferences are copied; the immutable history can initially be shared safely.
+3. An ordinary transactional command changes candidate records. `Command.recordsHistory()` tells
+   `LogicManager` to call `recordAddressBook(previous, description)` on that candidate. A real change
+   discards any redo branch; an unchanged candidate leaves history untouched.
+4. `UndoCommand`/`RedoCommand` instead check availability and navigate the candidate's existing history.
+   They return `DisplayRequest.unchanged()` and do not record another action. Redo restores the recorded
+   snapshot directly, preserving UUIDs, loan dates, conditions and references without replaying commands.
+5. The existing atomic JSON save persists the candidate records once. Only after success does
+   `Model.publishTransaction()` publish the candidate records and history to the live model. It preserves
+   the live observable root and current preferences. Parse, validation and save failures leave live data,
+   history position, redo availability and the previously saved file unchanged.
 
-These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
+The model exposes `canUndoAddressBook()`, `canRedoAddressBook()`, `undoAddressBook()` and
+`redoAddressBook()`. Direct history navigation requires an available step; commands translate unavailable
+history into `Nothing to undo.` or `Nothing to redo.`. Successful feedback identifies the action:
+`Undid: equipment add.` or `Redid: equipment add.`. The history object guards invalid direct navigation
+with `IllegalStateException` and returns defensive copies of stored record states.
 
-Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
+Read-only queries, navigation, help, exit and appearance changes do not add history entries or invalidate
+redo. Existing list-command save behavior is preserved, but those saves do not record an action.
+A new successful record mutation after undo discards the undone branch. Explicit whole-model replacement
+with `setAddressBook()` starts fresh history; transaction publication uses its separate API to retain it.
 
-Step 1. The user launches the application for the first time. The `VersionedAddressBook` will be initialized with the initial address book state, and the `currentStatePointer` pointing to that single address book state.
+History is session-only and is not serialized. Restarting loads the most recently saved record state
+with no undo or redo available. Preferences, search filters, window geometry and command-input history
+are outside record history. The existing shell refreshes summaries, groups, holdings and loan history;
+when undo removes a displayed exact record, it returns to the corresponding filtered directory.
+No undo/redo buttons or new shortcuts are provided.
 
-<puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
+#### Design considerations and verification
 
-Step 2. The user executes `delete 5` command to delete the 5th person in the address book. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the address book after the `delete 5` command executes to be saved in the `addressBookStateList`, and the `currentStatePointer` is shifted to the newly inserted address book state.
+Complete snapshots keep linked member/equipment/loan data consistent and make batch restoration atomic.
+They cost more memory than per-command inverse operations, so retention is capped at ten changes.
+Inverse operations would require separate reversal logic for every command and batch failure path.
 
-<puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
+`AddressBookHistoryTest` covers the cap, branching, descriptions, snapshot isolation and invalid navigation.
+Command/parser tests cover syntax and empty history. `UndoRedoIntegrationTest` verifies identity and loan
+restoration, lifecycle changes, exact saved states, ten undos/redos, restart behavior and failed-save retries.
+Shell tests exercise the real command box, preserved filters, missing details, loans and error feedback.
 
-Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified address book state to be saved into the `addressBookStateList`.
-
-<puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
-
-<box type="info" seamless>
-
-**Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the address book state will not be saved into the `addressBookStateList`.
-</box>
-
-Step 4. The user now decides that adding the person was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous address book state, and restores the address book to that state.
-
-<puml src="diagrams/UndoRedoState3.puml" alt="UndoRedoState3" />
-
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index 0, pointing to the initial AddressBook state, then there are no previous AddressBook states to restore. The `undo` command uses `Model#canUndoAddressBook()` to check if this is the case. If so, it will return an error to the user rather
-than attempting to perform the undo.
-</box>
-
-The following sequence diagram shows how an undo operation goes through the `Logic` component:
-
-<puml src="diagrams/UndoSequenceDiagram-Logic.puml" alt="UndoSequenceDiagram-Logic" />
-
-<box type="info" seamless>
-
-**Note:** The lifeline for `UndoCommand` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
-</box>
-
-Similarly, how an undo operation goes through the `Model` component is shown below:
-
-<puml src="diagrams/UndoSequenceDiagram-Model.puml" alt="UndoSequenceDiagram-Model" />
-
-The `redo` command does the opposite — it calls `Model#redoAddressBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the address book to that state.
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index `addressBookStateList.size() - 1`, pointing to the latest address book state, then there are no undone AddressBook states to restore. The `redo` command uses `Model#canRedoAddressBook()` to check if this is the case. If so, it will return an error to the user rather than attempting to perform the redo.
-</box>
-
-Step 5. The user then decides to execute the command `list`. Commands that do not modify the address book, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
-
-<puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
-
-Step 6. The user executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
-
-<puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
-
-The following activity diagram summarizes what happens when a user executes a new command:
-
-<puml src="diagrams/CommitActivityDiagram.puml" width="250" />
-
-#### Design considerations:
-
-**Aspect: How undo & redo execute:**
-
-* **Alternative 1 (current choice):** Saves the entire address book.
-    * Pros: Easy to implement.
-    * Cons: May have performance issues in terms of memory usage.
-
-* **Alternative 2:** Individual command knows how to undo/redo by
-  itself.
-    * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
-    * Cons: We must ensure that the implementation of each individual command is correct.
-
-_{more aspects and alternatives to be added}_
+The inherited AB3 undo/redo PlantUML sources are retained unchanged for a separate diagram update;
+they do not describe this implementation yet.
 
 ### \[Proposed\] Data archiving
 
@@ -468,7 +437,7 @@ Laplace is a local, single-user desktop application for a CCA EXCO member to man
 These requirements consolidate the [team's project notes](https://docs.google.com/document/d/1XzYR2IpGc__mSZEy5GKMmVK8809j3Ln42VA8_9-va48/edit?usp=sharing): Week 4 (direction), Week 5 (all 41 user stories), and Week 6 (MVP and feature specifications). They describe intended behavior, including requirements beyond the MVP; they do not claim that every feature is implemented. Where the earlier schema differs from the later Feature Specifications, the latter defines the MVP baseline.
 
 * **MVP baseline:** Add, list, view, and delete members and equipment; identify members by NUS ID and equipment by a generated UUID; issue and return individual items; show holdings and holders; validate input and preserve consistency on failure.
-* **Broader requirements:** Editing, archiving, recovery, import/export, search and filtering, summaries, batch operations, condition recording at handover, histories, and undo/redo remain documented below even if they are not delivered this semester.
+* **Broader requirements:** Editing, archiving, recovery, import/export, search and filtering, summaries, batch operations, condition recording at handover, and histories remain documented below even if they are not delivered this semester. Undo/redo is implemented with a ten-change session limit.
 * **Deletion and retention:** Members and equipment are soft-deleted only without open loans. Records and closed history are retained; restoration has no time limit. This supersedes the original permanent-deletion and proposed 30-day recovery policies. The Loans tab and entity details show completed loan history.
 * **Single-user boundary:** Import/export supports the same user's local records and backups. The earlier idea of handing a snapshot to another EXCO member is retained as a considered use of export, but is excluded from the course product's regular operations. Shared datasets, concurrent users, and member self-service are outside scope.
 
@@ -515,8 +484,8 @@ Priority expresses product importance, not implementation status. **MVP** denote
 | US34 | `* *` | Future | CCA EXCO member investigating an item | view its past equipment loans | trace who held it and when. |
 | US35 | `* *` | Future | CCA EXCO member reviewing a member | view that member's past equipment loans | resolve questions about previous loans without searching separate records. |
 | US36 | `* *` | Future | CCA EXCO member archiving a member | be warned and prevented from archiving a member with outstanding equipment | resolve responsibility before removing the member from active records. |
-| US37 | `* *` | Future | CCA EXCO member who made a mistake | undo my most recent successful data-changing action | recover without reconstructing the previous state manually. |
-| US38 | `* *` | Future | CCA EXCO member | redo an action I just undid | recover when the undo itself was a mistake. |
+| US37 | `* *` | Implemented | CCA EXCO member who made a mistake | undo my most recent successful data-changing action | recover without reconstructing the previous state manually. |
+| US38 | `* *` | Implemented | CCA EXCO member | redo an action I just undid | recover when the undo itself was a mistake. |
 | US39 | `*` | Future | CCA EXCO member investigating a discrepancy | view a recent history of data-changing actions | understand how the current records came about. |
 | US40 | `* *` | Future | CCA EXCO member recovering from data loss | restore a previously exported complete snapshot | resume operations without rebuilding every record. |
 | US41 | `* * *` | MVP | CCA EXCO member entering invalid data | receive an actionable error with no partial change applied | correct my input while trusting that the records remain consistent. |
@@ -733,7 +702,7 @@ Use case ends.
 
 #### UC08: Undo a mistaken change
 
-**Scope:** Future. **Related stories:** US37, US38, US41.
+**Scope:** Implemented for up to ten changes per session. **Related stories:** US37, US38, US41.
 
 **MSS**
 
@@ -755,7 +724,7 @@ Use case ends.
     * 3b1. Laplace explains that no redo is available and leaves the current data unchanged.
     * Use case ends.
 
-A new successful data-changing action after undo invalidates redo. Read-only actions and failed commands do not add undo entries or invalidate redo. The future retention policy must support restoring any deleted records covered by undo.
+A new successful data-changing action after undo invalidates redo. Read-only actions and failed commands do not add undo entries or invalidate redo. History retains at most ten changes per session, including the deleted records covered by those changes. Older changes are discarded; restarting clears undo and redo history.
 
 ### Non-Functional Requirements
 
@@ -768,7 +737,7 @@ These are acceptance targets for the intended product, not measurements of the c
 5. **NFR05 — Keyboard operation:** Every documented record-management operation shall be completable with keyboard input alone. Users shall not need mouse actions to submit commands, inspect results, or correct input.
 6. **NFR06 — Display compatibility:** At 1920×1080 with 100% or 125% scaling, essential controls and feedback shall not overlap or be clipped. At 1280×720 with 150% scaling, every operation and its result shall remain accessible, using scrolling where necessary.
 7. **NFR07 — Capacity and response time:** With 1,000 members, 5,000 equipment items, and 10,000 loans on a computer with a four-core CPU, 8 GB RAM, and an SSD, at least 95 of 100 executions of each core add, list, exact lookup, delete, issue, and return operation shall display a result within two seconds of submission. Measure after startup, with valid data and no competing intensive workload; include local saving for mutations. Startup with the same dataset shall complete within ten seconds.
-8. **NFR08 — Atomicity and durability:** After a successful mutation and normal shutdown, restarting shall recover the same records and loan relationships. Validation or reported save failures shall not leave partially updated member, equipment, or loan data. A failed file replacement shall preserve the last valid saved dataset. The same guarantee applies to future batch, import, restore, and undo operations as a whole.
+8. **NFR08 — Atomicity and durability:** After a successful mutation and normal shutdown, restarting shall recover the same records and loan relationships. Validation or reported save failures shall not leave partially updated member, equipment, or loan data. A failed file replacement shall preserve the last valid saved dataset. The same guarantee applies to batch and undo/redo operations as a whole, and to future import/restore operations.
 9. **NFR09 — Consistent feedback:** Every rejected command shall identify the first detected problem and provide an accepted format or corrective action. Input errors shall not terminate the application, and the submitted command shall remain available for correction. Success and error messages shall be distinguishable by text, without relying on color alone.
 10. **NFR10 — Data confidentiality:** Laplace shall not transmit member details or inventory records over the network. Diagnostic logs shall omit member names, phone numbers, email addresses, and raw commands containing those values. Local text data and user-created exports rely on the operating system's file access controls; application-level encryption is not promised.
 
@@ -918,3 +887,21 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
     1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
 
 1. _{ more test cases … }_
+
+### Undo and redo
+
+Use temporary data. Do not test against a real inventory.
+
+1. Add a member, then enter `undo`. Expect `Undid: member add.`, removal of that member and a refreshed
+   directory. Enter `redo`; expect `Redid: member add.` and the identical member restored.
+2. Register three units with one `equipment add ... count/3` command. Capture all UUIDs. One undo must
+   remove all three; one redo must restore exactly those UUIDs.
+3. Issue and return a unit with a recorded return condition. Undo the return: expect the original open
+   loan, issue condition and holder restored. Redo: expect the recorded return date and condition.
+4. Make twelve successful changes. Only ten undos are available; the next reports `Nothing to undo.`.
+   Redo ten times; the next reports `Nothing to redo.`.
+5. Undo, run queries and `mode dark`, then redo. It must remain available and appearance must stay dark.
+   Undo again and make a new successful mutation; redo must now be unavailable. Rejected/no-change
+   edits must leave redo available. `undo 2` and `redo count/2` must be rejected without changing data.
+6. Restart after an undo. The restored records must still load, but undo and redo must both be unavailable.
+   Automated tests inject failed saves and verify records, history and prior file bytes survive for retry.
