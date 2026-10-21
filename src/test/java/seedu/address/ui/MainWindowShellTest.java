@@ -404,13 +404,34 @@ public class MainWindowShellTest {
     }
 
     @Test
+    public void navigation_preservesFiltersAndUserSplit_withoutSavingOrExecutingCommands() {
+        FxTestUtil.runAndWait(() -> {
+            submit("member search q/Alex");
+            int commands = logic.commands.size();
+            int saves = storage.saves;
+            button("equipmentNavigation").fire();
+            button("membersNavigation").fire();
+            assertEquals(1, rows().getItems().size());
+            assertTrue(label("queryContext").contains("alex"));
+            assertEquals(commands, logic.commands.size());
+            assertEquals(saves, storage.saves);
+            SplitPane split = (SplitPane) node("directory");
+            split.setDividerPositions(0.55);
+            Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+            root.resize(1000, 700);
+            layout();
+            assertTrue(split.getDividerPositions()[0] > 0.45);
+        });
+    }
+
+    @Test
     public void navigation_tabsAndMenu_exposesHelpExitAndRejectsLegacyTypedRoutes() {
         FxTestUtil.runAndWait(() -> {
             model.addPerson(new PersonBuilder().withName("Legacy Person").build());
             AddressBook before = new AddressBook(model.getAddressBook());
             button("equipmentNavigation").fire();
             assertTrue(node("equipmentNavigation").getStyleClass().contains("laplace-navigation-active"));
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Ready", label("feedbackStatus"));
             assertTrue(button("equipmentNavigation").getAccessibleText().contains("current view"));
             button("loansNavigation").fire();
             assertTrue(node("openLoans") != null);
@@ -424,8 +445,8 @@ public class MainWindowShellTest {
             assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
             assertTrue(window.getPersonListPanel().getRoot().getParent() == null);
             assertTrue(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
-            assertEquals(List.of("equipment list", "member list", "list", "list members"), logic.commands);
-            assertEquals(1, storage.saves);
+            assertEquals(List.of("list", "list members"), logic.commands);
+            assertEquals(0, storage.saves);
             assertEquals(before, model.getAddressBook());
         });
     }
@@ -504,12 +525,12 @@ public class MainWindowShellTest {
             rows().fireEvent(new KeyEvent(KeyEvent.KEY_RELEASED, "", "", KeyCode.DOWN,
                     false, false, false, false));
             assertTrue(label("selection").contains(new UUID(0, 2).toString()));
-            assertEquals(List.of("equipment list"), logic.commands);
+            assertTrue(logic.commands.isEmpty());
             rows().requestFocus();
             rows().fireEvent(key(KeyCode.SPACE));
             assertEquals(rows(), window.getPrimaryStage().getScene().getFocusOwner());
             assertEquals("", field().getText());
-            assertEquals(List.of("equipment list", "equipment view uuid/" + new UUID(0, 2)), logic.commands);
+            assertEquals(List.of("equipment view uuid/" + new UUID(0, 2)), logic.commands);
             assertEquals(new UUID(0, 2).toString(), detailLabel("equipmentUuid"));
             button("membersNavigation").fire();
             rows().getSelectionModel().select(1);
@@ -518,7 +539,7 @@ public class MainWindowShellTest {
                     false, false, false, false, false, false, false, false, false, true, null);
             directoryList.getChildrenUnmodifiable().getFirst().fireEvent(released);
             assertTrue(label("selection").contains("A0000002X"));
-            assertEquals(3, logic.commands.size());
+            assertEquals(1, logic.commands.size());
             window.getPrimaryStage().hide();
             model.setAddressBook(new AddressBook());
         });
@@ -651,7 +672,7 @@ public class MainWindowShellTest {
             button("loansNavigation").fire();
             assertEquals("0", label("openCount"));
             assertEquals(null, node("historyCount"));
-            assertEquals(List.of("equipment list"), logic.commands);
+            assertTrue(logic.commands.isEmpty());
         });
     }
 
@@ -1306,14 +1327,16 @@ public class MainWindowShellTest {
                 .getChildren().getFirst();
         int saves = storage.saves;
         try {
-            String json = Files.readString(storage.getAddressBookFilePath());
+            String json = Files.exists(storage.getAddressBookFilePath())
+                    ? Files.readString(storage.getAddressBookFilePath()) : null;
             submit(command);
             assertEquals("Error", label("feedbackStatus"), command);
             assertEquals(command, field().getText(), command);
             assertEquals(field(), window.getPrimaryStage().getScene().getFocusOwner(), command);
             assertEquals(before, model.getAddressBook(), command);
             assertEquals(saves, storage.saves, command);
-            assertEquals(json, Files.readString(storage.getAddressBookFilePath()), command);
+            assertEquals(json, Files.exists(storage.getAddressBookFilePath())
+                    ? Files.readString(storage.getAddressBookFilePath()) : null, command);
             assertEquals(selected, rows().getSelectionModel().getSelectedItem(), command);
             assertEquals(displayed, ((javafx.scene.layout.StackPane) node("directorySummaryPlaceholder"))
                     .getChildren().getFirst(), command);
@@ -1415,7 +1438,8 @@ public class MainWindowShellTest {
         assertTrue(node("commandTextField").localToScene(node("commandTextField").getBoundsInLocal()).getMaxX()
                 <= width);
         if (node("directory").isVisible()) {
-            assertEquals(0.28, ((SplitPane) node("directory")).getDividerPositions()[0], 0.02);
+            double position = ((SplitPane) node("directory")).getDividerPositions()[0];
+            assertTrue(position > 0 && position < 1);
         }
         WritableImage image = root.snapshot(null, new WritableImage(width, height));
         int[] pixels = new int[width * height];

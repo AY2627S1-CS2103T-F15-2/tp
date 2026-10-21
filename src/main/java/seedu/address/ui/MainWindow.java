@@ -13,12 +13,14 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -100,6 +102,12 @@ public class MainWindow extends UiPart<Stage> {
     private Button loansNavigation;
     @FXML
     private MenuItem helpMenuItem;
+    @FXML
+    private HBox directoryContext;
+    @FXML
+    private Label queryContext;
+    @FXML
+    private Button backToResults;
 
     /** Creates the shell with the actual command pipeline and the existing live root. */
     public MainWindow(Stage primaryStage, Logic logic, Path dataFilePath) {
@@ -110,7 +118,6 @@ public class MainWindow extends UiPart<Stage> {
         data = requireNonNull(logic.getAddressBook());
         helpWindow = new HelpWindow(new Stage(), command -> commandBox.prepare(command));
         setWindowDefaultSize(logic.getGuiSettings());
-        directory.widthProperty().addListener((unused, previous, current) -> directory.setDividerPositions(0.28));
         helpMenuItem.setAccelerator(KeyCombination.valueOf("F1"));
         primaryStage.addEventFilter(KeyEvent.KEY_PRESSED, helpFilter);
         primaryStage.addEventFilter(KeyEvent.KEY_RELEASED, activationReleaseFilter);
@@ -160,7 +167,7 @@ public class MainWindow extends UiPart<Stage> {
         primaryStage.getScene().getRoot().applyCss();
         primaryStage.getScene().getRoot().layout();
         directory.setDividerPositions(0.28);
-        resultDisplay.setFeedbackToUser("Ready. Use member list, equipment list, or the navigation buttons.");
+        resultDisplay.setReady("Type a command · ↑ history · Ctrl+Space completion · F1 Help");
         commandBox.requestFocus();
     }
 
@@ -248,6 +255,14 @@ public class MainWindow extends UiPart<Stage> {
         boolean equipmentView = request.getType() == DisplayRequest.Type.EQUIPMENT
                 || request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS;
         boolean directoryView = memberView || equipmentView;
+        directoryContext.setVisible(directoryView);
+        directoryContext.setManaged(directoryView);
+        queryContext.setText(directoryView ? "Filters: " + (memberView ? members.getQuery() : equipment.getQuery())
+                .description() : "");
+        boolean details = request.getType() == DisplayRequest.Type.MEMBER_DETAILS
+                || request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS;
+        backToResults.setVisible(details);
+        backToResults.setManaged(details);
         directory.setVisible(directoryView);
         directory.setManaged(directoryView);
         singlePanelPlaceholder.setVisible(!directoryView);
@@ -286,13 +301,13 @@ public class MainWindow extends UiPart<Stage> {
 
     @FXML
     private void handleMembers() {
-        activate("member list");
+        display(DisplayRequest.members());
         commandBox.requestFocus();
     }
 
     @FXML
     private void handleEquipment() {
-        activate("equipment list");
+        display(DisplayRequest.equipment());
         commandBox.requestFocus();
     }
 
@@ -300,6 +315,17 @@ public class MainWindow extends UiPart<Stage> {
     private void handleLoans() {
         display(DisplayRequest.loans());
         commandBox.requestFocus();
+    }
+
+    @FXML
+    private void handleBackToResults() {
+        display(currentDisplay.getMemberNusId().isPresent() ? DisplayRequest.members() : DisplayRequest.equipment());
+    }
+
+    @FXML
+    private void handleResetSearch() {
+        activate(currentDisplay.getType() == DisplayRequest.Type.MEMBERS
+                || currentDisplay.getType() == DisplayRequest.Type.MEMBER_DETAILS ? "member list" : "equipment list");
     }
 
     /** Returns correction focus only after Space's typed event has finished on its originating control. */

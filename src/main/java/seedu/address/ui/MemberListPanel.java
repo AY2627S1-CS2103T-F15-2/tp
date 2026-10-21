@@ -51,6 +51,11 @@ public class MemberListPanel extends UiPart<Region> {
         this.query = requireNonNull(query);
     }
 
+    /** Returns the active transient directory criteria. */
+    public DirectoryQuery getQuery() {
+        return query;
+    }
+
     /** Returns a fresh sorted query snapshot for identity-preserving shell selection recovery. */
     public List<Member> getDisplayedItems() {
         return query.members(data);
@@ -83,6 +88,9 @@ public class MemberListPanel extends UiPart<Region> {
     /** Selects an existing identity or clears an absent selection, without invoking the callback. */
     public void select(Optional<NusId> selected) {
         requireNonNull(selected);
+        if (getSelection().equals(selected)) {
+            return;
+        }
         rows.getSelectionModel().clearSelection();
         selected.filter(id -> data.getMemberList().stream().anyMatch(item -> item.getNusId().equals(id)))
                 .flatMap(id -> rows.getItems().stream()

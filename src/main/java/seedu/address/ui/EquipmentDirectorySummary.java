@@ -104,6 +104,8 @@ public class EquipmentDirectorySummary extends UiPart<Region> {
         selection.setText(selected.isEmpty() ? "No equipment selected"
                 : item.map(value -> value.getName() + " - " + value.getUuid())
                         .orElse("Equipment no longer exists: " + selected.orElseThrow()));
+        status.setVisible(unknown > 0 || count == 0);
+        status.setManaged(status.isVisible());
         status.getStyleClass().removeAll("laplace-success", "laplace-error");
         status.getStyleClass().add(unknown == 0 ? "laplace-success" : "laplace-error");
         statusTitle.setText(unknown > 0 ? "Inconsistent equipment data"

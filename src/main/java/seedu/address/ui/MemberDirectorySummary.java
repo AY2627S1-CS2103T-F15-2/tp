@@ -7,6 +7,7 @@ import java.util.Optional;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
@@ -35,6 +36,8 @@ public class MemberDirectorySummary extends UiPart<Region> {
     private Label selection;
     @FXML
     private Label statusTitle;
+    @FXML
+    private VBox status;
     @FXML
     private Label statusMessage;
 
@@ -77,6 +80,8 @@ public class MemberDirectorySummary extends UiPart<Region> {
         if (displayed != count) {
             title = "Showing " + displayed + " matching members";
         }
+        status.setVisible(count == 0);
+        status.setManaged(count == 0);
         statusTitle.setText(title);
         statusMessage.setText(count == 0
                 ? "Add a member with member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL."

@@ -52,6 +52,6 @@ final class DetailsPanelContent {
     }
 
     static void status(VBox parent, String message, boolean error) {
-        text(parent, "detailsStatus", message, error ? "laplace-error" : "laplace-success", "details-status");
+        text(parent, "detailsStatus", message, error ? "laplace-error" : "laplace-neutral", "details-status");
     }
 }
