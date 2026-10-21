@@ -1,3 +1,9 @@
+> Legacy-command retirement amendment (21 October 2026): top-level `add`, `edit`, `delete`,
+> `clear`, `find`, and `list` are rejected. Earlier requirements below to preserve public person-command
+> routing are superseded. Stored persons, shared value types and legacy implementation/UI classes
+> remain for compatibility and later cleanup. See the
+> [current routing contract](DeveloperGuide.md#command-routing-and-legacy-compatibility).
+
 > v1.3.3 amendment: schema and existing constructor/getter contracts remain unchanged. New member
 > input uses member-specific value factories; saved legacy values remain readable without rewriting.
 > Model now supplies an isolated transaction snapshot; Logic commits its saved data through the existing
