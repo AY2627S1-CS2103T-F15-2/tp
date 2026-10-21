@@ -21,7 +21,12 @@ public class ResultDisplayTest {
         FxTestUtil.runAndWait(() -> {
             Clipboard clipboard = Clipboard.getSystemClipboard();
             HashMap<DataFormat, Object> previous = new HashMap<>();
-            clipboard.getContentTypes().forEach(format -> previous.put(format, clipboard.getContent(format)));
+            for (DataFormat format : clipboard.getContentTypes()) {
+                Object value = clipboard.getContent(format);
+                if (value != null) {
+                    previous.put(format, value);
+                }
+            }
             try {
                 ResultDisplay display = new ResultDisplay();
                 TextArea area = (TextArea) display.getRoot().lookup("#resultDisplay");

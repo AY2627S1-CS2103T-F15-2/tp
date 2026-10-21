@@ -32,7 +32,12 @@ class CommandPreviewTest {
         FxTestUtil.runAndWait(() -> {
             Clipboard clipboard = Clipboard.getSystemClipboard();
             HashMap<DataFormat, Object> previous = new HashMap<>();
-            clipboard.getContentTypes().forEach(format -> previous.put(format, clipboard.getContent(format)));
+            for (DataFormat format : clipboard.getContentTypes()) {
+                Object value = clipboard.getContent(format);
+                if (value != null) {
+                    previous.put(format, value);
+                }
+            }
             try {
                 String command = "equipment add name/Caméra α category/Photo condition/GOOD notes/With  strap";
                 List<String> prepared = new ArrayList<>();
