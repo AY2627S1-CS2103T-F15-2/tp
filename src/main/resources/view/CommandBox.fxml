@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <VBox styleClass="laplace-command" spacing="6" xmlns="http://javafx.com/javafx/17"
       xmlns:fx="http://javafx.com/fxml/1">
-  <Label text="Command" styleClass="laplace-muted" />
   <HBox spacing="12" alignment="CENTER_LEFT">
     <TextField fx:id="commandTextField" onAction="#handleCommandEntered" HBox.hgrow="ALWAYS"
                accessibleText="Command" promptText="Enter a command, for example member list" />
-    <Label text="Press Enter&#10;to execute" styleClass="laplace-muted" />
+    <Label text="↵ Enter" styleClass="command-key" accessibleText="Press Enter to execute">
+      <tooltip><Tooltip text="Execute the command" /></tooltip>
+    </Label>
   </HBox>
 </VBox>

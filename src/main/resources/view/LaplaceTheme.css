@@ -1,7 +1,7 @@
 /* Shared Laplace theme. Load on a laplace-root; keep legacy/help dark styles local to their content. */
 .laplace-root {
     -fx-font-family: "System";
-    -fx-font-size: 13px;
+    -fx-font-size: 15px;
     -fx-background-color: #EEF1F3;
     -fx-base: #FFFFFF;
     -fx-control-inner-background: #FFFFFF;
@@ -23,20 +23,20 @@
 }
 
 .laplace-root .laplace-title {
-    -fx-font-size: 19px;
+    -fx-font-size: 23px;
     -fx-font-weight: bold;
     -fx-text-fill: #37474F;
 }
 
 .laplace-root .laplace-muted {
-    -fx-font-size: 12px;
-    -fx-text-fill: #607D8B;
+    -fx-font-size: 13px;
+    -fx-text-fill: #526672;
 }
 
 .laplace-root .laplace-count-badge {
-    -fx-font-size: 11px;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-text-fill: #0874C9;
+    -fx-text-fill: #075C9E;
     -fx-background-color: #E8F5E9;
     -fx-background-radius: 12;
     -fx-padding: 4 10;
@@ -44,7 +44,7 @@
 
 .laplace-header {
     -fx-background-color: #263238;
-    -fx-padding: 12 20;
+    -fx-padding: 8 14;
     -fx-spacing: 12;
 }
 
@@ -84,7 +84,7 @@
     -fx-border-color: #DCE3E8;
     -fx-background-radius: 3;
     -fx-border-radius: 3;
-    -fx-padding: 12 16;
+    -fx-padding: 8 12;
 }
 
 .laplace-root .laplace-success .label {
@@ -96,7 +96,7 @@
     -fx-border-color: #E6B9B9;
     -fx-background-radius: 3;
     -fx-border-radius: 3;
-    -fx-padding: 12 16;
+    -fx-padding: 8 12;
 }
 
 .laplace-root .laplace-error .label,
@@ -106,7 +106,7 @@
 
 .laplace-row {
     -fx-background-color: transparent;
-    -fx-padding: 12 16;
+    -fx-padding: 8 12;
     -fx-spacing: 4;
 }
 
@@ -136,17 +136,17 @@
     -fx-background-color: #E3F2FD;
     -fx-border-color: #1688E8;
     -fx-border-width: 1;
-    -fx-text-fill: #0874C9;
+    -fx-text-fill: #075C9E;
 }
 
 .laplace-root .list-cell:filled:selected .label {
-    -fx-text-fill: #0874C9;
+    -fx-text-fill: #075C9E;
 }
 
 .laplace-root .text-field {
     -fx-background-color: #FFFFFF;
     -fx-text-fill: #37474F;
-    -fx-prompt-text-fill: #607D8B;
+    -fx-prompt-text-fill: #526672;
     -fx-border-color: #DCE3E8;
     -fx-border-radius: 4;
     -fx-background-radius: 4;
@@ -178,7 +178,7 @@
 
 /* Shell-only surfaces; component styles and legacy/help styles stay local. */
 .laplace-content {
-    -fx-padding: 16;
+    -fx-padding: 10;
 }
 
 .laplace-directory {
@@ -188,7 +188,7 @@
 
 .laplace-directory > .split-pane-divider {
     -fx-background-color: #EEF1F3;
-    -fx-padding: 0 7;
+    -fx-padding: 0 4;
 }
 
 .laplace-feedback .text-area,
@@ -243,4 +243,16 @@
 .laplace-root .laplace-legacy .list-cell .label,
 .laplace-root .laplace-legacy .list-cell:filled:selected .label {
     -fx-text-fill: #FFFFFF;
+}
+
+.laplace-command .text-field {
+    -fx-font-family: "monospace";
+    -fx-font-size: 16px;
+}
+
+.laplace-root .command-key {
+    -fx-padding: 5 8;
+    -fx-background-color: #E2E8ED;
+    -fx-background-radius: 4;
+    -fx-text-fill: #37474F;
 }

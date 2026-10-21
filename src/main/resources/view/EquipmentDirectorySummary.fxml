@@ -12,17 +12,16 @@
 <ScrollPane xmlns:fx="http://javafx.com/fxml/1" fitToWidth="true" minWidth="0" minHeight="0"
             styleClass="laplace-surface,directory-summary" stylesheets="@DirectorySummary.css">
     <content>
-        <VBox spacing="20" fillWidth="true" minWidth="0">
-            <padding><Insets top="20" right="20" bottom="20" left="20" /></padding>
+        <VBox spacing="12" fillWidth="true" minWidth="0">
+            <padding><Insets top="14" right="14" bottom="14" left="14" /></padding>
             <HBox spacing="12" alignment="CENTER_LEFT">
                 <Label text="Equipment Directory" styleClass="laplace-title" wrapText="true" minWidth="0" />
                 <Region HBox.hgrow="ALWAYS" />
                 <Label fx:id="countBadge" styleClass="laplace-count-badge" />
             </HBox>
-            <VBox spacing="16" styleClass="laplace-surface,directory-summary-box">
-                <Label text="LIST SUMMARY" styleClass="laplace-muted" />
+            <VBox spacing="10" styleClass="directory-summary-box">
                 <Label fx:id="criteria" wrapText="true" minWidth="0" />
-                <GridPane hgap="12" vgap="14" minWidth="0">
+                <GridPane hgap="12" vgap="8" minWidth="0">
                     <columnConstraints>
                         <ColumnConstraints percentWidth="38" minWidth="0" />
                         <ColumnConstraints percentWidth="62" minWidth="0" hgrow="ALWAYS" />

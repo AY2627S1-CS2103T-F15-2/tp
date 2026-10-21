@@ -9,7 +9,7 @@
 }
 
 .directory-summary .directory-summary-box {
-    -fx-padding: 18;
+    -fx-padding: 0;
 }
 
 .directory-summary .directory-key,
