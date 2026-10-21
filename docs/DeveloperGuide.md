@@ -129,6 +129,9 @@ they are omitted from this view for readability.
 `Member` is immutable and contains its NUS ID, name, phone, email and a `deleted` boolean. The existing
 four-field constructor creates an active member; the five-field constructor accepts deletion state.
 Equality and hashing include all five fields, while `isSameMember` compares only the NUS ID.
+The diagram shows object-valued fields once, as navigable association lines with private role names
+and multiplicities. The primitive `deleted` flag appears in the attributes compartment. Interface
+classifiers use the `<<interface>>` keyword and dashed realization lines.
 
 Editing replaces supplied details without changing the NUS ID or deletion state. Deleted members must
 be restored before editing. Soft-delete and restoration create replacements through `setDeleted`,
@@ -138,10 +141,16 @@ list remains observable and includes deleted records. The model also retains use
 
 <puml src="diagrams/MemberLifecycleDiagram.puml" alt="Member editing, soft-delete and unlimited restore" />
 
+The state diagram follows a logical member record identified by its stable NUS ID, rather than the
+lifetime of one immutable Java object. Transition labels use `event [guard] / effect` notation.
 Deletion is blocked while a member has outstanding loans. A deleted member remains visible and
 recoverable indefinitely; editing, new loans and repeated deletion are rejected. Restoration has no
 time limit, expiry or automatic purge. These mutations use the existing transactional save-before-publish
 pipeline: validation and persistence failures preserve live state and the previous saved file.
+
+These are implementation design diagrams. Their notation follows the
+[course modeling chapter](https://nus-cs2103-ay2627-s1.github.io/website/se-book-adapted/chapters/modeling.html).
+Class diagrams show selected structure; the state diagram separately describes lifecycle behavior.
 
 ### Storage component
 

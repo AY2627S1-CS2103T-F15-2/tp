@@ -9,7 +9,7 @@ skinparam classBackgroundColor STORAGE_COLOR
 title Member deletion state in the JSON snapshot
 
 package Storage as StoragePackage {
-    interface Storage
+    class Storage <<interface>>
     class StorageManager
     class JsonUserPrefsStorage
     class JsonAddressBookStorage
@@ -20,7 +20,7 @@ package Storage as StoragePackage {
         -phone: String {readOnly}
         -email: String {readOnly}
         -deleted: boolean
-        ~setDeleted(value: JsonNode)
+        ~setDeleted(value: JsonNode): void
         +toModelType(): Member
     }
     class JsonAdaptedEquipment
@@ -28,18 +28,20 @@ package Storage as StoragePackage {
     class JsonAdaptedPerson
     class JsonAdaptedTag
 }
-class Member <<immutable>> MODEL_COLOR
+package Model as ModelPackage {
+    class Member MODEL_COLOR
+}
 show JsonAdaptedMember members
 
 StorageManager ..|> Storage
 StorageManager --> "1" JsonUserPrefsStorage
 StorageManager --> "1" JsonAddressBookStorage
 JsonAddressBookStorage ..> JsonSerializableAddressBook
-JsonSerializableAddressBook --> "0..*" JsonAdaptedMember : members
-JsonSerializableAddressBook --> "0..*" JsonAdaptedEquipment : equipment
-JsonSerializableAddressBook --> "0..*" JsonAdaptedLoan : loans
-JsonSerializableAddressBook --> "0..*" JsonAdaptedPerson : persons (legacy)
-JsonAdaptedPerson --> "0..*" JsonAdaptedTag
+JsonSerializableAddressBook --> "0..*\n-members" JsonAdaptedMember
+JsonSerializableAddressBook --> "0..*\n-equipment" JsonAdaptedEquipment
+JsonSerializableAddressBook --> "0..*\n-loans" JsonAdaptedLoan
+JsonSerializableAddressBook --> "0..*\n-persons" JsonAdaptedPerson
+JsonAdaptedPerson --> "0..*\n-tags" JsonAdaptedTag
 JsonAdaptedMember ..> Member : reconstructs with deletion flag
 
 note right of JsonAdaptedMember
@@ -47,7 +49,8 @@ note right of JsonAdaptedMember
   Missing legacy field defaults to false.
   Explicit null and non-boolean values are rejected.
 end note
-note bottom of JsonSerializableAddressBook
+note bottom of StoragePackage
+  The persons and tags adapters are legacy support.
   Retain active and deleted members and closed loans.
   Validate entities before loading loan references.
   Closed loans may reference deleted members;

@@ -5,15 +5,15 @@ skinparam stateBorderColor MODEL_COLOR
 skinparam arrowColor MODEL_COLOR
 skinparam stateFontColor #202020
 
-title Member editing, soft-delete and unlimited restore
+title Logical member record lifecycle (stable NUS ID)
 
 state "Active member\ndeleted = false" as Active
 state "Deleted member\ndeleted = true" as Deleted
 
-[*] --> Active : member add
-Active --> Active : member edit [details change]\nreplace details; retain NUS ID
-Active --> Deleted : member delete [no outstanding loans]\nretain details, NUS ID and loan history
-Deleted --> Active : member restore\nno time limit
+[*] --> Active
+Active --> Active : member edit [valid changed details] /\nreplace details; retain NUS ID
+Active --> Deleted : member delete [no outstanding loans] /\ndeleted := true
+Deleted --> Active : member restore / deleted := false
 
 note left of Active
   Editing is allowed with outstanding loans.
@@ -22,15 +22,17 @@ note left of Active
   Restoring an active member is rejected.
 end note
 note right of Deleted
-  Remains visible and selectable in the directory.
-  NUS ID stays reserved; records are never purged.
+  NUS ID, details and loan history are retained.
+  Restoration has no deadline; records are never purged.
   Editing, new loans and repeated deletion are rejected.
   Restore before editing or borrowing again.
 end note
 note bottom of Active
+  Initial entry represents a newly added active record.
+  States describe a logical record, not one Java object.
+  Edits, deletion and restoration replace immutable Member instances.
   Successful mutations save an isolated snapshot before publishing.
   Validation or save failures leave live state and saved bytes unchanged.
-  Deletion and restoration create immutable replacements.
   Archival and deletion timestamps are outside scope.
 end note
 @enduml
