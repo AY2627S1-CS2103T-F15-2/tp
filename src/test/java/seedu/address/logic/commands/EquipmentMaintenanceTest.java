@@ -69,6 +69,16 @@ public class EquipmentMaintenanceTest {
     }
 
     @Test
+    public void edit_categoryOnly_preservesOtherDetailsAndHistory() throws Exception {
+        ModelManager model = model();
+        parser.parseCommand("equipment edit uuid/" + ID + " category/  Video   Production ").execute(model);
+        Equipment edited = new Equipment(ID, CAMERA.getName(), "Video Production", CAMERA.getCondition(),
+                CAMERA.getNotes());
+        assertEquals(List.of(edited, SIBLING), model.getEquipmentList());
+        assertEquals(List.of(CLOSED), model.getLoanList());
+    }
+
+    @Test
     public void lifecycle_deleteRestore_retainsHistoryBlocksLoansAndDoesNotRepairCondition() throws Exception {
         ModelManager model = model();
         model.deleteEquipment(CAMERA);
@@ -167,6 +177,21 @@ public class EquipmentMaintenanceTest {
         units.add(CAMERA);
         assertThrows(IllegalArgumentException.class, () -> units.setEquipment(CAMERA, SIBLING));
         assertEquals(List.of(CAMERA), units.asUnmodifiableObservableList());
+    }
+
+    @Test
+    public void model_repeatedLifecycleChanges_resolvesStoredStateAndPreservesData() {
+        ModelManager model = model();
+        AddressBook active = new AddressBook(model.getAddressBook());
+        // A stale caller snapshot must not bypass the root's lifecycle checks.
+        assertThrows(IllegalStateException.class, () -> model.restoreEquipment(CAMERA.withDeleted(true)));
+        assertEquals(active, model.getAddressBook());
+        model.deleteEquipment(CAMERA);
+        AddressBook deleted = new AddressBook(model.getAddressBook());
+        assertThrows(EquipmentDeletedException.class, () -> model.deleteEquipment(CAMERA));
+        assertEquals(deleted, model.getAddressBook());
+        model.restoreEquipment(CAMERA);
+        assertEquals(active, model.getAddressBook());
     }
 
     @Test
