@@ -78,7 +78,7 @@ public class LogicManager implements Logic {
     /**
      * Returns the command family and action without retaining parameter values in history descriptions.
      */
-    private String describeAction(String commandText) {
+    static String describeAction(String commandText) {
         String[] words = commandText.trim().split("\\s+", 3);
         return words.length > 1 ? words[0] + " " + words[1] : words[0];
     }
