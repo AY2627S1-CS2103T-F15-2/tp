@@ -125,8 +125,8 @@ public class DetailsPanelTest {
                             .toList());
             Parent camera = (Parent) holdings.getChildren().get(0);
             assertEquals(CAMERA.getCategory(), value(camera, "category"));
-            assertEquals("GOOD", value(camera, "condition"));
-            assertEquals("ASSIGNED", value(camera, "availability"));
+            assertEquals("Good", value(camera, "condition"));
+            assertEquals("Assigned", value(camera, "availability"));
             assertEquals(ViewTestData.ASSIGNED.toString(), value(camera, "assignedDate"));
             assertEquals(ViewTestData.EXPECTED.toString(), value(camera, "expectedReturnDate"));
             panel.showMember(OTHER_ALEX.getNusId());
@@ -180,9 +180,9 @@ public class DetailsPanelTest {
             assertEquals("Camera", value(panel.getRoot(), "equipmentName"));
             assertEquals(CAMERA.getUuid().toString(), value(panel.getRoot(), "equipmentUuid"));
             assertEquals(CAMERA.getCategory(), value(panel.getRoot(), "category"));
-            assertEquals("GOOD", value(panel.getRoot(), "condition"));
+            assertEquals("Good", value(panel.getRoot(), "condition"));
             assertEquals(CAMERA.getNotes(), value(panel.getRoot(), "notes"));
-            assertEquals("ASSIGNED", value(panel.getRoot(), "availability"));
+            assertEquals("Assigned", value(panel.getRoot(), "availability"));
             assertEquals(ALEX.getName().fullName, value(panel.getRoot(), "holder"));
             assertEquals(ALEX.getNusId().value, value(panel.getRoot(), "holderNusId"));
             assertEquals(ALEX.getPhone().value, value(panel.getRoot(), "holderPhone"));
@@ -207,8 +207,13 @@ public class DetailsPanelTest {
                 model.addEquipment(new Equipment(CAMERA.getUuid(), "Camera", "Photography", condition, ""));
                 EquipmentDetailsPanel panel = equipment(model);
                 panel.showEquipment(CAMERA.getUuid());
-                assertEquals(condition.toString(), value(panel.getRoot(), "condition"));
-                assertEquals(model.getAvailability(CAMERA.getUuid()).toString(),
+                assertEquals(switch (condition) {
+                    case GOOD -> "Good";
+                    case FAIR -> "Fair";
+                    case DAMAGED -> "Damaged";
+                    case UNDER_REPAIR -> "Under repair";
+                }, value(panel.getRoot(), "condition"));
+                assertEquals(condition == Condition.GOOD || condition == Condition.FAIR ? "Available" : "Unavailable",
                         value(panel.getRoot(), "availability"));
                 assertEquals("No notes", value(panel.getRoot(), "notes"));
                 assertEquals("No current holder", value(panel.getRoot(), "holder"));
@@ -235,7 +240,7 @@ public class DetailsPanelTest {
             members.refresh();
             equipment.refresh();
             assertEquals("0 item(s) held", value(members.getRoot(), "heldCount"));
-            assertEquals("AVAILABLE", value(equipment.getRoot(), "availability"));
+            assertEquals("Available", value(equipment.getRoot(), "availability"));
             assertEquals("No current holder", value(equipment.getRoot(), "holder"));
             assertNull(equipment.getRoot().lookup("#assignedDate"));
             assertNull(equipment.getRoot().lookup("#expectedReturnDate"));
@@ -266,7 +271,7 @@ public class DetailsPanelTest {
             Label deletedName = (Label) members.getRoot().lookup("#memberName");
             assertEquals("Alex Tan (deleted)", deletedName.getAccessibleText());
             assertEquals(CAMERA.getNotes(), value(equipment.getRoot(), "notes"));
-            assertEquals("DELETED", value(equipment.getRoot(), "equipmentStatus"));
+            assertEquals("Deleted", value(equipment.getRoot(), "equipmentStatus"));
             members.showMember(new NusId("A0999999Z"));
             equipment.showEquipment(new UUID(0, 999));
             assertTrue(value(members.getRoot(), "detailsStatus").contains("A0999999Z"));
@@ -296,7 +301,7 @@ public class DetailsPanelTest {
             assertEquals("New camera name", value(equipment.getRoot(), "equipmentName"));
             assertEquals("Film", value(equipment.getRoot(), "category"));
             assertEquals("Changed notes", value(equipment.getRoot(), "notes"));
-            assertEquals("UNAVAILABLE", value(equipment.getRoot(), "availability"));
+            assertEquals("Unavailable", value(equipment.getRoot(), "availability"));
         });
     }
 

@@ -10,7 +10,9 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -25,10 +27,13 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
@@ -65,12 +70,12 @@ public class LoanPanelTest {
             Label openEmpty = (Label) section(panel, "openLoans").getChildren().get(0);
             assertEquals("No open loans. Available equipment is ready to assign.",
                     openEmpty.getText());
-            assertEquals(null, panel.getRoot().lookup("#loanHistory"));
+            assertEquals("0", ((Label) panel.getRoot().lookup("#closedCount")).getText());
         });
     }
 
     @Test
-    public void constructor_mixedLoans_showsOnlyOpenIdentitiesDatesAndPreservesStoredHistory() {
+    public void constructor_mixedLoans_showsCurrentAndCompletedIdentitiesAndDates() {
         FxTestUtil.runAndWait(() -> {
             AddressBook data = mixedBook();
             AddressBook before = new AddressBook(data);
@@ -79,14 +84,14 @@ public class LoanPanelTest {
             VBox openRow = row(panel, "openLoans", 0);
             assertEquals("Camera\nUUID: " + FIRST_UUID, equipmentButton(openRow).getText());
             assertEquals("Alex Tan\nNUS ID: " + FIRST_MEMBER.getNusId(), memberButton(openRow).getText());
-            assertEquals(List.of("Assigned: 2026-10-01", "Expected return: 2026-10-08"), dates(openRow));
+            assertEquals(List.of("Assigned: 2026-10-01", "Expected return: 2026-10-08",
+                    "Issue condition: Not recorded"), dates(openRow));
             assertEquals("Open loan", ((Label) openRow.lookup(".loan-status")).getText());
             assertTrue(openRow.lookup(".loan-status").getStyleClass().contains("loan-open-status"));
 
             assertEquals(3, data.getLoanList().stream().filter(loan -> !loan.isOpen()).count());
-            assertEquals(2, panel.getRoot().lookupAll(".loan-row").size());
-            assertFalse(panel.getRoot().lookupAll(".label").stream().map(node -> ((Label) node).getText())
-                    .anyMatch(text -> text.contains("Returned")));
+            assertEquals(5, panel.getRoot().lookupAll(".loan-row").size());
+            assertEquals("3", ((Label) panel.getRoot().lookup("#closedCount")).getText());
             assertEquals(before, data);
         });
     }
@@ -96,10 +101,35 @@ public class LoanPanelTest {
         FxTestUtil.runAndWait(() -> {
             LoanPanel panel = panel(mixedBook());
             assertEquals(List.of(FIRST_UUID, SECOND_UUID), equipmentIds(panel, "openLoans"));
-            assertEquals(null, panel.getRoot().lookup("#loanHistory"));
+            assertNotNull(panel.getRoot().lookup("#loanHistory"));
             assertEquals("Alex Tan\nNUS ID: " + SECOND_MEMBER.getNusId(),
                     memberButton(row(panel, "openLoans", 1)).getText());
             assertEquals("Camera\nUUID: " + SECOND_UUID, equipmentButton(row(panel, "openLoans", 1)).getText());
+        });
+    }
+
+    @Test
+    public void filters_narrowCurrentAndCompletedLoansByStableIdentities() {
+        FxTestUtil.runAndWait(() -> {
+            LoanPanel panel = panel(mixedBook());
+            TextField memberFilter = (TextField) panel.getRoot().lookup("#memberFilter");
+            TextField equipmentFilter = (TextField) panel.getRoot().lookup("#equipmentFilter");
+
+            memberFilter.setText(FIRST_MEMBER.getNusId().toString());
+            assertTrue(section(panel, "openLoans").getChildren().size() >= 1);
+            equipmentFilter.setText(SECOND_UUID.toString());
+            assertEquals("0", ((Label) panel.getRoot().lookup("#openCount")).getText());
+            assertEquals("0", ((Label) panel.getRoot().lookup("#closedCount")).getText());
+            Label emptyOpenLoans = (Label) section(panel, "openLoans").getChildren().get(0);
+            assertEquals("No open loans match these filters.", emptyOpenLoans.getText());
+            equipmentFilter.setText(FIRST_UUID.toString());
+            assertEquals(List.of(FIRST_UUID), equipmentIds(panel, "openLoans"));
+            assertEquals("1", ((Label) panel.getRoot().lookup("#openCount")).getText());
+            memberFilter.setText("NO_MATCH");
+            assertEquals("0", ((Label) panel.getRoot().lookup("#openCount")).getText());
+            assertEquals("0", ((Label) panel.getRoot().lookup("#closedCount")).getText());
+            emptyOpenLoans = (Label) section(panel, "openLoans").getChildren().get(0);
+            assertEquals("No open loans match these filters.", emptyOpenLoans.getText());
         });
     }
 
@@ -187,7 +217,7 @@ public class LoanPanelTest {
             panel.refresh();
             assertOpenCount(panel, 0);
             assertTrue(section(panel, "openLoans").getChildren().get(0) instanceof Label);
-            assertEquals(null, panel.getRoot().lookup("#loanHistory"));
+            assertNotNull(panel.getRoot().lookup("#loanHistory"));
         });
     }
 
@@ -204,7 +234,7 @@ public class LoanPanelTest {
             assertEquals(1, data.getLoanList().size());
             assertFalse(data.getLoanList().getFirst().isOpen());
             assertEquals(ASSIGNED, data.getLoanList().getFirst().getReturnedDate().orElseThrow());
-            assertTrue(panel.getRoot().lookupAll(".loan-row").isEmpty());
+            assertEquals(1, panel.getRoot().lookupAll(".loan-row").size());
         });
     }
 
@@ -234,6 +264,94 @@ public class LoanPanelTest {
                     assertEquals(missingMember ? List.of() : List.of(FIRST_MEMBER.getNusId()), memberSelections);
                 }
             }
+        });
+    }
+
+    @Test
+    public void dates_urgencyAndReturnPreparation_useTodayWithoutMutatingLoans() {
+        FxTestUtil.runAndWait(() -> {
+            AddressBook data = mixedBook();
+            AddressBook before = new AddressBook(data);
+            List<String> commands = new ArrayList<>();
+            for (int days : List.of(6, 7, 8, 10)) {
+                LocalDate today = ASSIGNED.plusDays(days);
+                LoanPanel panel = new LoanPanel(data, unused -> { }, unused -> { }, commands::add,
+                        Clock.fixed(today.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC));
+                new Scene(panel.getRoot(), 760, 500);
+                panel.getRoot().getStyleClass().add("laplace-root");
+                panel.getRoot().getScene().getStylesheets().add(
+                        LoanPanel.class.getResource("/view/LaplaceTheme.css").toExternalForm());
+                panel.getRoot().applyCss();
+                String expected = days == 6 ? "Open loan" : days == 7 ? "Due today"
+                        : days == 8 ? "Overdue · 1 day" : "Overdue · 3 days";
+                VBox first = row(panel, "openLoans", 0);
+                assertEquals(expected, ((Label) first.lookup(".loan-status")).getText());
+                Button prepare = (Button) first.getChildren().getLast();
+                prepare.fire();
+                assertEquals("loans return uuid/" + FIRST_UUID + " returned/" + today, commands.getLast());
+                assertEquals(before, data);
+            }
+        });
+    }
+
+    @Test
+    public void layout_narrowWideAndNarrowAgain_reflowsIdentitiesWithoutChangingLoans() {
+        FxTestUtil.runAndWait(() -> {
+            AddressBook data = mixedBook();
+            AddressBook before = new AddressBook(data);
+            List<UUID> selected = new ArrayList<>();
+            LoanPanel panel = new LoanPanel(data, selected::add, unused -> { });
+            Region root = panel.getRoot();
+            root.getStyleClass().add("laplace-root");
+            Scene scene = new Scene(root, 480, 500);
+            scene.getStylesheets().add(LoanPanel.class.getResource("/view/LaplaceTheme.css").toExternalForm());
+            for (int width : List.of(480, 1000, 480)) {
+                root.resize(width, 500);
+                root.applyCss();
+                root.layout();
+                VBox first = row(panel, "openLoans", 0);
+                GridPane identities = (GridPane) equipmentButton(first).getParent().getParent();
+                boolean isWide = width == 1000;
+                assertEquals(isWide, identities.getWidth() >= 650);
+                assertEquals(isWide ? 2 : 1, identities.getColumnConstraints().size());
+                assertEquals(isWide ? 50 : 100, identities.getColumnConstraints().getFirst().getPercentWidth());
+                assertEquals(isWide ? 1 : 0, GridPane.getColumnIndex(memberButton(first).getParent()));
+                assertEquals(isWide ? 0 : 1, GridPane.getRowIndex(memberButton(first).getParent()));
+                assertEquals("Camera\nUUID: " + FIRST_UUID, equipmentButton(first).getText());
+            }
+            VBox first = row(panel, "openLoans", 0);
+            equipmentButton(first).fire();
+            assertEquals(List.of(FIRST_UUID), selected);
+            Button prepareReturn = (Button) first.getChildren().getLast();
+            prepareReturn.fire();
+            assertEquals(before, data);
+        });
+    }
+
+    @Test
+    public void completedLoan_pastDueDate_showsConditionsWithoutUrgencyOrReturnAction() {
+        FxTestUtil.runAndWait(() -> {
+            AddressBook data = new AddressBook();
+            data.addMember(FIRST_MEMBER);
+            data.addEquipment(FIRST_ITEM);
+            data.addLoan(new Loan(FIRST_UUID, FIRST_MEMBER.getNusId(), ASSIGNED.minusDays(3),
+                    ASSIGNED.minusDays(2), ASSIGNED.minusDays(1), Condition.GOOD, Condition.FAIR));
+            LoanPanel panel = panel(data);
+            VBox completed = row(panel, "closedLoans", 0);
+            Label status = (Label) completed.lookup(".loan-status");
+            assertEquals("Completed loan", status.getText());
+            assertTrue(status.getStyleClass().contains("loan-closed-status"));
+            assertFalse(status.getStyleClass().contains("loan-overdue-status"));
+            assertEquals(List.of("Assigned: 2026-09-28", "Expected return: 2026-09-29", "Issue condition: GOOD",
+                    "Return condition: FAIR", "Returned: 2026-09-30"), dates(completed));
+            assertEquals(2, completed.lookupAll(".button").size());
+            assertNotNull(equipmentButton(completed));
+            assertNotNull(memberButton(completed));
+            panel.getRoot().getStyleClass().add("dark");
+            panel.getRoot().applyCss();
+            assertEquals(Color.web("#033a16"), status.getBackground().getFills().getFirst().getFill());
+            TextField filter = (TextField) panel.getRoot().lookup("#memberFilter");
+            assertEquals(Color.web("#151b23"), filter.getBackground().getFills().getFirst().getFill());
         });
     }
 
@@ -297,7 +415,8 @@ public class LoanPanelTest {
     }
 
     private static LoanPanel panel(ReadOnlyAddressBook data, Consumer<UUID> onEquipment, Consumer<NusId> onMember) {
-        LoanPanel panel = new LoanPanel(data, onEquipment, onMember);
+        LoanPanel panel = new LoanPanel(data, onEquipment, onMember, unused -> { },
+                Clock.fixed(ASSIGNED.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC));
         Region root = panel.getRoot();
         root.getStyleClass().add("laplace-root");
         Scene scene = new Scene(root, 760, 500);
@@ -312,8 +431,8 @@ public class LoanPanelTest {
 
     private static void assertOpenCount(LoanPanel panel, int open) {
         assertEquals(Integer.toString(open), ((Label) panel.getRoot().lookup("#openCount")).getText());
-        assertEquals(null, panel.getRoot().lookup("#historyCount"));
-        assertEquals(null, panel.getRoot().lookup("#loanHistory"));
+        assertNotNull(panel.getRoot().lookup("#closedCount"));
+        assertNotNull(panel.getRoot().lookup("#loanHistory"));
     }
 
     private static VBox section(LoanPanel panel, String name) {
@@ -333,8 +452,8 @@ public class LoanPanelTest {
     }
 
     private static List<String> dates(VBox row) {
-        return row.getChildren().stream().filter(node -> node.getStyleClass().contains("loan-date"))
-                .map(node -> ((Label) node).getText()).toList();
+        return row.lookupAll(".loan-date").stream()
+                .map(node -> ((Label) node).getText()).sorted().toList();
     }
 
     private static List<UUID> equipmentIds(LoanPanel panel, String name) {

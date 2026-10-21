@@ -5,45 +5,64 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.equipment.exceptions.EquipmentNotFoundException;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.loan.exceptions.OpenLoanNotFoundException;
-import seedu.address.model.member.Member;
 import seedu.address.model.member.exceptions.MemberNotFoundException;
 
-/** Records a validated equipment return, retaining the immutable closed loan in history. */
+/** Completes one or more loans with a shared return date and observed condition. */
 public class LoanReturnCommand extends Command {
     public static final String COMMAND_WORD = "loans return";
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Records an equipment return. Parameters: uuid/UUID returned/DATE\nDates must use yyyy-MM-dd.";
+            + ": Parameters: uuid/UUID[,UUID...] returned/DATE [condition/CONDITION]\n"
+            + "Dates must use yyyy-MM-dd.";
     public static final String MESSAGE_SUCCESS = "Returned %1$s (%2$s) from %3$s (%4$s) on %5$s.";
+    public static final String MESSAGE_BATCH_SUCCESS = "Returned %1$d units (%2$s) on %3$s.";
     public static final String MESSAGE_EQUIPMENT_NOT_FOUND = "No equipment with UUID %1$s exists.";
     public static final String MESSAGE_NO_OPEN_LOAN = "Equipment %1$s has no open loan to return.";
     public static final String MESSAGE_MEMBER_NOT_FOUND =
             "Cannot return equipment %1$s: its open loan refers to a missing member.";
     public static final String MESSAGE_FUTURE_RETURN = "Returned date cannot be after today (%1$s).";
 
-    private final UUID equipmentUuid;
+    private final List<UUID> equipmentUuids;
     private final LocalDate returnedDate;
+    private final Condition returnCondition;
     private final Clock clock;
 
-    /** Creates a command using the computer's local date at execution time. */
+    /** Creates an individual return using the existing syntax. */
     public LoanReturnCommand(UUID equipmentUuid, LocalDate returnedDate) {
-        this(equipmentUuid, returnedDate, Clock.systemDefaultZone());
+        this(List.of(requireNonNull(equipmentUuid)), returnedDate, null);
     }
 
-    /** Supplies a clock for deterministic command tests. */
+    /** Creates a return batch with an optional shared observed condition. */
+    public LoanReturnCommand(List<UUID> equipmentUuids, LocalDate returnedDate, Condition returnCondition) {
+        this(equipmentUuids, returnedDate, returnCondition, Clock.systemDefaultZone());
+    }
+
+    /** Supplies a clock for deterministic single-item tests. */
     LoanReturnCommand(UUID equipmentUuid, LocalDate returnedDate, Clock clock) {
-        requireAllNonNull(equipmentUuid, returnedDate, clock);
-        this.equipmentUuid = equipmentUuid;
+        this(List.of(requireNonNull(equipmentUuid)), returnedDate, null, clock);
+    }
+
+    /** Supplies a clock for deterministic batch tests. */
+    LoanReturnCommand(List<UUID> equipmentUuids, LocalDate returnedDate, Condition returnCondition, Clock clock) {
+        requireAllNonNull(equipmentUuids, returnedDate, clock);
+        this.equipmentUuids = List.copyOf(equipmentUuids);
+        if (this.equipmentUuids.isEmpty() || new HashSet<>(this.equipmentUuids).size() != this.equipmentUuids.size()) {
+            throw new IllegalArgumentException("Return requires distinct equipment UUIDs");
+        }
         this.returnedDate = returnedDate;
+        this.returnCondition = returnCondition;
         this.clock = clock;
     }
 
@@ -55,45 +74,76 @@ public class LoanReturnCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        try {
-            Equipment equipment = model.findEquipment(equipmentUuid).orElseThrow(EquipmentNotFoundException::new);
-            Loan loan = model.findOpenLoan(equipmentUuid).orElseThrow(OpenLoanNotFoundException::new);
-            Member member = model.findMember(loan.getMemberNusId()).orElseThrow(MemberNotFoundException::new);
-            LocalDate today = LocalDate.now(clock);
-            if (returnedDate.isBefore(loan.getAssignedDate())) {
+        LocalDate today = LocalDate.now(clock);
+        if (returnedDate.isAfter(today)) {
+            throw new CommandException(String.format(MESSAGE_FUTURE_RETURN, today));
+        }
+        String firstName = null;
+        String firstMemberName = null;
+        String firstMemberId = null;
+        for (UUID uuid : equipmentUuids) {
+            Equipment item;
+            Loan open;
+            try {
+                item = model.findEquipment(uuid).orElseThrow(EquipmentNotFoundException::new);
+            } catch (EquipmentNotFoundException exception) {
+                throw new CommandException(String.format(MESSAGE_EQUIPMENT_NOT_FOUND, uuid), exception);
+            }
+            try {
+                open = model.findOpenLoan(uuid).orElseThrow(OpenLoanNotFoundException::new);
+            } catch (OpenLoanNotFoundException exception) {
+                throw new CommandException(String.format(MESSAGE_NO_OPEN_LOAN, uuid), exception);
+            }
+            var member = model.findMember(open.getMemberNusId()).orElseThrow(() ->
+                    new CommandException(String.format(MESSAGE_MEMBER_NOT_FOUND, uuid),
+                            new MemberNotFoundException()));
+            if (returnedDate.isBefore(open.getAssignedDate())) {
                 throw new CommandException(Loan.MESSAGE_RETURNED_DATE_CONSTRAINTS);
             }
-            if (returnedDate.isAfter(today)) {
-                throw new CommandException(String.format(MESSAGE_FUTURE_RETURN, today));
+            if (firstName == null) {
+                firstName = item.getName();
+                firstMemberName = member.getName().toString();
+                firstMemberId = member.getNusId().toString();
             }
-            model.closeLoan(equipmentUuid, returnedDate);
-            return new CommandResult(String.format(MESSAGE_SUCCESS, equipment.getName(), equipmentUuid,
-                    member.getName(), member.getNusId(), returnedDate), DisplayRequest.equipmentDetails(equipmentUuid));
-        } catch (EquipmentNotFoundException e) {
-            throw new CommandException(String.format(MESSAGE_EQUIPMENT_NOT_FOUND, equipmentUuid), e);
-        } catch (OpenLoanNotFoundException e) {
-            throw new CommandException(String.format(MESSAGE_NO_OPEN_LOAN, equipmentUuid), e);
-        } catch (MemberNotFoundException e) {
-            throw new CommandException(String.format(MESSAGE_MEMBER_NOT_FOUND, equipmentUuid), e);
-        } catch (IllegalArgumentException e) {
-            throw new CommandException("Could not return equipment " + equipmentUuid + ": " + e.getMessage(), e);
         }
+        try {
+            if (equipmentUuids.size() == 1 && returnCondition == null) {
+                model.closeLoan(equipmentUuids.get(0), returnedDate);
+            } else {
+                model.returnLoans(equipmentUuids, returnedDate, returnCondition);
+            }
+        } catch (OpenLoanNotFoundException exception) {
+            throw new CommandException(String.format(MESSAGE_NO_OPEN_LOAN, equipmentUuids.get(0)), exception);
+        } catch (EquipmentNotFoundException | MemberNotFoundException exception) {
+            throw new CommandException("Could not return equipment: " + exception.getMessage(), exception);
+        } catch (IllegalArgumentException | IllegalStateException exception) {
+            throw new CommandException("Could not return equipment: " + exception.getMessage(), exception);
+        }
+        UUID first = equipmentUuids.get(0);
+        String identifiers = equipmentUuids.size() == 1 ? first.toString() : equipmentUuids.toString();
+        DisplayRequest display = equipmentUuids.size() == 1
+                ? DisplayRequest.equipmentDetails(first) : DisplayRequest.loans();
+        String feedback = equipmentUuids.size() == 1
+                ? String.format(MESSAGE_SUCCESS, firstName, identifiers, firstMemberName, firstMemberId, returnedDate)
+                : String.format(MESSAGE_BATCH_SUCCESS, equipmentUuids.size(), identifiers, returnedDate);
+        return new CommandResult(feedback, display);
     }
 
     @Override
     public boolean equals(Object other) {
         return other == this || other instanceof LoanReturnCommand command
-                && equipmentUuid.equals(command.equipmentUuid) && returnedDate.equals(command.returnedDate);
+                && equipmentUuids.equals(command.equipmentUuids) && returnedDate.equals(command.returnedDate)
+                && returnCondition == command.returnCondition;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(equipmentUuid, returnedDate);
+        return Objects.hash(equipmentUuids, returnedDate, returnCondition);
     }
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this).add("equipmentUuid", equipmentUuid)
-                .add("returnedDate", returnedDate).toString();
+        return new ToStringBuilder(this).add("equipmentUuids", equipmentUuids)
+                .add("returnedDate", returnedDate).add("returnCondition", returnCondition).toString();
     }
 }

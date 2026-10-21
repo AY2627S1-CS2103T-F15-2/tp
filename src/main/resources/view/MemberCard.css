@@ -1,39 +1,36 @@
 .member-card {
     -fx-background-color: transparent;
-    -fx-font-family: "System";
-    -fx-font-size: 12px;
 }
 
 .member-card .member-name {
-    -fx-font-weight: bold;
-    -fx-font-size: 13px;
-    -fx-text-fill: #37474F;
+    -fx-padding: 0 2 0 0;
+    -fx-text-fill: -laplace-text;
 }
 
 .member-card .member-contact {
-    -fx-text-fill: #37474F;
+    -fx-text-fill: -laplace-text;
 }
 
 .member-card .member-holdings {
-    -fx-text-fill: #546E7A;
+    -fx-text-fill: -laplace-muted;
 }
 
 .member-card.deleted-member {
-    -fx-background-color: #ECEFF1;
-    -fx-border-color: #B0BEC5;
+    -fx-background-color: -laplace-neutral;
+    -fx-border-color: -laplace-thumb;
     -fx-border-width: 1;
 }
 
 .member-card.deleted-member .label {
-    -fx-text-fill: #455A64;
+    -fx-text-fill: -laplace-muted;
 }
 
 .list-cell:selected .member-card.deleted-member {
-    -fx-background-color: #DCE6ED;
-    -fx-border-color: #1877C9;
+    -fx-background-color: -laplace-selection;
+    -fx-border-color: -laplace-focus;
     -fx-border-width: 2;
 }
 
 .laplace-root .list-cell:filled:selected .member-card.deleted-member .label {
-    -fx-text-fill: #455A64;
+    -fx-text-fill: -laplace-muted;
 }

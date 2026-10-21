@@ -8,11 +8,11 @@
 [![CI Status](https://github.com/AY2627S1-CS2103T-F15-2/tp/workflows/Java%20CI/badge.svg)](https://github.com/AY2627S1-CS2103T-F15-2/tp/actions)
 [![codecov](https://codecov.io/gh/AY2627S1-CS2103T-F15-2/tp/graph/badge.svg?token=YBWSCFRIVB)](https://codecov.io/gh/AY2627S1-CS2103T-F15-2/tp)
 
-![Ui](images/Ui.png)
+![Laplace grouped equipment](images/BetterUi.png)
 
 **Laplace helps CCA EXCO members manage members, equipment and equipment loans.** It is a local, single-user desktop application with a graphical interface and typed commands.
 
-* To register members and equipment, issue items and record returns, start with the [_Quick Start_ section of the **User Guide**](UserGuide.html#quick-start). The guide covers all eleven commands, including `loans list`, and the bundled first-launch examples.
+* To register members and equipment, issue items and record returns, start with the [_Quick Start_ section of the **User Guide**](UserGuide.html#quick-start). The guide covers seventeen member, equipment and loan commands, plus appearance commands, and the bundled first-launch examples.
 * To contribute to Laplace, start with the [**Developer Guide**](DeveloperGuide.html).
 
 

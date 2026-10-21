@@ -1,10 +1,10 @@
 package seedu.address.ui;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.Region;
 
 /**
@@ -22,7 +22,8 @@ public class StatusBarFooter extends UiPart<Region> {
      */
     public StatusBarFooter(Path saveLocation) {
         super(FXML);
-        saveLocationStatus.setText(Paths.get(".").resolve(saveLocation).toString());
+        saveLocationStatus.setText("Data: " + saveLocation.getFileName());
+        saveLocationStatus.setTooltip(new Tooltip(saveLocation.toAbsolutePath().normalize().toString()));
     }
 
 }

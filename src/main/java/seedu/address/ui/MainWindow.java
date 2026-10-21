@@ -3,6 +3,7 @@ package seedu.address.ui;
 import static java.util.Objects.requireNonNull;
 
 import java.nio.file.Path;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -13,12 +14,14 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -34,7 +37,9 @@ import seedu.address.model.equipment.Equipment;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
 
-/** Application shell. Owns navigation and refresh subscriptions, while panels remain read-only views. */
+/**
+ * Application shell. Owns navigation and refresh subscriptions, while panels remain read-only views.
+ */
 public class MainWindow extends UiPart<Stage> {
     private static final String FXML = "MainWindow.fxml";
     private static final String ACTIVE_STYLE = "laplace-navigation-active";
@@ -65,7 +70,7 @@ public class MainWindow extends UiPart<Stage> {
     private MemberDirectorySummary memberSummary;
     private EquipmentDirectorySummary equipmentSummary;
     private MemberDetailsPanel memberDetails;
-    private EquipmentDetailsPanel equipmentDetails;
+    private EquipmentGroupPanel equipmentDetails;
     private LoanPanel loans;
     private CommandBox commandBox;
     private ResultDisplay resultDisplay;
@@ -99,18 +104,28 @@ public class MainWindow extends UiPart<Stage> {
     @FXML
     private Button loansNavigation;
     @FXML
+    private Button modeButton;
+    @FXML
     private MenuItem helpMenuItem;
+    @FXML
+    private HBox directoryContext;
+    @FXML
+    private Label queryContext;
+    @FXML
+    private Button backToResults;
 
-    /** Creates the shell with the actual command pipeline and the existing live root. */
+    /**
+     * Creates the shell with the actual command pipeline and the existing live root.
+     */
     public MainWindow(Stage primaryStage, Logic logic, Path dataFilePath) {
         super(FXML, requireNonNull(primaryStage));
         this.primaryStage = primaryStage;
         this.logic = requireNonNull(logic);
         this.dataFilePath = requireNonNull(dataFilePath);
         data = requireNonNull(logic.getAddressBook());
-        helpWindow = new HelpWindow();
+        helpWindow = new HelpWindow(new Stage(), command -> commandBox.prepare(command));
         setWindowDefaultSize(logic.getGuiSettings());
-        directory.widthProperty().addListener((unused, previous, current) -> directory.setDividerPositions(0.28));
+        applyAppearance();
         helpMenuItem.setAccelerator(KeyCombination.valueOf("F1"));
         primaryStage.addEventFilter(KeyEvent.KEY_PRESSED, helpFilter);
         primaryStage.addEventFilter(KeyEvent.KEY_RELEASED, activationReleaseFilter);
@@ -121,7 +136,9 @@ public class MainWindow extends UiPart<Stage> {
         return primaryStage;
     }
 
-    /** Mounts each component and subscribes exactly once. Initial selection never executes a command. */
+    /**
+     * Mounts each component and subscribes exactly once. Initial selection never executes a command.
+     */
     void fillInnerParts() {
         if (initialized || disposed) {
             return;
@@ -131,13 +148,17 @@ public class MainWindow extends UiPart<Stage> {
         personListPanel.getRoot().getStylesheets().add(getClass().getResource("/view/DarkTheme.css").toExternalForm());
         members = new MemberListPanel(data, id -> activate("member view nus/" + id.value));
         equipment = new EquipmentListPanel(data, logic::getAvailability,
-                id -> activate("equipment view uuid/" + id));
+                key -> display(DisplayRequest.equipmentGroup(key)));
         memberSummary = new MemberDirectorySummary(data);
         equipmentSummary = new EquipmentDirectorySummary(data, logic::getAvailability);
-        memberDetails = new MemberDetailsPanel(data, logic::getAvailability);
-        equipmentDetails = new EquipmentDetailsPanel(data, logic::getAvailability);
+        memberDetails = new MemberDetailsPanel(data, logic::getAvailability,
+                command -> commandBox.prepare(command), id -> activate("equipment view uuid/" + id));
+        equipmentDetails = new EquipmentGroupPanel(data, logic::getAvailability,
+                command -> commandBox.prepare(command), id -> activate("member view nus/" + id),
+                id -> activate("equipment view uuid/" + id));
         loans = new LoanPanel(data, id -> activate("equipment view uuid/" + id),
-                id -> activate("member view nus/" + id.value));
+                id -> activate("member view nus/" + id.value),
+                command -> commandBox.prepare(command), Clock.systemDefaultZone());
         resultDisplay = new ResultDisplay();
         commandBox = new CommandBox(this::executeCommand);
         commandBoxPlaceholder.getChildren().setAll(commandBox.getRoot());
@@ -158,11 +179,13 @@ public class MainWindow extends UiPart<Stage> {
         primaryStage.getScene().getRoot().applyCss();
         primaryStage.getScene().getRoot().layout();
         directory.setDividerPositions(0.28);
-        resultDisplay.setFeedbackToUser("Ready. Use member list, equipment list, or the navigation buttons.");
+        resultDisplay.setReady("Type a command · ↑ history · Ctrl+Space completion · F1 Help");
         commandBox.requestFocus();
     }
 
-    /** Coalesces synchronous root changes, so observers render after a whole model operation finishes. */
+    /**
+     * Coalesces synchronous root changes, so observers render after a whole model operation finishes.
+     */
     private void queueRefresh() {
         if (disposed || refreshQueued) {
             return;
@@ -175,7 +198,9 @@ public class MainWindow extends UiPart<Stage> {
         });
     }
 
-    /** Rebuilds all derived views, retaining identities or choosing the next sorted row after deletion. */
+    /**
+     * Rebuilds all derived views, retaining identities or choosing the next sorted row after deletion.
+     */
     private void refreshViews() {
         refreshQueued = false;
         List<NusId> newMembers = members.getDisplayedItems().stream()
@@ -183,11 +208,17 @@ public class MainWindow extends UiPart<Stage> {
         List<UUID> newEquipment = equipment.getDisplayedItems().stream()
                 .map(Equipment::getUuid).toList();
         Optional<NusId> memberSelection = recoverSelection(members.getSelection(), memberOrder, newMembers);
-        Optional<UUID> equipmentSelection = recoverSelection(equipment.getSelection(), equipmentOrder, newEquipment);
+        Optional<UUID> equipmentSelection = currentDisplay.getEquipmentUuid().filter(id -> data.getEquipmentList()
+                .stream().anyMatch(unit -> unit.getUuid().equals(id)));
+        if (equipmentSelection.isEmpty()) {
+            equipmentSelection = recoverSelection(equipment.getSelection(), equipmentOrder, newEquipment);
+        }
         members.refresh();
         equipment.refresh();
         members.select(memberSelection);
-        equipment.select(equipmentSelection);
+        if (equipmentSelection.isPresent() || equipment.getSelection().isPresent()) {
+            equipment.select(equipmentSelection);
+        }
         memberOrder = newMembers;
         equipmentOrder = newEquipment;
         refreshSummaries();
@@ -205,7 +236,9 @@ public class MainWindow extends UiPart<Stage> {
         }
     }
 
-    /** Resolves a deleted selection by its former position, without firing a panel activation callback. */
+    /**
+     * Resolves a deleted selection by its former position, without firing a panel activation callback.
+     */
     private static <T> Optional<T> recoverSelection(Optional<T> selected, List<T> previous, List<T> current) {
         if (selected.isPresent() && current.contains(selected.get())) {
             return selected;
@@ -220,9 +253,14 @@ public class MainWindow extends UiPart<Stage> {
     private void refreshSummaries() {
         memberSummary.refresh(members.getSelection());
         equipmentSummary.refresh(equipment.getSelection());
+        if (equipment.getSelection().isEmpty()) {
+            equipment.getSelectedGroup().ifPresent(equipmentSummary::showGroupSelection);
+        }
     }
 
-    /** Mounts the real summary or detail panel according to the typed display request. */
+    /**
+     * Mounts the real summary or detail panel according to the typed display request.
+     */
     private void display(DisplayRequest request) {
         if (request.getType() == DisplayRequest.Type.UNCHANGED) {
             return;
@@ -244,24 +282,24 @@ public class MainWindow extends UiPart<Stage> {
         boolean memberView = request.getType() == DisplayRequest.Type.MEMBERS
                 || request.getType() == DisplayRequest.Type.MEMBER_DETAILS;
         boolean equipmentView = request.getType() == DisplayRequest.Type.EQUIPMENT
-                || request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS;
+                || request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS
+                || request.getType() == DisplayRequest.Type.EQUIPMENT_GROUP;
         boolean directoryView = memberView || equipmentView;
+        directoryContext.setVisible(directoryView);
+        directoryContext.setManaged(directoryView);
+        queryContext.setText(directoryView ? "Filters: " + (memberView ? members.getQuery() : equipment.getQuery())
+                .description() : "");
+        boolean isDetailsView = request.getType() == DisplayRequest.Type.MEMBER_DETAILS
+                || request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS
+                || request.getType() == DisplayRequest.Type.EQUIPMENT_GROUP;
+        backToResults.setVisible(isDetailsView);
+        backToResults.setManaged(isDetailsView);
         directory.setVisible(directoryView);
         directory.setManaged(directoryView);
         singlePanelPlaceholder.setVisible(!directoryView);
         singlePanelPlaceholder.setManaged(!directoryView);
         if (directoryView) {
-            directoryListPlaceholder.getChildren().setAll(memberView ? members.getRoot() : equipment.getRoot());
-            if (request.getType() == DisplayRequest.Type.MEMBER_DETAILS) {
-                memberDetails.showMember(request.getMemberNusId().orElseThrow());
-                directorySummaryPlaceholder.getChildren().setAll(memberDetails.getRoot());
-            } else if (request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS) {
-                equipmentDetails.showEquipment(request.getEquipmentUuid().orElseThrow());
-                directorySummaryPlaceholder.getChildren().setAll(equipmentDetails.getRoot());
-            } else {
-                directorySummaryPlaceholder.getChildren().setAll(memberView
-                        ? memberSummary.getRoot() : equipmentSummary.getRoot());
-            }
+            mountDirectory(request, memberView);
         } else {
             singlePanelPlaceholder.getChildren().setAll(request.getType() == DisplayRequest.Type.LOANS
                     ? loans.getRoot() : personListPanel.getRoot());
@@ -274,6 +312,27 @@ public class MainWindow extends UiPart<Stage> {
         refreshSummaries();
     }
 
+    /**
+     * Mounts the directory and its requested summary, group or exact-identity details.
+     */
+    private void mountDirectory(DisplayRequest request, boolean memberView) {
+        directoryListPlaceholder.getChildren().setAll(memberView ? members.getRoot() : equipment.getRoot());
+        if (request.getType() == DisplayRequest.Type.MEMBER_DETAILS) {
+            memberDetails.showMember(request.getMemberNusId().orElseThrow());
+            directorySummaryPlaceholder.getChildren().setAll(memberDetails.getRoot());
+        } else if (request.getType() == DisplayRequest.Type.EQUIPMENT_DETAILS) {
+            equipmentDetails.showUnit(request.getEquipmentUuid().orElseThrow(), equipment.getQuery());
+            directorySummaryPlaceholder.getChildren().setAll(equipmentDetails);
+        } else if (request.getType() == DisplayRequest.Type.EQUIPMENT_GROUP) {
+            equipmentDetails.showGroup(request.getEquipmentGroup().orElseThrow(), equipment.getQuery());
+            equipment.selectGroup(request.getEquipmentGroup().orElseThrow());
+            directorySummaryPlaceholder.getChildren().setAll(equipmentDetails);
+        } else {
+            directorySummaryPlaceholder.getChildren().setAll(memberView
+                    ? memberSummary.getRoot() : equipmentSummary.getRoot());
+        }
+    }
+
     private void setActive(Button button, boolean active) {
         button.getStyleClass().remove(ACTIVE_STYLE);
         if (active) {
@@ -284,23 +343,37 @@ public class MainWindow extends UiPart<Stage> {
 
     @FXML
     private void handleMembers() {
-        activate("member list");
+        display(DisplayRequest.members());
         commandBox.requestFocus();
     }
 
     @FXML
     private void handleEquipment() {
-        activate("equipment list");
+        display(DisplayRequest.equipment());
         commandBox.requestFocus();
     }
 
     @FXML
     private void handleLoans() {
+        loans.refresh();
         display(DisplayRequest.loans());
         commandBox.requestFocus();
     }
 
-    /** Returns correction focus only after Space's typed event has finished on its originating control. */
+    @FXML
+    private void handleBackToResults() {
+        display(currentDisplay.getMemberNusId().isPresent() ? DisplayRequest.members() : DisplayRequest.equipment());
+    }
+
+    @FXML
+    private void handleResetSearch() {
+        activate(currentDisplay.getType() == DisplayRequest.Type.MEMBERS
+                || currentDisplay.getType() == DisplayRequest.Type.MEMBER_DETAILS ? "member list" : "equipment list");
+    }
+
+    /**
+     * Returns correction focus only after Space's typed event has finished on its originating control.
+     */
     private void handleActivationRelease(KeyEvent event) {
         if (event.getCode() == KeyCode.SPACE) {
             spacePressed = false;
@@ -311,7 +384,9 @@ public class MainWindow extends UiPart<Stage> {
         }
     }
 
-    /** Routes explicit UI activation through exactly the same pipeline as command input. */
+    /**
+     * Routes explicit UI activation through exactly the same pipeline as command input.
+     */
     private void activate(String commandText) {
         try {
             executeCommand(commandText);
@@ -329,6 +404,7 @@ public class MainWindow extends UiPart<Stage> {
     private CommandResult executeCommand(String commandText) throws CommandException, ParseException {
         try {
             CommandResult result = logic.execute(commandText);
+            applyAppearance();
             resultDisplay.setFeedbackToUser(result.getFeedbackToUser());
             refreshViews();
             if (result.isShowHelp()) {
@@ -347,16 +423,18 @@ public class MainWindow extends UiPart<Stage> {
         }
     }
 
-    /** Keeps saved geometry usable on the current screens, while choosing a wider first-run shell. */
+    /**
+     * Keeps saved geometry usable on the current screens, while choosing a wider first-run shell.
+     */
     private void setWindowDefaultSize(GuiSettings settings) {
         Rectangle2D bounds = Screen.getScreens().stream()
                 .filter(screen -> settings.getWindowCoordinates() != null
                         && screen.getVisualBounds().contains(settings.getWindowCoordinates().getX(),
                                 settings.getWindowCoordinates().getY()))
                 .findFirst().orElse(Screen.getPrimary()).getVisualBounds();
-        boolean firstRun = settings.equals(new GuiSettings());
-        double width = Math.min(bounds.getWidth(), Math.max(760, firstRun ? 1100 : settings.getWindowWidth()));
-        double height = Math.min(bounds.getHeight(), Math.max(500, firstRun ? 700 : settings.getWindowHeight()));
+        boolean isFirstRun = settings.withDarkMode(false).equals(new GuiSettings());
+        double width = Math.min(bounds.getWidth(), Math.max(760, isFirstRun ? 1100 : settings.getWindowWidth()));
+        double height = Math.min(bounds.getHeight(), Math.max(500, isFirstRun ? 700 : settings.getWindowHeight()));
         primaryStage.setMinWidth(Math.min(760, bounds.getWidth()));
         primaryStage.setMinHeight(Math.min(500, bounds.getHeight()));
         primaryStage.setWidth(width);
@@ -369,7 +447,31 @@ public class MainWindow extends UiPart<Stage> {
         }
     }
 
-    /** Opens help or brings its existing window to the front. */
+    /**
+     * Applies the same palette to the shell and its separate help window.
+     */
+    private void applyAppearance() {
+        boolean isDark = logic.getGuiSettings().isDarkMode();
+        for (Stage stage : List.of(primaryStage, helpWindow.getRoot())) {
+            stage.getScene().getRoot().getStyleClass().remove("dark");
+            if (isDark) {
+                stage.getScene().getRoot().getStyleClass().add("dark");
+            }
+        }
+        modeButton.setText(isDark ? "Light mode" : "Dark mode");
+    }
+
+    /**
+     * Switches between the two persisted appearances. The button names the mode it will apply.
+     */
+    @FXML
+    private void handleToggleMode() {
+        activate(logic.getGuiSettings().isDarkMode() ? "mode light" : "mode dark");
+    }
+
+    /**
+     * Opens help or brings its existing window to the front.
+     */
     @FXML
     public void handleHelp() {
         if (helpWindow.isShowing()) {
@@ -384,16 +486,21 @@ public class MainWindow extends UiPart<Stage> {
         directory.setDividerPositions(0.28);
     }
 
-    /** Saves window preferences and closes the shell and its owned help window. */
+    /**
+     * Saves window preferences and closes the shell and its owned help window.
+     */
     @FXML
     private void handleExit() {
         logic.setGuiSettings(new GuiSettings(primaryStage.getWidth(), primaryStage.getHeight(),
-                (int) primaryStage.getX(), (int) primaryStage.getY()));
+                (int) primaryStage.getX(), (int) primaryStage.getY())
+                .withDarkMode(logic.getGuiSettings().isDarkMode()));
         dispose();
         primaryStage.hide();
     }
 
-    /** Detaches subscriptions and handlers; queued refreshes become harmless after shutdown. */
+    /**
+     * Detaches subscriptions and handlers; queued refreshes become harmless after shutdown.
+     */
     public void dispose() {
         if (disposed) {
             return;

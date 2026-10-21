@@ -16,6 +16,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.AvailabilityCalculator;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.equipment.exceptions.EquipmentNotFoundException;
 import seedu.address.model.loan.Loan;
@@ -188,6 +189,11 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public void addLoans(List<Loan> loans) {
+        addressBook.addLoans(loans);
+    }
+
+    @Override
     public Optional<Loan> findOpenLoan(UUID equipmentUuid) {
         return addressBook.findOpenLoan(equipmentUuid);
     }
@@ -200,6 +206,11 @@ public class ModelManager implements Model {
     @Override
     public void closeLoan(UUID equipmentUuid, LocalDate returnedDate) {
         addressBook.closeLoan(equipmentUuid, returnedDate);
+    }
+
+    @Override
+    public void returnLoans(List<UUID> equipmentUuids, LocalDate returnedDate, Condition returnCondition) {
+        addressBook.returnLoans(equipmentUuids, returnedDate, returnCondition);
     }
 
     @Override

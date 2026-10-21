@@ -18,6 +18,7 @@ public class GuiSettings implements Serializable {
     private final double windowWidth;
     private final double windowHeight;
     private final Point windowCoordinates;
+    private final boolean darkMode;
 
     /**
      * Constructs a {@code GuiSettings} with the default height, width and position.
@@ -25,16 +26,34 @@ public class GuiSettings implements Serializable {
     public GuiSettings() {
         windowWidth = DEFAULT_WIDTH;
         windowHeight = DEFAULT_HEIGHT;
-        windowCoordinates = null; // null represent no coordinates
+        windowCoordinates = null; // null represents no saved coordinates
+        darkMode = false;
     }
 
     /**
      * Constructs a {@code GuiSettings} with the specified height, width and position.
      */
     public GuiSettings(double windowWidth, double windowHeight, int xPosition, int yPosition) {
+        this(windowWidth, windowHeight, new Point(xPosition, yPosition), false);
+    }
+
+    private GuiSettings(double windowWidth, double windowHeight, Point coordinates, boolean darkMode) {
         this.windowWidth = windowWidth;
         this.windowHeight = windowHeight;
-        windowCoordinates = new Point(xPosition, yPosition);
+        windowCoordinates = coordinates == null ? null : new Point(coordinates);
+        this.darkMode = darkMode;
+    }
+
+    /**
+     * Returns updated appearance settings, preserving geometry and defensive coordinate copying.
+     * Older preference files without this setting retain the default light appearance.
+     */
+    public GuiSettings withDarkMode(boolean darkMode) {
+        return new GuiSettings(windowWidth, windowHeight, windowCoordinates, darkMode);
+    }
+
+    public boolean isDarkMode() {
+        return darkMode;
     }
 
     public double getWindowWidth() {
@@ -60,14 +79,15 @@ public class GuiSettings implements Serializable {
             return false;
         }
 
-        return windowWidth == otherGuiSettings.windowWidth
+        return darkMode == otherGuiSettings.darkMode
+                && windowWidth == otherGuiSettings.windowWidth
                 && windowHeight == otherGuiSettings.windowHeight
                 && Objects.equals(windowCoordinates, otherGuiSettings.windowCoordinates);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(windowWidth, windowHeight, windowCoordinates);
+        return Objects.hash(windowWidth, windowHeight, windowCoordinates, darkMode);
     }
 
     @Override
@@ -76,6 +96,7 @@ public class GuiSettings implements Serializable {
                 .add("windowWidth", windowWidth)
                 .add("windowHeight", windowHeight)
                 .add("windowCoordinates", windowCoordinates)
+                .add("darkMode", darkMode)
                 .toString();
     }
 }
