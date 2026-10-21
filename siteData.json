@@ -52,6 +52,7 @@
         "storage-component": "Storage component",
         "common-classes": "Common classes",
         "implementation": "Implementation",
+        "adding-multiple-physical-equipment-units": "Adding multiple physical equipment units",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
@@ -64,6 +65,7 @@
         "appendix-instructions-for-manual-testing": "Appendix: Instructions for manual testing",
         "launch-and-shutdown": "Launch and shutdown",
         "rejection-of-retired-commands": "Rejection of retired commands",
+        "adding-a-batch-of-equipment": "Adding a batch of equipment",
         "saving-data": "Saving data"
       },
       "headingKeywords": {}
