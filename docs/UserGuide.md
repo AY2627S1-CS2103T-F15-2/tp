@@ -13,8 +13,9 @@ Type commands to register records, find an exact member or item, issue equipment
 remove erroneous records. Lists and details show who holds each item and what each member holds.
 
 This guide describes **seventeen member, equipment and loan commands**, including member and equipment
-editing/restoration, batch equipment registration and search: seven member commands, seven equipment
-commands and three loan commands. Use it with the matching release supplied by the team;
+editing/restoration, batch equipment registration and search, with Tab autocomplete throughout:
+seven member commands, seven equipment commands and three loan commands.
+Use it with the matching release supplied by the team;
 earlier builds may not support every behavior described here. Laplace is a local, single-user application.
 
 <page-nav-print />
@@ -40,6 +41,40 @@ Command text uses [IBM Plex Mono](https://github.com/IBM/plex), distributed unde
 Your rows, counts and selected record depend on your data. Both light and dark appearance are supported.
 If startup fails, check the JAR filename and Java version and keep the terminal error for the team.
 Do not delete your data file to troubleshoot startup.
+
+### Completing commands and fields with Tab
+
+Type part of a command in the command box and press **Tab** to complete it. For example,
+`mem` becomes `member`, `member ad` becomes `member add`, and `member add na` becomes
+`member add name/`. Member editing is supported too: `member ed` becomes `member edit`, with
+`nus/`, `name/`, `phone/` and `email/` field and value suggestions. Member names always come from the
+member directory, including during edits. Press Space yourself to begin the next word or field.
+
+When several suggestions match, press Tab repeatedly to cycle through them in alphabetical order.
+During that cycle, **Shift+Tab** selects the previous suggestion. Editing the input, moving the caret,
+submitting a command, leaving the input, or changing the records starts a fresh cycle.
+
+Laplace also completes existing field values: member names, phone numbers and emails; member IDs in
+reference fields; equipment UUIDs, names and categories; and the four equipment conditions. For example,
+`equipment add condition/g` completes to `equipment add condition/GOOD`. Values match without regard
+to case and retain their stored spelling. Suggestions use the current records, including records added
+since startup. Identical values appear once.
+
+Command words and field prefixes are case-sensitive. Field suggestions depend on the command and omit
+non-repeatable prefixes already present. All seventeen member, equipment and loan commands plus `help`,
+`exit`, `mode dark` and `mode light` have command completion. Search supports `q/`, the applicable filters, sorting and ordering;
+finite options such as `status/de` complete to `status/DELETED`. Query text can reuse searchable stored
+values. Equipment editing and both restoration commands support their fields and existing references.
+Batch equipment creation includes `count/`; batch loan UUID completion fills the active comma-separated
+entry, preserves the others and excludes UUIDs already listed. Return conditions are supported too.
+New member IDs, dates, numeric counts and free-form notes remain manual. Completion does not guarantee that a command
+can execute: ordinary validation still runs when you press Enter.
+
+Tab changes only the active token or field value and preserves later fields and their separators,
+including Unicode spaces copied into the input. It never executes a command or saves records. Press **Enter** to submit the completed input. With blank input, selected text, an
+unsupported context, at the start of an existing field marker, or with no matching suggestion,
+normal Tab navigation remains available. An untouched following marker and its value are preserved. Shift+Tab also
+keeps its normal navigation behavior outside an active completion cycle.
 
 ### Sample records on first launch
 
@@ -106,8 +141,8 @@ To explore without changing the sample records:
   **Details** expands the complete feedback and **Copy** includes all UUIDs from batch creation.
 - The command input, identifiers and command examples use IBM Plex Mono. **↑/↓** browse up to 100 recent submissions in this session,
   preserving an unfinished draft. **Ctrl+Space** offers command-name or parameter-prefix completion at
-  the end of the input. Choose an entry to insert it; **Escape** dismisses suggestions. Tab retains normal
-  keyboard focus navigation. History is cleared when the application closes.
+  the end of the input. Choose an entry to insert it; **Escape** dismisses suggestions. Tab completes the
+  active token or value as described above; with no applicable suggestion it retains normal focus navigation. History is cleared when the application closes.
 - **F1** or `help` opens a scrollable command reference with copyable templates and the user-guide link.
 - Drag the directory divider to resize its panels. Scroll long lists/details vertically; the data filename
   appears in the footer, with the full path available on hover.

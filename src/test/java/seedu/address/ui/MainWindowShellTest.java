@@ -112,6 +112,181 @@ public class MainWindowShellTest {
     }
 
     @Test
+    public void autocomplete_keyboardSession_preservesDataAndExecutesOnlyOnEnter() throws IOException {
+        Path transcript = Path.of("build", "reports", "laplace", "autocomplete-keyboard-session.txt");
+        try {
+            FxTestUtil.runAndWait(() -> {
+                session.add("Mounted JavaFX shell, real LogicManager/ModelManager/JSON storage. Java 25.");
+                String[][] examples = {
+                    {"mo", "mode"}, {"mode da", "mode dark"}, {"mode li", "mode light"},
+                    {"mem", "member"}, {"member ad", "member add"}, {"member ed", "member edit"},
+                    {"member edit na", "member edit name/"},
+                    {"member edit name/al", "member edit name/Alex Tan"},
+                    {"member edit phone/91", "member edit phone/91234567"},
+                    {"member edit email/member1", "member edit email/member1@example.com"},
+                    {"member edit nus/a0000001", "member edit nus/A0000001X"},
+                    {"member add na", "member add name/"}, {"member add name/al", "member add name/Alex Tan"},
+                    {"member add phone/91", "member add phone/91234567"},
+                    {"member add email/member1", "member add email/member1@example.com"},
+                    {"equipment add name/cam", "equipment add name/Camera 1"},
+                    {"equipment add category/pho", "equipment add category/Photography"},
+                    {"equipment add condition/g", "equipment add condition/GOOD"},
+                    {"member view nus/A000000", "member view nus/A0000001X"},
+                    {"equipment view uuid/00000000-0000-0000-0000-000000000001",
+                        "equipment view uuid/00000000-0000-0000-0000-000000000001"},
+                    {"member add unknown/value", "member add unknown/value"},
+                    {"member res", "member restore"},
+                    {"member restore n", "member restore nus/"},
+                    {"member se", "member search"},
+                    {"member search holding/y", "member search holding/YES"},
+                    {"member search sort/he", "member search sort/HELD"},
+                    {"equipment ed", "equipment edit"},
+                    {"equipment edit co", "equipment edit condition/"},
+                    {"equipment res", "equipment restore"},
+                    {"equipment restore u", "equipment restore uuid/"},
+                    {"equipment search av", "equipment search availability/"},
+                    {"equipment search availability/av", "equipment search availability/AVAILABLE"},
+                    {"equipment search status/de", "equipment search status/DELETED"},
+                    {"equipment search order/de", "equipment search order/desc"},
+                    {"equipment add cou", "equipment add count/"},
+                    {"loans return co", "loans return condition/"},
+                    {"loans return condition/fa", "loans return condition/FAIR"},
+                    {"loans add uuid/00000000-0000-0000-0000-000000000001,00000000",
+                        "loans add uuid/00000000-0000-0000-0000-000000000001,"
+                            + "00000000-0000-0000-0000-000000000002"},
+                    {"loans return uuid/00000000-0000-0000-0000-000000000001,  ",
+                        "loans return uuid/00000000-0000-0000-0000-000000000001,  "
+                            + "00000000-0000-0000-0000-000000000002"},
+                    {"member add nus/A", "member add nus/A"},
+                    {"loans add assigned/2026", "loans add assigned/2026"}
+                };
+                for (String[] example : examples) {
+                    field().requestFocus();
+                    field().setText(example[0]);
+                    field().positionCaret(example[0].length());
+                    completeKey(false, example[1]);
+                }
+                field().setText("member ");
+                field().positionCaret(field().getLength());
+                completeKey(false, "member add");
+                completeKey(false, "member delete");
+                completeKey(true, "member add");
+                field().setText("member add name/alex xx   phone/91234567");
+                field().positionCaret("member add name/alex".length());
+                completeKey(false, "member add name/Alex Tan   phone/91234567");
+                for (String separator : List.of("\u2003", "\u00a0", "\u202f", "\u3000")) {
+                    String input = "member edit name/Alex" + separator + "phone/91234567"
+                            + separator + "email/member1@example.com";
+                    String expected = input.replace("name/Alex", "name/Alex Tan");
+                    session.add(String.format("FIELD SEPARATOR: U+%04X", (int) separator.charAt(0)));
+                    field().requestFocus();
+                    field().setText(input);
+                    field().positionCaret(input.indexOf("Alex") + 4);
+                    completeKey(false, expected);
+                    assertEquals("member edit name/Alex Tan".length(), field().getCaretPosition());
+                    completeKey(true, expected);
+                    field().positionCaret(expected.indexOf("phone/"));
+                    completeKey(false, expected);
+                }
+                String untouched = "member add name/Alex phone/91234567";
+                field().setText(untouched);
+                field().positionCaret(untouched.indexOf("phone/"));
+                completeKey(false, untouched);
+                assertTrue(logic.commands.isEmpty());
+                assertEquals(0, storage.saves);
+                assertFalse(Files.exists(storage.getAddressBookFilePath()));
+
+                field().setText("member view nus/A0000001");
+                field().positionCaret(field().getLength());
+                completeKey(false, "member view nus/A0000001X");
+                field().fireEvent(key(KeyCode.ENTER));
+                assertEquals(List.of("member view nus/A0000001X"), logic.commands);
+                assertEquals("", field().getText());
+                assertEquals(1, storage.saves);
+                recordOutcome("member view nus/A0000001X [Enter]");
+                reject("member view nus/invalid");
+                succeed("member list");
+                field().setText("member ed");
+                field().positionCaret(field().getLength());
+                completeKey(false, "member edit");
+                field().appendText(" nus/A0000001X name/ja");
+                field().positionCaret(field().getLength());
+                completeKey(false, "member edit nus/A0000001X name/Jamie Lim");
+                int saves = storage.saves;
+                field().fireEvent(key(KeyCode.ENTER));
+                assertEquals("", field().getText());
+                assertEquals("Success", feedbackStatus());
+                assertEquals(saves + 1, storage.saves);
+                assertEquals("Jamie Lim", model.findMember(id(1)).orElseThrow().getName().fullName);
+                recordOutcome("member edit nus/A0000001X name/Jamie Lim [Enter]");
+                completeAndSubmit("mode da", "mode dark");
+                assertTrue(model.getGuiSettings().isDarkMode());
+                completeAndSubmit("mode li", "mode light");
+                assertFalse(model.getGuiSettings().isDarkMode());
+                completeAndSubmit("member search holding/n", "member search holding/NO");
+                completeAndSubmit("equipment edit uuid/" + new UUID(0, 2) + " condition/fa",
+                        "equipment edit uuid/" + new UUID(0, 2) + " condition/FAIR");
+                int count = model.getEquipmentList().size();
+                completeAndSubmit("equipment add name/Batch Camera category/Photo count/2 condition/g",
+                        "equipment add name/Batch Camera category/Photo count/2 condition/GOOD");
+                assertEquals(count + 2, model.getEquipmentList().size());
+                String assignment = "loans add uuid/" + new UUID(0, 2)
+                        + " assigned/2026-01-01 expected/2026-01-02 nus/";
+                completeAndSubmit(assignment + "a0000001", assignment + "A0000001X");
+                String returns = "loans return uuid/" + new UUID(0, 1) + "," + new UUID(0, 2)
+                        + " returned/2026-01-02 condition/";
+                completeAndSubmit(returns + "g", returns + "GOOD");
+                assertTrue(model.findOpenLoan(new UUID(0, 1)).isEmpty());
+                assertTrue(model.findOpenLoan(new UUID(0, 2)).isEmpty());
+                succeed("equipment delete uuid/" + new UUID(0, 2));
+                completeAndSubmit("equipment restore uuid/00000000-0000-0000-0000-000000000002",
+                        "equipment restore uuid/00000000-0000-0000-0000-000000000002");
+                assertFalse(model.findEquipment(new UUID(0, 2)).orElseThrow().isDeleted());
+                succeed("member delete nus/" + id(3));
+                completeAndSubmit("member restore nus/a0000003", "member restore nus/A0000003X");
+                assertFalse(model.findMember(id(3)).orElseThrow().isDeleted());
+                assertEquals(model.getAddressBook(), assertDoesNotThrow(() -> storage.readAddressBook()).orElseThrow());
+                session.add("PASS: search, batch registration, loan return and restoration persisted/reloaded.");
+            });
+        } catch (AssertionError failure) {
+            session.add("FAIL: " + failure.getMessage());
+            throw failure;
+        } finally {
+            Files.createDirectories(transcript.getParent());
+            Files.write(transcript, session);
+        }
+    }
+
+    /** Submits the completed text through JavaFX Enter and records the parser/storage outcome. */
+    private void completeAndSubmit(String input, String expected) {
+        field().requestFocus();
+        field().setText(input);
+        field().positionCaret(input.length());
+        completeKey(false, expected);
+        field().fireEvent(key(KeyCode.ENTER));
+        assertEquals("", field().getText());
+        assertEquals("Success", feedbackStatus());
+        recordOutcome(expected + " [Enter]");
+    }
+
+    /** Records a Tab event and checks text, dispatch/save counts, and all model collections. */
+    private void completeKey(boolean reverse, String expected) {
+        AddressBook before = new AddressBook(model.getAddressBook());
+        int commands = logic.commands.size();
+        int saves = storage.saves;
+        session.add("INPUT: " + field().getText() + " [" + (reverse ? "Shift+Tab" : "Tab") + "]");
+        field().fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.TAB, reverse, false, false, false));
+        field().fireEvent(new KeyEvent(KeyEvent.KEY_RELEASED, "", "", KeyCode.TAB, reverse, false, false, false));
+        session.add("EXPECTED: " + expected);
+        session.add("ACTUAL: " + field().getText());
+        assertEquals(expected, field().getText());
+        assertEquals(commands, logic.commands.size());
+        assertEquals(saves, storage.saves);
+        assertEquals(before, model.getAddressBook());
+        session.add("CHECK: no command execution, save, or model mutation.");
+    }
+
+    @Test
     public void contextActions_prepareCommandsAndFollowIdentityWhileResetIsExplicit() {
         FxTestUtil.runAndWait(() -> {
             submit("member search q/alex");

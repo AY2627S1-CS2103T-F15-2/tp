@@ -1,0 +1,127 @@
+Production code source: /Users/keith/Desktop/CS2103T/tp/build/libs/Laplace.jar
+INPUT: mo [Tab]
+EXPECTED: mode
+ACTUAL: mode
+INPUT: mode da [Tab]
+EXPECTED: mode dark
+ACTUAL: mode dark
+INPUT: mode li [Tab]
+EXPECTED: mode light
+ACTUAL: mode light
+INPUT: mem [Tab]
+EXPECTED: member
+ACTUAL: member
+INPUT: member ad [Tab]
+EXPECTED: member add
+ACTUAL: member add
+INPUT: member add na [Tab]
+EXPECTED: member add name/
+ACTUAL: member add name/
+INPUT: member add name/al [Tab]
+EXPECTED: member add name/Alex Tan
+ACTUAL: member add name/Alex Tan
+INPUT: member ed [Tab]
+EXPECTED: member edit
+ACTUAL: member edit
+INPUT: member edit na [Tab]
+EXPECTED: member edit name/
+ACTUAL: member edit name/
+INPUT: member edit name/al [Tab]
+EXPECTED: member edit name/Alex Tan
+ACTUAL: member edit name/Alex Tan
+INPUT: member edit nus/a012 [Tab]
+EXPECTED: member edit nus/A0123456X
+ACTUAL: member edit nus/A0123456X
+INPUT: member edit phone/91 [Tab]
+EXPECTED: member edit phone/91234567
+ACTUAL: member edit phone/91234567
+INPUT: member edit email/alex [Tab]
+EXPECTED: member edit email/alex@example.com
+ACTUAL: member edit email/alex@example.com
+INPUT: equipment add category/pho [Tab]
+EXPECTED: equipment add category/Photography
+ACTUAL: equipment add category/Photography
+INPUT: equipment add condition/g [Tab]
+EXPECTED: equipment add condition/GOOD
+ACTUAL: equipment add condition/GOOD
+INPUT: member res [Tab]
+EXPECTED: member restore
+ACTUAL: member restore
+INPUT: member restore n [Tab]
+EXPECTED: member restore nus/
+ACTUAL: member restore nus/
+INPUT: member se [Tab]
+EXPECTED: member search
+ACTUAL: member search
+INPUT: member search holding/y [Tab]
+EXPECTED: member search holding/YES
+ACTUAL: member search holding/YES
+INPUT: member search sort/he [Tab]
+EXPECTED: member search sort/HELD
+ACTUAL: member search sort/HELD
+INPUT: equipment ed [Tab]
+EXPECTED: equipment edit
+ACTUAL: equipment edit
+INPUT: equipment edit co [Tab]
+EXPECTED: equipment edit condition/
+ACTUAL: equipment edit condition/
+INPUT: equipment res [Tab]
+EXPECTED: equipment restore
+ACTUAL: equipment restore
+INPUT: equipment restore u [Tab]
+EXPECTED: equipment restore uuid/
+ACTUAL: equipment restore uuid/
+INPUT: equipment search av [Tab]
+EXPECTED: equipment search availability/
+ACTUAL: equipment search availability/
+INPUT: equipment search availability/av [Tab]
+EXPECTED: equipment search availability/AVAILABLE
+ACTUAL: equipment search availability/AVAILABLE
+INPUT: equipment search status/de [Tab]
+EXPECTED: equipment search status/DELETED
+ACTUAL: equipment search status/DELETED
+INPUT: equipment search order/de [Tab]
+EXPECTED: equipment search order/desc
+ACTUAL: equipment search order/desc
+INPUT: equipment add cou [Tab]
+EXPECTED: equipment add count/
+ACTUAL: equipment add count/
+INPUT: loans return co [Tab]
+EXPECTED: loans return condition/
+ACTUAL: loans return condition/
+INPUT: loans return condition/fa [Tab]
+EXPECTED: loans return condition/FAIR
+ACTUAL: loans return condition/FAIR
+INPUT: loans add uuid/00000000-0000-0000-0000-000000000001,00000000 [Tab]
+EXPECTED: loans add uuid/00000000-0000-0000-0000-000000000001,00000000-0000-0000-0000-000000000002
+ACTUAL: loans add uuid/00000000-0000-0000-0000-000000000001,00000000-0000-0000-0000-000000000002
+INPUT: loans return uuid/00000000-0000-0000-0000-000000000001,   [Tab]
+EXPECTED: loans return uuid/00000000-0000-0000-0000-000000000001,  00000000-0000-0000-0000-000000000002
+ACTUAL: loans return uuid/00000000-0000-0000-0000-000000000001,  00000000-0000-0000-0000-000000000002
+INPUT: member add nus/A [Tab]
+EXPECTED: member add nus/A
+ACTUAL: member add nus/A
+FIELD SEPARATOR: U+2003
+INPUT: member edit name/Alex phone/91234567 email/alex@example.com [Tab after Alex]
+EXPECTED: member edit name/Alex Tan phone/91234567 email/alex@example.com
+ACTUAL: member edit name/Alex Tan phone/91234567 email/alex@example.com
+FIELD SEPARATOR: U+00A0
+INPUT: member edit name/Alex phone/91234567 email/alex@example.com [Tab after Alex]
+EXPECTED: member edit name/Alex Tan phone/91234567 email/alex@example.com
+ACTUAL: member edit name/Alex Tan phone/91234567 email/alex@example.com
+FIELD SEPARATOR: U+202F
+INPUT: member edit name/Alex phone/91234567 email/alex@example.com [Tab after Alex]
+EXPECTED: member edit name/Alex Tan phone/91234567 email/alex@example.com
+ACTUAL: member edit name/Alex Tan phone/91234567 email/alex@example.com
+FIELD SEPARATOR: U+3000
+INPUT: member edit name/Alex　phone/91234567　email/alex@example.com [Tab after Alex]
+EXPECTED: member edit name/Alex Tan　phone/91234567　email/alex@example.com
+ACTUAL: member edit name/Alex Tan　phone/91234567　email/alex@example.com
+BOUNDARY: member add name/Alex |phone/91234567 [Tab]
+EXPECTED: member add name/Alex phone/91234567
+ACTUAL: member add name/Alex phone/91234567
+CYCLE: member add -> member delete -> [Shift+Tab] member add
+ENTER: member view nus/A0123456X; commands=1, saves=1, input cleared.
+ENTER: member edit nus/A0123456X phone/98765432; commands=2, saves=2, input cleared.
+RELOAD: JSON matches the live model after completed edit.
+PASS: packaged JAR keyboard session.

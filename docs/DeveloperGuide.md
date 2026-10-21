@@ -115,6 +115,18 @@ The feedback heading displays only Last result; the box carries neutral/success/
 text contains the status plus the entire message. Ready command previews say `Press Enter to execute (ready)`;
 templates say `Replace uppercase placeholders (template)`. Copy and Use command still never execute a command.
 
+### Tab completion
+
+`MainWindow` supplies the live read-only address book to `CommandBox`. `CompletionService` computes
+replacement ranges and ordered candidates without calling logic, history or storage. Command constants
+and shared search prefix constants define all accepted routes and fields. Search enum options follow
+`DirectoryQuery`; dates, numeric counts, new member IDs and free-form notes are entered manually.
+Batch loan completion replaces only the active UUID entry and excludes neighboring identities.
+`CompletionController` owns cycling and resets after input, caret, focus or model changes. Enter retains
+the ordinary parser and transactional command path. Tests compare family completion to parser routes,
+exercise real JavaFX events, and load production classes from the packaged JAR. Gradle enforces 100%
+instruction, line and branch coverage for the feature, including its UI wiring. See [Testing](Testing.md).
+
 ### Logic component
 
 **API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/logic/Logic.java)
@@ -861,6 +873,26 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
    in each appearance. Exit normally and relaunch; the selected mode persists. `mode sepia` is rejected.
 8. Review at 1920×1080 with 100%/125% scaling and 1280×720 with 150% scaling on supported systems.
    Check wrapping, scrolling, visible focus and contrast. Logical-size snapshots alone do not verify OS scaling.
+
+### Tab completion across current commands
+
+1. In a disposable dataset, type `mem` and press Tab. Expected: `member`, with the caret at its end.
+   Add a space and cycle with Tab, then Shift+Tab. Expected: alphabetical subcommands and reverse cycling.
+2. Try `member restore n`, `equipment edit co`, `equipment add cou`, and `loans return co`, pressing
+   Tab after each. Expected: `nus/`, `condition/`, `count/`, and `condition/` respectively.
+3. Try `member search holding/y`, `equipment search availability/av` and `equipment search order/de`.
+   Expected: `YES`, `AVAILABLE` and `desc`. Enter the completed search; check the filtered directory.
+4. In `loans return uuid/FIRST_UUID,  PARTIAL_SECOND_UUID returned/DATE`, position the caret after the
+   partial UUID and press Tab. Expected: only that UUID is replaced; the first UUID, spacing and return
+   date remain intact. Candidates omit UUIDs already present. Repeat with a space after the comma.
+5. Repeat a name completion with an em space (`U+2003`) or nonbreaking space (`U+00A0`) before the
+   following `phone/` field. Expected: the phone field and original separator remain, with the caret
+   immediately after the completed name. Check the same behavior in a comma-separated UUID list.
+6. Check an untouched following field, no matching input, selected text and Shift+Tab outside a cycle.
+   Expected: surrounding input remains intact and ordinary focus traversal remains available.
+7. Add or edit a record, then retry completion. Expected: current values are suggested. Tab alone never
+   changes records or saves; Enter uses normal parser validation. Restart after a valid mutation and
+   verify the saved records. New IDs, dates, numeric counts and notes remain manually entered.
 
 ### Rejection of retired commands
 

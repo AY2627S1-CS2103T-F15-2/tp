@@ -29,6 +29,43 @@ You can run tests in two ways.
 
 --------------------------------------------------------------------------------------------------------------------
 
+## Autocomplete checks
+
+Use Java 25 and run `./gradlew test check coverage shadowJar`. The `check` task enforces 100% line,
+instruction and branch coverage for all completion classes, the complete `CommandBox`, and the shell's
+modified mounting method. Missing classes, methods, reports or line counters fail the verification.
+Straight-line code has no branch counter in JaCoCo; no executable feature code is excluded.
+
+`CompletionServiceTest` checks command vocabulary, prefix/value contexts, multiword replacement,
+invalid input and current model data. A parser-route contract test checks every accepted family subcommand.
+Search option suggestions are parsed by the actual command parser; tests cover lifecycle fields, batch
+UUID neighbors and duplicates, searchable values and member-only name suggestions. Direct service, JavaFX
+input and packaged-JAR regressions verify that Tab at the start of an existing field marker leaves its
+marker and value unchanged. Unicode field-separator regressions cover em spaces, nonbreaking spaces,
+narrow nonbreaking spaces, next-line characters, ideographic spaces and tabs. They preserve later fields,
+partial prefixes and batch UUID neighbors, including duplicate suppression. Mounted and packaged keyboard
+sessions check Unicode separators and caret placement without executing or saving on Tab.
+`CompletionControllerTest` dispatches JavaFX key events and checks
+cycling, modifier keys, selections and focus traversal. Its focus-field test double also drives JavaFX's
+protected focus setter because macOS foreground activation is not deterministic in a test runner.
+
+The mounted-shell test `MainWindowShellTest.autocomplete_keyboardSession_preservesDataAndExecutesOnlyOnEnter`
+runs sequentially and stops at the first mismatch. It records expected and actual input text, then checks
+dispatch counts, successful saves and every model collection after each Tab press. It also submits a
+completed command, rejects an invalid input and verifies that a later valid command still succeeds.
+The transcript is `build/reports/laplace/autocomplete-keyboard-session.txt`; the coverage report is
+`build/reports/jacoco/coverage/html/index.html`.
+
+`check` also runs `verifyPackagedAutocomplete` in a separate JVM and a disposable directory. The probe
+verifies the production code source is `build/libs/Laplace.jar`, then drives its mounted shell with
+JavaFX keyboard events. Matching native JavaFX dependencies precede the distributable JAR on the smoke
+test classpath. Test output contains helpers only, with no unpackaged production classes. Results are
+recorded in `build/reports/laplace/packaged-autocomplete-session.txt`.
+
+Reviewable local evidence is recorded in [AutocompleteVerification.txt](gui/AutocompleteVerification.txt),
+[AutocompleteKeyboardSession.txt](gui/AutocompleteKeyboardSession.txt), and
+[AutocompletePackagedSession.txt](gui/AutocompletePackagedSession.txt).
+
 ## Types of tests
 
 This project has three types of tests:
