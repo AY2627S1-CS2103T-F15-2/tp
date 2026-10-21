@@ -38,21 +38,22 @@ public class ResultDisplay extends UiPart<Region> {
     }
 
     /**
-     * Shows success or failure with both a textual status and a distinct background.
+     * Shows success or failure with a visible status and a distinct background.
      */
-    public void setFeedbackToUser(String feedbackToUser, boolean error) {
+    public void setFeedbackToUser(String feedbackToUser, boolean isError) {
         requireNonNull(feedbackToUser);
         getRoot().getStyleClass().removeAll("laplace-success", "laplace-error", "laplace-neutral");
-        getRoot().getStyleClass().add(error ? "laplace-error" : "laplace-success");
-        feedbackStatus.setText(error ? "Error" : "Success");
+        getRoot().getStyleClass().add(isError ? "laplace-error" : "laplace-success");
+        feedbackStatus.setText(isError ? "Error" : "Success");
+        resultDisplay.setAccessibleText(feedbackStatus.getText() + ": " + feedbackToUser);
         resultDisplay.setText(feedbackToUser);
         resultDisplay.setPrefHeight(38);
         Button expand = new Button("Details");
         expand.setAccessibleText("Expand or collapse the complete command result");
         expand.setOnAction(event -> {
-            boolean expanded = resultDisplay.getPrefHeight() > 38;
-            resultDisplay.setPrefHeight(expanded ? 38 : 130);
-            expand.setText(expanded ? "Details" : "Collapse");
+            boolean isExpanded = resultDisplay.getPrefHeight() > 38;
+            resultDisplay.setPrefHeight(isExpanded ? 38 : 130);
+            expand.setText(isExpanded ? "Details" : "Collapse");
         });
         feedbackActions.getChildren().setAll(expand, CommandPreview.copyButton("Copy", feedbackToUser));
     }
@@ -63,6 +64,7 @@ public class ResultDisplay extends UiPart<Region> {
     public void setReady(String message) {
         setFeedbackToUser(message);
         feedbackStatus.setText("Ready");
+        resultDisplay.setAccessibleText("Ready: " + message);
         getRoot().getStyleClass().remove("laplace-success");
         getRoot().getStyleClass().add("laplace-neutral");
     }

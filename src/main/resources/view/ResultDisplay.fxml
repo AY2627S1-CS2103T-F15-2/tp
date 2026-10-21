@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<HBox spacing="10" alignment="CENTER_LEFT" styleClass="laplace-feedback,laplace-neutral"
+<VBox spacing="4" styleClass="laplace-feedback,laplace-neutral"
       xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-  <VBox spacing="2" minWidth="-Infinity">
+  <HBox spacing="8" alignment="CENTER_LEFT">
     <Label text="Last result" styleClass="laplace-muted" />
-    <Label fx:id="feedbackStatus" text="Ready" minWidth="55" />
-  </VBox>
-  <TextArea fx:id="resultDisplay" editable="false" wrapText="true" HBox.hgrow="ALWAYS" prefHeight="38"
-            minHeight="0" minWidth="0" accessibleText="Last command result" />
-  <HBox fx:id="feedbackActions" spacing="4" minWidth="-Infinity" />
-</HBox>
+    <Label fx:id="feedbackStatus" text="Ready" styleClass="laplace-muted" />
+  </HBox>
+  <HBox spacing="10" alignment="CENTER_LEFT">
+    <TextArea fx:id="resultDisplay" editable="false" wrapText="true" HBox.hgrow="ALWAYS" prefHeight="38"
+              minHeight="0" minWidth="0" accessibleText="Ready" />
+    <HBox fx:id="feedbackActions" spacing="4" minWidth="-Infinity" alignment="CENTER_LEFT" />
+  </HBox>
+</VBox>

@@ -22,12 +22,13 @@ import javafx.util.Duration;
  * Readable plain-text command with explicit copy and prepare actions; never executes a command.
  */
 public class CommandPreview extends VBox {
+    private static final Pattern COMMAND_NAME = Pattern.compile("^(?:(?:member|equipment|loans|mode) \\w+|help|exit)");
     private static final Pattern PREFIX = Pattern.compile("(?<!\\S)[a-z]+/");
 
     /**
      * Creates a wrapping preview, identifying placeholders when this is a command template.
      */
-    public CommandPreview(String command, boolean template, Consumer<String> onUse) {
+    public CommandPreview(String command, boolean isTemplate, Consumer<String> onUse) {
         super(6);
         requireNonNull(command);
         requireNonNull(onUse);
@@ -38,7 +39,7 @@ public class CommandPreview extends VBox {
         code.getStyleClass().add("command-code");
         Matcher matcher = PREFIX.matcher(command);
         int position = 0;
-        Matcher commandName = Pattern.compile("^(?:(?:member|equipment|loans|mode) \\w+|help|exit)").matcher(command);
+        Matcher commandName = COMMAND_NAME.matcher(command);
         if (commandName.find()) {
             Text name = new Text(commandName.group());
             name.getStyleClass().add("command-name");
@@ -57,8 +58,8 @@ public class CommandPreview extends VBox {
         use.setAccessibleText("Prepare command in the command input without executing");
         use.setOnAction(event -> onUse.accept(command));
         FlowPane actions = new FlowPane(8, 6, copyButton("Copy", command), use);
-        Label hint = new Label(template ? "Template — replace uppercase placeholders before pressing Enter."
-                : "Ready to prepare — press Enter in the command box to execute.");
+        Label hint = new Label(isTemplate ? "Replace uppercase placeholders (template)"
+                : "Use command, then press Enter in the command box.");
         hint.setWrapText(true);
         hint.getStyleClass().add("laplace-muted");
         getChildren().addAll(code, actions, hint);
