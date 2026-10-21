@@ -108,6 +108,20 @@ public class MainWindowShellTest {
     }
 
     @Test
+    public void equipmentBatchAdd_resetsSearchAndShowsAllUnitsAfterOneSave() {
+        FxTestUtil.runAndWait(() -> {
+            int originalCount = model.getEquipmentList().size();
+            submit("equipment search q/NoMatchingBatch");
+            assertEquals(0, rows().getItems().size());
+            succeed("equipment add name/Batch Camera category/Photo condition/GOOD count/3");
+            assertEquals(originalCount + 3, rows().getItems().size());
+            assertTrue(button("equipmentNavigation").getStyleClass().contains("laplace-navigation-active"));
+            assertTrue(feedback().startsWith("Added 3 equipment units: Batch Camera"));
+            assertEquals(1, storage.saves);
+        });
+    }
+
+    @Test
     public void search_realCommandInput_filtersSortsRetainsCriteriaAndResetsWithList() {
         FxTestUtil.runAndWait(() -> {
             int saves = storage.saves;

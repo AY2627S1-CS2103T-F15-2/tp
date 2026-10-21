@@ -15,7 +15,9 @@
 
 * Laplace evolves the course-provided [AddressBook-Level3 starter](https://github.com/NUS-CS2103-AY2627-S1/tp).
 * For retirement of the legacy command routes, Arjo Das used OpenAI Codex to assist with planning,
-  implementation, regression tests, and documentation. This acknowledgement describes that change only.
+  implementation, regression tests, and documentation.
+* Arjo Das also used OpenAI Codex for equipment batch-add planning, implementation, tests, and documentation.
+  These acknowledgements describe those changes only.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -172,6 +174,26 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Adding multiple physical equipment units
+
+`EquipmentAddCommandParser` accepts optional `count/` through `LaplaceArgumentParser`, retaining its
+left-to-right validation and duplicate-prefix checks. Counts default to 1 and must be ASCII digits with
+a numeric value from 1 to `EquipmentAddCommand.MAX_COUNT` (100). The command constructor also validates
+the range for direct callers. The cap bounds accidental bulk creation and feedback size.
+
+`EquipmentAddCommand` reserves all identities before inserting units. A local set prevents duplicate
+UUIDs within the batch; `Model.hasEquipment` excludes already-stored UUIDs. Each unit has a bounded
+100-attempt generation budget. The command computes an advisory duplicate-description warning against
+the pre-batch records, then inserts units into the candidate model supplied by `LogicManager`.
+
+The existing transactional path saves that candidate once and publishes only after success. Generation
+failure leaves the candidate untouched; insertion or persistence failure discards the candidate without
+changing live records. No quantity field, batch entity, persistence migration, or new model API is added.
+
+Count 1 preserves existing feedback and `equipmentDetails(uuid)` navigation. Larger batches report all
+new UUIDs and return `DisplayRequest.equipment(DirectoryQuery.all())`, resetting prior filters/sorting
+so the newly created units can be found. Availability remains derived from each unit's condition/loans.
+
 ### \[Proposed\] Undo/redo feature
 
 The following inherited AB3 proposal uses retired person commands as examples. It is not implemented
@@ -308,7 +330,7 @@ These requirements consolidate the [team's project notes](https://docs.google.co
 ### User stories
 
 Priorities: High (must have) — `* * *`; Medium (nice to have) — `* *`; Low (lower-priority candidate) — `*`.
-Priority expresses product importance, not implementation status. **MVP** denotes the Week 6 baseline; **Future** denotes a requirement outside that baseline, without a delivery commitment. US01–US41 retain the numbering of the Week 5 stories; US42–US45 make supporting requirements explicit.
+Priority expresses product importance, not implementation status. **MVP** denotes the Week 6 baseline; **Future** denotes a requirement outside that baseline, without a delivery commitment. **Implemented** marks an addition now available beyond that baseline. US01–US41 retain the numbering of the Week 5 stories; US42–US45 make supporting requirements explicit.
 
 | ID | Priority | Scope | As a … | I want to … | So that I can … |
 |----|----------|-------|--------|-------------|----------------|
@@ -326,7 +348,7 @@ Priority expresses product importance, not implementation status. **MVP** denote
 | US12 | `* *` | Future | busy CCA EXCO member | find members using incomplete queries or approximate names | retrieve the right record quickly even when I do not know the exact identifier. |
 | US13 | `* * *` | MVP | CCA EXCO member adding data | have duplicate NUS IDs rejected with an explanation | avoid conflicting records for the same member. |
 | US14 | `* * *` | MVP | CCA EXCO member | add one equipment item with an automatically generated unique UUID | track each newly acquired physical unit separately. |
-| US15 | `*` | Future | CCA EXCO member receiving a batch | add several units of the same equipment type in one operation | record a delivery without repeating the same entry process. |
+| US15 | `*` | Implemented | CCA EXCO member receiving a batch | add several units of the same equipment type in one operation | record a delivery without repeating the same entry process. |
 | US16 | `* * *` | MVP | CCA EXCO member | list all active equipment and its availability | review the current inventory at a glance. |
 | US17 | `* * *` | MVP | CCA EXCO member | view one equipment item's full details | verify its identity, condition, and recorded information. |
 | US18 | `* *` | Future | CCA EXCO member | edit an equipment record while retaining its UUID | keep item information accurate without breaking loan references. |
@@ -387,15 +409,16 @@ Use case ends.
 
 Names, phone numbers, or email addresses shared by different NUS IDs do not by themselves constitute duplicates.
 
-#### UC02: Register an equipment item
+#### UC02: Register physical equipment units
 
-**Scope:** MVP. **Related stories:** US14, US17, US41, US45.
+**Scope:** Implemented. **Related stories:** US14, US15, US17, US41, US45.
 
 **MSS**
 
-1. The EXCO member provides the item's name, category, condition, and optional notes.
-2. Laplace validates the details and generates a UUID that is not already in use.
-3. Laplace saves the item and shows its UUID, details, and derived availability.
+1. The EXCO member provides the units' name, category, condition, optional notes, and optional count.
+2. Laplace validates the details and count (default 1, range 1-100), then reserves a distinct UUID per unit.
+3. Laplace saves all units in one transaction and reports their UUIDs and derived availability.
+   One unit opens details; a batch opens the unfiltered equipment directory.
 
 Use case ends.
 
@@ -405,7 +428,7 @@ Use case ends.
     * 2a1. Laplace explains what needs correcting.
     * Use case resumes at step 1.
 * 2b. Laplace cannot generate a unique identifier.
-    * 2b1. Laplace reports the failure without adding an item.
+    * 2b1. Laplace reports the failure without adding any units.
     * Use case ends.
 
 Matching descriptions are permitted: each physical unit receives its own UUID. An item in `DAMAGED` or `UNDER_REPAIR` condition may be registered but is unavailable for issue.
@@ -665,6 +688,21 @@ testers are expected to do more *exploratory* testing.
    the rejected-input file comparison above.
 4. Restart the application. Expected: saved records still load normally. Existing JSON files with a
    `persons` array remain readable; no migration or removal of that array is required by this change.
+
+### Adding a batch of equipment
+
+1. In a separate temporary dataset, run
+   `equipment add name/Batch Test Camera category/Photography condition/GOOD count/3 notes/Shared kit`.
+   Expected: three new rows with distinct UUIDs, AVAILABLE status and identical supplied details;
+   feedback lists all three UUIDs and the full equipment directory opens.
+2. Repeat without `count/`, then with `count/1`. Each command adds one unit and opens its details.
+3. Try `count/0`, `count/-1`, `count/101`, `count/1.5`, a blank `count/`, and `count/2 count/3`.
+   Expected: an error, no new records, and no save. Correct the input and retry.
+4. Run `equipment search q/NoMatchingBatch`, then add a valid batch. Expected: the old filter resets
+   and the directory includes the new units. Repeating a batch retains distinct UUIDs and warns about
+   pre-existing matching units, not the new units within the same batch.
+5. Exit and relaunch from the same folder. Expected: all units retain their original UUIDs and details.
+   Use `equipment view uuid/UUID` with each actual generated UUID to verify independently.
 
 ### Saving data
 
