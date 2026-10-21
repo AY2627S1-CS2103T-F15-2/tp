@@ -41,7 +41,11 @@ invalid input and current model data. A parser-route contract test checks every 
 Search option suggestions are parsed by the actual command parser; tests cover lifecycle fields, batch
 UUID neighbors and duplicates, searchable values and member-only name suggestions. Direct service, JavaFX
 input and packaged-JAR regressions verify that Tab at the start of an existing field marker leaves its
-marker and value unchanged. `CompletionControllerTest` dispatches JavaFX key events and checks
+marker and value unchanged. Unicode field-separator regressions cover em spaces, nonbreaking spaces,
+narrow nonbreaking spaces, next-line characters, ideographic spaces and tabs. They preserve later fields,
+partial prefixes and batch UUID neighbors, including duplicate suppression. Mounted and packaged keyboard
+sessions check Unicode separators and caret placement without executing or saving on Tab.
+`CompletionControllerTest` dispatches JavaFX key events and checks
 cycling, modifier keys, selections and focus traversal. Its focus-field test double also drives JavaFX's
 protected focus setter because macOS foreground activation is not deterministic in a test runner.
 

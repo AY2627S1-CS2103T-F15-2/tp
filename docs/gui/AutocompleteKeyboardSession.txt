@@ -179,6 +179,58 @@ INPUT: member add name/alex xx   phone/91234567 [Tab]
 EXPECTED: member add name/Alex Tan   phone/91234567
 ACTUAL: member add name/Alex Tan   phone/91234567
 CHECK: no command execution, save, or model mutation.
+FIELD SEPARATOR: U+2003
+INPUT: member edit name/Alex phone/91234567 email/member1@example.com [Tab]
+EXPECTED: member edit name/Alex Tan phone/91234567 email/member1@example.com
+ACTUAL: member edit name/Alex Tan phone/91234567 email/member1@example.com
+CHECK: no command execution, save, or model mutation.
+INPUT: member edit name/Alex Tan phone/91234567 email/member1@example.com [Shift+Tab]
+EXPECTED: member edit name/Alex Tan phone/91234567 email/member1@example.com
+ACTUAL: member edit name/Alex Tan phone/91234567 email/member1@example.com
+CHECK: no command execution, save, or model mutation.
+INPUT: member edit name/Alex Tan phone/91234567 email/member1@example.com [Tab]
+EXPECTED: member edit name/Alex Tan phone/91234567 email/member1@example.com
+ACTUAL: member edit name/Alex Tan phone/91234567 email/member1@example.com
+CHECK: no command execution, save, or model mutation.
+FIELD SEPARATOR: U+00A0
+INPUT: member edit name/Alex phone/91234567 email/member1@example.com [Tab]
+EXPECTED: member edit name/Alex Tan phone/91234567 email/member1@example.com
+ACTUAL: member edit name/Alex Tan phone/91234567 email/member1@example.com
+CHECK: no command execution, save, or model mutation.
+INPUT: member edit name/Alex Tan phone/91234567 email/member1@example.com [Shift+Tab]
+EXPECTED: member edit name/Alex Tan phone/91234567 email/member1@example.com
+ACTUAL: member edit name/Alex Tan phone/91234567 email/member1@example.com
+CHECK: no command execution, save, or model mutation.
+INPUT: member edit name/Alex Tan phone/91234567 email/member1@example.com [Tab]
+EXPECTED: member edit name/Alex Tan phone/91234567 email/member1@example.com
+ACTUAL: member edit name/Alex Tan phone/91234567 email/member1@example.com
+CHECK: no command execution, save, or model mutation.
+FIELD SEPARATOR: U+202F
+INPUT: member edit name/Alex phone/91234567 email/member1@example.com [Tab]
+EXPECTED: member edit name/Alex Tan phone/91234567 email/member1@example.com
+ACTUAL: member edit name/Alex Tan phone/91234567 email/member1@example.com
+CHECK: no command execution, save, or model mutation.
+INPUT: member edit name/Alex Tan phone/91234567 email/member1@example.com [Shift+Tab]
+EXPECTED: member edit name/Alex Tan phone/91234567 email/member1@example.com
+ACTUAL: member edit name/Alex Tan phone/91234567 email/member1@example.com
+CHECK: no command execution, save, or model mutation.
+INPUT: member edit name/Alex Tan phone/91234567 email/member1@example.com [Tab]
+EXPECTED: member edit name/Alex Tan phone/91234567 email/member1@example.com
+ACTUAL: member edit name/Alex Tan phone/91234567 email/member1@example.com
+CHECK: no command execution, save, or model mutation.
+FIELD SEPARATOR: U+3000
+INPUT: member edit name/Alex　phone/91234567　email/member1@example.com [Tab]
+EXPECTED: member edit name/Alex Tan　phone/91234567　email/member1@example.com
+ACTUAL: member edit name/Alex Tan　phone/91234567　email/member1@example.com
+CHECK: no command execution, save, or model mutation.
+INPUT: member edit name/Alex Tan　phone/91234567　email/member1@example.com [Shift+Tab]
+EXPECTED: member edit name/Alex Tan　phone/91234567　email/member1@example.com
+ACTUAL: member edit name/Alex Tan　phone/91234567　email/member1@example.com
+CHECK: no command execution, save, or model mutation.
+INPUT: member edit name/Alex Tan　phone/91234567　email/member1@example.com [Tab]
+EXPECTED: member edit name/Alex Tan　phone/91234567　email/member1@example.com
+ACTUAL: member edit name/Alex Tan　phone/91234567　email/member1@example.com
+CHECK: no command execution, save, or model mutation.
 INPUT: member add name/Alex phone/91234567 [Tab]
 EXPECTED: member add name/Alex phone/91234567
 ACTUAL: member add name/Alex phone/91234567
@@ -260,7 +312,7 @@ CHECK: no command execution, save, or model mutation.
 INPUT: equipment add name/Batch Camera category/Photo count/2 condition/GOOD [Enter]
 STATUS: Success
 OUTPUT: Added 2 equipment units: Batch Camera, availability: AVAILABLE.
-UUIDs: cd08536a-805a-460f-b424-adad090c54fa, 22f17d08-3093-4f6f-a8ea-318977244726
+UUIDs: 73c2332e-2b42-43c1-8235-ad8f205e5a68, 421fa8e7-afb2-4312-b6f4-aba0a2be4fda
 RETAINED INPUT:
 SUCCESSFUL SAVES: 5
 INPUT: loans add uuid/00000000-0000-0000-0000-000000000002 assigned/2026-01-01 expected/2026-01-02 nus/a0000001 [Tab]

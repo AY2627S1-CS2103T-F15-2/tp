@@ -70,8 +70,8 @@ entry, preserves the others and excludes UUIDs already listed. Return conditions
 New member IDs, dates, numeric counts and free-form notes remain manual. Completion does not guarantee that a command
 can execute: ordinary validation still runs when you press Enter.
 
-Tab changes only the active token or field value and preserves later fields. It never executes a command
-or saves records. Press **Enter** to submit the completed input. With blank input, selected text, an
+Tab changes only the active token or field value and preserves later fields and their separators,
+including Unicode spaces copied into the input. It never executes a command or saves records. Press **Enter** to submit the completed input. With blank input, selected text, an
 unsupported context, at the start of an existing field marker, or with no matching suggestion,
 normal Tab navigation remains available. An untouched following marker and its value are preserved. Shift+Tab also
 keeps its normal navigation behavior outside an active completion cycle.

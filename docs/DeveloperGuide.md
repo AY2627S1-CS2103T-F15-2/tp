@@ -885,9 +885,12 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
 4. In `loans return uuid/FIRST_UUID,  PARTIAL_SECOND_UUID returned/DATE`, position the caret after the
    partial UUID and press Tab. Expected: only that UUID is replaced; the first UUID, spacing and return
    date remain intact. Candidates omit UUIDs already present. Repeat with a space after the comma.
-5. Check an untouched following field, no matching input, selected text and Shift+Tab outside a cycle.
+5. Repeat a name completion with an em space (`U+2003`) or nonbreaking space (`U+00A0`) before the
+   following `phone/` field. Expected: the phone field and original separator remain, with the caret
+   immediately after the completed name. Check the same behavior in a comma-separated UUID list.
+6. Check an untouched following field, no matching input, selected text and Shift+Tab outside a cycle.
    Expected: surrounding input remains intact and ordinary focus traversal remains available.
-6. Add or edit a record, then retry completion. Expected: current values are suggested. Tab alone never
+7. Add or edit a record, then retry completion. Expected: current values are suggested. Tab alone never
    changes records or saves; Enter uses normal parser validation. Restart after a valid mutation and
    verify the saved records. New IDs, dates, numeric counts and notes remain manually entered.
 

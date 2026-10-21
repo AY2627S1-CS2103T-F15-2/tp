@@ -127,6 +127,47 @@ public class CompletionServiceTest {
     }
 
     @Test
+    public void complete_unicodeFieldSeparators_preservesValuesPrefixesAndParserBoundaries() {
+        for (String separator : List.of("\u2003", "\u00a0", "\u202f", "\u0085", "\u3000", "\t")) {
+            String input = "member edit nus/A0123456X name/Alex" + separator + "phone/91234567"
+                    + separator + "email/alex@example.com";
+            int caret = input.indexOf("Alex") + 4;
+            Completion completion = service.complete(input, caret, model.getAddressBook()).orElseThrow();
+            String expected = input.replace("name/Alex", "name/Alex Tan");
+            assertEquals(expected, apply(input, completion));
+            assertDoesNotThrow(() -> new AddressBookParser().parseCommand(expected));
+            assertTrue(service.complete(input, input.indexOf("phone/"), model.getAddressBook()).isEmpty());
+
+            String prefix = "member edit name/Alex" + separator + "ph" + separator + "email/alex@example.com";
+            Completion field = service.complete(prefix, prefix.indexOf("ph") + 2,
+                    model.getAddressBook()).orElseThrow();
+            assertEquals(prefix.replace("ph" + separator, "phone/" + separator), apply(prefix, field));
+            String leading = "member add name/" + separator + "al" + separator + "phone/91234567";
+            Completion value = service.complete(leading, leading.indexOf("al") + 2,
+                    model.getAddressBook()).orElseThrow();
+            assertEquals(leading.replace("al" + separator, "Alex Tan" + separator), apply(leading, value));
+            String unknown = "member edit name/Alex" + separator + "unknown/value";
+            assertTrue(service.complete(unknown, unknown.indexOf("Alex") + 4,
+                    model.getAddressBook()).isEmpty());
+        }
+    }
+
+    @Test
+    public void complete_unicodeBatchSeparators_preservesSpacingAndExcludesNeighborIdentities() {
+        String first = ViewTestData.CAMERA.getUuid().toString();
+        String second = ViewTestData.OTHER_CAMERA.getUuid().toString();
+        String third = ViewTestData.SPEAKER.getUuid().toString();
+        for (String separator : List.of("\u2003", "\u00a0", "\u202f", "\u0085", "\u3000")) {
+            assertCandidates("loans add uuid/" + first + separator + "," + separator, second, third);
+            String input = "loans return uuid/" + first + separator + "," + separator + "00000000junk"
+                    + separator + "," + separator + third + separator + "returned/2026-01-08";
+            Completion completion = service.complete(input, input.indexOf("junk"),
+                    model.getAddressBook()).orElseThrow();
+            assertEquals(input.replace("00000000junk", second), apply(input, completion));
+        }
+    }
+
+    @Test
     public void complete_caretAtExistingFieldStart_preservesFollowingMarkerAndValue() {
         String text = "member add name/Alex phone/91234567";
         int caret = text.indexOf("phone/");

@@ -1,14 +1,22 @@
-Autocomplete master-parity verification - 21 October 2026
+Autocomplete Unicode field-preservation verification - 21 October 2026
 PR: https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/112
 Integrated team master: 630a0bf240c0100c3dd5ede1edb93aed9b5f4bec
 Working folder: /Users/keith/Desktop/CS2103T/tp
 Platform: Darwin arm64; Java: Zulu 25.0.3+9-LTS
 
-Command: ./gradlew test check coverage shadowJar --console plain
-Result: PASS; 879 tests, 0 failures, 0 errors, 0 skipped
+Command: ./gradlew clean test check coverage shadowJar --console plain
+Result: PASS; 881 tests, 0 failures, 0 errors, 0 skipped
 Main/test Checkstyle: PASS
 Documentation: npm --prefix docs ci; npm --prefix docs run build; PASS
 Rendered user/developer completion sections reviewed in browser.
+
+Review: https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/112#discussion_r4338421955
+Before fix: completing Alex before U+2003 + phone/91234567 drops the phone field.
+Two new unit regressions fail before the production fix and pass afterward.
+Fix: recognize field markers, trim replacement ranges and locate batch entries with Unicode whitespace.
+Preserve later phone/email fields and separators, partial prefixes, UUID neighbors and caret placement.
+Service tests include U+2003, U+00A0, U+202F, U+0085, U+3000 and tab separators.
+Mounted and packaged keyboard sessions cover Unicode spaces without dispatch, saves or model changes.
 
 Audit: all 17 domain commands plus help, exit and mode dark/light.
 Concrete parser prefix constants checked against completion fields by regression test.
@@ -25,9 +33,9 @@ seedu/address/logic/completion/Completion
   INSTRUCTION: 15 covered; 0 missed
   LINE: 3 covered; 0 missed
 seedu/address/logic/completion/CompletionService
-  INSTRUCTION: 993 covered; 0 missed
+  INSTRUCTION: 1002 covered; 0 missed
   BRANCH: 110 covered; 0 missed
-  LINE: 151 covered; 0 missed
+  LINE: 153 covered; 0 missed
 seedu/address/ui/CompletionController
   INSTRUCTION: 212 covered; 0 missed
   BRANCH: 26 covered; 0 missed

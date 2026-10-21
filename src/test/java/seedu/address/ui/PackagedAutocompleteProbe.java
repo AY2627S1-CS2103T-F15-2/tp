@@ -107,6 +107,25 @@ public final class PackagedAutocompleteProbe {
                 check(before.equals(model.getAddressBook()), "Tab changed stored records");
                 check(logic.commands == 0 && storage.saves == 0, "Tab executed or saved a command");
             }
+            for (String separator : List.of("\u2003", "\u00a0", "\u202f", "\u3000")) {
+                String input = "member edit name/Alex" + separator + "phone/91234567"
+                        + separator + "email/alex@example.com";
+                String expected = input.replace("name/Alex", "name/Alex Tan");
+                field.requestFocus();
+                field.setText(input);
+                field.positionCaret(input.indexOf("Alex") + 4);
+                AddressBook before = new AddressBook(model.getAddressBook());
+                press(field, KeyCode.TAB, false);
+                session.add(String.format("FIELD SEPARATOR: U+%04X", (int) separator.charAt(0)));
+                session.add("INPUT: " + input + " [Tab after Alex]");
+                session.add("EXPECTED: " + expected);
+                session.add("ACTUAL: " + field.getText());
+                check(expected.equals(field.getText()), "Completion must preserve Unicode-separated following fields");
+                check(field.getCaretPosition() == "member edit name/Alex Tan".length(),
+                        "Caret must stay after the completed name");
+                check(before.equals(model.getAddressBook()), "Unicode completion changed records");
+                check(logic.commands == 0 && storage.saves == 0, "Unicode completion executed or saved a command");
+            }
             String untouched = "member add name/Alex phone/91234567";
             field.setText(untouched);
             field.positionCaret(untouched.indexOf("phone/"));

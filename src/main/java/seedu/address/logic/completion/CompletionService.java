@@ -34,6 +34,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import seedu.address.commons.util.LaplaceText;
 import seedu.address.logic.commands.EquipmentAddCommand;
 import seedu.address.logic.commands.EquipmentDeleteCommand;
 import seedu.address.logic.commands.EquipmentEditCommand;
@@ -61,7 +62,8 @@ import seedu.address.model.query.DirectoryQuery;
 /** Computes suggestions from parser vocabulary and a live read-only root, without executing commands. */
 public final class CompletionService {
     private static final Pattern WORD = Pattern.compile("\\S+");
-    private static final Pattern MARKER = Pattern.compile("(?<!\\S)[A-Za-z][A-Za-z0-9_-]*/");
+    private static final Pattern MARKER = Pattern.compile("(?U)(?<!\\S)[A-Za-z][A-Za-z0-9_-]*/");
+    private static final Pattern ARGUMENT_WHITESPACE = Pattern.compile("(?U)\\s");
     private static final Map<String, List<Prefix>> COMMANDS = Map.ofEntries(
             Map.entry(MemberAddCommand.COMMAND_WORD,
                     List.of(PREFIX_NUS_ID, PREFIX_MEMBER_NAME, PREFIX_MEMBER_PHONE, PREFIX_MEMBER_EMAIL)),
@@ -154,11 +156,11 @@ public final class CompletionService {
             return Optional.empty();
         }
         int tokenStart = caret;
-        while (!Character.isWhitespace(text.charAt(tokenStart - 1))) {
+        while (!isArgumentWhitespace(text.charAt(tokenStart - 1))) {
             tokenStart--;
         }
         int tokenEnd = caret;
-        while (tokenEnd < text.length() && !Character.isWhitespace(text.charAt(tokenEnd))) {
+        while (tokenEnd < text.length() && !isArgumentWhitespace(text.charAt(tokenEnd))) {
             tokenEnd++;
         }
         int markerIndex = starts.indexOf(tokenStart);
@@ -171,7 +173,7 @@ public final class CompletionService {
                 .filter(prefix -> !seen.contains(prefix) || text.startsWith(prefix, replacementStart));
         // Spaces after a batch separator still belong to the next UUID, rather than a new field.
         boolean isBatchEntry = command.startsWith("loans ")
-                && text.substring(argumentsStart, caret).stripTrailing().endsWith(",");
+                && LaplaceText.normalize(text.substring(argumentsStart, caret)).endsWith(",");
         Optional<Completion> prefix = isBatchEntry ? Optional.empty()
                 : suggest(tokenStart, tokenEnd, fragment, available, false);
         if (prefix.isPresent()) {
@@ -181,10 +183,10 @@ public final class CompletionService {
             int end = i + 1 < starts.size() ? starts.get(i + 1) : text.length();
             if (caret >= ends.get(i) && caret <= end) {
                 int start = ends.get(i);
-                while (start < caret && Character.isWhitespace(text.charAt(start))) {
+                while (start < caret && isArgumentWhitespace(text.charAt(start))) {
                     start++;
                 }
-                while (end > caret && Character.isWhitespace(text.charAt(end - 1))) {
+                while (end > caret && isArgumentWhitespace(text.charAt(end - 1))) {
                     end--;
                 }
                 if (command.startsWith("loans ") && markers.get(i).equals(PREFIX_EQUIPMENT_UUID.getPrefix())) {
@@ -197,6 +199,13 @@ public final class CompletionService {
         return Optional.empty();
     }
 
+    /**
+     * Returns whether a character is whitespace under the argument parser's Unicode rules.
+     */
+    private static boolean isArgumentWhitespace(char character) {
+        return ARGUMENT_WHITESPACE.matcher(String.valueOf(character)).matches();
+    }
+
     /** Completes one batch entry while preserving neighboring UUIDs and excluding identities already listed. */
     private Optional<Completion> loanIdentity(String text, int start, int end, int caret, ReadOnlyAddressBook data) {
         int entryStart = Math.max(start, text.lastIndexOf(',', caret - 1) + 1);
@@ -204,11 +213,11 @@ public final class CompletionService {
         int entryEnd = comma < 0 ? end : Math.min(end, comma);
         String neighbors = text.substring(start, entryStart) + text.substring(entryEnd, end);
         Set<String> used = new HashSet<>(Arrays.stream(neighbors.split(","))
-                .map(String::strip).map(value -> value.toLowerCase(Locale.ROOT)).toList());
-        while (entryStart < caret && Character.isWhitespace(text.charAt(entryStart))) {
+                .map(LaplaceText::normalize).map(value -> value.toLowerCase(Locale.ROOT)).toList());
+        while (entryStart < caret && isArgumentWhitespace(text.charAt(entryStart))) {
             entryStart++;
         }
-        while (entryEnd > caret && Character.isWhitespace(text.charAt(entryEnd - 1))) {
+        while (entryEnd > caret && isArgumentWhitespace(text.charAt(entryEnd - 1))) {
             entryEnd--;
         }
         return suggest(entryStart, entryEnd, text.substring(entryStart, caret),

@@ -174,6 +174,20 @@ public class MainWindowShellTest {
                 field().setText("member add name/alex xx   phone/91234567");
                 field().positionCaret("member add name/alex".length());
                 completeKey(false, "member add name/Alex Tan   phone/91234567");
+                for (String separator : List.of("\u2003", "\u00a0", "\u202f", "\u3000")) {
+                    String input = "member edit name/Alex" + separator + "phone/91234567"
+                            + separator + "email/member1@example.com";
+                    String expected = input.replace("name/Alex", "name/Alex Tan");
+                    session.add(String.format("FIELD SEPARATOR: U+%04X", (int) separator.charAt(0)));
+                    field().requestFocus();
+                    field().setText(input);
+                    field().positionCaret(input.indexOf("Alex") + 4);
+                    completeKey(false, expected);
+                    assertEquals("member edit name/Alex Tan".length(), field().getCaretPosition());
+                    completeKey(true, expected);
+                    field().positionCaret(expected.indexOf("phone/"));
+                    completeKey(false, expected);
+                }
                 String untouched = "member add name/Alex phone/91234567";
                 field().setText(untouched);
                 field().positionCaret(untouched.indexOf("phone/"));

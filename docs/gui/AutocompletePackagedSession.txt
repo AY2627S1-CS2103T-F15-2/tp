@@ -101,6 +101,22 @@ ACTUAL: loans return uuid/00000000-0000-0000-0000-000000000001,  00000000-0000-0
 INPUT: member add nus/A [Tab]
 EXPECTED: member add nus/A
 ACTUAL: member add nus/A
+FIELD SEPARATOR: U+2003
+INPUT: member edit name/Alex phone/91234567 email/alex@example.com [Tab after Alex]
+EXPECTED: member edit name/Alex Tan phone/91234567 email/alex@example.com
+ACTUAL: member edit name/Alex Tan phone/91234567 email/alex@example.com
+FIELD SEPARATOR: U+00A0
+INPUT: member edit name/Alex phone/91234567 email/alex@example.com [Tab after Alex]
+EXPECTED: member edit name/Alex Tan phone/91234567 email/alex@example.com
+ACTUAL: member edit name/Alex Tan phone/91234567 email/alex@example.com
+FIELD SEPARATOR: U+202F
+INPUT: member edit name/Alex phone/91234567 email/alex@example.com [Tab after Alex]
+EXPECTED: member edit name/Alex Tan phone/91234567 email/alex@example.com
+ACTUAL: member edit name/Alex Tan phone/91234567 email/alex@example.com
+FIELD SEPARATOR: U+3000
+INPUT: member edit name/Alex　phone/91234567　email/alex@example.com [Tab after Alex]
+EXPECTED: member edit name/Alex Tan　phone/91234567　email/alex@example.com
+ACTUAL: member edit name/Alex Tan　phone/91234567　email/alex@example.com
 BOUNDARY: member add name/Alex |phone/91234567 [Tab]
 EXPECTED: member add name/Alex phone/91234567
 ACTUAL: member add name/Alex phone/91234567
