@@ -70,10 +70,14 @@ public interface Model {
      */
     void recordAddressBook(ReadOnlyAddressBook previous, String description);
 
-    /** Returns whether a previous session state can be restored. */
+    /**
+     * Returns whether a previous session state can be restored.
+     */
     boolean canUndoAddressBook();
 
-    /** Returns whether an undone session state can be restored. */
+    /**
+     * Returns whether an undone session state can be restored.
+     */
     boolean canRedoAddressBook();
 
     /**
