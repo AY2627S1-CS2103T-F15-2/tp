@@ -339,29 +339,52 @@ a second open loan for the same equipment UUID. `MemberDetailsPanel` and
 
 <puml src="diagrams/LoanWorkflowClassDiagram.puml" alt="Loan workflow and history class diagram" />
 
-#### Inherited person model
+#### Root and member model
 
-The following diagrams describe the retained AB3 person model and an inherited alternative design;
-they do not replace the equipment model above.
+<puml src="diagrams/ModelClassDiagram.puml" alt="Root collections, stable views and immutable member details" />
 
-<puml src="diagrams/ModelClassDiagram.puml" width="450" />
+The diagram combines the root collection structure with the member model used by editing, soft-delete
+and restoration. `ModelManager` delegates to `AddressBook`, which maintains person, member, equipment
+and loan containers. `UniquePersonList` is always present; the three domain containers are initialized
+on demand, so their multiplicities are `0..1`. A null container represents an empty collection.
 
+Each root maintains four stable `CollectionView<E>` objects, one per collection. This private nested
+class extends JavaFX `SimpleListProperty<E>`. Public unmodifiable wrappers and collection factories
+are omitted. `resetData` validates replacement containers and loan references before installing new
+backing lists. Notifications are suspended until every view reflects the replacement dataset.
+The package-private overload runs a publication callback before notifications resume, coordinating
+matching records and immutable history. The callback also runs when records are unchanged.
 
-The inherited person-related part of the `Model` component,
+The collection-to-entity multiplicities allow immutable values to be shared across independent
+transaction snapshots. Loan identities resolve through the root; `Loan` does not store direct
+`Member` or `Equipment` references. Equipment, loan and legacy Person details are omitted to keep this diagram focused.
 
-* stores all `Person` objects (which are contained in a `UniquePersonList` object).
-* stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
-* stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
-* does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
+The root structure and stable-view portion adapts Keith's
+[PR #141 diagram](https://github.com/wtvlol/tp/blob/3a8b932635cee7489a277fa6c895d32c1894e84e/docs/diagrams/RootModelClass.puml).
+Member editing and retained deletion come from [#114](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/114)
+and [#116](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/116); record/history publication is supporting
+behavior from [#137](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/137)
+and [#138](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/138).
 
+`Member` is immutable and contains its NUS ID, name, phone, email and a `deleted` boolean. The existing
+four-field constructor creates an active member; the five-field constructor accepts deletion state.
+Equality and hashing include all five fields, while `isSameMember` compares only the NUS ID.
+The diagram shows object-valued fields once, as navigable association lines with multiplicities.
+Role labels are omitted for readability. The primitive `deleted` flag appears in the attributes
+compartment. Interface classifiers use the `<<interface>>` keyword and dashed realization lines.
 
-<box type="info" seamless>
+Editing replaces supplied details without changing the NUS ID or deletion state. Deleted members must
+be restored before editing. Soft-delete and restoration create replacements through `setDeleted`,
+retaining collection position, reserved identities and historical loan references. The exposed member
+list remains observable and includes deleted records. The model also retains user preferences through
+`UserPrefs` and `ReadOnlyUserPrefs`.
 
-**Note:** The alternative, arguably more object-oriented, design below keeps a unique list of tags in `AddressBook`, and each `Person` references tags from that list. This lets `AddressBook` maintain one `Tag` object per unique tag instead of each `Person` holding its own `Tag` objects.<br>
+Deletion is blocked while a member has outstanding loans. Deleted members remain visible and
+recoverable indefinitely; editing and new loans require restoration first. Restoration has no expiry
+or automatic purge. Mutations use the existing transactional save-before-publish pipeline.
 
-<puml src="diagrams/BetterModelClassDiagram.puml" width="450" />
-</box>
-
+The diagram follows the [course modeling notation](https://nus-cs2103-ay2627-s1.github.io/website/se-book-adapted/chapters/modeling.html)
+and shows selected structure; lifecycle behavior is explained in the text above.
 
 ### Storage component
 
