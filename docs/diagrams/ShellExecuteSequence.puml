@@ -1,0 +1,40 @@
+@startuml
+!include style.puml
+skinparam ParticipantBackgroundColor UI_COLOR_T1
+skinparam ParticipantFontColor #111111
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 220
+title sd ShellExecuteSequence: MainWindow#executeCommand
+
+participant "window:MainWindow" as window
+participant "logic:Logic" as logic
+participant "feedback:ResultDisplay" as feedback
+
+[-> window : executeCommand(text)
+activate window
+window -> logic : execute(text)
+activate logic
+ref over logic
+  Parsing and execution; transactional mutations use
+  MutationTransactionSequence; isReadOnly() bypasses saving
+end ref
+logic --> window : result, or ParseException / CommandException
+deactivate logic
+alt execution succeeds
+  window -> window : applyAppearance()
+  window -> feedback : setFeedbackToUser(result.getFeedbackToUser())
+  window -> window : refreshViews()
+  alt result requests Help
+    window -> window : handleHelp()
+  else result requests Exit
+    window -> window : handleExit()
+  else ordinary display result
+    window -> window : display(result.getDisplayRequest())
+  end
+else ParseException or CommandException
+  window -> feedback : setFeedbackToUser(message, true)
+  window -> window : queueRefresh()
+end
+[<-- window : result, or rethrown original exception
+deactivate window
+@enduml

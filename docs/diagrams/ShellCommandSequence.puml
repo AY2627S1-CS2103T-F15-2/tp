@@ -1,0 +1,49 @@
+@startuml
+!include style.puml
+skinparam ParticipantBackgroundColor UI_COLOR_T1
+skinparam ParticipantFontColor #111111
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 220
+title One execution path for typed commands and identity links
+
+actor User as user
+participant "input:CommandBox" as input
+participant "window:MainWindow" as window
+
+alt nonblank command submitted with Enter
+  user -> input : submit command text
+  activate input
+  input -> window : executeCommand(text)\nvia CommandExecutor.execute
+  activate window
+  ref over window
+    ShellExecuteSequence
+  end ref
+  window --> input : result, or original exception
+  deactivate window
+  alt execution succeeds
+    input -> input : clear text
+  else ParseException or CommandException
+    input -> input : mark error; retain text
+  end
+  input -> input : requestFocus()
+  deactivate input
+else explicit member / equipment identity activation
+  user -> window : activate("member view nus/..."\nor "equipment view uuid/...")\nvia panel callback
+  activate window
+  window -> window : executeCommand(text)
+  activate window
+  ref over window
+    ShellExecuteSequence
+  end ref
+  window --> window : result or exception
+  deactivate window
+  opt ParseException or CommandException caught
+    window -> window : focus CommandBox for correction\n(after Space release if needed)
+  end
+  deactivate window
+end
+note over input, window
+  Navigation tabs and equipment group selection display views directly.
+  Copy / Use command previews only copy or prepare text, without execution.
+end note
+@enduml

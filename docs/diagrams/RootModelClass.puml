@@ -1,0 +1,64 @@
+@startuml
+!include style.puml
+skinparam classBackgroundColor MODEL_COLOR_T1
+skinparam classFontColor #111111
+skinparam classStereotypeFontColor #111111
+skinparam classBorderColor MODEL_COLOR_T4
+skinparam arrowColor MODEL_COLOR_T4
+skinparam classAttributeIconSize 0
+show members
+hide empty members
+left to right direction
+title Root collections and stable views
+
+class "<<interface>>\nReadOnlyAddressBook" as ReadOnlyAddressBook
+class AddressBook {
+  +resetData(newData: ReadOnlyAddressBook): void
+  ~resetData(newData, publishModelState): void
+}
+class "AddressBook.CollectionView<E>" as CollectionView {
+  -notificationsSuspended: boolean
+  -notificationPending: boolean
+  -suspendNotifications(): void
+  -resumeNotifications(): void
+}
+class "SimpleListProperty<E>" as SimpleListProperty
+class UniquePersonList
+class UniqueMemberList
+class UniqueEquipmentList
+class UniqueLoanList
+class Person
+class Member
+class Equipment
+class Loan
+
+AddressBook ..|> ReadOnlyAddressBook
+AddressBook "1" *--> "4" CollectionView : stable views
+CollectionView --|> SimpleListProperty
+AddressBook "1" *--> "1" UniquePersonList : persons
+AddressBook "1" *--> "0..1" UniqueMemberList : members
+AddressBook "1" *--> "0..1" UniqueEquipmentList : equipment
+AddressBook "1" *--> "0..1" UniqueLoanList : loans
+UniquePersonList "0..*" --> "0..*" Person : values
+UniqueMemberList "0..*" --> "0..*" Member : values
+UniqueEquipmentList "0..*" --> "0..*" Equipment : values
+UniqueLoanList "0..*" --> "0..*" Loan : values
+
+note bottom of AddressBook
+  Collections enforce identity uniqueness.
+  The root validates loan references across collections.
+  A null domain container represents an empty list.
+end note
+note bottom of CollectionView
+  Each public list has a stable unmodifiable wrapper.
+  Reset replaces backing lists before notifying observers.
+  The package overload publishes related model history
+  before notifications, including for unchanged records.
+  Wrappers and factory fields are omitted.
+end note
+legend bottom
+  Immutable entity values may be shared by independent snapshots;
+  their associations are not composition. Loan IDs resolve through
+  the root, not through stored Member or Equipment object links.
+endlegend
+@enduml

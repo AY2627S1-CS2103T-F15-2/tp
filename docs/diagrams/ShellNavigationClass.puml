@@ -1,0 +1,70 @@
+@startuml
+!include style.puml
+skinparam classBackgroundColor UI_COLOR_T1
+skinparam classFontColor #111111
+skinparam classStereotypeFontColor #111111
+skinparam classBorderColor UI_COLOR_T4
+skinparam arrowColor UI_COLOR_T4
+skinparam classAttributeIconSize 0
+show members
+hide empty members
+left to right direction
+title Typed shell navigation and read-only panels
+
+class MainWindow {
+  -executeCommand(text: String): CommandResult
+  -activate(text: String): void
+  -display(request: DisplayRequest): void
+  -queueRefresh(): void
+  -refreshViews(): void
+  +dispose(): void
+}
+class CommandBox {
+  +prepare(command: String): void
+}
+class "<<interface>>\nCommandBox.CommandExecutor" as CommandExecutor {
+  +execute(commandText: String): CommandResult
+}
+class "<<interface>>\nLogic" as Logic
+class "<<interface>>\nReadOnlyAddressBook" as ReadOnlyAddressBook
+class CommandResult {
+  +getDisplayRequest(): DisplayRequest
+}
+class DisplayRequest {
+  +getType(): Type
+  +getQuery(): Optional<DirectoryQuery>
+}
+class MemberListPanel
+class EquipmentListPanel
+class MemberDetailsPanel
+class EquipmentGroupPanel
+class LoanPanel
+class ResultDisplay
+
+MainWindow "0..*" --> "1" Logic : logic
+MainWindow "0..*" --> "1" ReadOnlyAddressBook : data
+MainWindow "1" *--> "1" CommandBox : commandBox
+CommandBox "0..*" --> "1" CommandExecutor : commandExecutor
+MainWindow ..> CommandExecutor : supplies executeCommand callback
+MainWindow "1" *--> "1" MemberListPanel : members
+MainWindow "1" *--> "1" EquipmentListPanel : equipment
+MainWindow "1" *--> "1" MemberDetailsPanel : memberDetails
+MainWindow "1" *--> "1" EquipmentGroupPanel : equipmentDetails
+MainWindow "1" *--> "1" LoanPanel : loans
+MainWindow "1" *--> "1" ResultDisplay : resultDisplay
+MainWindow "0..*" --> "1" DisplayRequest : currentDisplay
+CommandResult "0..*" --> "1" DisplayRequest : displayRequest
+MainWindow ..> CommandResult
+
+note bottom of MainWindow
+  Exact-identity row/link activations call activate(text).
+  Preparing a preview only edits CommandBox.
+  Group selection and navigation tabs call display directly.
+  Typed requests choose views; feedback text is never parsed.
+end note
+legend bottom
+  Focused shell view; summaries, help, footer, UiPart inheritance
+  and panel data/callback fields are omitted. Current group panels
+  are supporting context, not attributed to Keith's original shell PR.
+endlegend
+@enduml

@@ -1,0 +1,76 @@
+@startuml
+!include style.puml
+skinparam classBackgroundColor LOGIC_COLOR_T1
+skinparam classFontColor #111111
+skinparam classStereotypeFontColor #111111
+skinparam classBorderColor LOGIC_COLOR_T4
+skinparam arrowColor LOGIC_COLOR_T4
+skinparam classAttributeIconSize 0
+show members
+hide empty members
+title Transaction execution and atomic persistence
+
+class LogicManager {
+  +execute(commandText: String): CommandResult
+}
+class "{abstract}\nCommand" as Command {
+  +isTransactional(): boolean
+  +isReadOnly(): boolean
+  +recordsHistory(): boolean
+  {abstract} +execute(model: Model): CommandResult
+}
+class "<<interface>>\nModel" as Model {
+  +createTransactionSnapshot(): Model
+  +getAddressBook(): ReadOnlyAddressBook
+  +recordAddressBook(previous, description): void
+  +publishTransaction(candidate: Model): void
+}
+class ModelManager
+class AddressBook {
+  ~resetData(data, publishModelState): void
+}
+class AddressBookHistory
+class "<<interface>>\nStorage" as Storage {
+  +saveAddressBook(data: ReadOnlyAddressBook): void
+}
+class StorageManager
+class JsonAddressBookStorage {
+  +saveAddressBook(data: ReadOnlyAddressBook): void
+}
+class AtomicFileWriter {
+  ~write(destination: Path, content: byte[]): void
+  ~writeTemporaryFile(temporary: Path, content: byte[]): void
+  ~replaceFile(temporary: Path, target: Path): void
+}
+
+LogicManager "0..*" -down-> "1" Model : model
+LogicManager "0..*" -right-> "1" Storage : storage
+LogicManager .left.> Command : parses and executes
+Command .down.> Model : execute parameter
+ModelManager .up.|> Model
+ModelManager "0..*" --> "1" AddressBook : addressBook
+ModelManager "0..*" --> "1" AddressBookHistory : history
+StorageManager .up.|> Storage
+StorageManager "0..*" --> "1" JsonAddressBookStorage : addressBookStorage
+JsonAddressBookStorage "0..*" --> "1" AtomicFileWriter : fileWriter
+
+note bottom of Model
+  Default createTransactionSnapshot constructs a ModelManager
+  from current records, preferences and immutable history.
+  Records/preferences are copied; history is initially shared.
+  Publication resets the live root and adopts matching history
+  before notifying record observers, preserving root identity.
+end note
+note bottom of AtomicFileWriter
+  Serialize before writing; write and flush a sibling file;
+  replace using ATOMIC_MOVE + REPLACE_EXISTING.
+  Failure has no non-atomic overwrite fallback.
+end note
+legend bottom
+  Selected APIs only; parser and JSON adapter dependencies omitted.
+  Live and candidate models own independent collection containers.
+  Flags shown on Command are overridden by concrete domain commands.
+  History coordination is supporting behavior from #137/#138;
+  see UndoRedoClassDiagram for the complete history design.
+endlegend
+@enduml

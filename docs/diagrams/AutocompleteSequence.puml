@@ -1,0 +1,89 @@
+@startuml
+!include style.puml
+skinparam ParticipantBackgroundColor UI_COLOR_T1
+skinparam ParticipantFontColor #111111
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 220
+title Tab replacement and candidate cycling
+
+actor User as user
+participant "field:TextField" as field
+participant "controller:CompletionController" as controller
+participant "data:Supplier" as data
+participant "current:AddressBook" as current
+participant "service:CompletionService" as service
+participant "<<class>>\nMath" as math
+
+user -> field : Tab or Shift+Tab
+field -> controller : handleKey(event)
+activate controller
+alt Ctrl/Alt/Meta held or text selected
+  controller -> controller : resetAfterEdit()
+  note right of controller : Leave event unconsumed for normal handling.
+else eligible Tab event
+  controller -> data : get()
+  activate data
+  data --> controller : live ReadOnlyAddressBook
+  deactivate data
+  create current
+  controller -> current : new AddressBook(live root)
+  note right of controller
+    Detached snapshot of the live root.
+    An active cycle whose stored snapshot
+    differs from current is discarded.
+  end note
+  alt no active cycle
+    alt Shift+Tab
+      note right of controller : Leave event unconsumed; do not start a reverse cycle.
+    else plain Tab
+      controller -> field : getText(), getCaretPosition()
+      activate field
+      field --> controller : originalText, caret
+      deactivate field
+      controller -> service : complete(originalText, caret, current)
+      activate service
+      service --> controller : Optional<Completion>
+      deactivate service
+      alt no suggestion
+        note right of controller : Leave event unconsumed for ordinary traversal.
+      else suggestion exists
+        note right of controller
+          Retain completion; snapshot = current;
+          candidateIndex = 0.
+        end note
+      end
+    end
+  else active cycle
+    controller -> math : floorMod(candidateIndex + direction,\ncandidates.size())
+    activate math
+    math --> controller : next candidateIndex
+    deactivate math
+    note right of controller : direction = +1 for Tab, -1 for Shift+Tab
+  end
+  opt a candidate was selected
+    note right of controller : isApplying = true
+    controller -> field : setText(original prefix + candidate + original suffix)
+    activate field
+    field -> controller : resetAfterEdit()\n(text/caret/anchor listener)
+    activate controller
+    note right of controller : Ignored while isApplying.
+    controller --> field
+    deactivate controller
+    field --> controller
+    deactivate field
+    controller -> field : positionCaret(start + candidate.length())
+    note right of controller
+      isApplying = false (finally);
+      event.consume().
+    end note
+  end
+end
+controller --> field
+deactivate controller
+note over field, controller
+  External text, caret, anchor or focus changes clear the cycle.
+  Enter clears it and follows ordinary command submission.
+  Replacement uses the original start/end range, preserving later fields
+  and Unicode separators. Completing one batch UUID preserves its neighbors.
+end note
+@enduml
