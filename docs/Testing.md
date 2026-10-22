@@ -57,10 +57,15 @@ The transcript is `build/reports/laplace/autocomplete-keyboard-session.txt`; the
 `build/reports/jacoco/coverage/html/index.html`.
 
 `check` also runs `verifyPackagedAutocomplete` in a separate JVM and a disposable directory. The probe
-verifies the production code source is `build/libs/Laplace.jar`, then drives its mounted shell with
-JavaFX keyboard events. Matching native JavaFX dependencies precede the distributable JAR on the smoke
-test classpath. Test output contains helpers only, with no unpackaged production classes. Results are
+verifies the production code source is the selected JAR under `build/libs`, then drives its mounted shell
+with JavaFX keyboard events. The smoke test uses the JAR's bundled native libraries without prepending
+matching test dependencies. CI uses a plain Java 25 JDK. Test output contains helpers only, with no
+unpackaged production classes. Results are
 recorded in `build/reports/laplace/packaged-autocomplete-session.txt`.
+
+Build the Intel macOS/Windows/Linux artifact with `./gradlew check coverage shadowJar -PjavafxMacPlatform=mac`.
+Build the Apple Silicon variant with `./gradlew check coverage shadowJar -PjavafxMacPlatform=mac-aarch64`.
+Run checks on the matching target architecture; selecting an ARM64 artifact does not emulate ARM64.
 
 Reviewable local evidence is recorded in [AutocompleteVerification.txt](gui/AutocompleteVerification.txt),
 [AutocompleteKeyboardSession.txt](gui/AutocompleteKeyboardSession.txt), and

@@ -33,11 +33,17 @@ configurations {
     javafxTestRuntime
 }
 
-// Test with one matching native platform, while preserving the existing distributable dependencies.
+// Unit tests use one matching native platform; packaged tests must use the selected JAR's libraries.
 String javaFxVersion = '17.0.7'
 String operatingSystem = System.getProperty('os.name').toLowerCase(Locale.ROOT)
 String architecture = System.getProperty('os.arch').toLowerCase(Locale.ROOT)
 boolean isArm = architecture in ['aarch64', 'arm64']
+// macOS native libraries share resource names, so each JAR must contain exactly one architecture.
+String javaFxMacPlatform = providers.gradleProperty('javafxMacPlatform')
+        .orElse(isArm ? 'mac-aarch64' : 'mac').get()
+if (!(javaFxMacPlatform in ['mac', 'mac-aarch64'])) {
+    throw new GradleException('javafxMacPlatform must be mac or mac-aarch64')
+}
 String javaFxTestPlatform = operatingSystem.contains('mac') ? (isArm ? 'mac-aarch64' : 'mac')
         : operatingSystem.contains('win') ? 'win' : (isArm ? 'linux-aarch64' : 'linux')
 
@@ -78,16 +84,16 @@ dependencies {
     }
 
     implementation "org.openjfx:javafx-base:${javaFxVersion}:win"
-    implementation "org.openjfx:javafx-base:${javaFxVersion}:mac"
+    implementation "org.openjfx:javafx-base:${javaFxVersion}:${javaFxMacPlatform}"
     implementation "org.openjfx:javafx-base:${javaFxVersion}:linux"
     implementation "org.openjfx:javafx-controls:${javaFxVersion}:win"
-    implementation "org.openjfx:javafx-controls:${javaFxVersion}:mac"
+    implementation "org.openjfx:javafx-controls:${javaFxVersion}:${javaFxMacPlatform}"
     implementation "org.openjfx:javafx-controls:${javaFxVersion}:linux"
     implementation "org.openjfx:javafx-fxml:${javaFxVersion}:win"
-    implementation "org.openjfx:javafx-fxml:${javaFxVersion}:mac"
+    implementation "org.openjfx:javafx-fxml:${javaFxVersion}:${javaFxMacPlatform}"
     implementation "org.openjfx:javafx-fxml:${javaFxVersion}:linux"
     implementation "org.openjfx:javafx-graphics:${javaFxVersion}:win"
-    implementation "org.openjfx:javafx-graphics:${javaFxVersion}:mac"
+    implementation "org.openjfx:javafx-graphics:${javaFxVersion}:${javaFxMacPlatform}"
     implementation "org.openjfx:javafx-graphics:${javaFxVersion}:linux"
 
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.7.0'
@@ -100,7 +106,7 @@ dependencies {
 }
 
 shadowJar {
-    archiveFileName = 'Laplace.jar'
+    archiveFileName = javaFxMacPlatform == 'mac-aarch64' ? 'Laplace-mac-arm64.jar' : 'Laplace.jar'
 }
 
 defaultTasks 'clean', 'test'
@@ -165,10 +171,10 @@ tasks.register('autocompleteCoverageVerification') {
 
 check.dependsOn autocompleteCoverageVerification
 
-// Run the keyboard smoke test against the packaged classes/FXML, with matching platform natives first.
+// Use only bundled production classes and natives so tests cannot hide distributable packaging failures.
 tasks.register('verifyPackagedAutocomplete', JavaExec) {
     dependsOn shadowJar, testClasses
-    classpath = configurations.javafxTestRuntime + files(shadowJar.archiveFile) + sourceSets.test.output
+    classpath = files(shadowJar.archiveFile) + sourceSets.test.output
     mainClass = 'seedu.address.ui.PackagedAutocompleteProbe'
     jvmArgs '--limit-modules=java.se,jdk.unsupported', '--enable-native-access=ALL-UNNAMED'
     workingDir layout.buildDirectory.dir('packaged-autocomplete-sandbox')
