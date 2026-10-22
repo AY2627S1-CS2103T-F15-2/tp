@@ -88,16 +88,14 @@ public class ModelManager implements Model {
 
     @Override
     public void setAddressBook(ReadOnlyAddressBook addressBook) {
-        this.addressBook.resetData(addressBook);
-        history = new AddressBookHistory();
+        replaceRecordsAndHistory(addressBook, new AddressBookHistory());
     }
 
     @Override
     public void publishTransaction(Model candidate) {
         requireNonNull(candidate);
         AddressBookHistory candidateHistory = requireNonNull(candidate.getAddressBookHistory());
-        addressBook.resetData(candidate.getAddressBook());
-        history = candidateHistory;
+        replaceRecordsAndHistory(candidate.getAddressBook(), candidateHistory);
     }
 
     @Override
@@ -124,8 +122,7 @@ public class ModelManager implements Model {
     public String undoAddressBook() {
         String description = history.getUndoDescription();
         AddressBookHistory restored = history.undo();
-        addressBook.resetData(restored.getCurrentState());
-        history = restored;
+        replaceRecordsAndHistory(restored.getCurrentState(), restored);
         return description;
     }
 
@@ -133,9 +130,15 @@ public class ModelManager implements Model {
     public String redoAddressBook() {
         String description = history.getRedoDescription();
         AddressBookHistory restored = history.redo();
-        addressBook.resetData(restored.getCurrentState());
-        history = restored;
+        replaceRecordsAndHistory(restored.getCurrentState(), restored);
         return description;
+    }
+
+    /**
+     * Publishes matching records and history after validation and before observable-list notifications.
+     */
+    private void replaceRecordsAndHistory(ReadOnlyAddressBook records, AddressBookHistory replacementHistory) {
+        addressBook.resetData(records, () -> history = replacementHistory);
     }
 
     @Override

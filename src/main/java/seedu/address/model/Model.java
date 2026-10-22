@@ -42,6 +42,7 @@ public interface Model {
 
     /**
      * Replaces address book data with the data in {@code addressBook}, starting fresh session history.
+     * Record observers see the cleared history when notified of replacement records.
      * Transaction publication uses {@link #publishTransaction(Model)} to preserve candidate history.
      */
     void setAddressBook(ReadOnlyAddressBook addressBook);
@@ -57,6 +58,7 @@ public interface Model {
 
     /**
      * Publishes a successfully saved candidate's records and history, preserving the live root and preferences.
+     * Record observers see the candidate history when notified of replacement records.
      */
     void publishTransaction(Model candidate);
 

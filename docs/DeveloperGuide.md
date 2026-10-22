@@ -381,6 +381,12 @@ snapshot are discarded. A batch creation, issue or return is one history entry r
    the live observable root and current preferences. Parse, validation and save failures leave live data,
    history position, redo availability and the previously saved file unchanged.
 
+Record replacement validates all collections before publishing. `AddressBook.resetData()` installs the
+new records and runs the model's history-publication action before resuming list notifications. This
+keeps synchronous observers' record values and undo/redo availability consistent during transaction
+publication, explicit whole-model replacement, and direct undo/redo navigation. Validation failures leave
+the previous history intact; replacing identical records can still update history without list events.
+
 The model exposes `canUndoAddressBook()`, `canRedoAddressBook()`, `undoAddressBook()` and
 `redoAddressBook()`. Direct history navigation requires an available step; commands translate unavailable
 history into `Nothing to undo.` or `Nothing to redo.`. Successful feedback identifies the action:
@@ -408,6 +414,8 @@ Inverse operations would require separate reversal logic for every command and b
 Command/parser tests cover syntax and empty history. `UndoRedoIntegrationTest` verifies identity and loan
 restoration, lifecycle changes, exact saved states, ten undos/redos, restart behavior and failed-save retries.
 Shell tests exercise the real command box, preserved filters, missing details, loans and error feedback.
+`ModelManagerTest` checks history availability inside synchronous collection listeners, unchanged-record
+history transitions, and rollback when replacement records are invalid.
 
 The inherited AB3 undo/redo PlantUML sources are retained unchanged for a separate diagram update;
 they do not describe this implementation yet.
