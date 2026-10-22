@@ -407,6 +407,55 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Directory search and inventory planning
+
+`MemberCommandParser` and `EquipmentCommandParser` delegate `search` arguments to
+`DirectorySearchCommandParser`. It validates the allowed prefixes and sort fields, then constructs
+an immutable `DirectoryQuery` and a `DirectorySearchCommand` for the requested directory.
+Search defaults to active records; `status/deleted` and `status/all` expose retained records.
+
+The sequence below shows successful execution of `member search q/alice sort/name`.
+Parsing, collection iteration, and result-object construction are omitted to focus on
+the read-only command path. `data` is the `ReadOnlyAddressBook` returned by the model.
+
+<puml src="diagrams/DirectorySearchSequence.puml" alt="Read-only member search execution and query-carrying result" />
+
+`DirectorySearchCommand` counts matches using `DirectoryQuery`, then returns a `CommandResult`
+containing `DisplayRequest.members(query)` or `DisplayRequest.equipment(query)`. Since the command
+is read-only, `LogicManager` returns without creating a transaction snapshot or saving data.
+Equipment queries additionally use `Model.getAvailability` to derive availability from current state.
+
+`MainWindow` passes the same query to the directory list and its summary before refreshing them.
+Both evaluate the query against current data, keeping displayed rows and matching counts consistent.
+Sorting affects returned snapshots rather than stored records. Navigation requests without a query
+preserve the current criteria; explicit list commands pass `DirectoryQuery.all()` to reset them.
+After mutations, the shell refreshes the views with their retained queries and recovers selection by
+NUS ID or equipment UUID when possible.
+
+`EquipmentDirectorySummary.refresh` builds inventory summaries with `InventoryGroups.group`, passing
+`DirectoryQuery.all().equipment(data, availabilityLookup)` as the matching units. It formats each group
+using `EquipmentPresentation.counts(group.units(), availabilityLookup)`. The activity below shows this
+GUI path when availability can be resolved; it does not describe the retained `summarize` helper.
+
+<puml src="diagrams/InventoryPlanningActivity.puml" alt="Grouping all equipment units and formatting active availability and retained deletion counts" />
+
+Each group uses a pair of normalized category and name values, keeping the two keys separate even
+when either contains a display separator. `InventoryGroups.group` retains all physical units under each
+key and emits groups in first-match order. For this caller, the all-records query supplies default
+category/name/UUID order, so groups appear in category/name order. Other callers can pass a filtered or
+sorted matching list; `group.matching()` records those matches while `group.units()` retains the full
+group. The summary uses the all-records query, so its group counts are independent of search filters.
+
+`EquipmentPresentation.counts` looks up each active unit's availability by UUID and counts deleted
+units separately without an availability lookup. It displays zero for absent availability states and
+adds a deleted count only when nonzero. The summary prefixes these counts with the category and name
+of the first unit in the group, preserving its stored spelling rather than displaying the normalized
+key. If its initial scan cannot resolve an active unit's availability, the summary displays
+`Inventory groups unavailable: inconsistent equipment data.` instead of group lines. These derived
+summaries preserve individual equipment identities and do not introduce a stored quantity field.
+
+<!-- Nguyen Anh Duy used OpenAI Codex to assist with this section and its two PlantUML diagrams. -->
+
 ### Identity-based deletion
 
 The #86 leaf parsers require one normalized NUS ID or UUID and construct commands that resolve the
@@ -543,7 +592,8 @@ historical scaffold's permanent deletion. Member and equipment restoration have 
 
 Lifecycle is separate from condition and loan status. Editing condition while loaned is allowed:
 ASSIGNED remains derived from the open loan; on return the edited condition controls availability.
-Deleted units derive UNAVAILABLE, cannot receive open loans, and are excluded from inventory totals.
+Deleted units derive UNAVAILABLE, cannot receive open loans, and are excluded from active availability
+counts. Inventory groups retain them and report their deleted count separately.
 Root loan validation applies this invariant both to new loans and complete dataset replacement/loading.
 
 `JsonAdaptedEquipment` writes a boolean `deleted`. An absent flag defaults to false for earlier files;
@@ -555,7 +605,8 @@ Directory queries share `DirectoryQuery.Status` across members and equipment. Eq
 to active; `status/deleted|all` exposes retained units. List resets to all states without recording history.
 Cards label deleted units; details show lifecycle state and a restore command. Edit/restore navigate to
 the same UUID, retaining query criteria even if that unit no longer matches. Total counts include deleted
-units; availability counts and inventory groups include active units only. The Loans tab and entity
+units; availability counts include active units only, while groups also report retained deletions.
+The Loans tab and entity
 details show the retained completed loan history.
 
 ### Undo/redo feature
