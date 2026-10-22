@@ -100,7 +100,17 @@ public class AddressBook implements ReadOnlyAddressBook {
      * All collection views are updated before observers are notified. Unchanged data causes no notifications.
      */
     public void resetData(ReadOnlyAddressBook newData) {
+        resetData(newData, () -> { });
+    }
+
+    /**
+     * Replaces validated records, then publishes related model state before notifying list observers.
+     * {@code publishModelState} must not throw or mutate records. It also runs when records are unchanged.
+     * Validation failure leaves records unchanged and does not run the publication action.
+     */
+    void resetData(ReadOnlyAddressBook newData, Runnable publishModelState) {
         requireNonNull(newData);
+        requireNonNull(publishModelState);
 
         // Snapshot first, including self-reset: caller-owned lists cannot become our storage.
         List<Person> replacementPersons = List.copyOf(newData.getPersonList());
@@ -111,6 +121,7 @@ public class AddressBook implements ReadOnlyAddressBook {
                 && getMemberList().equals(replacementMembers)
                 && getEquipmentList().equals(replacementEquipment)
                 && getLoanList().equals(replacementLoans)) {
+            publishModelState.run();
             return;
         }
 
@@ -156,6 +167,7 @@ public class AddressBook implements ReadOnlyAddressBook {
             memberView.set(replacementMemberView);
             equipmentView.set(replacementEquipmentView);
             loanView.set(replacementLoanView);
+            publishModelState.run();
         } finally {
             personView.resumeNotifications();
             memberView.resumeNotifications();

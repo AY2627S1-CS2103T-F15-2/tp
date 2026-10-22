@@ -30,6 +30,8 @@ Member soft-delete and unlimited restoration are supported. Archival remains out
 | loans add | `loans add uuid/UUID nus/NUS_ID assigned/DATE expected/DATE` | [Assign equipment](loans-add.md) |
 | loans return | `loans return uuid/UUID returned/DATE` | [Return equipment](loans-return.md) |
 | loans list | `loans list` | [Open Loans tab](loans-list.md) |
+| undo | `undo` | [Undo record change](undo.md) |
+| redo | `redo` | [Redo record change](redo.md) |
 
 Families/subcommands are lowercase and case-sensitive. Parameter order is free, and
 spaces/tabs separate arguments. List commands accept whitespace only. Other implemented
@@ -70,3 +72,11 @@ packaged-window acceptance remain tracked separately in milestone integration is
 
 Member deletion now retains records and history. See [Restore member](member-restore.md) for lifecycle,
 persistence and feature-integration guarantees. Equipment deletion remains unchanged.
+
+## Undo and redo
+
+`undo` and `redo` are no-argument top-level commands. They navigate up to ten successful record changes
+per session. Batches are single steps; new successful mutations discard redo. Queries, appearance changes
+and failed commands do not affect history. Candidates contain both records and immutable history;
+LogicManager publishes both only after the existing atomic save succeeds. Restart clears history while
+retaining the last saved records. See [Undo](undo.md) and [Redo](redo.md).

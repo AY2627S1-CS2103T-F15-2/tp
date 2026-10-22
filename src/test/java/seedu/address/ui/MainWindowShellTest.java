@@ -112,6 +112,74 @@ public class MainWindowShellTest {
     }
 
     @Test
+    public void undoRedo_memberCreation_preservesSearchAndClearsMissingDetailsWithoutExtraCommands() {
+        FxTestUtil.runAndWait(() -> {
+            submit("member search q/Robin");
+            submit("member add nus/A9999999X name/Robin Tan phone/91234567 email/robin@example.com");
+            assertEquals("A9999999X", detailLabel("memberNusId"));
+            int dispatches = logic.commands.size();
+            submit("undo");
+            assertEquals(dispatches + 1, logic.commands.size());
+            assertEquals("Success", feedbackStatus());
+            assertEquals("Undid: member add.", feedback());
+            assertEquals("", field().getText());
+            assertTrue(rows().getItems().isEmpty());
+            assertTrue(label("queryContext").contains("robin"));
+            assertEquals(null, node("memberNusId"));
+            submit("redo");
+            assertEquals(dispatches + 2, logic.commands.size());
+            assertEquals(1, rows().getItems().size());
+            assertTrue(label("queryContext").contains("robin"));
+        });
+    }
+
+    @Test
+    public void undoRedo_equipmentCreation_recoversDirectoryAndExactUuidsWithoutExtraCommands() {
+        FxTestUtil.runAndWait(() -> {
+            submit("equipment add name/Undo Camera category/Photo condition/GOOD");
+            String uuid = detailLabel("equipmentUuid");
+            submit("undo");
+            assertEquals("Success", feedbackStatus());
+            assertEquals(null, node("equipmentUuid"));
+            assertEquals(3, model.getEquipmentList().size());
+            submit("redo");
+            assertEquals(4, model.getEquipmentList().size());
+            submit("equipment view uuid/" + uuid);
+            assertEquals(uuid, detailLabel("equipmentUuid"));
+            submit("redo");
+            assertEquals("Error", feedbackStatus());
+            assertEquals("Nothing to redo.", feedback());
+            assertEquals("redo", field().getText());
+            assertEquals(uuid, detailLabel("equipmentUuid"));
+        });
+    }
+
+    @Test
+    public void undoRedo_return_refreshesLoanRowsAndKeepsFailedUndoAvailable() {
+        FxTestUtil.runAndWait(() -> {
+            UUID target = new UUID(0, 1);
+            submit("loans return uuid/" + target + " returned/2026-01-02 condition/DAMAGED");
+            submit("loans list");
+            assertEquals("0", label("openCount"));
+            submit("undo");
+            assertEquals("1", label("openCount"));
+            assertEquals(Availability.ASSIGNED, model.getAvailability(target));
+            submit("redo");
+            assertEquals("0", label("openCount"));
+            assertEquals(Availability.UNAVAILABLE, model.getAvailability(target));
+            storage.fail = true;
+            submit("undo");
+            assertEquals("Error", feedbackStatus());
+            assertEquals("undo", field().getText());
+            assertEquals("0", label("openCount"));
+            storage.fail = false;
+            submit("undo");
+            assertEquals("1", label("openCount"));
+            assertEquals("Success", feedbackStatus());
+        });
+    }
+
+    @Test
     public void autocomplete_keyboardSession_preservesDataAndExecutesOnlyOnEnter() throws IOException {
         Path transcript = Path.of("build", "reports", "laplace", "autocomplete-keyboard-session.txt");
         try {

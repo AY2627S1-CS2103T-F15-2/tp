@@ -41,17 +41,56 @@ public interface Model {
     void setGuiSettings(GuiSettings guiSettings);
 
     /**
-     * Replaces address book data with the data in {@code addressBook}.
+     * Replaces address book data with the data in {@code addressBook}, starting fresh session history.
+     * Record observers see the cleared history when notified of replacement records.
+     * Transaction publication uses {@link #publishTransaction(Model)} to preserve candidate history.
      */
     void setAddressBook(ReadOnlyAddressBook addressBook);
 
     /**
-     * Returns an isolated snapshot for a transactional command. Mutable collections must not be shared.
+     * Returns an isolated snapshot for a transactional command, including its immutable session history.
+     * Mutable collections must not be shared.
      * Implementations with additional validation behavior must preserve it in their snapshot implementation.
      */
     default Model createTransactionSnapshot() {
-        return new ModelManager(getAddressBook(), getUserPrefs());
+        return new ModelManager(getAddressBook(), getUserPrefs(), getAddressBookHistory());
     }
+
+    /**
+     * Publishes a successfully saved candidate's records and history, preserving the live root and preferences.
+     * Record observers see the candidate history when notified of replacement records.
+     */
+    void publishTransaction(Model candidate);
+
+    /**
+     * Returns immutable session history; its stored collections cannot be changed by callers.
+     */
+    AddressBookHistory getAddressBookHistory();
+
+    /**
+     * Records a changed candidate relative to the preceding live state, clearing redo only for a real change.
+     */
+    void recordAddressBook(ReadOnlyAddressBook previous, String description);
+
+    /**
+     * Returns whether a previous session state can be restored.
+     */
+    boolean canUndoAddressBook();
+
+    /**
+     * Returns whether an undone session state can be restored.
+     */
+    boolean canRedoAddressBook();
+
+    /**
+     * Restores the previous state and returns its action description. Requires an available undo.
+     */
+    String undoAddressBook();
+
+    /**
+     * Restores the next state and returns its action description. Requires an available redo.
+     */
+    String redoAddressBook();
 
     /** Returns the AddressBook */
     ReadOnlyAddressBook getAddressBook();
