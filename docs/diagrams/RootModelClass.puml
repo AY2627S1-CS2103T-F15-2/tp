@@ -11,7 +11,7 @@ hide empty members
 left to right direction
 title Root collections and stable views
 
-interface ReadOnlyAddressBook
+class "<<interface>>\nReadOnlyAddressBook" as ReadOnlyAddressBook
 class AddressBook {
   +resetData(newData: ReadOnlyAddressBook): void
   ~resetData(newData, publishModelState): void

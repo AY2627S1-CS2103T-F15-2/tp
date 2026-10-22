@@ -12,7 +12,7 @@ left to right direction
 title UI resources and shared JavaFX test support
 
 package "Production UI (context)" {
-  abstract class "UiPart<T>" as UiPart {
+  class "{abstract}\nUiPart<T>" as UiPart {
     +getRoot(): T
     -loadFxmlFile(location: URL, root: T): void
   }

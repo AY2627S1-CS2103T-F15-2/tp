@@ -28,8 +28,8 @@ class Completion <<record>> {
   -end: int
   -candidates: List<String>
 }
-interface "Supplier<ReadOnlyAddressBook>" as Supplier
-interface ReadOnlyAddressBook
+class "<<interface>>\nSupplier<ReadOnlyAddressBook>" as Supplier
+class "<<interface>>\nReadOnlyAddressBook" as ReadOnlyAddressBook
 class AddressBook
 
 MainWindow ..> CommandBox : creates with logic::getAddressBook

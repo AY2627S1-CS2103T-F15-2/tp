@@ -10,7 +10,9 @@ actor User as user
 participant "field:TextField" as field
 participant "controller:CompletionController" as controller
 participant "data:Supplier" as data
+participant "current:AddressBook" as current
 participant "service:CompletionService" as service
+participant "<<class>>\nMath" as math
 
 user -> field : Tab or Shift+Tab
 field -> controller : handleKey(event)
@@ -20,38 +22,63 @@ alt Ctrl/Alt/Meta held or text selected
   note right of controller : Leave event unconsumed for normal handling.
 else eligible Tab event
   controller -> data : get()
+  activate data
   data --> controller : live ReadOnlyAddressBook
-  controller -> controller : new AddressBook(live root)
-  opt active cycle and snapshot differs from current data
-    controller -> controller : completion = null
-  end
+  deactivate data
+  create current
+  controller -> current : new AddressBook(live root)
+  note right of controller
+    Detached snapshot of the live root.
+    An active cycle whose stored snapshot
+    differs from current is discarded.
+  end note
   alt no active cycle
     alt Shift+Tab
       note right of controller : Leave event unconsumed; do not start a reverse cycle.
     else plain Tab
       controller -> field : getText(), getCaretPosition()
+      activate field
       field --> controller : originalText, caret
+      deactivate field
       controller -> service : complete(originalText, caret, current)
+      activate service
       service --> controller : Optional<Completion>
+      deactivate service
       alt no suggestion
         note right of controller : Leave event unconsumed for ordinary traversal.
       else suggestion exists
-        controller -> controller : retain completion and snapshot; candidateIndex = 0
+        note right of controller
+          Retain completion; snapshot = current;
+          candidateIndex = 0.
+        end note
       end
     end
   else active cycle
-    controller -> controller : floorMod(index + direction, candidates.size())
+    controller -> math : floorMod(candidateIndex + direction,\ncandidates.size())
+    activate math
+    math --> controller : next candidateIndex
+    deactivate math
     note right of controller : direction = +1 for Tab, -1 for Shift+Tab
   end
   opt a candidate was selected
-    controller -> controller : isApplying = true
+    note right of controller : isApplying = true
     controller -> field : setText(original prefix + candidate + original suffix)
-    field -> controller : text/caret/anchor change listeners
-    controller -> controller : resetAfterEdit() ignores own insertion
+    activate field
+    field -> controller : resetAfterEdit()\n(text/caret/anchor listener)
+    activate controller
+    note right of controller : Ignored while isApplying.
+    controller --> field
+    deactivate controller
+    field --> controller
+    deactivate field
     controller -> field : positionCaret(start + candidate.length())
-    controller -> controller : isApplying = false (finally); event.consume()
+    note right of controller
+      isApplying = false (finally);
+      event.consume().
+    end note
   end
 end
+controller --> field
 deactivate controller
 note over field, controller
   External text, caret, anchor or focus changes clear the cycle.

@@ -22,11 +22,11 @@ class MainWindow {
 class CommandBox {
   +prepare(command: String): void
 }
-interface "CommandBox.CommandExecutor" as CommandExecutor {
+class "<<interface>>\nCommandBox.CommandExecutor" as CommandExecutor {
   +execute(commandText: String): CommandResult
 }
-interface Logic
-interface ReadOnlyAddressBook
+class "<<interface>>\nLogic" as Logic
+class "<<interface>>\nReadOnlyAddressBook" as ReadOnlyAddressBook
 class CommandResult {
   +getDisplayRequest(): DisplayRequest
 }

@@ -10,12 +10,12 @@ show members
 hide empty members
 title Identity-based deletion
 
-interface "Parser<T>" as Parser
+class "<<interface>>\nParser<T>" as Parser
 class MemberDeleteCommandParser
 class EquipmentDeleteCommandParser
 class LaplaceArgumentParser
 class ParserUtil
-abstract class Command {
+class "{abstract}\nCommand" as Command {
   {abstract} +execute(model: Model): CommandResult
   +isTransactional(): boolean
 }
@@ -29,7 +29,7 @@ class EquipmentDeleteCommand {
   +execute(model: Model): CommandResult
   +isTransactional(): boolean
 }
-interface Model {
+class "<<interface>>\nModel" as Model {
   +findMember(id: NusId): Optional<Member>
   +findEquipment(id: UUID): Optional<Equipment>
   +deleteMember(member: Member): void

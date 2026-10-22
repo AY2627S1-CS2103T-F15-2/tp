@@ -13,13 +13,13 @@ title Transaction execution and atomic persistence
 class LogicManager {
   +execute(commandText: String): CommandResult
 }
-abstract class Command {
+class "{abstract}\nCommand" as Command {
   +isTransactional(): boolean
   +isReadOnly(): boolean
   +recordsHistory(): boolean
   {abstract} +execute(model: Model): CommandResult
 }
-interface Model {
+class "<<interface>>\nModel" as Model {
   +createTransactionSnapshot(): Model
   +getAddressBook(): ReadOnlyAddressBook
   +recordAddressBook(previous, description): void
@@ -30,7 +30,7 @@ class AddressBook {
   ~resetData(data, publishModelState): void
 }
 class AddressBookHistory
-interface Storage {
+class "<<interface>>\nStorage" as Storage {
   +saveAddressBook(data: ReadOnlyAddressBook): void
 }
 class StorageManager

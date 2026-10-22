@@ -79,7 +79,7 @@ work into a feature branch does not make that work part of Keith's authorship.
 | [#62: Root integration](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/62) | [147ba902](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/147ba902), [392b4840](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/392b4840) | RootModelClass, RootModelResetSequence |
 | [#81: UI foundation](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/81) | [65b39d4a](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/65b39d4a) | UiFoundationClass, FxTestExecutionSequence |
 | [#86: Identity deletion](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/86) | [4112c4de](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/4112c4de), [118fed7b](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/118fed7b) | IdentityDeletionClass, IdentityDeletionSequence |
-| [#93: Application shell](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/93) | [2e99cc08](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/2e99cc08), [a69514c9](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/a69514c9), [4ce33358](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/4ce33358) | ShellNavigationClass, ShellCommandSequence, ShellRefreshSequence |
+| [#93: Application shell](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/93) | [2e99cc08](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/2e99cc08), [a69514c9](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/a69514c9), [4ce33358](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/4ce33358) | ShellNavigationClass, ShellCommandSequence, ShellExecuteSequence, ShellRefreshSequence |
 | [#97: MVP completion](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/97) | [992988ad](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/992988ad), [2906d380](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/2906d380), [a2c349b9](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/a2c349b9), [37ec27aa](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/37ec27aa) | MutationTransactionClass, MutationTransactionSequence, MvpValidationActivity; deletion feedback and shell navigation above |
 | [#112: Tab completion](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/112) | [59beff9b](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/59beff9b), [c4517ac0](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/c4517ac0), [2df80011](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/2df80011) | AutocompleteClass, AutocompleteSequence |
 
@@ -160,6 +160,13 @@ and navigation tabs display views directly, while command previews only prepare 
 <puml src="diagrams/ShellCommandSequence.puml" alt="Shared typed-command and identity-link execution sequence" />
 
 [Open full-size diagram](diagrams/ShellCommandSequence.png)
+
+Both entry paths call the same `executeCommand` method, shown once below. MainWindow returns the result
+or rethrows the original exception after updating feedback and refresh state.
+
+<puml src="diagrams/ShellExecuteSequence.puml" alt="Shared executeCommand result handling sequence" />
+
+[Open full-size diagram](diagrams/ShellExecuteSequence.png)
 
 Root invalidations queue one refresh. A synchronous successful-command refresh clears that pending
 work, and disposed windows ignore queued callbacks. Programmatic selection never dispatches another
