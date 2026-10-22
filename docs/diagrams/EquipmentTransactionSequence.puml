@@ -3,7 +3,11 @@ skinparam shadowing false
 skinparam defaultFontName Arial
 hide footbox
 skinparam maxMessageSize 150
-skinparam ParticipantPadding 10
+<style>
+participant {
+  padding 10
+}
+</style>
 
 participant ":LogicManager" as logic
 participant "live:ModelManager" as live

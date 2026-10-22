@@ -2,7 +2,11 @@
 skinparam shadowing false
 skinparam defaultFontName Arial
 skinparam maxMessageSize 105
-skinparam ParticipantPadding 10
+<style>
+participant {
+  padding 10
+}
+</style>
 hide footbox
 
 title Redo within the transaction candidate
