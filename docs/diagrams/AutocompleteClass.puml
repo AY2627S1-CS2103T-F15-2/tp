@@ -1,0 +1,60 @@
+@startuml
+!include style.puml
+skinparam classBackgroundColor UI_COLOR_T1
+skinparam classFontColor #111111
+skinparam classStereotypeFontColor #111111
+skinparam classBorderColor UI_COLOR_T4
+skinparam arrowColor UI_COLOR_T4
+skinparam classAttributeIconSize 0
+show members
+hide empty members
+title Read-only Tab completion
+
+class MainWindow
+class CommandBox
+class TextField
+class CompletionController {
+  -originalText: String
+  -candidateIndex: int
+  -isApplying: boolean
+  -handleKey(event: KeyEvent): void
+  -resetAfterEdit(): void
+}
+class CompletionService {
+  +complete(text, caret, data): Optional<Completion>
+}
+class Completion <<record>> {
+  -start: int
+  -end: int
+  -candidates: List<String>
+}
+class "<<interface>>\nSupplier<ReadOnlyAddressBook>" as Supplier
+class "<<interface>>\nReadOnlyAddressBook" as ReadOnlyAddressBook
+class AddressBook
+
+MainWindow ..> CommandBox : creates with logic::getAddressBook
+CommandBox "1" --> "1" TextField : commandTextField
+CommandBox ..> CompletionController : creates; no controller field
+TextField ..> CompletionController : registered event/listener callbacks
+CompletionController "0..*" --> "1" TextField : field
+CompletionController "0..*" --> "1" Supplier : data
+Supplier ..> ReadOnlyAddressBook : returns live root
+CompletionController "1" *--> "1" CompletionService : service
+CompletionController "0..*" --> "0..1" Completion : completion
+CompletionController "0..*" --> "0..1" AddressBook : snapshot
+AddressBook ..|> ReadOnlyAddressBook
+CompletionService ..> ReadOnlyAddressBook : reads candidate values
+CompletionService ..> Completion : creates replacement range and candidates
+
+note bottom of CompletionService
+  Uses command/prefix vocabulary and current record values.
+  Unicode field boundaries preserve surrounding separators.
+  Batch loan UUIDs replace only the active entry and
+  exclude identities already present in neighboring entries.
+end note
+legend bottom
+  No completion dependency calls Logic.execute or storage.
+  The controller's detached snapshot detects model changes despite
+  stable live-root identity. Ordinary Enter submission remains separate.
+endlegend
+@enduml

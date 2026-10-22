@@ -1,0 +1,61 @@
+@startuml
+!include style.puml
+skinparam ParticipantBackgroundColor UI_COLOR_T1
+skinparam ParticipantFontColor #111111
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 220
+title Coalesced refresh and identity-preserving navigation
+
+participant "observable root lists" as lists
+participant "window:MainWindow" as window
+participant "<<class>>\nPlatform" as platform
+participant "read-only panels" as panels
+
+loop synchronous invalidations from a root operation
+  lists -> window : dataListener -> queueRefresh()
+  activate window
+  alt disposed or refresh already queued
+    window -> window : return without scheduling
+  else active with no queued refresh
+    window -> window : refreshQueued = true
+    window -> platform : runLater(refresh callback)
+  end
+  deactivate window
+end
+
+alt window disposed before callback
+  window -> window : dispose(): mark disposed;\nremove list listeners and UI handlers; hide Help
+  platform ->> window : queued callback
+  window -> window : skip refresh because disposed
+else active window
+  opt successful command refreshes synchronously before callback
+    window -> window : refreshViews() clears refreshQueued
+    note right of window : The later callback skips an already completed refresh.
+  end
+  platform ->> window : queued callback
+  opt !disposed and refreshQueued
+    window -> window : refreshViews(); refreshQueued = false
+    window -> panels : getDisplayedItems(), getSelection()
+    panels --> window : current identities and selection
+    window -> window : recoverSelection(old selection, old order, new order)
+    note right of window
+      Retain identity when present; otherwise choose
+      a bounded former position or empty selection.
+      Prefer the exact current equipment-detail UUID
+      if that retained unit still exists.
+    end note
+    window -> panels : refresh(); select(recovered identity)
+    window -> panels : refresh summaries, loans and details
+    note right of panels : Programmatic refresh/select never activates a user command.
+    opt current detail identity no longer exists
+      window -> window : display(members() / equipment())
+    end
+  end
+end
+note over window, panels
+  display(directoryRequest) changes query criteria only when getQuery is present.
+  Explicit list/reset commands supply DirectoryQuery.all(); ordinary navigation
+  preserves existing criteria. Soft-deleted retained identities still exist,
+  so soft deletion alone does not trigger the missing-identity fallback.
+end note
+@enduml

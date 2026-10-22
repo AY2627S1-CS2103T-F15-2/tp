@@ -67,6 +67,32 @@ For example, the `Logic` component defines its API in `Logic.java` and implement
 
 The sections below give more details of each component.
 
+### Contribution diagram index
+
+The following diagrams document the current implementation of Keith's (`wtvlol`) merged contributions.
+The PR and authored-commit links establish provenance; supporting classes and subsequent changes by
+other contributors are included only where needed to explain the current design. Merging a teammate's
+work into a feature branch does not make that work part of Keith's authorship.
+
+| Contribution | Authored implementation commits | Current diagrams |
+| --- | --- | --- |
+| [#62: Root integration](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/62) | [147ba902](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/147ba902), [392b4840](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/392b4840) | RootModelClass, RootModelResetSequence |
+| [#81: UI foundation](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/81) | [65b39d4a](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/65b39d4a) | UiFoundationClass, FxTestExecutionSequence |
+| [#86: Identity deletion](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/86) | [4112c4de](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/4112c4de), [118fed7b](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/118fed7b) | IdentityDeletionClass, IdentityDeletionSequence |
+| [#93: Application shell](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/93) | [2e99cc08](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/2e99cc08), [a69514c9](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/a69514c9), [4ce33358](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/4ce33358) | ShellNavigationClass, ShellCommandSequence, ShellExecuteSequence, ShellRefreshSequence |
+| [#97: MVP completion](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/97) | [992988ad](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/992988ad), [2906d380](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/2906d380), [a2c349b9](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/a2c349b9), [37ec27aa](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/37ec27aa) | MutationTransactionClass, MutationTransactionSequence, MvpValidationActivity; deletion feedback and shell navigation above |
+| [#112: Tab completion](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/112) | [59beff9b](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/59beff9b), [c4517ac0](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/c4517ac0), [2df80011](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/2df80011) | AutocompleteClass, AutocompleteSequence |
+
+Names in the last column refer to the `.puml` sources in `docs/diagrams`, embedded in the relevant
+sections below. This set excludes deployment-permission PR #89, profile/photo PRs #22/#27/#35/#36,
+and unmerged remark/data-transfer PRs #7/#107. It does not replace other contributors' member, equipment,
+loan, directory-search or undo/redo diagrams.
+
+Notation follows the [course UML reference sheet](https://nus-cs2103-ay2627-s1.github.io/website/admin/uml-reference-sheet.html).
+Class diagrams show selected APIs and stored-reference roles; dashed dependencies describe calls,
+creation or parameter use. Sequence messages abbreviate Java calls where noted. Notes distinguish
+omitted infrastructure and current behavior from the original PR's historical behavior.
+
 ### UI component
 
 The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/ui/Ui.java)
@@ -115,17 +141,91 @@ The feedback heading displays only Last result; the box carries neutral/success/
 text contains the status plus the entire message. Ready command previews say `Press Enter to execute (ready)`;
 templates say `Replace uppercase placeholders (template)`. Copy and Use command still never execute a command.
 
+#### Shell execution and refresh
+
+The following focused views complement `UiClassDiagram`: they explain the command callback and typed
+navigation boundary introduced in #93, rather than claiming ownership of every panel shown. The current
+equipment group panel, query criteria, previews and loan-history presentation are supporting context
+from later work. `MainWindow` supplies a method-reference implementation of `CommandExecutor`; it does
+not implement that interface itself.
+
+<puml src="diagrams/ShellNavigationClass.puml" alt="Shell ownership, command callback and typed display requests" />
+
+[Open full-size diagram](diagrams/ShellNavigationClass.png)
+
+Typed Enter submission and explicit member/equipment identity links share `executeCommand`. Failures
+retain correction text; a Space-activated link defers correction focus until key release. Group selection
+and navigation tabs display views directly, while command previews only prepare text.
+
+<puml src="diagrams/ShellCommandSequence.puml" alt="Shared typed-command and identity-link execution sequence" />
+
+[Open full-size diagram](diagrams/ShellCommandSequence.png)
+
+Both entry paths call the same `executeCommand` method, shown once below. MainWindow returns the result
+or rethrows the original exception after updating feedback and refresh state.
+
+<puml src="diagrams/ShellExecuteSequence.puml" alt="Shared executeCommand result handling sequence" />
+
+[Open full-size diagram](diagrams/ShellExecuteSequence.png)
+
+Root invalidations queue one refresh. A synchronous successful-command refresh clears that pending
+work, and disposed windows ignore queued callbacks. Programmatic selection never dispatches another
+user command. A request without a query retains existing criteria; only an explicit reset supplies an
+all-record query. Missing identities fall back to a directory, but a soft-deleted retained record still
+exists and can remain visible in details.
+
+<puml src="diagrams/ShellRefreshSequence.puml" alt="Coalesced refresh, selection recovery and disposal sequence" />
+
+[Open full-size diagram](diagrams/ShellRefreshSequence.png)
+
+#### UI foundation and JavaFX test execution
+
+PR #81 supplied shared theme resources, `FxTestUtil` and the matching JavaFX test runtime. The production
+classes below show how the current UI loads those resources; `UiPart`, JavaFX and later font handling
+are context, not new classes attributed to that PR. Stylesheets are resources, not domain objects.
+
+<puml src="diagrams/UiFoundationClass.puml" alt="UI resource loading and shared JavaFX test-support dependencies" />
+
+[Open full-size diagram](diagrams/UiFoundationClass.png)
+
+`runAndWait` runs inline on the FX thread or awaits shared startup and queues a `FutureTask`. Both waits
+have a 30-second bound. Original runtime failures and errors propagate; interruption preserves the flag
+and cancels an unfinished queued task. Cancellation cannot undo an action already running. Tests own
+their windows and must not shut down the shared toolkit.
+
+<puml src="diagrams/FxTestExecutionSequence.puml" alt="JavaFX toolkit startup, execution and test failure propagation" />
+
+[Open full-size diagram](diagrams/FxTestExecutionSequence.png)
+
 ### Tab completion
 
 `MainWindow` supplies the live read-only address book to `CommandBox`. `CompletionService` computes
 replacement ranges and ordered candidates without calling logic, history or storage. Command constants
-and shared search prefix constants define all accepted routes and fields. Search enum options follow
+and shared search prefix constants define the completion vocabulary. The newly merged `undo`/`redo`
+parser routes are not currently registered in `CompletionService`. Search enum options follow
 `DirectoryQuery`; dates, numeric counts, new member IDs and free-form notes are entered manually.
 Batch loan completion replaces only the active UUID entry and excludes neighboring identities.
 `CompletionController` owns cycling and resets after input, caret, focus or model changes. Enter retains
 the ordinary parser and transactional command path. Tests compare family completion to parser routes,
 exercise real JavaFX events, and load production classes from the packaged JAR. Gradle enforces 100%
 instruction, line and branch coverage for the feature, including its UI wiring. See [Testing](Testing.md).
+
+The controller is created by `CommandBox` and retained through the field's registered callbacks, rather
+than a `CommandBox` member field. It uses a detached root snapshot to detect model changes before each
+eligible Tab event, since the live root deliberately keeps its object identity.
+
+<puml src="diagrams/AutocompleteClass.puml" alt="Tab completion service, controller and read-only data dependencies" />
+
+[Open full-size diagram](diagrams/AutocompleteClass.png)
+
+The first plain Tab selects the first candidate. Further Tab or Shift+Tab events wrap through the same
+candidate list; Shift+Tab alone does not start a cycle. External edits, caret/anchor/focus changes and
+Enter clear the cycle. Without a candidate the event remains unconsumed. Replacement preserves the
+original suffix, including Unicode separators and neighboring batch UUIDs, and never executes or saves.
+
+<puml src="diagrams/AutocompleteSequence.puml" alt="Tab suggestion, forward and reverse cycling, and range replacement" />
+
+[Open full-size diagram](diagrams/AutocompleteSequence.png)
 
 ### Logic component
 
@@ -173,6 +273,30 @@ The inherited parser diagram below documents the remaining AB3 classes, not the 
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/model/Model.java)
+
+#### Root collection integration
+
+PR #62 integrated the four root collections and stable observable views. Each root has independent
+collection containers; immutable entity values may be shared across snapshots. Domain containers are
+created lazily, while callers always receive stable unmodifiable lists. Cross-record loan integrity
+belongs to `AddressBook`, rather than the UI or serialization layer.
+
+<puml src="diagrams/RootModelClass.puml" alt="Root collections, immutable values and stable observable wrappers" />
+
+[Open full-size diagram](diagrams/RootModelClass.png)
+
+`resetData` first copies and validates every replacement collection and loan reference, and resolves all
+replacement backing views. Only then does it replace live fields and views, deferring notifications until
+the complete dataset is visible. The current package overload also runs a model-state callback before
+notifications so observers see matching records and session history. It runs that callback even when
+records are unchanged, without list notifications; the public overload supplies a no-op callback.
+This coordination is supporting behavior from #137/#138. Validation failure leaves records/history
+intact. The callback must not throw or mutate records; the diagram does not promise recovery from
+arbitrary exceptions thrown by publication actions or external observer callbacks.
+
+<puml src="diagrams/RootModelResetSequence.puml" alt="Root reset validation and complete publication before notification" />
+
+[Open full-size diagram](diagrams/RootModelResetSequence.png)
 
 #### Equipment and loan model
 
@@ -259,6 +383,64 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Identity-based deletion
+
+The #86 leaf parsers require one normalized NUS ID or UUID and construct commands that resolve the
+stored entity. The root enforces the open-loan constraint. Member failures report the held-item count;
+equipment failures report the current holder. Successful feedback uses the stored name and identity.
+The #97 follow-up captures that context before mutation and preserves original domain failure causes.
+
+<puml src="diagrams/IdentityDeletionClass.puml" alt="Member and equipment deletion parsers, commands and model boundary" />
+
+[Open full-size diagram](diagrams/IdentityDeletionClass.png)
+
+This member example runs on the isolated candidate supplied by `LogicManager`. Equipment differences
+are noted below the sequence. Successful command execution still requires the transaction's atomic save
+before the live root changes. Current soft deletion retains details and closed loans; it supersedes the
+permanent deletion and related-history cleanup in the original #62/#86 implementation.
+
+<puml src="diagrams/IdentityDeletionSequence.puml" alt="Identity lookup, deletion guards and contextual member feedback" />
+
+[Open full-size diagram](diagrams/IdentityDeletionSequence.png)
+
+### Domain mutation transactions
+
+PR #97 introduced the transaction boundary used by current Laplace mutations. Commands explicitly opt
+in with `isTransactional()`. `LogicManager` executes on independent candidate containers, saves the
+candidate atomically, then calls `publishTransaction` to publish records and matching session history
+through the existing observable root. Commands marked `isReadOnly()` return before recording or saving.
+This contract does not turn remaining legacy commands into transactional mutations automatically.
+The history steps are supporting context from #137/#138; see [Undo/redo](#undo-redo-feature).
+
+<puml src="diagrams/MutationTransactionClass.puml" alt="Domain transaction and atomic storage class relationships" />
+
+[Open full-size diagram](diagrams/MutationTransactionClass.png)
+
+Serialization precedes writing. The writer flushes a sibling temporary file and requires an atomic
+replacement, without a non-atomic overwrite fallback. Parse/execution failures and handled persistence
+failures do not publish candidate state. A partial write or failed replacement preserves the previous
+save file. Original I/O causes remain attached to the reported command failure. Ordinary transactional
+mutations stage a history entry after execution and before saving; undo/redo navigate existing history
+instead. Failed saving leaves live records and history untouched, and successful publication adopts
+matching history before record observers run.
+
+<puml src="diagrams/MutationTransactionSequence.puml" alt="Isolated mutation, atomic persistence, failure and live publication" />
+
+[Open full-size diagram](diagrams/MutationTransactionSequence.png)
+
+The next activity uses equipment creation to connect #97's input normalization, reading-order validation
+and bounded UUID retries to the current batch-add implementation. Batch counts and reserving every UUID
+before insertion are later supporting behavior. Other parsers reuse the same argument-validation
+boundary; exact field rules remain in the command documentation and User Guide.
+
+<puml src="diagrams/MvpValidationActivity.puml" alt="Equipment input validation and bounded UUID reservation activity" />
+
+[Open full-size diagram](diagrams/MvpValidationActivity.png)
+
+The original #97 presentation hid completed loans. Current loan panels and entity details show retained
+completed history; see [Loan workflow and history](#loan-workflow-and-history). The shell diagrams above
+show the current navigation boundary without reinstating that historical presentation policy.
 
 ### Adding multiple physical equipment units
 

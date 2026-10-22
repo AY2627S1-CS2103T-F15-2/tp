@@ -1,0 +1,59 @@
+@startuml
+!include style.puml
+skinparam classBackgroundColor UI_COLOR_T1
+skinparam classFontColor #111111
+skinparam classStereotypeFontColor #111111
+skinparam classBorderColor UI_COLOR_T4
+skinparam arrowColor UI_COLOR_T4
+skinparam classAttributeIconSize 0
+show members
+hide empty members
+left to right direction
+title UI resources and shared JavaFX test support
+
+package "Production UI (context)" {
+  class "{abstract}\nUiPart<T>" as UiPart {
+    +getRoot(): T
+    -loadFxmlFile(location: URL, root: T): void
+  }
+  class MainWindow
+  class FXMLLoader {
+    +setController(controller: Object): void
+    +load(): T
+  }
+  class LaplaceFonts
+}
+package "Test support" {
+  class FxTestUtil {
+    {static} +runAndWait(action: Runnable): void
+    {static} -awaitStartup(): void
+    {static} -await(result: Future): void
+  }
+  class LaplaceThemeTest
+}
+class Platform {
+  {static} +isFxApplicationThread(): boolean
+  {static} +startup(action: Runnable): void
+  {static} +runLater(action: Runnable): void
+}
+
+MainWindow --|> UiPart
+UiPart "1" *--> "1" FXMLLoader : fxmlLoader
+UiPart ..> LaplaceFonts : register / install
+LaplaceThemeTest ..> FxTestUtil : runAndWait
+LaplaceThemeTest ..> UiPart : load test FXML
+FxTestUtil ..> Platform
+
+note bottom of UiPart
+  Loads classpath /view/*.fxml with this controller.
+  MainWindow.fxml loads LaplaceTheme.css;
+  its laplace-root scope supplies shared theme tokens.
+  Fonts and current appearance behavior are context,
+  not additional authorship attributed to PR #81.
+end note
+note bottom of FxTestUtil
+  One shared startup result; no toolkit shutdown.
+  GUI tests require a display and matching JavaFX natives.
+  The helper does not own application windows.
+end note
+@enduml

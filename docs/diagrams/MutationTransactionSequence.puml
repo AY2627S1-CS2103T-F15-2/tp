@@ -1,0 +1,82 @@
+@startuml
+!include style.puml
+skinparam ParticipantBackgroundColor LOGIC_COLOR_T1
+skinparam ParticipantFontColor #111111
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 220
+title Domain mutation: save candidate, then publish
+
+participant "logic:LogicManager" as logic
+participant "command:Command" as command
+participant "live:Model" as live
+participant "candidate:Model" as candidate
+participant "json:\nJsonAddressBookStorage" as json
+participant "writer:AtomicFileWriter" as writer
+
+[-> logic : execute(text)
+activate logic
+logic -> logic : addressBookParser.parseCommand(text)
+note right of logic
+  Parse failure returns before snapshot or execution.
+  This example assumes isTransactional() is true
+  and isReadOnly() is false.
+end note
+logic -> live : createTransactionSnapshot()
+live --> logic : candidate (copied records/preferences; immutable history shared)
+logic -> command : execute(candidate)
+activate command
+command -> candidate : domain operations
+command --> logic : result or CommandException
+deactivate command
+alt validation or execution fails
+  [<-- logic : exception (no save or publication)
+else execution succeeds
+  opt command.recordsHistory() is true
+    logic -> live : getAddressBook()
+    live --> logic : previousData
+    logic -> candidate : recordAddressBook(previousData, describeAction(text))
+    note right of candidate
+      Stage a new immutable history value for a real change.
+      Undo/redo navigate history instead of recording again.
+    end note
+  end
+  logic -> candidate : getAddressBook()
+  candidate --> logic : candidateData
+  logic -> json : saveAddressBook(candidateData)\nvia StorageManager (forwarding omitted)
+  activate json
+  json -> json : serialize JsonSerializableAddressBook to UTF-8 bytes
+  alt serialization succeeds
+    json -> writer : write(path, bytes)
+    activate writer
+    writer -> writer : create sibling temporary file;\nwriteTemporaryFile(); flush with force(true)
+    writer -> writer : replaceFile() using atomic move
+    writer --> json : return or IOException
+    deactivate writer
+  else serialization throws IOException
+    note right of json : Writer is never called.
+  end
+  json --> logic : return or IOException
+  deactivate json
+  alt persistence throws IOException
+    [<-- logic : CommandException with original cause
+    note over live, writer
+      No live records/history publication; previous destination bytes remain intact.
+      Writer failures attempt temporary-file cleanup;
+      cleanup failure is suppressed on the original failure.
+    end note
+  else atomic replacement succeeds
+    logic -> live : publishTransaction(candidate)
+    ref over live
+      RootModelResetSequence:
+      validate records, adopt history, then notify existing views
+    end ref
+    [<-- logic : result
+  end
+end
+deactivate logic
+note over logic, live
+  If isReadOnly() is true, execution returns before history recording or saving.
+  Nontransactional legacy/navigation paths are outside this flow.
+  Current history coordination comes from #137/#138, not Keith's #97.
+end note
+@enduml

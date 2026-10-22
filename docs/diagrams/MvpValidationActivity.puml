@@ -1,0 +1,80 @@
+@startuml
+!include style.puml
+skinparam activityBackgroundColor LOGIC_COLOR_T1
+skinparam activityBorderColor LOGIC_COLOR_T4
+skinparam ArrowFontStyle plain
+skinparam conditionStyle diamond
+title Equipment add: input validation and bounded identity reservation
+
+start
+if (Input comes from CommandBox?) then ([yes])
+  :TextFormatter replaces pasted tabs and
+  vertical whitespace with spaces;
+else ([no])
+endif
+:AddressBookParser accepts multiline arguments;
+:EquipmentAddCommandParser calls
+LaplaceArgumentParser.parse with validators;
+:Scan supplied fields left to right;
+note right
+  Reject nonblank preamble, unknown/repeated markers,
+  blank required fields and invalid values.
+  Validate a preceding value before the next marker.
+end note
+if (Supplied-field error?) then ([yes])
+  :Throw ParseException with usage;
+  stop
+else ([no])
+endif
+:Check missing required fields
+in lexicographic prefix order;
+if (Required field missing?) then ([yes])
+  :Throw ParseException with usage;
+  stop
+else ([no])
+endif
+:Parse condition/count; construct command;
+note right
+  ParserUtil validates text and exact condition values.
+  count defaults to 1 and accepts ASCII digits, 1..100.
+  Constructor normalizes name/category/notes and
+  checks the count range for direct callers too.
+end note
+:LogicManager creates isolated candidate;
+:Begin prepareUnits(candidate),
+with empty reserved UUID set;
+while (More units to prepare?) is ([yes])
+  :Reset generation attempts for this unit;
+  repeat
+    :Read next UUID from supplier;
+    if (Supplier returns null?) then ([yes])
+      :Throw CommandException;
+      stop
+    else ([no])
+    endif
+    :Count this attempt;
+    :Check candidate.hasEquipment(uuid)
+    and reserved.contains(uuid);
+    if (UUID unused?) then ([yes])
+      :Reserve UUID and prepare immutable Equipment;
+    else ([no])
+      if (100 attempts exhausted?) then ([yes])
+        :Throw CommandException;
+        stop
+      else ([no])
+      endif
+    endif
+  repeat while (UUID collided?) is ([yes]) not ([no])
+endwhile ([no])
+:Compute duplicate-description warning
+against candidate before insertion;
+:Add all prepared units to candidate;
+note right
+  A duplicate-insertion failure becomes CommandException.
+  Any execution failure discards the candidate;
+  live data and its previous file stay unchanged.
+end note
+:Continue atomic save then publication
+(MutationTransactionSequence);
+stop
+@enduml
