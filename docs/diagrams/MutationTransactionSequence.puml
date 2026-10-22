@@ -1,0 +1,72 @@
+@startuml
+!include style.puml
+skinparam ParticipantBackgroundColor LOGIC_COLOR_T1
+skinparam ParticipantFontColor #111111
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 220
+title Domain mutation: save candidate, then publish
+
+participant "logic:LogicManager" as logic
+participant "command:Command" as command
+participant "live:Model" as live
+participant "candidate:Model" as candidate
+participant "json:\nJsonAddressBookStorage" as json
+participant "writer:AtomicFileWriter" as writer
+
+[-> logic : execute(text)
+activate logic
+logic -> logic : addressBookParser.parseCommand(text)
+note right of logic
+  Parse failure returns before snapshot or execution.
+  This example assumes isTransactional() is true
+  and isReadOnly() is false.
+end note
+logic -> live : createTransactionSnapshot()
+live --> logic : candidate (independent containers)
+logic -> command : execute(candidate)
+activate command
+command -> candidate : domain operations
+command --> logic : result or CommandException
+deactivate command
+alt validation or execution fails
+  [<-- logic : exception (no save or publication)
+else execution succeeds
+  logic -> candidate : getAddressBook()
+  candidate --> logic : candidateData
+  logic -> json : saveAddressBook(candidateData)\nvia StorageManager (forwarding omitted)
+  activate json
+  json -> json : serialize JsonSerializableAddressBook to UTF-8 bytes
+  alt serialization succeeds
+    json -> writer : write(path, bytes)
+    activate writer
+    writer -> writer : create sibling temporary file;\nwriteTemporaryFile(); flush with force(true)
+    writer -> writer : replaceFile() using atomic move
+    writer --> json : return or IOException
+    deactivate writer
+  else serialization throws IOException
+    note right of json : Writer is never called.
+  end
+  json --> logic : return or IOException
+  deactivate json
+  alt persistence throws IOException
+    [<-- logic : CommandException with original cause
+    note over live, writer
+      No live publication; previous destination bytes remain intact.
+      Writer failures attempt temporary-file cleanup;
+      cleanup failure is suppressed on the original failure.
+    end note
+  else atomic replacement succeeds
+    logic -> live : setAddressBook(candidateData)
+    ref over live
+      RootModelResetSequence:
+      validate and publish through existing root/views
+    end ref
+    [<-- logic : result
+  end
+end
+deactivate logic
+note over logic, live
+  Current pure queries execute on live and return before saving.
+  Legacy commands that do not opt into transactions are outside this flow.
+end note
+@enduml

@@ -1,0 +1,62 @@
+@startuml
+!include style.puml
+skinparam ParticipantBackgroundColor UI_COLOR_T1
+skinparam ParticipantFontColor #111111
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 220
+title Tab replacement and candidate cycling
+
+actor User as user
+participant "field:TextField" as field
+participant "controller:CompletionController" as controller
+participant "data:Supplier" as data
+participant "service:CompletionService" as service
+
+user -> field : Tab or Shift+Tab
+field -> controller : handleKey(event)
+activate controller
+alt Ctrl/Alt/Meta held or text selected
+  controller -> controller : resetAfterEdit()
+  note right of controller : Leave event unconsumed for normal handling.
+else eligible Tab event
+  controller -> data : get()
+  data --> controller : live ReadOnlyAddressBook
+  controller -> controller : new AddressBook(live root)
+  opt active cycle and snapshot differs from current data
+    controller -> controller : completion = null
+  end
+  alt no active cycle
+    alt Shift+Tab
+      note right of controller : Leave event unconsumed; do not start a reverse cycle.
+    else plain Tab
+      controller -> field : getText(), getCaretPosition()
+      field --> controller : originalText, caret
+      controller -> service : complete(originalText, caret, current)
+      service --> controller : Optional<Completion>
+      alt no suggestion
+        note right of controller : Leave event unconsumed for ordinary traversal.
+      else suggestion exists
+        controller -> controller : retain completion and snapshot; candidateIndex = 0
+      end
+    end
+  else active cycle
+    controller -> controller : floorMod(index + direction, candidates.size())
+    note right of controller : direction = +1 for Tab, -1 for Shift+Tab
+  end
+  opt a candidate was selected
+    controller -> controller : isApplying = true
+    controller -> field : setText(original prefix + candidate + original suffix)
+    field -> controller : text/caret/anchor change listeners
+    controller -> controller : resetAfterEdit() ignores own insertion
+    controller -> field : positionCaret(start + candidate.length())
+    controller -> controller : isApplying = false (finally); event.consume()
+  end
+end
+deactivate controller
+note over field, controller
+  External text, caret, anchor or focus changes clear the cycle.
+  Enter clears it and follows ordinary command submission.
+  Replacement uses the original start/end range, preserving later fields
+  and Unicode separators. Completing one batch UUID preserves its neighbors.
+end note
+@enduml
