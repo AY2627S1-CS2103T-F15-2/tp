@@ -30,10 +30,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.LaplaceText;
 import seedu.address.logic.commands.EquipmentAddCommand;
 import seedu.address.logic.commands.EquipmentDeleteCommand;
@@ -61,6 +63,7 @@ import seedu.address.model.query.DirectoryQuery;
 
 /** Computes suggestions from parser vocabulary and a live read-only root, without executing commands. */
 public final class CompletionService {
+    private static final Logger logger = LogsCenter.getLogger(CompletionService.class);
     private static final Pattern WORD = Pattern.compile("\\S+");
     private static final Pattern MARKER = Pattern.compile("(?U)(?<!\\S)[A-Za-z][A-Za-z0-9_-]*/");
     private static final Pattern ARGUMENT_WHITESPACE = Pattern.compile("(?U)\\s");
@@ -103,6 +106,15 @@ public final class CompletionService {
         if (caret < 0 || caret > text.length()) {
             throw new IllegalArgumentException("Caret must be within the input.");
         }
+        Optional<Completion> completion = findCompletion(text, caret, data);
+        // Input text and candidates may contain member details, so only their sizes are logged.
+        logger.fine("Completion at caret " + caret + " of " + text.length() + " characters: "
+                + completion.map(found -> found.candidates().size() + " candidate(s)").orElse("none"));
+        return completion;
+    }
+
+    /** Returns the completion for a validated caret, or nothing when the input has no completable token. */
+    private Optional<Completion> findCompletion(String text, int caret, ReadOnlyAddressBook data) {
         Matcher words = WORD.matcher(text);
         if (!words.find() || caret <= words.start()) {
             return Optional.empty();
@@ -145,6 +157,8 @@ public final class CompletionService {
         while (matcher.find()) {
             String marker = matcher.group();
             if (!allowed.contains(marker) || !seen.add(marker)) {
+                logger.fine("Field completion stopped at an unsupported or repeated marker for "
+                        + command.split(" ")[0] + " commands.");
                 return Optional.empty();
             }
             starts.add(matcher.start());

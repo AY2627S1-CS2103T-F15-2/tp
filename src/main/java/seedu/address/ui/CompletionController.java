@@ -4,10 +4,12 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.completion.Completion;
 import seedu.address.logic.completion.CompletionService;
 import seedu.address.model.AddressBook;
@@ -15,6 +17,8 @@ import seedu.address.model.ReadOnlyAddressBook;
 
 /** Owns one input field's Tab cycle; every key uses fresh read-only model data. */
 final class CompletionController {
+    private static final Logger logger = LogsCenter.getLogger(CompletionController.class);
+
     private final TextField field;
     private final Supplier<ReadOnlyAddressBook> data;
     private final CompletionService service = new CompletionService();
@@ -50,6 +54,7 @@ final class CompletionController {
         }
         AddressBook current = new AddressBook(data.get());
         if (completion != null && !snapshot.equals(current)) {
+            logger.fine("Restarting completion cycle because the data changed.");
             completion = null;
         }
         if (completion == null) {
@@ -65,9 +70,13 @@ final class CompletionController {
             completion = suggestion.orElseThrow();
             snapshot = current;
             candidateIndex = 0;
+            logger.fine("Started completion cycle with " + completion.candidates().size()
+                    + " candidate(s).");
         } else {
             int direction = event.isShiftDown() ? -1 : 1;
             candidateIndex = Math.floorMod(candidateIndex + direction, completion.candidates().size());
+            logger.fine("Cycled to completion candidate " + (candidateIndex + 1) + " of "
+                    + completion.candidates().size() + ".");
         }
         String candidate = completion.candidates().get(candidateIndex);
         isApplying = true;
@@ -83,7 +92,8 @@ final class CompletionController {
 
     /** Text/caret changes caused by our own insertion belong to the same cycle. */
     private void resetAfterEdit() {
-        if (!isApplying) {
+        if (!isApplying && completion != null) {
+            logger.fine("Ended completion cycle after the input changed.");
             completion = null;
         }
     }
