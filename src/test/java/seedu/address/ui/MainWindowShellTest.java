@@ -3,6 +3,7 @@ package seedu.address.ui;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 
@@ -27,12 +28,14 @@ import javafx.event.ActionEvent;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Labeled;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TitledPane;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
@@ -42,6 +45,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
@@ -68,6 +72,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.query.InventoryGroups;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -108,16 +113,358 @@ public class MainWindowShellTest {
     }
 
     @Test
+    public void undoRedo_memberCreation_preservesSearchAndClearsMissingDetailsWithoutExtraCommands() {
+        FxTestUtil.runAndWait(() -> {
+            submit("member search q/Robin");
+            submit("member add nus/A9999999X name/Robin Tan phone/91234567 email/robin@example.com");
+            assertEquals("A9999999X", detailLabel("memberNusId"));
+            int dispatches = logic.commands.size();
+            submit("undo");
+            assertEquals(dispatches + 1, logic.commands.size());
+            assertEquals("Success", feedbackStatus());
+            assertEquals("Undid: member add.", feedback());
+            assertEquals("", field().getText());
+            assertTrue(rows().getItems().isEmpty());
+            assertTrue(label("queryContext").contains("robin"));
+            assertNull(node("memberNusId"));
+            submit("redo");
+            assertEquals(dispatches + 2, logic.commands.size());
+            assertEquals(1, rows().getItems().size());
+            assertTrue(label("queryContext").contains("robin"));
+        });
+    }
+
+    @Test
+    public void undoRedo_equipmentCreation_recoversDirectoryAndExactUuidsWithoutExtraCommands() {
+        FxTestUtil.runAndWait(() -> {
+            submit("equipment add name/Undo Camera category/Photo condition/GOOD");
+            String uuid = detailLabel("equipmentUuid");
+            submit("undo");
+            assertEquals("Success", feedbackStatus());
+            assertNull(node("equipmentUuid"));
+            assertEquals(3, model.getEquipmentList().size());
+            submit("redo");
+            assertEquals(4, model.getEquipmentList().size());
+            submit("equipment view uuid/" + uuid);
+            assertEquals(uuid, detailLabel("equipmentUuid"));
+            submit("redo");
+            assertEquals("Error", feedbackStatus());
+            assertEquals("Nothing to redo.", feedback());
+            assertEquals("redo", field().getText());
+            assertEquals(uuid, detailLabel("equipmentUuid"));
+        });
+    }
+
+    @Test
+    public void undoRedo_return_refreshesLoanRowsAndKeepsFailedUndoAvailable() {
+        FxTestUtil.runAndWait(() -> {
+            UUID target = new UUID(0, 1);
+            submit("loans return uuid/" + target + " returned/2026-01-02 condition/DAMAGED");
+            submit("loans list");
+            assertEquals("0", label("openCount"));
+            submit("undo");
+            assertEquals("1", label("openCount"));
+            assertEquals(Availability.ASSIGNED, model.getAvailability(target));
+            submit("redo");
+            assertEquals("0", label("openCount"));
+            assertEquals(Availability.UNAVAILABLE, model.getAvailability(target));
+            storage.fail = true;
+            submit("undo");
+            assertEquals("Error", feedbackStatus());
+            assertEquals("undo", field().getText());
+            assertEquals("0", label("openCount"));
+            storage.fail = false;
+            submit("undo");
+            assertEquals("1", label("openCount"));
+            assertEquals("Success", feedbackStatus());
+        });
+    }
+
+    @Test
+    public void autocomplete_keyboardSession_preservesDataAndExecutesOnlyOnEnter() throws IOException {
+        Path transcript = Path.of("build", "reports", "laplace", "autocomplete-keyboard-session.txt");
+        try {
+            FxTestUtil.runAndWait(() -> {
+                session.add("Mounted JavaFX shell, real LogicManager/ModelManager/JSON storage. Java 25.");
+                String[][] examples = {
+                    {"mo", "mode"}, {"mode da", "mode dark"}, {"mode li", "mode light"},
+                    {"mem", "member"}, {"member ad", "member add"}, {"member ed", "member edit"},
+                    {"member edit na", "member edit name/"},
+                    {"member edit name/al", "member edit name/Alex Tan"},
+                    {"member edit phone/91", "member edit phone/91234567"},
+                    {"member edit email/member1", "member edit email/member1@example.com"},
+                    {"member edit nus/a0000001", "member edit nus/A0000001X"},
+                    {"member add na", "member add name/"}, {"member add name/al", "member add name/Alex Tan"},
+                    {"member add phone/91", "member add phone/91234567"},
+                    {"member add email/member1", "member add email/member1@example.com"},
+                    {"equipment add name/cam", "equipment add name/Camera 1"},
+                    {"equipment add category/pho", "equipment add category/Photography"},
+                    {"equipment add condition/g", "equipment add condition/GOOD"},
+                    {"member view nus/A000000", "member view nus/A0000001X"},
+                    {"equipment view uuid/00000000-0000-0000-0000-000000000001",
+                        "equipment view uuid/00000000-0000-0000-0000-000000000001"},
+                    {"member add unknown/value", "member add unknown/value"},
+                    {"member res", "member restore"},
+                    {"member restore n", "member restore nus/"},
+                    {"member se", "member search"},
+                    {"member search holding/y", "member search holding/YES"},
+                    {"member search sort/he", "member search sort/HELD"},
+                    {"equipment ed", "equipment edit"},
+                    {"equipment edit co", "equipment edit condition/"},
+                    {"equipment res", "equipment restore"},
+                    {"equipment restore u", "equipment restore uuid/"},
+                    {"equipment search av", "equipment search availability/"},
+                    {"equipment search availability/av", "equipment search availability/AVAILABLE"},
+                    {"equipment search status/de", "equipment search status/DELETED"},
+                    {"equipment search order/de", "equipment search order/desc"},
+                    {"equipment add cou", "equipment add count/"},
+                    {"loans return co", "loans return condition/"},
+                    {"loans return condition/fa", "loans return condition/FAIR"},
+                    {"loans add uuid/00000000-0000-0000-0000-000000000001,00000000",
+                        "loans add uuid/00000000-0000-0000-0000-000000000001,"
+                            + "00000000-0000-0000-0000-000000000002"},
+                    {"loans return uuid/00000000-0000-0000-0000-000000000001,  ",
+                        "loans return uuid/00000000-0000-0000-0000-000000000001,  "
+                            + "00000000-0000-0000-0000-000000000002"},
+                    {"member add nus/A", "member add nus/A"},
+                    {"loans add assigned/2026", "loans add assigned/2026"}
+                };
+                for (String[] example : examples) {
+                    field().requestFocus();
+                    field().setText(example[0]);
+                    field().positionCaret(example[0].length());
+                    completeKey(false, example[1]);
+                }
+                field().setText("member ");
+                field().positionCaret(field().getLength());
+                completeKey(false, "member add");
+                completeKey(false, "member delete");
+                completeKey(true, "member add");
+                field().setText("member add name/alex xx   phone/91234567");
+                field().positionCaret("member add name/alex".length());
+                completeKey(false, "member add name/Alex Tan   phone/91234567");
+                for (String separator : List.of("\u2003", "\u00a0", "\u202f", "\u3000")) {
+                    String input = "member edit name/Alex" + separator + "phone/91234567"
+                            + separator + "email/member1@example.com";
+                    String expected = input.replace("name/Alex", "name/Alex Tan");
+                    session.add(String.format("FIELD SEPARATOR: U+%04X", (int) separator.charAt(0)));
+                    field().requestFocus();
+                    field().setText(input);
+                    field().positionCaret(input.indexOf("Alex") + 4);
+                    completeKey(false, expected);
+                    assertEquals("member edit name/Alex Tan".length(), field().getCaretPosition());
+                    completeKey(true, expected);
+                    field().positionCaret(expected.indexOf("phone/"));
+                    completeKey(false, expected);
+                }
+                String untouched = "member add name/Alex phone/91234567";
+                field().setText(untouched);
+                field().positionCaret(untouched.indexOf("phone/"));
+                completeKey(false, untouched);
+                assertTrue(logic.commands.isEmpty());
+                assertEquals(0, storage.saves);
+                assertFalse(Files.exists(storage.getAddressBookFilePath()));
+
+                field().setText("member view nus/A0000001");
+                field().positionCaret(field().getLength());
+                completeKey(false, "member view nus/A0000001X");
+                field().fireEvent(key(KeyCode.ENTER));
+                assertEquals(List.of("member view nus/A0000001X"), logic.commands);
+                assertEquals("", field().getText());
+                assertEquals(1, storage.saves);
+                recordOutcome("member view nus/A0000001X [Enter]");
+                reject("member view nus/invalid");
+                succeed("member list");
+                field().setText("member ed");
+                field().positionCaret(field().getLength());
+                completeKey(false, "member edit");
+                field().appendText(" nus/A0000001X name/ja");
+                field().positionCaret(field().getLength());
+                completeKey(false, "member edit nus/A0000001X name/Jamie Lim");
+                int saves = storage.saves;
+                field().fireEvent(key(KeyCode.ENTER));
+                assertEquals("", field().getText());
+                assertEquals("Success", feedbackStatus());
+                assertEquals(saves + 1, storage.saves);
+                assertEquals("Jamie Lim", model.findMember(id(1)).orElseThrow().getName().fullName);
+                recordOutcome("member edit nus/A0000001X name/Jamie Lim [Enter]");
+                completeAndSubmit("mode da", "mode dark");
+                assertTrue(model.getGuiSettings().isDarkMode());
+                completeAndSubmit("mode li", "mode light");
+                assertFalse(model.getGuiSettings().isDarkMode());
+                completeAndSubmit("member search holding/n", "member search holding/NO");
+                completeAndSubmit("equipment edit uuid/" + new UUID(0, 2) + " condition/fa",
+                        "equipment edit uuid/" + new UUID(0, 2) + " condition/FAIR");
+                int count = model.getEquipmentList().size();
+                completeAndSubmit("equipment add name/Batch Camera category/Photo count/2 condition/g",
+                        "equipment add name/Batch Camera category/Photo count/2 condition/GOOD");
+                assertEquals(count + 2, model.getEquipmentList().size());
+                String assignment = "loans add uuid/" + new UUID(0, 2)
+                        + " assigned/2026-01-01 expected/2026-01-02 nus/";
+                completeAndSubmit(assignment + "a0000001", assignment + "A0000001X");
+                String returns = "loans return uuid/" + new UUID(0, 1) + "," + new UUID(0, 2)
+                        + " returned/2026-01-02 condition/";
+                completeAndSubmit(returns + "g", returns + "GOOD");
+                assertTrue(model.findOpenLoan(new UUID(0, 1)).isEmpty());
+                assertTrue(model.findOpenLoan(new UUID(0, 2)).isEmpty());
+                succeed("equipment delete uuid/" + new UUID(0, 2));
+                completeAndSubmit("equipment restore uuid/00000000-0000-0000-0000-000000000002",
+                        "equipment restore uuid/00000000-0000-0000-0000-000000000002");
+                assertFalse(model.findEquipment(new UUID(0, 2)).orElseThrow().isDeleted());
+                succeed("member delete nus/" + id(3));
+                completeAndSubmit("member restore nus/a0000003", "member restore nus/A0000003X");
+                assertFalse(model.findMember(id(3)).orElseThrow().isDeleted());
+                assertEquals(model.getAddressBook(), assertDoesNotThrow(() -> storage.readAddressBook()).orElseThrow());
+                session.add("PASS: search, batch registration, loan return and restoration persisted/reloaded.");
+            });
+        } catch (AssertionError failure) {
+            session.add("FAIL: " + failure.getMessage());
+            throw failure;
+        } finally {
+            Files.createDirectories(transcript.getParent());
+            Files.write(transcript, session);
+        }
+    }
+
+    /** Submits the completed text through JavaFX Enter and records the parser/storage outcome. */
+    private void completeAndSubmit(String input, String expected) {
+        field().requestFocus();
+        field().setText(input);
+        field().positionCaret(input.length());
+        completeKey(false, expected);
+        field().fireEvent(key(KeyCode.ENTER));
+        assertEquals("", field().getText());
+        assertEquals("Success", feedbackStatus());
+        recordOutcome(expected + " [Enter]");
+    }
+
+    /** Records a Tab event and checks text, dispatch/save counts, and all model collections. */
+    private void completeKey(boolean reverse, String expected) {
+        AddressBook before = new AddressBook(model.getAddressBook());
+        int commands = logic.commands.size();
+        int saves = storage.saves;
+        session.add("INPUT: " + field().getText() + " [" + (reverse ? "Shift+Tab" : "Tab") + "]");
+        field().fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.TAB, reverse, false, false, false));
+        field().fireEvent(new KeyEvent(KeyEvent.KEY_RELEASED, "", "", KeyCode.TAB, reverse, false, false, false));
+        session.add("EXPECTED: " + expected);
+        session.add("ACTUAL: " + field().getText());
+        assertEquals(expected, field().getText());
+        assertEquals(commands, logic.commands.size());
+        assertEquals(saves, storage.saves);
+        assertEquals(before, model.getAddressBook());
+        session.add("CHECK: no command execution, save, or model mutation.");
+    }
+
+    @Test
+    public void contextActions_prepareCommandsAndFollowIdentityWhileResetIsExplicit() {
+        FxTestUtil.runAndWait(() -> {
+            submit("member search q/alex");
+            submit("member view nus/" + id(1));
+            TitledPane commands = (TitledPane) node("directorySummaryPlaceholder").lookup(".titled-pane");
+            commands.setAnimated(false);
+            commands.setExpanded(true);
+            layout();
+            int executed = logic.commands.size();
+            action("Use command").fire();
+            assertTrue(field().getText().startsWith("member edit nus/" + id(1)));
+            assertEquals(executed, logic.commands.size());
+            action("View equipment").fire();
+            assertEquals(new UUID(0, 1).toString(), detailLabel("equipmentUuid"));
+            commands = (TitledPane) node("directorySummaryPlaceholder").lookup(".titled-pane");
+            commands.setAnimated(false);
+            commands.setExpanded(true);
+            layout();
+            executed = logic.commands.size();
+            action("Use command").fire();
+            assertTrue(field().getText().startsWith("equipment edit uuid/" + new UUID(0, 1)));
+            assertEquals(executed, logic.commands.size());
+            action("View member").fire();
+            assertEquals(id(1).value, detailLabel("memberNusId"));
+            action("Back to results").fire();
+            assertTrue(label("queryContext").contains("alex"));
+            action("Reset search").fire();
+            assertEquals("Filters: All records", label("queryContext"));
+            submit("equipment search q/Camera 1");
+            rows().fireEvent(key(KeyCode.ENTER));
+            action("Back to results").fire();
+            assertTrue(label("queryContext").contains("camera 1"));
+            action("Reset search").fire();
+            assertEquals("Filters: All records", label("queryContext"));
+        });
+    }
+
+    private Button action(String caption) {
+        return window.getPrimaryStage().getScene().getRoot().lookupAll(".button").stream()
+                .map(node -> (Button) node).filter(button -> button.getText().equals(caption))
+                .findFirst().orElseThrow();
+    }
+
+    @Test
+    public void appearance_commandsAndModeButton_preserveFiltersDataAndSavedPreference() throws Exception {
+        FxTestUtil.runAndWait(() -> {
+            submit("equipment search availability/available");
+            String criteria = label("queryContext");
+            int saves = storage.saves;
+            submit("mode dark");
+            assertTrue(model.getGuiSettings().isDarkMode());
+            assertTrue(window.getPrimaryStage().getScene().getRoot().getStyleClass().contains("dark"));
+            assertEquals(criteria, label("queryContext"));
+            assertEquals(saves, storage.saves);
+            assertEquals(Color.web("#0d1117"), ((Region) window.getPrimaryStage().getScene().getRoot())
+                    .getBackground().getFills().getFirst().getFill());
+            render("dark-equipment", 1100, 700);
+            submit("equipment view uuid/" + new UUID(0, 1));
+            render("dark-unit", 760, 500);
+            button("loansNavigation").fire();
+            render("dark-loans", 1100, 700);
+            window.handleHelp();
+            Stage help = Stage.getWindows().stream().filter(stage -> stage instanceof Stage
+                    && ((Stage) stage).getTitle().equals("Command reference")).map(stage -> (Stage) stage)
+                    .findFirst().orElseThrow();
+            assertTrue(help.getScene().getRoot().getStyleClass().contains("dark"));
+            Region helpRoot = (Region) help.getScene().getRoot();
+            helpRoot.resize(720, 600);
+            helpRoot.applyCss();
+            helpRoot.layout();
+            writeSnapshot(helpRoot, "dark-help", 720, 600);
+            assertEquals("Light mode", button("modeButton").getText());
+            button("modeButton").fire();
+            assertFalse(model.getGuiSettings().isDarkMode());
+            assertEquals("Dark mode", button("modeButton").getText());
+            assertFalse(help.getScene().getRoot().getStyleClass().contains("dark"));
+            button("modeButton").fire();
+            assertTrue(model.getGuiSettings().isDarkMode());
+            assertEquals("Light mode", button("modeButton").getText());
+            submit("exit");
+            assertTrue(model.getGuiSettings().isDarkMode());
+        });
+        JsonUserPrefsStorage prefs = new JsonUserPrefsStorage(temporaryDirectory.resolve("appearance.json"));
+        prefs.saveUserPrefs(model.getUserPrefs());
+        assertTrue(prefs.readUserPrefs().orElseThrow().getGuiSettings().isDarkMode());
+    }
+
+    @Test
     public void equipmentBatchAdd_resetsSearchAndShowsAllUnitsAfterOneSave() {
         FxTestUtil.runAndWait(() -> {
             int originalCount = model.getEquipmentList().size();
             submit("equipment search q/NoMatchingBatch");
             assertEquals(0, rows().getItems().size());
             succeed("equipment add name/Batch Camera category/Photo condition/GOOD count/3");
-            assertEquals(originalCount + 3, rows().getItems().size());
+            assertEquals(originalCount + 1, rows().getItems().size());
+            assertEquals(originalCount + 3, model.getEquipmentList().size());
             assertTrue(button("equipmentNavigation").getStyleClass().contains("laplace-navigation-active"));
             assertTrue(feedback().startsWith("Added 3 equipment units: Batch Camera"));
             assertEquals(1, storage.saves);
+            rows().getSelectionModel().selectFirst();
+            rows().fireEvent(key(KeyCode.ENTER));
+            assertEquals("Batch Camera", label("groupTitle"));
+            javafx.scene.control.TableView<?> units = (javafx.scene.control.TableView<?>) node("physicalUnits");
+            assertEquals(3, units.getItems().size());
+            render("grouped-equipment", 1280, 720);
+            units.getSelectionModel().selectFirst();
+            render("grouped-unit", 1280, 720);
+            render("grouped-unit", 760, 500);
+            render("grouped-unit", 853, 440);
         });
     }
 
@@ -126,7 +473,7 @@ public class MainWindowShellTest {
         FxTestUtil.runAndWait(() -> {
             int saves = storage.saves;
             submit("member search q/alex holding/yes sort/id order/desc");
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals(1, rows().getItems().size());
             assertEquals("1", detailLabel("displayedCount"));
             assertTrue(detailLabel("criteria").contains("alex"));
@@ -144,20 +491,28 @@ public class MainWindowShellTest {
             assertEquals("3", detailLabel("displayedCount"));
             submit("equipment search category/photo availability/available sort/id order/desc");
             assertEquals(1, rows().getItems().size());
-            assertEquals(new UUID(0, 2), ((Equipment) rows().getItems().getFirst()).getUuid());
+            assertEquals(new UUID(0, 2), ((InventoryGroups.Group) rows().getItems().getFirst())
+                    .matching().getFirst().getUuid());
             assertEquals("1", detailLabel("displayedCount"));
-            assertTrue(detailLabel("inventoryGroups").contains("\"photography\" / \"camera 1\""));
+            assertTrue(detailLabel("inventoryGroups").contains("Photography · Camera 1"));
             render("search-equipment", 1100, 700);
             render("search-equipment", 760, 500);
             int dispatches = logic.commands.size();
             rows().fireEvent(key(KeyCode.ENTER));
+            assertEquals(dispatches, logic.commands.size());
+            assertEquals("Camera 2", label("groupTitle"));
+            javafx.scene.control.TableView<?> units = (javafx.scene.control.TableView<?>) node("physicalUnits");
+            assertEquals(null, units.getSelectionModel().getSelectedItem());
+            units.getSelectionModel().selectFirst();
             assertEquals(dispatches + 1, logic.commands.size());
             assertEquals(new UUID(0, 2).toString(), detailLabel("equipmentUuid"));
             assertEquals(1, rows().getItems().size());
             submit("equipment search sort/id order/desc");
-            assertEquals(new UUID(0, 3), ((Equipment) rows().getItems().getFirst()).getUuid());
+            assertEquals(new UUID(0, 3), ((InventoryGroups.Group) rows().getItems().getFirst())
+                    .matching().getFirst().getUuid());
             submit("equipment list");
-            assertEquals(new UUID(0, 1), ((Equipment) rows().getItems().getFirst()).getUuid());
+            assertEquals(new UUID(0, 1), ((InventoryGroups.Group) rows().getItems().getFirst())
+                    .matching().getFirst().getUuid());
         });
     }
 
@@ -168,16 +523,16 @@ public class MainWindowShellTest {
             assertEquals(1, rows().getItems().size());
             String criteria = detailLabel("criteria");
             submit("equipment search availability/not-valid");
-            assertEquals("Error", label("feedbackStatus"));
+            assertEquals("Error", feedbackStatus());
             assertEquals("equipment search availability/not-valid", field().getText());
             assertEquals(criteria, detailLabel("criteria"));
             submit("loans return uuid/" + new UUID(0, 1) + " returned/2026-01-02");
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals(2, rows().getItems().size());
             assertEquals(new UUID(0, 1).toString(), detailLabel("equipmentUuid"));
             submit("equipment search availability/available");
             assertEquals("2", detailLabel("displayedCount"));
-            assertTrue(detailLabel("inventoryGroups").contains("\"camera 1\": 1 available"));
+            assertTrue(detailLabel("inventoryGroups").contains("Camera 1: 1 available"));
         });
     }
 
@@ -193,7 +548,7 @@ public class MainWindowShellTest {
             int saves = storage.saves;
             int dispatches = logic.commands.size();
             submit("member delete nus/" + id(2));
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals(saves + 1, storage.saves);
             assertEquals(dispatches + 1, logic.commands.size());
             assertEquals(List.of(id(3)), rows().getItems().stream()
@@ -203,7 +558,7 @@ public class MainWindowShellTest {
             assertEquals("1", detailLabel("displayedCount"));
             assertTrue(detailLabel("selection").contains(id(3).value));
             submit("member delete nus/" + id(3));
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertTrue(rows().getItems().isEmpty());
             assertEquals(criteria, detailLabel("criteria"));
             assertEquals(sort, detailLabel("sortOrder"));
@@ -225,24 +580,24 @@ public class MainWindowShellTest {
         FxTestUtil.runAndWait(() -> {
             submit("equipment search status/active sort/id");
             submit("equipment edit uuid/" + target + " name/Updated Camera condition/DAMAGED notes/Repair lens");
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals(target.toString(), detailLabel("equipmentUuid"));
             assertEquals("Updated Camera", detailLabel("equipmentName"));
             assertEquals("Repair lens", detailLabel("notes"));
-            assertEquals("UNAVAILABLE", detailLabel("availability"));
+            assertEquals("Unavailable", detailLabel("availability"));
             submit("equipment delete uuid/" + target);
             assertEquals(2, rows().getItems().size());
             assertEquals("1", detailLabel("unavailableCount"));
             submit("equipment search status/deleted");
             assertEquals(1, rows().getItems().size());
-            assertTrue(((Equipment) rows().getItems().getFirst()).isDeleted());
+            assertTrue(((InventoryGroups.Group) rows().getItems().getFirst()).matching().getFirst().isDeleted());
             submit("equipment view uuid/" + target);
-            assertEquals("DELETED", detailLabel("equipmentStatus"));
+            assertEquals("Deleted", detailLabel("equipmentStatus"));
             assertEquals("Repair lens", detailLabel("notes"));
             submit("equipment restore uuid/" + target);
-            assertEquals("ACTIVE", detailLabel("equipmentStatus"));
+            assertEquals("Active", detailLabel("equipmentStatus"));
             assertEquals(target.toString(), detailLabel("equipmentUuid"));
-            assertEquals("UNAVAILABLE", detailLabel("availability"));
+            assertEquals("Unavailable", detailLabel("availability"));
             assertTrue(rows().getItems().isEmpty());
             submit("equipment search status/active");
             assertEquals(3, rows().getItems().size());
@@ -253,8 +608,8 @@ public class MainWindowShellTest {
         FxTestUtil.runAndWait(() -> {
             submit("equipment view uuid/" + target);
             assertEquals("Updated Camera", detailLabel("equipmentName"));
-            assertEquals("ACTIVE", detailLabel("equipmentStatus"));
-            assertEquals("DAMAGED", detailLabel("condition"));
+            assertEquals("Active", detailLabel("equipmentStatus"));
+            assertEquals("Damaged", detailLabel("condition"));
             render("equipment-maintenance", 1100, 700);
         });
     }
@@ -272,7 +627,7 @@ public class MainWindowShellTest {
             int saves = storage.saves;
             int dispatches = logic.commands.size();
             submit("equipment delete uuid/" + target);
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals(saves + 1, storage.saves);
             assertEquals(dispatches + 1, logic.commands.size());
             assertTrue(rows().getItems().isEmpty());
@@ -296,7 +651,7 @@ public class MainWindowShellTest {
             String criteria = detailLabel("criteria");
             String sort = detailLabel("sortOrder");
             submit("member delete nus/" + id(2));
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals(1, rows().getItems().size());
             assertTrue(((Member) rows().getItems().getFirst()).isDeleted());
             assertEquals(criteria, detailLabel("criteria"));
@@ -311,9 +666,9 @@ public class MainWindowShellTest {
             render("search-deleted-members", 1100, 700);
             render("search-deleted-members", 760, 500);
             submit("member view nus/" + id(2));
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             submit("member restore nus/" + id(2));
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals("Jamie Lim", detailLabel("memberName"));
             assertTrue(rows().getItems().isEmpty());
             submit("member search q/jamie status/deleted");
@@ -358,7 +713,7 @@ public class MainWindowShellTest {
                     int saves = storage.saves;
                     int dispatches = logic.commands.size();
                     field().fireEvent(new ActionEvent());
-                    assertEquals("Success", label("feedbackStatus"), feedback());
+                    assertEquals("Success", feedbackStatus(), feedback());
                     assertEquals("First line Second line", detailLabel("notes"));
                     assertEquals(saves + 1, storage.saves);
                     assertEquals(dispatches + 1, logic.commands.size());
@@ -404,28 +759,58 @@ public class MainWindowShellTest {
     }
 
     @Test
+    public void navigation_preservesFiltersAndUserSplit_withoutSavingOrExecutingCommands() {
+        FxTestUtil.runAndWait(() -> {
+            submit("member search q/Alex");
+            int commands = logic.commands.size();
+            int saves = storage.saves;
+            button("equipmentNavigation").fire();
+            button("membersNavigation").fire();
+            assertEquals(1, rows().getItems().size());
+            assertTrue(label("queryContext").contains("alex"));
+            assertEquals(commands, logic.commands.size());
+            assertEquals(saves, storage.saves);
+            SplitPane split = (SplitPane) node("directory");
+            split.setDividerPositions(0.55);
+            Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+            root.resize(1000, 700);
+            layout();
+            assertTrue(split.getDividerPositions()[0] > 0.45);
+        });
+    }
+
+    @Test
     public void navigation_tabsAndMenu_exposesHelpExitAndRejectsLegacyTypedRoutes() {
         FxTestUtil.runAndWait(() -> {
             model.addPerson(new PersonBuilder().withName("Legacy Person").build());
             AddressBook before = new AddressBook(model.getAddressBook());
             button("equipmentNavigation").fire();
             assertTrue(node("equipmentNavigation").getStyleClass().contains("laplace-navigation-active"));
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Ready", feedbackStatus());
             assertTrue(button("equipmentNavigation").getAccessibleText().contains("current view"));
             button("loansNavigation").fire();
             assertTrue(node("openLoans") != null);
             assertEquals("1", label("openCount"));
             button("membersNavigation").fire();
             MenuButton menu = (MenuButton) window.getPrimaryStage().getScene().getRoot().lookup(".menu-button");
-            assertEquals(List.of("Help", "Exit"), menu.getItems().stream().map(item -> item.getText()).toList());
+            assertEquals(List.of("Help", "Exit"),
+                    menu.getItems().stream().map(item -> item.getText()).toList());
+            HBox header = (HBox) button("membersNavigation").getParent();
+            assertEquals(List.of("Laplace", "Members", "Equipment", "Loans", "Dark mode", "Menu"),
+                    header.getChildren().stream().filter(child -> child instanceof Labeled)
+                            .map(child -> ((Labeled) child).getText()).toList());
+            assertEquals("Laplace", window.getPrimaryStage().getTitle());
+            assertEquals("IBM Plex Mono", field().getFont().getFamily());
+            LaplaceThemeTest.assertInterfaceFace((Label) node("countBadge"), true);
+            LaplaceThemeTest.assertInterfaceFace((Label) node("queryContext"), false);
             reject("list");
             assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
             reject("list members");
             assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
             assertTrue(window.getPersonListPanel().getRoot().getParent() == null);
             assertTrue(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
-            assertEquals(List.of("equipment list", "member list", "list", "list members"), logic.commands);
-            assertEquals(1, storage.saves);
+            assertEquals(List.of("list", "list members"), logic.commands);
+            assertEquals(0, storage.saves);
             assertEquals(before, model.getAddressBook());
         });
     }
@@ -440,13 +825,13 @@ public class MainWindowShellTest {
             assertTrue(logic.commands.isEmpty());
             submit("equipment list unexpected");
             assertEquals("equipment list unexpected", field().getText());
-            assertEquals("Error", label("feedbackStatus"));
+            assertEquals("Error", feedbackStatus());
             assertTrue(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
             assertTrue(label("selection").contains("A0000001X"));
             assertEquals(before, model.getAddressBook());
             submit("equipment list");
             assertEquals("", field().getText());
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals(2, logic.commands.size());
             assertEquals(0, storage.saves);
         });
@@ -478,11 +863,11 @@ public class MainWindowShellTest {
                     false, false, false, false, false, false, false, false, false, true, null));
             rows().fireEvent(key(KeyCode.ENTER));
             assertEquals(List.of("member view nus/A0000001X", "member view nus/A0000001X"), logic.commands);
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals("A0000001X", detailLabel("memberNusId"));
             assertTrue(button("membersNavigation").getStyleClass().contains("laplace-navigation-active"));
             button("loansNavigation").fire();
-            List<Button> links = node("openLoans").lookupAll(".button").stream()
+            List<Button> links = node("openLoans").lookupAll(".loan-identity-link").stream()
                     .map(node -> (Button) node).toList();
             assertEquals(2, links.size());
             for (Button link : links) {
@@ -490,7 +875,7 @@ public class MainWindowShellTest {
             }
             assertEquals(4, logic.commands.size());
             assertTrue(logic.commands.contains("equipment view uuid/" + new UUID(0, 1)));
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertTrue(node("detailsTitle") != null);
             assertEquals(4, storage.saves);
         });
@@ -503,14 +888,16 @@ public class MainWindowShellTest {
             rows().getSelectionModel().select(1);
             rows().fireEvent(new KeyEvent(KeyEvent.KEY_RELEASED, "", "", KeyCode.DOWN,
                     false, false, false, false));
-            assertTrue(label("selection").contains(new UUID(0, 2).toString()));
-            assertEquals(List.of("equipment list"), logic.commands);
+            assertTrue(label("selection").contains("camera 2"));
+            assertTrue(logic.commands.isEmpty());
             rows().requestFocus();
             rows().fireEvent(key(KeyCode.SPACE));
             assertEquals(rows(), window.getPrimaryStage().getScene().getFocusOwner());
             assertEquals("", field().getText());
-            assertEquals(List.of("equipment list", "equipment view uuid/" + new UUID(0, 2)), logic.commands);
-            assertEquals(new UUID(0, 2).toString(), detailLabel("equipmentUuid"));
+            assertTrue(logic.commands.isEmpty());
+            assertEquals("Camera 2", label("groupTitle"));
+            assertEquals(null, ((javafx.scene.control.TableView<?>) node("physicalUnits"))
+                    .getSelectionModel().getSelectedItem());
             button("membersNavigation").fire();
             rows().getSelectionModel().select(1);
             Region directoryList = (Region) node("directoryListPlaceholder");
@@ -518,7 +905,7 @@ public class MainWindowShellTest {
                     false, false, false, false, false, false, false, false, false, true, null);
             directoryList.getChildrenUnmodifiable().getFirst().fireEvent(released);
             assertTrue(label("selection").contains("A0000002X"));
-            assertEquals(3, logic.commands.size());
+            assertTrue(logic.commands.isEmpty());
             window.getPrimaryStage().hide();
             model.setAddressBook(new AddressBook());
         });
@@ -532,7 +919,7 @@ public class MainWindowShellTest {
             rows().requestFocus();
             storage.fail = true;
             rows().fireEvent(key(KeyCode.SPACE));
-            assertEquals("Error", label("feedbackStatus"));
+            assertEquals("Error", feedbackStatus());
             assertEquals(rows(), window.getPrimaryStage().getScene().getFocusOwner());
             rows().fireEvent(new KeyEvent(KeyEvent.KEY_TYPED, " ", " ", KeyCode.UNDEFINED,
                     false, false, false, false));
@@ -568,7 +955,7 @@ public class MainWindowShellTest {
             rows().fireEvent(key(KeyCode.SPACE));
             Node focusBeforeDisposal = window.getPrimaryStage().getScene().getFocusOwner();
             assertEquals(rows(), focusBeforeDisposal);
-            assertEquals("Error", label("feedbackStatus"));
+            assertEquals("Error", feedbackStatus());
 
             window.dispose();
             rows().fireEvent(new KeyEvent(KeyEvent.KEY_RELEASED, "", "", KeyCode.SPACE,
@@ -611,7 +998,8 @@ public class MainWindowShellTest {
                     DisplayRequest.equipmentDetails(new UUID(0, 2)));
             submit("controlled equipment detail result");
             assertEquals(new UUID(0, 2).toString(), label("equipmentUuid"));
-            assertEquals(new UUID(0, 2), ((Equipment) rows().getSelectionModel().getSelectedItem()).getUuid());
+            assertEquals(new UUID(0, 2), ((Equipment) ((javafx.scene.control.TableView<?>) node("physicalUnits"))
+                    .getSelectionModel().getSelectedItem()).getUuid());
             logic.nextResult = new CommandResult("Requested loans", DisplayRequest.loans());
             submit("controlled loans result");
             assertTrue(node("openLoans") != null);
@@ -647,11 +1035,12 @@ public class MainWindowShellTest {
             layout();
             card = (Region) rows().lookupAll(".list-cell").stream().map(node -> (ListCell<?>) node)
                     .filter(ListCell::isSelected).findFirst().orElseThrow().getGraphic();
-            assertEquals("No current holder", ((Label) card.lookup("#holder")).getText());
+            assertTrue(card.lookupAll(".label").stream().map(node -> ((Label) node).getText())
+                    .anyMatch(text -> text.contains("1 available")));
             button("loansNavigation").fire();
             assertEquals("0", label("openCount"));
             assertEquals(null, node("historyCount"));
-            assertEquals(List.of("equipment list"), logic.commands);
+            assertTrue(logic.commands.isEmpty());
         });
     }
 
@@ -705,7 +1094,7 @@ public class MainWindowShellTest {
             model.deleteEquipment(model.findEquipment(new UUID(0, 2)).orElseThrow());
         });
         FxTestUtil.runAndWait(() -> {
-            assertEquals("DELETED", detailLabel("equipmentStatus"));
+            assertEquals("Deleted", detailLabel("equipmentStatus"));
             assertEquals("Renamed Camera", detailLabel("equipmentName"));
             assertEquals(1, logic.commands.size());
         });
@@ -742,7 +1131,7 @@ public class MainWindowShellTest {
             showEquipmentDetails(new UUID(0, 2));
             assertEquals(new UUID(0, 2).toString(), detailLabel("equipmentUuid"));
             assertEquals("Keep the lens cap on.\nCase included.", detailLabel("notes"));
-            assertEquals("ASSIGNED", detailLabel("availability"));
+            assertEquals("Assigned", detailLabel("availability"));
             assertEquals("Alex Tan", detailLabel("holder"));
             assertEquals("A0000001X", detailLabel("holderNusId"));
             assertEquals("91234567", detailLabel("holderPhone"));
@@ -779,7 +1168,7 @@ public class MainWindowShellTest {
                     assertEquals("2 item(s) held", detailLabel("heldCount"));
                     assertEquals(2, node("directorySummaryPlaceholder").lookupAll("#equipmentUuid").size());
                 } else if (active == DisplayRequest.Type.EQUIPMENT_DETAILS) {
-                    assertEquals("ASSIGNED", detailLabel("availability"));
+                    assertEquals("Assigned", detailLabel("availability"));
                     assertEquals("A0000001X", detailLabel("holderNusId"));
                 } else {
                     assertEquals("2", label("openCount"));
@@ -793,7 +1182,7 @@ public class MainWindowShellTest {
                     assertEquals(new UUID(0, 2).toString(), detailLabel("equipmentUuid"));
                     assertEquals("2026-01-03", detailLabel("expectedReturnDate"));
                 } else if (active == DisplayRequest.Type.EQUIPMENT_DETAILS) {
-                    assertEquals("AVAILABLE", detailLabel("availability"));
+                    assertEquals("Available", detailLabel("availability"));
                     assertEquals("No current holder", detailLabel("holder"));
                     assertEquals(null, node("directorySummaryPlaceholder").lookup("#holderEmail"));
                     assertEquals(null, node("directorySummaryPlaceholder").lookup("#assignedDate"));
@@ -866,7 +1255,7 @@ public class MainWindowShellTest {
             AddressBook before = new AddressBook(model.getAddressBook());
             storage.fail = true;
             submit("member delete nus/A0000002X");
-            assertEquals("Error", label("feedbackStatus"));
+            assertEquals("Error", feedbackStatus());
             assertEquals("member delete nus/A0000002X", field().getText());
             assertEquals(field(), window.getPrimaryStage().getScene().getFocusOwner());
             assertEquals("A0000002X", detailLabel("memberNusId"));
@@ -894,7 +1283,7 @@ public class MainWindowShellTest {
             storage.fail = true;
             for (String input : List.of("clear", "add n/Test Person p/91234567 e/test@example.com a/Test Address")) {
                 submit(input);
-                assertEquals("Error", label("feedbackStatus"));
+                assertEquals("Error", feedbackStatus());
                 assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
                 assertEquals(input, field().getText());
                 assertEquals(field(), window.getPrimaryStage().getScene().getFocusOwner());
@@ -1017,17 +1406,17 @@ public class MainWindowShellTest {
                     "member view nus/A0000001X", "list", "member list")) {
                 submit(input);
                 session.add("INPUT: " + (input.isBlank() ? "<whitespace only>" : input));
-                session.add("STATUS: " + label("feedbackStatus"));
+                session.add("STATUS: " + feedbackStatus());
                 session.add("OUTPUT: " + feedback());
                 session.add("RETAINED INPUT: " + field().getText());
                 if (input.equals("list")) {
-                    assertEquals("Error", label("feedbackStatus"));
+                    assertEquals("Error", feedbackStatus());
                     assertEquals(MESSAGE_UNKNOWN_COMMAND, feedback());
                     assertEquals(input, field().getText());
                 }
             }
             button("loansNavigation").fire();
-            session.add("Loans tab: " + label("openCount") + " open; closed history is not presented.");
+            session.add("Loans tab: " + label("openCount") + " open; " + label("closedCount") + " completed.");
             session.add("Commands executed: " + logic.commands);
             session.add("Successful saves: " + storage.saves);
             assertEquals(6, logic.commands.size());
@@ -1057,16 +1446,17 @@ public class MainWindowShellTest {
             succeed("member list");
             assertEquals(2, rows().getItems().size());
             succeed("equipment list");
-            assertEquals(2, rows().getItems().size());
+            assertEquals(1, rows().getItems().size());
             for (UUID item : items) {
                 succeed(assign(item, id(1), assigned, expected));
-                assertEquals("ASSIGNED", detailLabel("availability"));
+                assertEquals("Assigned", detailLabel("availability"));
                 assertEquals("A0000001X", detailLabel("holderNusId"));
                 assertEquals("91234567", detailLabel("holderPhone"));
                 assertEquals("alex@example.com", detailLabel("holderEmail"));
                 assertEquals(assigned.toString(), detailLabel("assignedDate"));
                 assertEquals(expected.toString(), detailLabel("expectedReturnDate"));
-                assertEquals(item, ((Equipment) rows().getSelectionModel().getSelectedItem()).getUuid());
+                assertEquals(item, ((Equipment) ((javafx.scene.control.TableView<?>) node("physicalUnits"))
+                    .getSelectionModel().getSelectedItem()).getUuid());
             }
             succeed("member view nus/A0000001X");
             assertEquals("2 item(s) held", detailLabel("heldCount"));
@@ -1091,7 +1481,7 @@ public class MainWindowShellTest {
             reject("equipment delete uuid/" + items[0]);
             for (UUID item : items) {
                 succeed("loans return uuid/" + item + " returned/" + LocalDate.now());
-                assertEquals("AVAILABLE", detailLabel("availability"));
+                assertEquals("Available", detailLabel("availability"));
                 assertEquals("No current holder", detailLabel("holder"));
                 assertEquals(null, node("directorySummaryPlaceholder").lookup("#assignedDate"));
                 reject("loans return uuid/" + item + " returned/" + LocalDate.now());
@@ -1111,7 +1501,8 @@ public class MainWindowShellTest {
             assertEquals(null, node("detailsTitle"));
             succeed("equipment view uuid/" + items[0]);
             succeed("equipment delete uuid/" + items[0]);
-            assertEquals(items[0], ((Equipment) rows().getSelectionModel().getSelectedItem()).getUuid());
+            assertTrue(((InventoryGroups.Group) rows().getSelectionModel().getSelectedItem()).units().stream()
+                    .anyMatch(unit -> unit.getUuid().equals(items[0])));
             assertEquals(null, node("detailsTitle"));
             button("loansNavigation").fire();
             assertEquals("0", label("openCount"));
@@ -1128,7 +1519,7 @@ public class MainWindowShellTest {
             assertEquals("other@example.com", detailLabel("email"));
             succeed("equipment list");
             succeed("equipment view uuid/" + items[1]);
-            assertEquals("AVAILABLE", detailLabel("availability"));
+            assertEquals("Available", detailLabel("availability"));
         });
         Path transcript = Path.of("build", "reports", "laplace", "routed-shell-session.txt");
         Files.createDirectories(transcript.getParent());
@@ -1198,7 +1589,7 @@ public class MainWindowShellTest {
                     assertEquals("2 item(s) held", detailLabel("heldCount"));
                     assertTrue(label("itemsHeld").contains("2"));
                 } else if (active == DisplayRequest.Type.EQUIPMENT_DETAILS) {
-                    assertEquals("ASSIGNED", detailLabel("availability"));
+                    assertEquals("Assigned", detailLabel("availability"));
                     assertEquals("A0000001X", detailLabel("holderNusId"));
                 } else {
                     assertEquals("2", label("openCount"));
@@ -1211,7 +1602,7 @@ public class MainWindowShellTest {
                 if (active == DisplayRequest.Type.MEMBER_DETAILS) {
                     assertEquals("1 item(s) held", detailLabel("heldCount"));
                 } else if (active == DisplayRequest.Type.EQUIPMENT_DETAILS) {
-                    assertEquals("AVAILABLE", detailLabel("availability"));
+                    assertEquals("Available", detailLabel("availability"));
                     assertEquals("No current holder", detailLabel("holder"));
                 } else {
                     assertEquals("1", label("openCount"));
@@ -1235,7 +1626,7 @@ public class MainWindowShellTest {
             Region card = (Region) node("directoryListPlaceholder").lookup(".deleted-member");
             assertFalse(card.isDisabled());
             Label name = (Label) card.lookup("#name");
-            assertEquals(Color.web("#455A64"), name.getTextFill());
+            assertEquals(Color.web("#59636e"), name.getTextFill());
             TextFlow flow = (TextFlow) name.getGraphic();
             Text value = (Text) flow.getChildren().getFirst();
             Text suffix = (Text) flow.getChildren().getLast();
@@ -1265,7 +1656,7 @@ public class MainWindowShellTest {
         FxTestUtil.runAndWait(() -> {
             showMemberDetails(id(1));
             submit("member edit nus/" + id(1) + " name/Zelda Updated phone/98765432 email/zelda@example.com");
-            assertEquals("Success", label("feedbackStatus"));
+            assertEquals("Success", feedbackStatus());
             assertEquals("Zelda Updated", detailLabel("memberName"));
             assertEquals(id(1), ((Member) rows().getSelectionModel().getSelectedItem()).getNusId());
             assertEquals(id(1), ((Member) rows().getItems().getLast()).getNusId());
@@ -1291,7 +1682,7 @@ public class MainWindowShellTest {
         int saves = storage.saves;
         int dispatched = logic.commands.size();
         submit(command);
-        assertEquals("Success", label("feedbackStatus"), command + ": " + feedback());
+        assertEquals("Success", feedbackStatus(), command + ": " + feedback());
         assertEquals("", field().getText(), command);
         assertEquals(saves + (command.equals("equipment list") ? 0 : 1), storage.saves, command);
         assertEquals(dispatched + 1, logic.commands.size(), command);
@@ -1306,14 +1697,16 @@ public class MainWindowShellTest {
                 .getChildren().getFirst();
         int saves = storage.saves;
         try {
-            String json = Files.readString(storage.getAddressBookFilePath());
+            String json = Files.exists(storage.getAddressBookFilePath())
+                    ? Files.readString(storage.getAddressBookFilePath()) : null;
             submit(command);
-            assertEquals("Error", label("feedbackStatus"), command);
+            assertEquals("Error", feedbackStatus(), command);
             assertEquals(command, field().getText(), command);
             assertEquals(field(), window.getPrimaryStage().getScene().getFocusOwner(), command);
             assertEquals(before, model.getAddressBook(), command);
             assertEquals(saves, storage.saves, command);
-            assertEquals(json, Files.readString(storage.getAddressBookFilePath()), command);
+            assertEquals(json, Files.exists(storage.getAddressBookFilePath())
+                    ? Files.readString(storage.getAddressBookFilePath()) : null, command);
             assertEquals(selected, rows().getSelectionModel().getSelectedItem(), command);
             assertEquals(displayed, ((javafx.scene.layout.StackPane) node("directorySummaryPlaceholder"))
                     .getChildren().getFirst(), command);
@@ -1326,7 +1719,7 @@ public class MainWindowShellTest {
     /** Records actual pipeline outcomes for the checked lifecycle transcript. */
     private void recordOutcome(String command) {
         session.add("INPUT: " + command);
-        session.add("STATUS: " + label("feedbackStatus"));
+        session.add("STATUS: " + feedbackStatus());
         session.add("OUTPUT: " + feedback());
         session.add("RETAINED INPUT: " + field().getText());
         session.add("SUCCESSFUL SAVES: " + storage.saves);
@@ -1356,13 +1749,13 @@ public class MainWindowShellTest {
     /** Uses the same real family route and autosave as command input. */
     private void showMemberDetails(NusId identity) {
         submit("member view nus/" + identity.value);
-        assertEquals("Success", label("feedbackStatus"));
+        assertEquals("Success", feedbackStatus());
     }
 
     /** Uses the actual equipment parser, command, model and storage pipeline. */
     private void showEquipmentDetails(UUID identity) {
         submit("equipment view uuid/" + identity);
-        assertEquals("Success", label("feedbackStatus"));
+        assertEquals("Success", feedbackStatus());
     }
 
     private String detailLabel(String id) {
@@ -1390,6 +1783,13 @@ public class MainWindowShellTest {
         return ((Label) node(id)).getText();
     }
 
+    /**
+     * Returns the assistive status while the visible heading remains only Last result.
+     */
+    private String feedbackStatus() {
+        return node("resultDisplay").getAccessibleText().split(": ", 2)[0];
+    }
+
     private Node node(String id) {
         layout();
         return window.getPrimaryStage().getScene().getRoot().lookup("#" + id);
@@ -1415,8 +1815,17 @@ public class MainWindowShellTest {
         assertTrue(node("commandTextField").localToScene(node("commandTextField").getBoundsInLocal()).getMaxX()
                 <= width);
         if (node("directory").isVisible()) {
-            assertEquals(0.28, ((SplitPane) node("directory")).getDividerPositions()[0], 0.02);
+            double position = ((SplitPane) node("directory")).getDividerPositions()[0];
+            assertTrue(position > 0 && position < 1);
         }
+        for (Node control : node("feedbackActions").lookupAll(".button")) {
+            Button action = (Button) control;
+            assertTrue(action.getWidth() >= action.prefWidth(-1) - 1, "Feedback controls must not truncate");
+        }
+        writeSnapshot(root, name, width, height);
+    }
+
+    private static void writeSnapshot(Region root, String name, int width, int height) {
         WritableImage image = root.snapshot(null, new WritableImage(width, height));
         int[] pixels = new int[width * height];
         image.getPixelReader().getPixels(0, 0, width, height, PixelFormat.getIntArgbInstance(), pixels, 0, width);

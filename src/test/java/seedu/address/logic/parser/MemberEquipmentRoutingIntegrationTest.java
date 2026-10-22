@@ -147,9 +147,11 @@ public class MemberEquipmentRoutingIntegrationTest {
         addMembers();
         UUID first = addEquipment();
         UUID second = addEquipment();
-        model.addLoan(new Loan(first, FIRST_MEMBER, ASSIGNED, ASSIGNED, ASSIGNED));
-        model.addLoan(new Loan(second, SECOND_MEMBER, ASSIGNED, ASSIGNED.plusDays(1), null));
-        storage.saveAddressBook(model.getAddressBook());
+        logic.execute("loans add uuid/" + first + " nus/" + FIRST_MEMBER
+                + " assigned/" + ASSIGNED + " expected/" + ASSIGNED);
+        logic.execute("loans return uuid/" + first + " returned/" + ASSIGNED);
+        logic.execute("loans add uuid/" + second + " nus/" + SECOND_MEMBER
+                + " assigned/" + ASSIGNED + " expected/" + ASSIGNED.plusDays(1));
         AddressBook beforeViews = new AddressBook(model.getAddressBook());
         CommandResult member = logic.execute("member view nus/A0000002X");
         CommandResult equipment = logic.execute("equipment view uuid/" + second);
@@ -162,8 +164,7 @@ public class MemberEquipmentRoutingIntegrationTest {
         assertDisplay("member delete nus/A0000001X", DisplayRequest.members());
         assertEquals(2, model.getLoanList().size());
         assertTrue(model.hasEquipment(first));
-        model.closeLoan(second, ASSIGNED.plusDays(2));
-        storage.saveAddressBook(model.getAddressBook());
+        logic.execute("loans return uuid/" + second + " returned/" + ASSIGNED.plusDays(2));
         assertTrue(logic.execute("member view nus/A0000002X").getFeedbackToUser().contains("0 item(s)"));
         assertTrue(logic.execute("equipment view uuid/" + second).getFeedbackToUser().contains("AVAILABLE"));
         assertDisplay("equipment delete uuid/" + second, DisplayRequest.equipment());

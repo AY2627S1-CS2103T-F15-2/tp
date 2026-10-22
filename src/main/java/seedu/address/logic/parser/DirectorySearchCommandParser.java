@@ -13,14 +13,14 @@ import seedu.address.model.query.DirectoryQuery;
 
 /** Uses the shared strict grammar; search values are substrings, not exact identity parsers. */
 public class DirectorySearchCommandParser implements Parser<DirectorySearchCommand> {
-    private static final Prefix QUERY = new Prefix("q/");
-    private static final Prefix CATEGORY = new Prefix("category/");
-    private static final Prefix CONDITION = new Prefix("condition/");
-    private static final Prefix AVAILABILITY = new Prefix("availability/");
-    private static final Prefix HOLDING = new Prefix("holding/");
-    private static final Prefix STATUS = new Prefix("status/");
-    private static final Prefix SORT = new Prefix("sort/");
-    private static final Prefix ORDER = new Prefix("order/");
+    public static final Prefix QUERY = new Prefix("q/");
+    public static final Prefix CATEGORY = new Prefix("category/");
+    public static final Prefix CONDITION = new Prefix("condition/");
+    public static final Prefix AVAILABILITY = new Prefix("availability/");
+    public static final Prefix HOLDING = new Prefix("holding/");
+    public static final Prefix STATUS = new Prefix("status/");
+    public static final Prefix SORT = new Prefix("sort/");
+    public static final Prefix ORDER = new Prefix("order/");
     private final boolean members;
 
     public DirectorySearchCommandParser(boolean members) {

@@ -16,6 +16,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.AvailabilityCalculator;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.equipment.exceptions.EquipmentNotFoundException;
 import seedu.address.model.loan.Loan;
@@ -32,6 +33,7 @@ public class ModelManager implements Model {
     private final AddressBook addressBook;
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
+    private AddressBookHistory history = new AddressBookHistory();
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -39,6 +41,14 @@ public class ModelManager implements Model {
     public ModelManager(ReadOnlyAddressBook addressBook, ReadOnlyUserPrefs userPrefs) {
         this(userPrefs, new AddressBook(requireNonNull(addressBook)));
         logger.fine("Initializing with address book: " + addressBook + " and user prefs " + userPrefs);
+    }
+
+    /**
+     * Copies candidate records and preferences while sharing only immutable history with the live model.
+     */
+    ModelManager(ReadOnlyAddressBook addressBook, ReadOnlyUserPrefs userPrefs, AddressBookHistory history) {
+        this(addressBook, userPrefs);
+        this.history = requireNonNull(history);
     }
 
     /**
@@ -78,7 +88,57 @@ public class ModelManager implements Model {
 
     @Override
     public void setAddressBook(ReadOnlyAddressBook addressBook) {
-        this.addressBook.resetData(addressBook);
+        replaceRecordsAndHistory(addressBook, new AddressBookHistory());
+    }
+
+    @Override
+    public void publishTransaction(Model candidate) {
+        requireNonNull(candidate);
+        AddressBookHistory candidateHistory = requireNonNull(candidate.getAddressBookHistory());
+        replaceRecordsAndHistory(candidate.getAddressBook(), candidateHistory);
+    }
+
+    @Override
+    public AddressBookHistory getAddressBookHistory() {
+        return history;
+    }
+
+    @Override
+    public void recordAddressBook(ReadOnlyAddressBook previous, String description) {
+        history = history.record(previous, addressBook, description);
+    }
+
+    @Override
+    public boolean canUndoAddressBook() {
+        return history.canUndo();
+    }
+
+    @Override
+    public boolean canRedoAddressBook() {
+        return history.canRedo();
+    }
+
+    @Override
+    public String undoAddressBook() {
+        String description = history.getUndoDescription();
+        AddressBookHistory restored = history.undo();
+        replaceRecordsAndHistory(restored.getCurrentState(), restored);
+        return description;
+    }
+
+    @Override
+    public String redoAddressBook() {
+        String description = history.getRedoDescription();
+        AddressBookHistory restored = history.redo();
+        replaceRecordsAndHistory(restored.getCurrentState(), restored);
+        return description;
+    }
+
+    /**
+     * Publishes matching records and history after validation and before observable-list notifications.
+     */
+    private void replaceRecordsAndHistory(ReadOnlyAddressBook records, AddressBookHistory replacementHistory) {
+        addressBook.resetData(records, () -> history = replacementHistory);
     }
 
     @Override
@@ -188,6 +248,11 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public void addLoans(List<Loan> loans) {
+        addressBook.addLoans(loans);
+    }
+
+    @Override
     public Optional<Loan> findOpenLoan(UUID equipmentUuid) {
         return addressBook.findOpenLoan(equipmentUuid);
     }
@@ -200,6 +265,11 @@ public class ModelManager implements Model {
     @Override
     public void closeLoan(UUID equipmentUuid, LocalDate returnedDate) {
         addressBook.closeLoan(equipmentUuid, returnedDate);
+    }
+
+    @Override
+    public void returnLoans(List<UUID> equipmentUuids, LocalDate returnedDate, Condition returnCondition) {
+        addressBook.returnLoans(equipmentUuids, returnedDate, returnCondition);
     }
 
     @Override

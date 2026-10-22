@@ -3,6 +3,9 @@ package seedu.address.ui;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +15,9 @@ import java.util.function.Consumer;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -30,6 +36,8 @@ public class LoanPanel extends UiPart<Region> {
     private static final String FXML = "LoanPanel.fxml";
 
     private final ReadOnlyAddressBook data;
+    private final Clock clock;
+    private final Consumer<String> onUse;
     private final Consumer<UUID> onEquipmentSelected;
     private final Consumer<NusId> onMemberSelected;
 
@@ -37,29 +45,73 @@ public class LoanPanel extends UiPart<Region> {
     private Label openCount;
     @FXML
     private VBox openLoans;
+    @FXML
+    private Label closedCount;
+    @FXML
+    private VBox closedLoans;
+    @FXML
+    private TextField memberFilter;
+    @FXML
+    private TextField equipmentFilter;
 
     /**
      * Creates a panel using current records and callbacks supplied by the application shell.
      */
     public LoanPanel(ReadOnlyAddressBook data, Consumer<UUID> onEquipmentSelected,
             Consumer<NusId> onMemberSelected) {
+        this(data, onEquipmentSelected, onMemberSelected, unused -> { }, Clock.systemDefaultZone());
+    }
+
+    /**
+     * Creates a panel with command preparation and a clock for date-sensitive presentation.
+     */
+    public LoanPanel(ReadOnlyAddressBook data, Consumer<UUID> onEquipmentSelected,
+            Consumer<NusId> onMemberSelected, Consumer<String> onUse, Clock clock) {
         super(FXML);
-        requireAllNonNull(data, onEquipmentSelected, onMemberSelected);
+        requireAllNonNull(data, onEquipmentSelected, onMemberSelected, onUse, clock);
+        this.clock = clock;
+        this.onUse = onUse;
         this.data = data;
         this.onEquipmentSelected = onEquipmentSelected;
         this.onMemberSelected = onMemberSelected;
+        memberFilter.textProperty().addListener((observable, oldValue, newValue) -> refresh());
+        equipmentFilter.textProperty().addListener((observable, oldValue, newValue) -> refresh());
         refresh();
     }
 
     /**
-     * Rebuilds current assignments from current data without invoking callbacks or installing listeners.
+     * Rebuilds current and completed loans without invoking callbacks or installing listeners.
      */
     public void refresh() {
-        List<Loan> open = data.getLoanList().stream().filter(Loan::isOpen).sorted(OPEN_ORDER).toList();
+        List<Loan> open = data.getLoanList().stream().filter(Loan::isOpen).filter(this::matchesFilters)
+                .sorted(OPEN_ORDER).toList();
+        List<Loan> closed = data.getLoanList().stream().filter(loan -> !loan.isOpen())
+                .filter(this::matchesFilters).sorted(Comparator
+                        .comparing((Loan loan) -> loan.getReturnedDate().orElseThrow()).reversed()
+                        .thenComparing(Loan::getAssignedDate).thenComparing(loan -> loan.getEquipmentUuid().toString()))
+                .toList();
         openCount.setText(Integer.toString(open.size()));
-        refreshSection(openLoans, open, "No open loans. Available equipment is ready to assign.");
+        boolean hasFilter = !memberFilter.getText().isBlank() || !equipmentFilter.getText().isBlank();
+        String openEmptyMessage = hasFilter ? "No open loans match these filters."
+                : "No open loans. Available equipment is ready to assign.";
+        refreshSection(openLoans, open, openEmptyMessage);
+        closedCount.setText(Integer.toString(closed.size()));
+        refreshSection(closedLoans, closed, "No completed loans match these filters.");
     }
 
+    /**
+     * Matches both identity filters without depending on mutable display names.
+     */
+    private boolean matchesFilters(Loan loan) {
+        return loan.getMemberNusId().toString().toLowerCase(java.util.Locale.ROOT)
+                .contains(memberFilter.getText().strip().toLowerCase(java.util.Locale.ROOT))
+                && loan.getEquipmentUuid().toString().toLowerCase(java.util.Locale.ROOT)
+                .contains(equipmentFilter.getText().strip().toLowerCase(java.util.Locale.ROOT));
+    }
+
+    /**
+     * Replaces displayed loans with the current snapshot or a useful empty state.
+     */
     private void refreshSection(VBox section, List<Loan> loans, String emptyMessage) {
         section.getChildren().clear();
         if (loans.isEmpty()) {
@@ -69,6 +121,9 @@ public class LoanPanel extends UiPart<Region> {
         }
     }
 
+    /**
+     * Builds a responsive loan row with date-derived urgency and exact-identity actions.
+     */
     private VBox createLoanRow(Loan loan) {
         Optional<Equipment> equipment = data.getEquipmentList().stream()
                 .filter(item -> item.getUuid().equals(loan.getEquipmentUuid())).findFirst();
@@ -86,15 +141,64 @@ public class LoanPanel extends UiPart<Region> {
         memberLink.setDisable(member.isEmpty());
         memberLink.setOnAction(event -> onMemberSelected.accept(loan.getMemberNusId()));
 
-        Label status = label("Open loan", "loan-status");
-        status.getStyleClass().add("loan-open-status");
-        VBox row = new VBox(6, status, equipmentLink, memberLink,
+        Label status = createStatus(loan);
+        VBox equipmentColumn = new VBox(4, equipmentLink,
                 label("Assigned: " + loan.getAssignedDate(), "loan-date"),
+                label("Issue condition: " + loan.getIssueCondition().map(Enum::name).orElse("Not recorded"),
+                        "loan-date"));
+        VBox memberColumn = new VBox(4, memberLink,
                 label("Expected return: " + loan.getExpectedReturnDate(), "loan-date"));
+        GridPane identities = new GridPane();
+        identities.setHgap(16);
+        identities.setVgap(6);
+        identities.add(equipmentColumn, 0, 0);
+        identities.add(memberColumn, 0, 1);
+        identities.widthProperty().addListener((unused, previous, width) -> {
+            boolean isWide = width.doubleValue() >= 650;
+            identities.getColumnConstraints().clear();
+            for (int i = 0; i < (isWide ? 2 : 1); i++) {
+                ColumnConstraints column = new ColumnConstraints();
+                column.setPercentWidth(isWide ? 50 : 100);
+                column.setMinWidth(0);
+                identities.getColumnConstraints().add(column);
+            }
+            GridPane.setColumnIndex(memberColumn, isWide ? 1 : 0);
+            GridPane.setRowIndex(memberColumn, isWide ? 0 : 1);
+        });
+        VBox row = new VBox(6, status, identities);
+        if (loan.isOpen()) {
+            Button prepareReturn = new Button("Prepare return command");
+            prepareReturn.setOnAction(event -> onUse.accept("loans return uuid/" + loan.getEquipmentUuid()
+                    + " returned/" + LocalDate.now(clock)));
+            row.getChildren().add(prepareReturn);
+        } else {
+            memberColumn.getChildren().addAll(
+                    label("Returned: " + loan.getReturnedDate().orElseThrow(), "loan-date"),
+                    label("Return condition: " + loan.getReturnCondition().map(Enum::name).orElse("Not recorded"),
+                            "loan-date"));
+        }
         row.getStyleClass().addAll("laplace-row", "loan-row");
         row.setMinWidth(0);
         row.setMaxWidth(Double.MAX_VALUE);
         return row;
+    }
+
+    /**
+     * Shows urgency only for open loans and a completed state for returned loans.
+     */
+    private Label createStatus(Loan loan) {
+        if (!loan.isOpen()) {
+            Label status = label("Completed loan", "loan-status");
+            status.getStyleClass().add("loan-closed-status");
+            return status;
+        }
+        long overdueDays = ChronoUnit.DAYS.between(loan.getExpectedReturnDate(), LocalDate.now(clock));
+        String statusText = overdueDays > 0 ? "Overdue · " + overdueDays + (overdueDays == 1 ? " day" : " days")
+                : overdueDays == 0 ? "Due today" : "Open loan";
+        Label status = label(statusText, "loan-status");
+        status.getStyleClass().add(overdueDays > 0 ? "loan-overdue-status"
+                : overdueDays == 0 ? "loan-due-status" : "loan-open-status");
+        return status;
     }
 
     private static Button identityButton(String text, String styleClass) {

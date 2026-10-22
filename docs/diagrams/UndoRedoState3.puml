@@ -1,21 +1,49 @@
 @startuml
-!include style.puml
-skinparam ClassFontColor #000000
-skinparam ClassBorderColor #000000
-skinparam ClassBackgroundColor #FFFFAA
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam objectAttributeIconSize 0
+skinparam objectBackgroundColor #F6F8FA
+skinparam objectBorderColor #59636E
+skinparam ArrowColor #59636E
+hide empty members
 
-title After command "undo"
+title After undo: restore the state before the edit
 
-package States <<rectangle>> {
-    class State1 as "<u>ab0:AddressBook</u>"
-    class State2 as "<u>ab1:AddressBook</u>"
-    class State3 as "<u>ab2:AddressBook</u>"
+object "<u>h3:AddressBookHistory</u>" as history {
+  position = 1
+  states = [s0, s1, s2]
+  descriptions = [equipment add, equipment edit]
 }
 
-State1 -[hidden]right-> State2
-State2 -[hidden]right-> State3
+object "<u>s0:AddressBook</u>" as s0 {
+  Equipment: none
+}
 
-class Pointer as "Current State" #FFFFFF
+object "<u>s1:AddressBook</u>" as s1 #DDF4FF {
+  uuid = u
+  name = Camera
+  condition = GOOD
+}
 
-Pointer -up-> State2
-@end
+object "<u>s2:AddressBook</u>" as s2 {
+  uuid = u
+  name = Camera
+  condition = FAIR
+}
+s0 -[hidden]right-> s1
+s1 -[hidden]right-> s2
+
+history ..> s1 : states[position]
+
+note bottom of history
+  Undo creates a new history value with position = 1.
+  The undone state s2 remains available for redo.
+end note
+
+legend bottom
+  Each sN is a complete stored record snapshot; unrelated records are omitted from its label.
+  The highlighted snapshot matches live record values after saving and publication.
+  The live observable AddressBook remains a separate object.
+endlegend
+@enduml

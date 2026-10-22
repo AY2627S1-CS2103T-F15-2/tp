@@ -1,12 +1,8 @@
 /* Layout only; shared selection and surface styling comes from LaplaceTheme.css. */
 .directory-list .directory-list-header {
-    -fx-padding: 12;
-}
-
-.directory-list .directory-list-title {
-    -fx-font-weight: bold;
+    -fx-padding: 10;
 }
 
 .directory-list .directory-selection-hint {
-    -fx-font-size: 11px;
+    -fx-text-fill: -laplace-muted;
 }

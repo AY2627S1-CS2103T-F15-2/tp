@@ -12,7 +12,7 @@
         <Label fx:id="countLabel" styleClass="laplace-muted" wrapText="true" minWidth="0" />
     </VBox>
     <ListView fx:id="rows" minWidth="0" minHeight="0" VBox.vgrow="ALWAYS" />
-    <Label text="Select an item to view full details. Press Enter or Space to open."
+    <Label text="Enter or Space opens the selected row."
            styleClass="laplace-muted,directory-selection-hint" wrapText="true" minWidth="0"
            minHeight="-Infinity" maxWidth="Infinity">
         <padding><Insets top="6" right="8" bottom="8" left="8" /></padding>

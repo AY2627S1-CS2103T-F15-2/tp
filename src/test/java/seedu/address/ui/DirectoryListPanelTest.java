@@ -36,6 +36,8 @@ import seedu.address.model.member.NusId;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.query.DirectoryQuery;
+import seedu.address.model.query.InventoryGroups;
 import seedu.address.testutil.FxTestUtil;
 
 public class DirectoryListPanelTest {
@@ -68,12 +70,13 @@ public class DirectoryListPanelTest {
         FxTestUtil.runAndWait(() -> {
             ModelManager model = model();
             AddressBook before = new AddressBook(model.getAddressBook());
-            List<UUID> callbacks = new ArrayList<>();
+            List<InventoryGroups.Key> callbacks = new ArrayList<>();
             EquipmentListPanel panel = new EquipmentListPanel(model.getAddressBook(), model::getAvailability,
                     callbacks::add);
             mount(panel.getRoot());
             assertEquals(List.of(new UUID(0, 1), new UUID(0, 2), new UUID(0, 3)), rows(panel).getItems().stream()
-                    .map(item -> ((Equipment) item).getUuid()).toList());
+                    .flatMap(item -> ((InventoryGroups.Group) item).matching().stream())
+                    .map(Equipment::getUuid).toList());
             panel.select(Optional.of(new UUID(0, 2)));
             panel.refresh();
             assertEquals(Optional.of(new UUID(0, 2)), panel.getSelection());
@@ -81,7 +84,58 @@ public class DirectoryListPanelTest {
             assertTrue(panel.getSelection().isEmpty());
             assertTrue(callbacks.isEmpty());
             assertEquals(before, model.getAddressBook());
-            assertEquals("3 items", label(panel.getRoot(), "countLabel"));
+            assertEquals("1 groups · 3 matching units / 3 retained", label(panel.getRoot(), "countLabel"));
+        });
+    }
+
+    @Test
+    public void equipment_editSelectedUnit_followsCurrentNameAndCategoryWithoutActivating() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = model();
+            List<InventoryGroups.Key> callbacks = new ArrayList<>();
+            EquipmentListPanel panel = new EquipmentListPanel(model.getAddressBook(), model::getAvailability,
+                    callbacks::add);
+            UUID uuid = new UUID(0, 1);
+            panel.select(Optional.of(uuid));
+            for (Equipment edited : List.of(
+                    new Equipment(uuid, "Tripod", "Photography", Condition.GOOD, ""),
+                    new Equipment(uuid, "Tripod", "Accessories", Condition.GOOD, ""))) {
+                model.setEquipment(model.findEquipment(uuid).orElseThrow(), edited);
+                panel.refresh();
+                panel.select(Optional.of(uuid));
+                assertEquals(Optional.of(uuid), panel.getSelection());
+                assertEquals(Optional.of(InventoryGroups.keyOf(edited)), panel.getSelectedGroup());
+                assertEquals(2, rows(panel).getItems().size());
+                assertTrue(callbacks.isEmpty());
+            }
+        });
+    }
+
+    @Test
+    public void equipment_editOutsideFilter_clearsOldGroupAndRetainsUnitUntilFilterReset() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = model();
+            List<InventoryGroups.Key> callbacks = new ArrayList<>();
+            EquipmentListPanel panel = new EquipmentListPanel(model.getAddressBook(), model::getAvailability,
+                    callbacks::add);
+            panel.setQuery(new DirectoryQuery("", "Photography", null, null,
+                    DirectoryQuery.Holding.ANY, DirectoryQuery.Sort.DEFAULT, false));
+            panel.refresh();
+            UUID uuid = new UUID(0, 1);
+            panel.select(Optional.of(uuid));
+            Equipment edited = new Equipment(uuid, "Camera", "Accessories", Condition.GOOD, "");
+            model.setEquipment(model.findEquipment(uuid).orElseThrow(), edited);
+            panel.refresh();
+            panel.select(Optional.of(uuid));
+            assertEquals(Optional.of(uuid), panel.getSelection());
+            assertTrue(panel.getSelectedGroup().isEmpty());
+            assertEquals(1, rows(panel).getItems().size());
+            panel.setQuery(DirectoryQuery.all());
+            panel.refresh();
+            panel.select(Optional.of(uuid));
+            assertEquals(Optional.of(InventoryGroups.keyOf(edited)), panel.getSelectedGroup());
+            assertEquals(Optional.of(uuid), panel.getSelection());
+            assertTrue(callbacks.isEmpty());
         });
     }
 
@@ -117,7 +171,7 @@ public class DirectoryListPanelTest {
     public void equipment_activation_usesExactUuidAndIgnoresEmptySelection() {
         FxTestUtil.runAndWait(() -> {
             ModelManager model = model();
-            List<UUID> callbacks = new ArrayList<>();
+            List<InventoryGroups.Key> callbacks = new ArrayList<>();
             EquipmentListPanel panel = new EquipmentListPanel(model.getAddressBook(), model::getAvailability,
                     callbacks::add);
             StackPane root = mount(panel.getRoot());
@@ -128,11 +182,15 @@ public class DirectoryListPanelTest {
             cell.fireEvent(click(MouseButton.PRIMARY, 1));
             rows(panel).fireEvent(key(KeyCode.ENTER));
             rows(panel).fireEvent(key(KeyCode.SPACE));
-            assertEquals(List.of(id, id, id), callbacks);
+            assertEquals(List.of(InventoryGroups.keyOf(model.findEquipment(id).orElseThrow()),
+                    InventoryGroups.keyOf(model.findEquipment(id).orElseThrow()),
+                    InventoryGroups.keyOf(model.findEquipment(id).orElseThrow())), callbacks);
             cell.fireEvent(click(MouseButton.PRIMARY, 2));
             cell.fireEvent(click(MouseButton.SECONDARY, 1));
             rows(panel).fireEvent(key(KeyCode.DOWN));
-            assertEquals(List.of(id, id, id), callbacks);
+            assertEquals(List.of(InventoryGroups.keyOf(model.findEquipment(id).orElseThrow()),
+                    InventoryGroups.keyOf(model.findEquipment(id).orElseThrow()),
+                    InventoryGroups.keyOf(model.findEquipment(id).orElseThrow())), callbacks);
             panel.refresh();
             assertEquals(3, callbacks.size());
             panel.select(Optional.empty());
@@ -146,7 +204,7 @@ public class DirectoryListPanelTest {
         FxTestUtil.runAndWait(() -> {
             ModelManager model = model();
             List<NusId> memberCallbacks = new ArrayList<>();
-            List<UUID> equipmentCallbacks = new ArrayList<>();
+            List<InventoryGroups.Key> equipmentCallbacks = new ArrayList<>();
             MemberListPanel members = new MemberListPanel(model.getAddressBook(), memberCallbacks::add);
             EquipmentListPanel equipment = new EquipmentListPanel(model.getAddressBook(), model::getAvailability,
                     equipmentCallbacks::add);
@@ -165,7 +223,7 @@ public class DirectoryListPanelTest {
             assertTrue(memberCallbacks.isEmpty());
             assertTrue(equipmentCallbacks.isEmpty());
             assertEquals(3, rows(members).getItems().size());
-            assertEquals(3, rows(equipment).getItems().size());
+            assertEquals(1, rows(equipment).getItems().size());
         });
     }
 
@@ -195,11 +253,8 @@ public class DirectoryListPanelTest {
             assertEquals("1 item held", label(memberCard, "itemsHeld"));
             assertEquals("alex@example.com", label(memberCard, "email"));
             assertTrue(label(memberCard, "identityAndPhone").contains(nusId.value));
-            assertEquals("Availability: ASSIGNED", label(equipmentCard, "availability"));
-            assertTrue(label(equipmentCard, "holder").contains(nusId.value));
-            assertEquals("Condition: GOOD", label(equipmentCard, "condition"));
-            assertEquals("Category: Photography", label(equipmentCard, "category"));
-            assertTrue(label(equipmentCard, "uuid").contains(uuid.toString()));
+            assertTrue(equipmentCard.lookupAll(".label").stream().map(node -> ((Label) node).getText())
+                    .anyMatch(text -> text.contains("2 available")));
             assertEquals(before, model.getAddressBook());
             assertEquals(Optional.of(nusId), members.getSelection());
             assertEquals(Optional.of(uuid), equipment.getSelection());
@@ -211,7 +266,8 @@ public class DirectoryListPanelTest {
             memberCard = (Region) cellFor(rows(members), model.findMember(nusId).orElseThrow()).getGraphic();
             equipmentCard = (Region) cellFor(rows(equipment), model.findEquipment(uuid).orElseThrow()).getGraphic();
             assertEquals("0 items held", label(memberCard, "itemsHeld"));
-            assertEquals("No current holder", label(equipmentCard, "holder"));
+            assertTrue(equipmentCard.lookupAll(".label").stream().map(node -> ((Label) node).getText())
+                    .anyMatch(text -> text.contains("3 available")));
         });
     }
 
@@ -224,8 +280,8 @@ public class DirectoryListPanelTest {
             }, unused -> { });
             mount(panel.getRoot());
             Region row = (Region) cellFor(rows(panel), model.findEquipment(new UUID(0, 1)).orElseThrow()).getGraphic();
-            assertTrue(((Label) row.getChildrenUnmodifiable().getFirst()).getText()
-                    .contains("Availability could not be determined"));
+            assertTrue(row.lookupAll(".label").stream().map(node -> ((Label) node).getText())
+                    .anyMatch(text -> text.contains("Availability could not be determined")));
         });
     }
 
@@ -242,18 +298,15 @@ public class DirectoryListPanelTest {
                     return FXCollections.emptyObservableList();
                 }
             };
-            EquipmentListPanel missing = new EquipmentListPanel(missingMembers,
-                    model::getAvailability, unused -> { });
+            EquipmentDetailsPanel missing = new EquipmentDetailsPanel(missingMembers, model::getAvailability);
+            missing.showEquipment(uuid);
             mount(missing.getRoot());
-            Region card = (Region) cellFor(rows(missing), model.findEquipment(uuid).orElseThrow()).getGraphic();
-            assertTrue(label(card, "holder").contains("Holder reference missing"));
-            assertEquals("Availability: ASSIGNED", label(card, "availability"));
-            EquipmentListPanel conflicting = new EquipmentListPanel(model.getAddressBook(),
-                    unused -> Availability.AVAILABLE, unused -> { });
+            assertTrue(label(missing.getRoot(), "detailsStatus").contains("missing holder reference"));
+            EquipmentDetailsPanel conflicting = new EquipmentDetailsPanel(model.getAddressBook(),
+                    unused -> Availability.AVAILABLE);
+            conflicting.showEquipment(uuid);
             mount(conflicting.getRoot());
-            Region row = (Region) cellFor(rows(conflicting), model.findEquipment(uuid).orElseThrow()).getGraphic();
-            assertTrue(((Label) row.getChildrenUnmodifiable().getFirst()).getText()
-                    .contains("Open loan conflicts with derived availability"));
+            assertTrue(label(conflicting.getRoot(), "detailsStatus").contains("open loan conflicts"));
         });
     }
 
@@ -263,7 +316,7 @@ public class DirectoryListPanelTest {
             ModelManager model = model();
             AddressBook before = new AddressBook(model.getAddressBook());
             List<NusId> memberCallbacks = new ArrayList<>();
-            List<UUID> equipmentCallbacks = new ArrayList<>();
+            List<InventoryGroups.Key> equipmentCallbacks = new ArrayList<>();
             MemberListPanel members = new MemberListPanel(model.getAddressBook(), memberCallbacks::add);
             EquipmentListPanel equipment = new EquipmentListPanel(model.getAddressBook(), model::getAvailability,
                     equipmentCallbacks::add);
@@ -275,7 +328,7 @@ public class DirectoryListPanelTest {
             members.refresh();
             equipment.refresh();
             assertEquals(3, rows(members).getItems().size());
-            assertEquals(3, rows(equipment).getItems().size());
+            assertEquals(1, rows(equipment).getItems().size());
         });
     }
 
@@ -286,7 +339,7 @@ public class DirectoryListPanelTest {
             MemberListPanel members = new MemberListPanel(model.getAddressBook(), unused -> { });
             EquipmentListPanel equipment = new EquipmentListPanel(model.getAddressBook(), model::getAvailability,
                     unused -> { });
-            assertTrue(((Label) rows(members).getPlaceholder()).getText().contains("member add"));
+            assertEquals("No members yet", ((Label) rows(members).getPlaceholder()).getText());
             assertTrue(((Label) rows(equipment).getPlaceholder()).getText().contains("equipment add"));
             assertTrue(members.getSelection().isEmpty());
             assertTrue(equipment.getSelection().isEmpty());
@@ -330,7 +383,9 @@ public class DirectoryListPanelTest {
 
     private static ListCell<?> cellFor(ListView<?> rows, Object item) {
         return rows.lookupAll(".list-cell").stream().map(node -> (ListCell<?>) node)
-                .filter(cell -> item.equals(cell.getItem())).findFirst().orElseThrow();
+                .filter(cell -> item.equals(cell.getItem()) || item instanceof Equipment unit
+                        && cell.getItem() instanceof InventoryGroups.Group group && group.units().contains(unit))
+                .findFirst().orElseThrow();
     }
 
     private static String label(Region root, String id) {

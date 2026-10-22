@@ -14,10 +14,7 @@
 ## **Acknowledgements**
 
 * Laplace evolves the course-provided [AddressBook-Level3 starter](https://github.com/NUS-CS2103-AY2627-S1/tp).
-* For retirement of the legacy command routes, Arjo Das used OpenAI Codex to assist with planning,
-  implementation, regression tests, and documentation.
-* Arjo Das also used OpenAI Codex for equipment batch-add and identity-preserving equipment maintenance planning, implementation, tests, lifecycle UML, and documentation.
-  These acknowledgements describe those changes only.
+* Command text uses [IBM Plex Mono](https://github.com/IBM/plex) 2.004, copyright IBM Corp., under the SIL Open Font License. The faces and license are in `src/main/resources/fonts`.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -76,16 +73,59 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+`MainWindow` owns navigation, the command pipeline and coalesced model refresh subscriptions. Its
+member/equipment directories, summaries, details and loan panel are read-only views. Most panels extend
+`UiPart` and load FXML; `EquipmentGroupPanel` and `CommandPreview` compose JavaFX controls directly.
+The inherited person panel remains an internal compatibility component, outside the supported navigation.
 
-The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
+`DisplayRequest` carries typed navigation intent. Directory requests with no query preserve criteria;
+explicit list commands reset them. `InventoryGroups.Group` derives normalized category/name groups and
+keeps separate retained and matching unit lists. Groups are never persisted. Selecting a group does not
+choose an arbitrary UUID; physical-unit selection routes `equipment view uuid/...` through the same
+pipeline as typed input. Refreshes preserve exact identities and recompute group membership after edits,
+loans, deletion and restoration. The group panel shares one scrolling surface with unit details.
 
-The `UI` component,
+`CommandPreview` copies exact plain text or prepares `CommandBox`; neither action executes a mutation.
+The command catalog supplies examples and explicit completion. Input history is bounded to 100 session
+entries. `ResultDisplay` keeps full feedback behind a compact, expandable view. Related-record links use
+identity-based commands. `LoanPanel` filters open and completed loans by stable member/equipment IDs.
+Only open loans derive urgency from expected return dates and an injectable clock, and offer a return
+shortcut for explicit review and submission. Completed rows show recorded conditions and return dates.
+Loan urgency refreshes on commands, data changes and opening the Loans tab; there is no background
+midnight timer.
 
-* executes user commands using the `Logic` component.
-* listens for changes to `Model` data so that the UI can be updated with the modified data.
-* keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
-* depends on some classes in the `Model` component because it displays `Person` objects from the model.
+`LaplaceTheme.css` defines shared looked-up colors; component styles refer to these tokens. A `dark` style
+class changes the palette for both windows, including table selection, feedback and command previews.
+`ModeCommand` updates only `GuiSettings.darkMode` and returns an unchanged display request. Its
+`isReadOnly()` flag means no **domain-record** persistence; preferences are saved by the existing shutdown
+path. Missing `darkMode` in earlier preference JSON defaults to false. Window geometry and appearance are
+preserved together; equipment/member/loan schemas are unchanged.
+
+Tests exercise actual FXML/CSS on the shared JavaFX thread, command/storage routing, identity preservation,
+filter scope, date boundaries, clipboard text, theme changes and preference compatibility. UI snapshots
+are written under `build/reports/laplace` for visual review. Command text and identifiers use bundled
+IBM Plex Mono. `LaplaceFonts` registers those faces once and applies interface fonts by full face name:
+Helvetica/Helvetica Bold, then Arial/Arial Bold or Segoe UI/Segoe UI Bold when unavailable, with a system
+fallback. This bypasses JavaFX family/weight substitution that can clip bold interface glyphs.
+The helper owns interface sizes and weights; CSS owns colors, layout and monospace text. It observes
+new children, graphics and label style changes so dynamic rows and headings receive the same treatment.
+Tests check resolved face names as well as rendered layouts; checking only a Bold style is insufficient.
+
+The feedback heading displays only Last result; the box carries neutral/success/error color, and assistive
+text contains the status plus the entire message. Ready command previews say `Press Enter to execute (ready)`;
+templates say `Replace uppercase placeholders (template)`. Copy and Use command still never execute a command.
+
+### Tab completion
+
+`MainWindow` supplies the live read-only address book to `CommandBox`. `CompletionService` computes
+replacement ranges and ordered candidates without calling logic, history or storage. Command constants
+and shared search prefix constants define all accepted routes and fields. Search enum options follow
+`DirectoryQuery`; dates, numeric counts, new member IDs and free-form notes are entered manually.
+Batch loan completion replaces only the active UUID entry and excludes neighboring identities.
+`CompletionController` owns cycling and resets after input, caret, focus or model changes. Enter retains
+the ordinary parser and transactional command path. Tests compare family completion to parser routes,
+exercise real JavaFX events, and load production classes from the packaged JAR. Gradle enforces 100%
+instruction, line and branch coverage for the feature, including its UI wiring. See [Testing](Testing.md).
 
 ### Logic component
 
@@ -110,7 +150,7 @@ The sequence diagram below is a historical AB3 example of `execute("delete 1")`,
 `LogicManager.execute()` first calls `AddressBookParser.parseCommand()`. The root parser accepts
 `member`, `equipment`, and `loans`, delegating to their family parsers and then the appropriate leaf
 parser (for example, `EquipmentCommandParser` and `EquipmentAddCommandParser`). It also accepts
-`help` and `exit`. Family and leaf parsers remain responsible for validating subcommands and arguments.
+`undo`, `redo`, `mode`, `help` and `exit`. Family and leaf parsers remain responsible for validating subcommands and arguments.
 
 The retired top-level words `add`, `edit`, `delete`, `clear`, `find`, and `list` now reach the existing
 unknown-command branch and throw `ParseException("Unknown command.")`. In particular, `list members`
@@ -134,12 +174,58 @@ The inherited parser diagram below documents the remaining AB3 classes, not the 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/model/Model.java)
 
+#### Equipment and loan model
+
+The following diagram shows the equipment-related subset of the current model. Member/person
+collections, preferences, JavaFX collection wrappers and interfaces are omitted to keep its scope clear.
+Solid arrows show stored references; the dashed loan-to-equipment arrow describes UUID resolution,
+not an object reference stored inside `Loan`.
+
+<puml src="diagrams/EquipmentModel.puml" alt="Equipment model, retained identities and loan references" />
+
+`AddressBook` creates equipment/loan containers lazily, hence the `0..1` multiplicities. A null container
+means an empty collection to callers. The `0..*` multiplicity at each collection end of the value
+associations accounts for immutable objects shared across transaction snapshots; it does not mean
+one physical unit has several UUIDs. Equipment collections hold distinct UUIDs, and editing replaces a
+value at its existing position. Ordinary associations are used instead of composition because immutable
+values can outlive or be shared by their containers.
+
+| Relationship or rule | Meaning in a valid root dataset |
+| --- | --- |
+| Loan → equipment | Each loan's `equipmentUuid` resolves to exactly one retained equipment record. A unit can have zero or more historical loans, with at most one open loan. |
+| Loan → member (omitted from diagram) | Each loan's `memberNusId` resolves to one retained member. A member may have multiple open or closed loans. |
+| Identity and details | UUID identifies a physical unit. Name/category determine a derived inventory group; matching descriptions do not merge identities. |
+| Lifecycle | Deleted records retain UUIDs, details and closed loans. Open loans cannot reference deleted equipment or deleted members. |
+| Availability | `ModelManager` returns UNAVAILABLE for deleted units; otherwise the calculator returns ASSIGNED for an open loan, AVAILABLE for GOOD/FAIR, and UNAVAILABLE for DAMAGED/UNDER_REPAIR. |
+
+Availability, holders and inventory totals are derived, never persisted as independent fields.
+`AvailabilityCalculator` only accepts condition and open-loan state; the deletion check belongs to
+`ModelManager`. `AddressBook` validates cross-record references, while `UniqueLoanList` enforces the
+one-open-loan-per-unit rule. `UniqueEquipmentList` checks UUID uniqueness and identity-preserving
+replacement. These responsibilities keep editing and restoration from breaking loan references.
+
+#### Loan workflow and history
+
+The following class diagram traces batch assignment and return from their parsers to the
+model, JSON adapter and history views. It lists the loan-facing methods relevant to this
+workflow; shared infrastructure and unrelated methods are omitted. `AddressBook` validates
+each batch in a candidate root, while `UniqueLoanList` retains completed loans and rejects
+a second open loan for the same equipment UUID. `MemberDetailsPanel` and
+`EquipmentDetailsPanel` both call `LoanHistoryContent.add` for their selected identity.
+
+<puml src="diagrams/LoanWorkflowClassDiagram.puml" alt="Loan workflow and history class diagram" />
+
+#### Inherited person model
+
+The following diagrams describe the retained AB3 person model and an inherited alternative design;
+they do not replace the equipment model above.
+
 <puml src="diagrams/ModelClassDiagram.puml" width="450" />
 
 
-The `Model` component,
+The inherited person-related part of the `Model` component,
 
-* stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+* stores all `Person` objects (which are contained in a `UniquePersonList` object).
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -199,18 +285,27 @@ preserve the current criteria; explicit list commands pass `DirectoryQuery.all()
 After mutations, the shell refreshes the views with their retained queries and recovers selection by
 NUS ID or equipment UUID when possible.
 
-Inventory planning is computed by `InventoryGroups.summarize`, called from the equipment summary.
-The activity diagram below shows how it derives availability counts without storing aggregates.
+`EquipmentDirectorySummary.refresh` builds inventory summaries with `InventoryGroups.group`, passing
+`DirectoryQuery.all().equipment(data, availabilityLookup)` as the matching units. It formats each group
+using `EquipmentPresentation.counts(group.units(), availabilityLookup)`. The activity below shows this
+GUI path when availability can be resolved; it does not describe the retained `summarize` helper.
 
-<puml src="diagrams/InventoryPlanningActivity.puml" alt="Grouping active equipment units and deriving inventory availability counts" />
+<puml src="diagrams/InventoryPlanningActivity.puml" alt="Grouping all equipment units and formatting active availability and retained deletion counts" />
 
 Each group uses a pair of normalized category and name values, keeping the two keys separate even
-when either contains a display separator. Every eligible physical unit contributes once using its
-own UUID for availability lookup. Groups are returned in category/name order, with missing availability
-counts shown as zero. Deleted equipment is excluded, and the caller supplies any additional eligibility
-predicate. The equipment summary accepts all active units for grouping, so inventory totals remain
-independent of directory search filters. These summaries preserve individual equipment identities
-and do not introduce a stored quantity field.
+when either contains a display separator. `InventoryGroups.group` retains all physical units under each
+key and emits groups in first-match order. For this caller, the all-records query supplies default
+category/name/UUID order, so groups appear in category/name order. Other callers can pass a filtered or
+sorted matching list; `group.matching()` records those matches while `group.units()` retains the full
+group. The summary uses the all-records query, so its group counts are independent of search filters.
+
+`EquipmentPresentation.counts` looks up each active unit's availability by UUID and counts deleted
+units separately without an availability lookup. It displays zero for absent availability states and
+adds a deleted count only when nonzero. The summary prefixes these counts with the category and name
+of the first unit in the group, preserving its stored spelling rather than displaying the normalized
+key. If its initial scan cannot resolve an active unit's availability, the summary displays
+`Inventory groups unavailable: inconsistent equipment data.` instead of group lines. These derived
+summaries preserve individual equipment identities and do not introduce a stored quantity field.
 
 <!-- Nguyen Anh Duy used OpenAI Codex to assist with this section and its two PlantUML diagrams. -->
 
@@ -234,6 +329,48 @@ Count 1 preserves existing feedback and `equipmentDetails(uuid)` navigation. Lar
 new UUIDs and return `DisplayRequest.equipment(DirectoryQuery.all())`, resetting prior filters/sorting
 so the newly created units can be found. Availability remains derived from each unit's condition/loans.
 
+#### Equipment-add parsing
+
+The parsing sequence below traces a valid `equipment add ... count/2` request and leaf-parser
+rejection. `AddressBookParser` selects the family, `EquipmentCommandParser` selects the operation,
+and `EquipmentAddCommandParser` applies the shared grammar and validators before constructing the
+command. Parsing is separate from UUID generation and does not access or mutate the live model.
+
+<puml src="diagrams/EquipmentAddSequence.puml" alt="Equipment add parsing and validation sequence" />
+
+The diagram omits shared-validator lifelines and command-constructor normalization calls. The parser
+returns a command; it does not execute it. Missing/unknown family or subcommand errors stop earlier in
+the chain. Neither a parser failure nor invalid count creates a transaction snapshot or saves data.
+
+#### Equipment-add execution and publication
+
+The next sequence starts after successful parsing. `Model.createTransactionSnapshot()` creates a new
+`ModelManager` with independent collection containers and copied preferences. It initially shares the
+live model's immutable `AddressBookHistory`. Immutable entity values may be shared until a command
+replaces them. `EquipmentAddCommand.execute(candidate)` prepares the complete batch before inserting any unit. The diagram abbreviates the root/collection delegation and the repeated read-only
+UUID checks; these occur on the candidate, not on the live model.
+
+<puml src="diagrams/EquipmentTransactionSequence.puml" alt="Equipment batch execution, atomic save and failure path" />
+
+The `CommandResult` exists before saving, but `LogicManager` returns it to the UI only after successful
+persistence and publication. Count 1 requests exact-unit details; larger batches request the full
+equipment directory. Observable refreshes resolve current data by identity after publication.
+
+The shown failure alternative is an `IOException` during saving. Serialization/write/replacement
+failure prevents publication; partial writes affect only a private temporary file, and unsupported
+atomic replacement fails rather than falling back to truncation. Temporary-file cleanup is attempted
+on failure. The existing data file remains intact; a first failed save need not leave a data file.
+Validation, UUID-generation and command-execution failures occur before the save call and are omitted
+from the successful execution path shown. A failure after candidate insertion still discards that
+candidate, so a later successful command cannot accidentally save a failed batch.
+
+Editing, soft deletion and restoration use the same snapshot/save/publish boundary with different
+command bodies. Equipment list/search do not change records or create history entries, so they do not
+follow this mutation sequence. Existing navigation-save behavior is described under undo/redo below.
+These diagrams describe a single-user command transaction, including history recording. They do not
+provide concurrent-writer coordination. [Undo/redo](#undo-redo-feature) uses the same save/publication
+boundary but navigates existing history instead of recording a new change.
+
 ### Equipment editing, deletion and restoration
 
 Each `Equipment` is an immutable physical unit. `EquipmentEditCommand` builds a replacement with the
@@ -250,7 +387,8 @@ historical scaffold's permanent deletion. Member and equipment restoration have 
 
 Lifecycle is separate from condition and loan status. Editing condition while loaned is allowed:
 ASSIGNED remains derived from the open loan; on return the edited condition controls availability.
-Deleted units derive UNAVAILABLE, cannot receive open loans, and are excluded from inventory totals.
+Deleted units derive UNAVAILABLE, cannot receive open loans, and are excluded from active availability
+counts. Inventory groups retain them and report their deleted count separately.
 Root loan validation applies this invariant both to new loans and complete dataset replacement/loading.
 
 `JsonAdaptedEquipment` writes a boolean `deleted`. An absent flag defaults to false for earlier files;
@@ -259,103 +397,168 @@ All maintenance commands are transactional: execute against a snapshot, save ato
 No-change/rejected edits and failed writes leave live state and previously saved bytes unchanged.
 
 Directory queries share `DirectoryQuery.Status` across members and equipment. Equipment search defaults
-to active; `status/deleted|all` exposes retained units. List resets to all states and does not save.
+to active; `status/deleted|all` exposes retained units. List resets to all states without recording history.
 Cards label deleted units; details show lifecycle state and a restore command. Edit/restore navigate to
 the same UUID, retaining query criteria even if that unit no longer matches. Total counts include deleted
-units; availability counts and inventory groups include active units only. Closed history remains stored,
-with no new history-view UI in this feature.
+units; availability counts include active units only, while groups also report retained deletions.
+The Loans tab and entity
+details show the retained completed loan history.
 
-### \[Proposed\] Undo/redo feature
+### Undo/redo feature
 
-The following inherited AB3 proposal uses retired person commands as examples. It is not implemented
-Laplace behavior and needs redesign for the current domain before implementation.
+The CLI commands `undo` and `redo` restore complete record states within the current session.
+`AddressBookHistory` is an immutable value owned by `ModelManager`, composed with the existing
+`AddressBook` rather than replacing or subclassing its observable root. It retains at most ten
+reversible changes (eleven snapshots). Each snapshot has independent collection containers for
+members, physical equipment, loans and retained legacy persons; immutable entity values may be shared.
 
-#### Proposed Implementation
+The class diagram below shows only the command, persistence and record-history collaborators. Parser
+classes, collection wrappers, domain entities and preferences are omitted. The live model and each
+candidate own separate roots; multiple immutable history values may reference the same private stored
+snapshots. Accordingly, snapshot sharing uses ordinary associations rather than exclusive composition.
+The ordered `states` association has multiplicity `0..11`, including empty history before the first change.
+An `AddressBook` snapshot has no `ModelManager` owner, hence `0..1` at the model end of root composition;
+every model still owns exactly one root. The logic associations allow model/storage collaborators to
+be shared by more than one `LogicManager` instance.
 
-The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as an `addressBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
+<puml src="diagrams/UndoRedoClassDiagram.puml" alt="Undo and redo command, model, snapshot history and storage dependencies" />
 
-* `VersionedAddressBook#commit()` -- Saves the current address book state in its history.
-* `VersionedAddressBook#undo()` -- Restores the previous address book state from its history.
-* `VersionedAddressBook#redo()` -- Restores a previously undone address book state from its history.
+The first successful mutation records both the preceding state and the candidate state. Later mutations
+append a snapshot and a short action description, such as `equipment add`, without retaining command
+parameter values in the description. Once ten changes are retained, the oldest change and its preceding
+snapshot are discarded. A batch creation, issue or return is one history entry regardless of unit count.
 
-These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
+#### Transaction and persistence boundary
 
-Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
+1. `AddressBookParser` routes bare `undo`/`redo` through their no-argument parsers. Both reject extra
+   text and prefixes using `LaplaceArgumentParser`.
+2. `LogicManager` creates an isolated candidate through `Model.createTransactionSnapshot()`. Candidate
+   records and preferences are copied; the immutable history can initially be shared safely.
+3. An ordinary transactional command changes candidate records. `Command.recordsHistory()` tells
+   `LogicManager` to call `recordAddressBook(previous, description)` on that candidate. A real change
+   discards any redo branch; an unchanged candidate leaves history untouched.
+4. `UndoCommand`/`RedoCommand` instead check availability and navigate the candidate's existing history.
+   They return `DisplayRequest.unchanged()` and do not record another action. Redo restores the recorded
+   snapshot directly, preserving UUIDs, loan dates, conditions and references without replaying commands.
+5. The existing atomic JSON save persists the candidate records once. Only after success does
+   `Model.publishTransaction()` publish the candidate records and history to the live model. It preserves
+   the live observable root and current preferences. Parse, validation and save failures leave live data,
+   history position, redo availability and the previously saved file unchanged.
 
-Step 1. The user launches the application for the first time. The `VersionedAddressBook` will be initialized with the initial address book state, and the `currentStatePointer` pointing to that single address book state.
+Record replacement validates all collections before publishing. `AddressBook.resetData()` installs the
+new records and runs the model's history-publication action before resuming list notifications. This
+keeps synchronous observers' record values and undo/redo availability consistent during transaction
+publication, explicit whole-model replacement, and direct undo/redo navigation. Validation failures leave
+the previous history intact; replacing identical records can still update history without list events.
 
-<puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
+The logic sequence traces one `undo` through parsing, availability checks, candidate execution,
+atomic saving and publication. `AddressBookParser` delegates argument validation and command construction
+to `UndoCommandParser`. The `Storage` lifeline abbreviates `StorageManager`, JSON serialization
+and `AtomicFileWriter`. Invalid arguments stop during parsing; unavailable undo stops during execution.
+Neither reaches saving. A save error discards the staged result without consuming a live history step.
 
-Step 2. The user executes `delete 5` command to delete the 5th person in the address book. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the address book after the `delete 5` command executes to be saved in the `addressBookStateList`, and the `currentStatePointer` is shifted to the newly inserted address book state.
+<puml src="diagrams/UndoSequenceDiagram-Logic.puml" alt="Undo command parsing, candidate restoration, atomic save and publication or failure" />
 
-<puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
+The next two sequences expand only the model operation inside that candidate. They distinguish the
+candidate's stable root from the defensive copy returned by `getCurrentState()`. `before` and `restored`
+are separate immutable history values; position changes never mutate a history shared with the live model.
+Field assignment is shown as a note, rather than as a fictitious method call.
 
-Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified address book state to be saved into the `addressBookStateList`.
+<puml src="diagrams/UndoSequenceDiagram-Model.puml" alt="Candidate undo creates earlier history and restores an independent record copy" />
 
-<puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
+<puml src="diagrams/RedoSequenceDiagram-Model.puml" alt="Candidate redo creates later history and restores recorded identifiers and dates" />
 
-<box type="info" seamless>
+`redo` follows the same logic/save/publication sequence with `RedoCommandParser`, `RedoCommand`,
+`canRedoAddressBook()` and `redoAddressBook()`. Its unavailable error is `Nothing to redo.`.
 
-**Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the address book state will not be saved into the `addressBookStateList`.
-</box>
+The model exposes `canUndoAddressBook()`, `canRedoAddressBook()`, `undoAddressBook()` and
+`redoAddressBook()`. Direct history navigation requires an available step; commands translate unavailable
+history into `Nothing to undo.` or `Nothing to redo.`. Successful feedback identifies the action:
+`Undid: equipment add.` or `Redid: equipment add.`. The history object guards invalid direct navigation
+with `IllegalStateException` and returns defensive copies of stored record states.
 
-Step 4. The user now decides that adding the person was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous address book state, and restores the address book to that state.
+Read-only queries, navigation, help, exit and appearance changes do not add history entries or invalidate
+redo. Existing list-command save behavior is preserved, but those saves do not record an action.
+A new successful record mutation after undo discards the undone branch. Explicit whole-model replacement
+with `setAddressBook()` starts fresh history; transaction publication uses its separate API to retain it.
 
-<puml src="diagrams/UndoRedoState3.puml" alt="UndoRedoState3" />
+History is session-only and is not serialized. Restarting loads the most recently saved record state
+with no undo or redo available. Preferences, search filters, window geometry and command-input history
+are outside record history. The existing shell refreshes summaries, groups, holdings and loan history;
+when undo removes a displayed exact record, it returns to the corresponding filtered directory.
+No undo/redo buttons or new shortcuts are provided.
 
+#### Example history states
 
-<box type="info" seamless>
+These object diagrams show a small equipment workflow after each successful command is saved and
+published. `u` denotes the UUID generated by the first add command. At startup, `s0` denotes the loaded
+live baseline; it becomes a stored snapshot on the first successful mutation. From that point onward,
+each `sN` is a complete stored record snapshot whose label shows only the relevant unit.
+The highlighted stored snapshot has the same record values
+as the live model; it is not the live `AddressBook` object. The integer `position` selects a snapshot,
+so the dashed `states[position]` arrow is a derived selection, not a separately stored pointer field.
 
-**Note:** If the `currentStatePointer` is at index 0, pointing to the initial AddressBook state, then there are no previous AddressBook states to restore. The `undo` command uses `Model#canUndoAddressBook()` to check if this is the case. If so, it will return an error to the user rather
-than attempting to perform the undo.
-</box>
+1. On launch, history `h0` has no snapshots or descriptions. The loaded record state is the baseline `s0`;
+   this example assumes it contains no equipment. Undo and redo are unavailable.
 
-The following sequence diagram shows how an undo operation goes through the `Logic` component:
+<puml src="diagrams/UndoRedoState0.puml" alt="Startup with empty history and no recorded snapshots" />
 
-<puml src="diagrams/UndoSequenceDiagram-Logic.puml" alt="UndoSequenceDiagram-Logic" />
+2. Run `equipment add name/Camera category/Photo condition/GOOD`. After saving, `h1` retains `s0` and
+   `s1`, with position 1 and one action description. A batch would still create only one history entry.
 
-<box type="info" seamless>
+<puml src="diagrams/UndoRedoState1.puml" alt="First equipment addition records before and after snapshots" />
 
-**Note:** The lifeline for `UndoCommand` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
-</box>
+3. Run `equipment edit uuid/u condition/FAIR`, substituting the real UUID for `u`. History `h2` appends
+   `s2` at position 2. The unit keeps its identity.
 
-Similarly, how an undo operation goes through the `Model` component is shown below:
+<puml src="diagrams/UndoRedoState2.puml" alt="Equipment edit appends a third snapshot with the same UUID" />
 
-<puml src="diagrams/UndoSequenceDiagram-Model.puml" alt="UndoSequenceDiagram-Model" />
+4. Run `undo`. New history `h3` selects `s1` at position 1; `s2` remains available for redo.
 
-The `redo` command does the opposite — it calls `Model#redoAddressBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the address book to that state.
+<puml src="diagrams/UndoRedoState3.puml" alt="Undo selects the preceding snapshot without discarding redo" />
 
-<box type="info" seamless>
+5. Run `equipment list`. The directory opens, but the same history `h3`, position and redo branch remain.
 
-**Note:** If the `currentStatePointer` is at index `addressBookStateList.size() - 1`, pointing to the latest address book state, then there are no undone AddressBook states to restore. The `redo` command uses `Model#canRedoAddressBook()` to check if this is the case. If so, it will return an error to the user rather than attempting to perform the redo.
-</box>
+<puml src="diagrams/UndoRedoState4.puml" alt="List navigation preserves the current immutable history" />
 
-Step 5. The user then decides to execute the command `list`. Commands that do not modify the address book, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
+6. Run `redo`. New history `h4` selects the recorded `s2` again without executing the edit command.
 
-<puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
+<puml src="diagrams/UndoRedoState6.puml" alt="Redo selects the existing edited snapshot without replaying a command" />
 
-Step 6. The user executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
+7. Run `undo` again, creating `h5` at position 1, then `equipment edit uuid/u condition/DAMAGED`.
+   Successful saving publishes `h6` with a new `s3`. It retains `s0` and `s1` and drops the old redo state
+   `s2` and its corresponding action description. Redo is now unavailable. Failed saves publish none of this.
 
-<puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
+<puml src="diagrams/UndoRedoState5.puml" alt="A new successful edit after undo replaces the redo branch" />
 
-The following activity diagram summarizes what happens when a user executes a new command:
+#### Retention limit and command flow
 
-<puml src="diagrams/CommitActivityDiagram.puml" width="250" />
+After twelve successful record changes, only snapshots `s2` through `s12` and the ten actions between
+them remain in the current history. The earliest reachable state is `s2`: ten undos reach position 0,
+and ten redos can return to `s12`. These limits apply to reversible commands, not the number of records.
+Older history values referenced transiently during a transaction can share stored snapshots; the bound
+applies to the history retained by each model. A failed save cannot evict entries from the live history.
 
-#### Design considerations:
+<puml src="diagrams/UndoRedoLimit.puml" alt="Eleven retained snapshots permit at most ten undo or redo steps" />
 
-**Aspect: How undo & redo execute:**
+The activity diagram summarizes `LogicManager.execute()`. It preserves the existing distinction between
+`isReadOnly()` commands, which skip saving, and nontransactional navigation commands, which can still save
+without adding history. Only successful transactional saves publish candidate records and history.
 
-* **Alternative 1 (current choice):** Saves the entire address book.
-    * Pros: Easy to implement.
-    * Cons: May have performance issues in terms of memory usage.
+<puml src="diagrams/CommitActivityDiagram.puml" alt="Parsing, staged execution, bounded history recording, atomic save and publication" />
 
-* **Alternative 2:** Individual command knows how to undo/redo by
-  itself.
-    * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
-    * Cons: We must ensure that the implementation of each individual command is correct.
+#### Design considerations and verification
 
-_{more aspects and alternatives to be added}_
+Complete snapshots keep linked member/equipment/loan data consistent and make batch restoration atomic.
+They cost more memory than per-command inverse operations, so retention is capped at ten changes.
+Inverse operations would require separate reversal logic for every command and batch failure path.
+
+`AddressBookHistoryTest` covers the cap, branching, descriptions, snapshot isolation and invalid navigation.
+Command/parser tests cover syntax and empty history. `UndoRedoIntegrationTest` verifies identity and loan
+restoration, lifecycle changes, exact saved states, ten undos/redos, restart behavior and failed-save retries.
+Shell tests exercise the real command box, preserved filters, missing details, loans and error feedback.
+`ModelManagerTest` checks history availability inside synchronous collection listeners, unchanged-record
+history transitions, and rollback when replacement records are invalid.
 
 ### \[Proposed\] Data archiving
 
@@ -394,8 +597,8 @@ Laplace is a local, single-user desktop application for a CCA EXCO member to man
 These requirements consolidate the [team's project notes](https://docs.google.com/document/d/1XzYR2IpGc__mSZEy5GKMmVK8809j3Ln42VA8_9-va48/edit?usp=sharing): Week 4 (direction), Week 5 (all 41 user stories), and Week 6 (MVP and feature specifications). They describe intended behavior, including requirements beyond the MVP; they do not claim that every feature is implemented. Where the earlier schema differs from the later Feature Specifications, the latter defines the MVP baseline.
 
 * **MVP baseline:** Add, list, view, and delete members and equipment; identify members by NUS ID and equipment by a generated UUID; issue and return individual items; show holdings and holders; validate input and preserve consistency on failure.
-* **Broader requirements:** Editing, archiving, recovery, import/export, search and filtering, summaries, batch operations, condition recording at handover, histories, and undo/redo remain documented below even if they are not delivered this semester.
-* **Deletion and retention:** Members and equipment are soft-deleted only without open loans. Records and closed history are retained; restoration has no time limit. This supersedes the original permanent-deletion and proposed 30-day recovery policies. A dedicated history view remains future work.
+* **Broader requirements:** Editing, archiving, recovery, import/export, search and filtering, summaries, batch operations, condition recording at handover, and histories remain documented below even if they are not delivered this semester. Undo/redo is implemented with a ten-change session limit.
+* **Deletion and retention:** Members and equipment are soft-deleted only without open loans. Records and closed history are retained; restoration has no time limit. This supersedes the original permanent-deletion and proposed 30-day recovery policies. The Loans tab and entity details show completed loan history.
 * **Single-user boundary:** Import/export supports the same user's local records and backups. The earlier idea of handing a snapshot to another EXCO member is retained as a considered use of export, but is excluded from the course product's regular operations. Shared datasets, concurrent users, and member self-service are outside scope.
 
 ### User stories
@@ -441,8 +644,8 @@ Priority expresses product importance, not implementation status. **MVP** denote
 | US34 | `* *` | Future | CCA EXCO member investigating an item | view its past equipment loans | trace who held it and when. |
 | US35 | `* *` | Future | CCA EXCO member reviewing a member | view that member's past equipment loans | resolve questions about previous loans without searching separate records. |
 | US36 | `* *` | Future | CCA EXCO member archiving a member | be warned and prevented from archiving a member with outstanding equipment | resolve responsibility before removing the member from active records. |
-| US37 | `* *` | Future | CCA EXCO member who made a mistake | undo my most recent successful data-changing action | recover without reconstructing the previous state manually. |
-| US38 | `* *` | Future | CCA EXCO member | redo an action I just undid | recover when the undo itself was a mistake. |
+| US37 | `* *` | Implemented | CCA EXCO member who made a mistake | undo my most recent successful data-changing action | recover without reconstructing the previous state manually. |
+| US38 | `* *` | Implemented | CCA EXCO member | redo an action I just undid | recover when the undo itself was a mistake. |
 | US39 | `*` | Future | CCA EXCO member investigating a discrepancy | view a recent history of data-changing actions | understand how the current records came about. |
 | US40 | `* *` | Future | CCA EXCO member recovering from data loss | restore a previously exported complete snapshot | resume operations without rebuilding every record. |
 | US41 | `* * *` | MVP | CCA EXCO member entering invalid data | receive an actionable error with no partial change applied | correct my input while trusting that the records remain consistent. |
@@ -659,7 +862,7 @@ Use case ends.
 
 #### UC08: Undo a mistaken change
 
-**Scope:** Future. **Related stories:** US37, US38, US41.
+**Scope:** Implemented for up to ten changes per session. **Related stories:** US37, US38, US41.
 
 **MSS**
 
@@ -681,7 +884,7 @@ Use case ends.
     * 3b1. Laplace explains that no redo is available and leaves the current data unchanged.
     * Use case ends.
 
-A new successful data-changing action after undo invalidates redo. Read-only actions and failed commands do not add undo entries or invalidate redo. The future retention policy must support restoring any deleted records covered by undo.
+A new successful data-changing action after undo invalidates redo. Read-only actions and failed commands do not add undo entries or invalidate redo. History retains at most ten changes per session, including the deleted records covered by those changes. Older changes are discarded; restarting clears undo and redo history.
 
 ### Non-Functional Requirements
 
@@ -694,7 +897,7 @@ These are acceptance targets for the intended product, not measurements of the c
 5. **NFR05 — Keyboard operation:** Every documented record-management operation shall be completable with keyboard input alone. Users shall not need mouse actions to submit commands, inspect results, or correct input.
 6. **NFR06 — Display compatibility:** At 1920×1080 with 100% or 125% scaling, essential controls and feedback shall not overlap or be clipped. At 1280×720 with 150% scaling, every operation and its result shall remain accessible, using scrolling where necessary.
 7. **NFR07 — Capacity and response time:** With 1,000 members, 5,000 equipment items, and 10,000 loans on a computer with a four-core CPU, 8 GB RAM, and an SSD, at least 95 of 100 executions of each core add, list, exact lookup, delete, issue, and return operation shall display a result within two seconds of submission. Measure after startup, with valid data and no competing intensive workload; include local saving for mutations. Startup with the same dataset shall complete within ten seconds.
-8. **NFR08 — Atomicity and durability:** After a successful mutation and normal shutdown, restarting shall recover the same records and loan relationships. Validation or reported save failures shall not leave partially updated member, equipment, or loan data. A failed file replacement shall preserve the last valid saved dataset. The same guarantee applies to future batch, import, restore, and undo operations as a whole.
+8. **NFR08 — Atomicity and durability:** After a successful mutation and normal shutdown, restarting shall recover the same records and loan relationships. Validation or reported save failures shall not leave partially updated member, equipment, or loan data. A failed file replacement shall preserve the last valid saved dataset. The same guarantee applies to batch and undo/redo operations as a whole, and to future import/restore operations.
 9. **NFR09 — Consistent feedback:** Every rejected command shall identify the first detected problem and provide an accepted format or corrective action. Input errors shall not terminate the application, and the submitted command shall remain available for correction. Success and error messages shall be distinguishable by text, without relying on color alone.
 10. **NFR10 — Data confidentiality:** Laplace shall not transmit member details or inventory records over the network. Diagnostic logs shall omit member names, phone numbers, email addresses, and raw commands containing those values. Local text data and user-created exports rely on the operating system's file access controls; application-level encryption is not promised.
 
@@ -747,17 +950,66 @@ testers are expected to do more *exploratory* testing.
 
     1. Download the JAR file and copy it into an empty folder.
 
-    1. Double-click the JAR file.<br>
-       Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+    1. In that folder, run `java -jar Laplace.jar` with Java 25.<br>
+       Expected: The GUI opens in light mode with sample members, grouped equipment and open loans.
 
 1. Saving window preferences
 
     1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-    1. Relaunch the app by double-clicking the JAR file.<br>
+    1. Relaunch with `java -jar Laplace.jar`.<br>
        Expected: The most recent window size and location are retained.
 
-1. _{ more test cases … }_
+**Known packaging limitation:** The current fat JAR contains Intel macOS JavaFX native libraries.
+An Apple Silicon launch without the JDK's bundled JavaFX fails with an incompatible native architecture;
+using a JavaFX-enabled JDK can mask this. Resolve and verify architecture-compatible packaging before
+releasing to users with a plain ARM64 Java 25 installation. GUI tests use a separate matching native
+test runtime, so a green test suite alone does not establish distributable-JAR portability.
+
+### Grouped equipment, command assistance and appearance
+
+Use a separate empty writable JAR folder. Keep any real dataset untouched.
+
+1. Run `equipment add name/UI Camera category/Photo condition/GOOD count/4`. Expect one group containing
+   four distinct UUIDs. Expand/copy Last result to capture all four. Open the group and select one unit;
+   Copy UUID must copy its complete UUID. Register another matching unit; expect five units in the same group.
+2. Edit one UUID with `equipment edit uuid/UUID condition/DAMAGED`, then search with
+   `equipment search availability/available`. The group must show matching versus retained counts;
+   Show all units reveals the damaged sibling. Directly view that UUID and check exact selection.
+   Uncheck Show all units: the table narrows again, the exact unit details remain visible, and a message
+   explains that the selected unit is outside the table filter.
+3. Rename the damaged unit, delete it, then restore it with the documented equipment commands. Expect
+   regrouping without UUID changes. Check deleted records never inflate available counts.
+4. Open a member's details, copy contact fields, and use a related equipment link. Switch tabs and use
+   Back to results. The previous filter persists until Reset search or a list command.
+5. Use a command preview. Expect only input preparation; review and press Enter. Test history up/down
+   with an unfinished draft, Ctrl+Space completion, Escape dismissal and keyboard focus navigation.
+6. Open Loans. Verify due/overdue labels against the computer's local date and the stored due date.
+   Prepare a return; verify the UUID/date and that the loan remains open until submission.
+7. Run `mode dark`, open Help, then switch back using the header appearance button. Repeat list/table selection, previews and errors
+   in each appearance. Exit normally and relaunch; the selected mode persists. `mode sepia` is rejected.
+8. Review at 1920×1080 with 100%/125% scaling and 1280×720 with 150% scaling on supported systems.
+   Check wrapping, scrolling, visible focus and contrast. Logical-size snapshots alone do not verify OS scaling.
+
+### Tab completion across current commands
+
+1. In a disposable dataset, type `mem` and press Tab. Expected: `member`, with the caret at its end.
+   Add a space and cycle with Tab, then Shift+Tab. Expected: alphabetical subcommands and reverse cycling.
+2. Try `member restore n`, `equipment edit co`, `equipment add cou`, and `loans return co`, pressing
+   Tab after each. Expected: `nus/`, `condition/`, `count/`, and `condition/` respectively.
+3. Try `member search holding/y`, `equipment search availability/av` and `equipment search order/de`.
+   Expected: `YES`, `AVAILABLE` and `desc`. Enter the completed search; check the filtered directory.
+4. In `loans return uuid/FIRST_UUID,  PARTIAL_SECOND_UUID returned/DATE`, position the caret after the
+   partial UUID and press Tab. Expected: only that UUID is replaced; the first UUID, spacing and return
+   date remain intact. Candidates omit UUIDs already present. Repeat with a space after the comma.
+5. Repeat a name completion with an em space (`U+2003`) or nonbreaking space (`U+00A0`) before the
+   following `phone/` field. Expected: the phone field and original separator remain, with the caret
+   immediately after the completed name. Check the same behavior in a comma-separated UUID list.
+6. Check an untouched following field, no matching input, selected text and Shift+Tab outside a cycle.
+   Expected: surrounding input remains intact and ordinary focus traversal remains available.
+7. Add or edit a record, then retry completion. Expected: current values are suggested. Tab alone never
+   changes records or saves; Enter uses normal parser validation. Restart after a valid mutation and
+   verify the saved records. New IDs, dates, numeric counts and notes remain manually entered.
 
 ### Rejection of retired commands
 
@@ -815,3 +1067,21 @@ testers are expected to do more *exploratory* testing.
     1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
 
 1. _{ more test cases … }_
+
+### Undo and redo
+
+Use temporary data. Do not test against a real inventory.
+
+1. Add a member, then enter `undo`. Expect `Undid: member add.`, removal of that member and a refreshed
+   directory. Enter `redo`; expect `Redid: member add.` and the identical member restored.
+2. Register three units with one `equipment add ... count/3` command. Capture all UUIDs. One undo must
+   remove all three; one redo must restore exactly those UUIDs.
+3. Issue and return a unit with a recorded return condition. Undo the return: expect the original open
+   loan, issue condition and holder restored. Redo: expect the recorded return date and condition.
+4. Make twelve successful changes. Only ten undos are available; the next reports `Nothing to undo.`.
+   Redo ten times; the next reports `Nothing to redo.`.
+5. Undo, run queries and `mode dark`, then redo. It must remain available and appearance must stay dark.
+   Undo again and make a new successful mutation; redo must now be unavailable. Rejected/no-change
+   edits must leave redo available. `undo 2` and `redo count/2` must be rejected without changing data.
+6. Restart after an undo. The restored records must still load, but undo and redo must both be unavailable.
+   Automated tests inject failed saves and verify records, history and prior file bytes survive for retry.

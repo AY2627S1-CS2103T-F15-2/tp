@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.member.NusId;
 
 /**
@@ -27,6 +28,8 @@ public class Loan {
     private final LocalDate assignedDate;
     private final LocalDate expectedReturnDate;
     private final LocalDate returnedDate;
+    private final Condition issueCondition;
+    private final Condition returnCondition;
 
     /**
      * Constructs a {@code Loan} with the given details.
@@ -35,15 +38,25 @@ public class Loan {
      */
     public Loan(UUID equipmentUuid, NusId memberNusId, LocalDate assignedDate,
             LocalDate expectedReturnDate, LocalDate returnedDate) {
+        this(equipmentUuid, memberNusId, assignedDate, expectedReturnDate, returnedDate, null, null);
+    }
+
+    /** Creates a loan with recorded conditions; null denotes an unknown historical condition. */
+    public Loan(UUID equipmentUuid, NusId memberNusId, LocalDate assignedDate,
+            LocalDate expectedReturnDate, LocalDate returnedDate, Condition issueCondition, Condition returnCondition) {
         requireAllNonNull(equipmentUuid, memberNusId, assignedDate, expectedReturnDate);
         checkArgument(!expectedReturnDate.isBefore(assignedDate), MESSAGE_EXPECTED_DATE_CONSTRAINTS);
         checkArgument(returnedDate == null || !returnedDate.isBefore(assignedDate),
                 MESSAGE_RETURNED_DATE_CONSTRAINTS);
+        checkArgument(returnedDate != null || returnCondition == null,
+                "An open loan cannot have a return condition");
         this.equipmentUuid = equipmentUuid;
         this.memberNusId = memberNusId;
         this.assignedDate = assignedDate;
         this.expectedReturnDate = expectedReturnDate;
         this.returnedDate = returnedDate;
+        this.issueCondition = issueCondition;
+        this.returnCondition = returnCondition;
     }
 
     public UUID getEquipmentUuid() {
@@ -66,6 +79,14 @@ public class Loan {
         return Optional.ofNullable(returnedDate);
     }
 
+    public Optional<Condition> getIssueCondition() {
+        return Optional.ofNullable(issueCondition);
+    }
+
+    public Optional<Condition> getReturnCondition() {
+        return Optional.ofNullable(returnCondition);
+    }
+
     /**
      * Returns true if this loan has not been returned.
      */
@@ -77,8 +98,14 @@ public class Loan {
      * Returns a closed copy of this loan with the given actual return date.
      */
     public Loan withReturnedDate(LocalDate returnedDate) {
+        return withReturnedDate(returnedDate, null);
+    }
+
+    /** Returns a closed copy with the actual return date and observed condition. */
+    public Loan withReturnedDate(LocalDate returnedDate, Condition returnCondition) {
         requireAllNonNull(returnedDate);
-        return new Loan(equipmentUuid, memberNusId, assignedDate, expectedReturnDate, returnedDate);
+        return new Loan(equipmentUuid, memberNusId, assignedDate, expectedReturnDate, returnedDate,
+                issueCondition, returnCondition);
     }
 
     @Override
@@ -93,12 +120,14 @@ public class Loan {
                 && memberNusId.equals(otherLoan.memberNusId)
                 && assignedDate.equals(otherLoan.assignedDate)
                 && expectedReturnDate.equals(otherLoan.expectedReturnDate)
-                && Objects.equals(returnedDate, otherLoan.returnedDate);
+                && Objects.equals(returnedDate, otherLoan.returnedDate)
+                && issueCondition == otherLoan.issueCondition && returnCondition == otherLoan.returnCondition;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(equipmentUuid, memberNusId, assignedDate, expectedReturnDate, returnedDate);
+        return Objects.hash(equipmentUuid, memberNusId, assignedDate, expectedReturnDate,
+                returnedDate, issueCondition, returnCondition);
     }
 
     @Override
@@ -109,6 +138,8 @@ public class Loan {
                 .add("assignedDate", assignedDate)
                 .add("expectedReturnDate", expectedReturnDate)
                 .add("returnedDate", returnedDate)
+                .add("issueCondition", issueCondition)
+                .add("returnCondition", returnCondition)
                 .toString();
     }
 }

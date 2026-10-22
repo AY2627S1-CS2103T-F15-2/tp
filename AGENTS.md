@@ -106,16 +106,16 @@ Source: [deliverables](https://nus-cs2103-ay2627-s1.github.io/website/admin/tp-d
 
 Sources: [reuse/AI policy](https://nus-cs2103-ay2627-s1.github.io/website/admin/appendixB-policies.html), [RepoSense](https://nus-cs2103-ay2627-s1.github.io/website/admin/tools.html#tool-reposense-for-authorship-tracking), [GitHub workflow](https://nus-cs2103-ay2627-s1.github.io/website/admin/appendixE-gitHub.html).
 
-- AI assistance is expected, but generated work must be understood, reviewed, tested, and acknowledged. Localized use is credited near the work; widespread use goes in DG acknowledgements with tool, users, and extent.
+- Generated work must be understood, reviewed and tested. Follow the user's attribution-placement instructions; do not add AI-agent usage acknowledgements to repository files unless explicitly requested.
 - Do not fabricate authorship, reviews, test results, or contributions. Merging another person's PR is integration work, not authorship of all its code.
-- Preserve the user's preference against unsolicited AI commit-message trailers; that preference does not remove course acknowledgements.
+- Do not add unsolicited AI commit-message trailers. Preserve third-party source, library and asset credits.
 - Check RepoSense attribution before feature freeze. Use truthful `@@author` corrections only where necessary; externally reused code follows the course's reuse marking rules.
 - When authorized to create work on GitHub: use meaningful assigned issues and separate branches; assign both issues and PRs to their actual milestone. PR ownership is determined by author.
 - From v1.4, branches directly in the team repository are allowed. Earlier iterations use forks.
 - Retain PR branches. Avoid squash/rebase/history rewriting that distorts course progress timestamps. Do not backdate work.
 - Reviews should contain specific, useful code-location comments. Merely merging or posting a conversation comment is not equivalent.
 
-Commit messages follow [Git conventions](https://se-education.org/guides/conventions/git.html): imperative, capitalized subject, no terminal period, preferably ≤50 characters and at most 72. For non-trivial changes, explain the problem/reason and resulting behavior in a body; this is a project practice, not a claim that every course commit requires a body.
+Commit messages follow [Git conventions](https://se-education.org/guides/conventions/git.html): imperative, capitalized subject, no terminal period, preferably ≤50 characters and at most 72. Separate the subject from the body with a blank line. Hard-wrap every body line at 72 characters; editor soft wrapping does not count. Check the complete message before committing. For non-trivial changes, explain the problem/reason and resulting behavior in a body; this is a project practice, not a claim that every course commit requires a body.
 
 ## Deadline-sensitive changes
 

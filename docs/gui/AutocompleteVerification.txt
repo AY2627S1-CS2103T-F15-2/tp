@@ -1,0 +1,61 @@
+Autocomplete Unicode field-preservation verification - 21 October 2026
+PR: https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/112
+Integrated team master: 630a0bf240c0100c3dd5ede1edb93aed9b5f4bec
+Working folder: /Users/keith/Desktop/CS2103T/tp
+Platform: Darwin arm64; Java: Zulu 25.0.3+9-LTS
+
+Command: ./gradlew clean test check coverage shadowJar --console plain
+Result: PASS; 881 tests, 0 failures, 0 errors, 0 skipped
+Main/test Checkstyle: PASS
+Documentation: npm --prefix docs ci; npm --prefix docs run build; PASS
+Rendered user/developer completion sections reviewed in browser.
+
+Review: https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/112#discussion_r4338421955
+Before fix: completing Alex before U+2003 + phone/91234567 drops the phone field.
+Two new unit regressions fail before the production fix and pass afterward.
+Fix: recognize field markers, trim replacement ranges and locate batch entries with Unicode whitespace.
+Preserve later phone/email fields and separators, partial prefixes, UUID neighbors and caret placement.
+Service tests include U+2003, U+00A0, U+202F, U+0085, U+3000 and tab separators.
+Mounted and packaged keyboard sessions cover Unicode spaces without dispatch, saves or model changes.
+
+Audit: all 17 domain commands plus help, exit and mode dark/light.
+Concrete parser prefix constants checked against completion fields by regression test.
+Search filters, lifecycle status, applicable sort fields and order values round-trip through parser.
+Restoration, equipment editing, count/ and return condition/ included.
+Master UI history, Ctrl+Space popup and context-prepared commands retained.
+Popup/history interaction and appearance-command completion verified.
+Batch UUID replacement preserves adjacent entries/spaces/fields and omits listed identities.
+Stored searchable values are suggested case-insensitively; retired AB3 routes are omitted.
+New member IDs, dates, numeric counts and free-form notes remain manual.
+
+Feature coverage (not whole-repository coverage):
+seedu/address/logic/completion/Completion
+  INSTRUCTION: 15 covered; 0 missed
+  LINE: 3 covered; 0 missed
+seedu/address/logic/completion/CompletionService
+  INSTRUCTION: 1002 covered; 0 missed
+  BRANCH: 110 covered; 0 missed
+  LINE: 153 covered; 0 missed
+seedu/address/ui/CompletionController
+  INSTRUCTION: 212 covered; 0 missed
+  BRANCH: 26 covered; 0 missed
+  LINE: 45 covered; 0 missed
+seedu/address/ui/CommandBox
+  INSTRUCTION: 317 covered; 0 missed
+  BRANCH: 34 covered; 0 missed
+  LINE: 67 covered; 0 missed
+seedu/address/ui/MainWindow.fillInnerParts
+  INSTRUCTION: 283 covered; 0 missed
+  BRANCH: 4 covered; 0 missed
+  LINE: 35 covered; 0 missed
+seedu/address/logic/parser/DirectorySearchCommandParser.<clinit>
+  INSTRUCTION: 41 covered; 0 missed
+  LINE: 8 covered; 0 missed
+
+Mounted-shell keyboard session: PASS; real parser/logic/model/JSON storage.
+Completed search, batch registration, loans and restoration execute only on Enter.
+Packaged-JAR keyboard session: PASS; production code loaded from built JAR; JSON reload matches.
+Tab does not execute commands, save or mutate records.
+Native foreground focus notifications use a deterministic JavaFX test double.
+Repository checks: PASS, with existing docs/AboutUs.md trailing-whitespace warning.
+Hosted CI is separate from this local verification.
