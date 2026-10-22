@@ -1,54 +1,94 @@
 @startuml
 !include style.puml
+!pragma layout smetana
+skinparam classAttributeFontColor #FFFFFF
+skinparam classAttributeIconSize 0
 skinparam arrowThickness 1.1
 skinparam arrowColor MODEL_COLOR
 skinparam classBackgroundColor MODEL_COLOR
+hide empty members
 
-Package Model as ModelPackage <<Rectangle>>{
-Class "<<interface>>\nReadOnlyAddressBook" as ReadOnlyAddressBook
-Class "<<interface>>\nReadOnlyUserPrefs" as ReadOnlyUserPrefs
-Class "<<interface>>\nModel" as Model
-Class AddressBook
-Class ModelManager
-Class UserPrefs
+title Root collections, stable views and immutable members
 
-Class UniquePersonList
-Class Person
-Class Address
-Class Email
-Class Name
-Class Phone
-Class Tag
-
-Class I #FFFFFF
+package Model as ModelPackage {
+    class Model <<interface>> {
+        +setMember(target: Member, editedMember: Member): void
+        +deleteMember(member: Member): void
+        +restoreMember(member: Member): void
+        +publishTransaction(candidate: Model): void
+    }
+    class ReadOnlyAddressBook <<interface>>
+    class ReadOnlyUserPrefs <<interface>>
+    class ModelManager
+    class UserPrefs
+    class AddressBookHistory
+    class AddressBook {
+        +resetData(newData: ReadOnlyAddressBook): void
+        ~resetData(newData: ReadOnlyAddressBook, publishModelState: Runnable): void
+        +setMember(target: Member, editedMember: Member): void
+        +removeMember(member: Member): void
+        +restoreMember(member: Member): void
+    }
+    class "AddressBook.CollectionView<E>" as CollectionView {
+        -notificationsSuspended: boolean
+        -notificationPending: boolean
+        -suspendNotifications(): void
+        -resumeNotifications(): void
+    }
+    class UniquePersonList
+    class UniqueEquipmentList
+    class UniqueLoanList
+    class UniqueMemberList {
+        +setMember(target: Member, editedMember: Member): void
+        +setDeleted(nusId: NusId, isDeleted: boolean): void
+    }
+    class Person
+    class Equipment
+    class Loan
+    class Member {
+        -deleted: boolean {readOnly}
+        +isDeleted(): boolean
+        +isSameMember(otherMember: Member): boolean
+    }
+    class NusId
+    class Name
+    class Phone
+    class Email
 }
+package "JavaFX" {
+    class "SimpleListProperty<E>" as SimpleListProperty
+}
+show Model methods
+show AddressBook methods
+show UniqueMemberList methods
+show Member members
+show CollectionView members
 
-Class HiddenOutside #FFFFFF
-HiddenOutside ..> Model
+ModelManager ..|> Model
+ModelManager --> "1" AddressBook
+ModelManager --> "1" UserPrefs
+ModelManager --> "1" AddressBookHistory
+AddressBook ..|> ReadOnlyAddressBook
+UserPrefs ..|> ReadOnlyUserPrefs
+AddressBook --> "4" CollectionView
+CollectionView --|> SimpleListProperty
+AddressBook --> "1" UniquePersonList
+AddressBook --> "0..1" UniqueMemberList
+AddressBook --> "0..1" UniqueEquipmentList
+AddressBook --> "0..1" UniqueLoanList
+UniquePersonList "0..*" --> "0..*" Person
+UniqueMemberList "0..*" --> "0..*" Member
+UniqueEquipmentList "0..*" --> "0..*" Equipment
+UniqueLoanList "0..*" --> "0..*" Loan
+Member --> "1" NusId
+Member --> "1" Name
+Member --> "1" Phone
+Member --> "1" Email
 
-AddressBook .up.|> ReadOnlyAddressBook
-
-ModelManager .up.|> Model
-Model .right.> ReadOnlyUserPrefs
-Model .left.> ReadOnlyAddressBook
-ModelManager -left-> "1" AddressBook
-ModelManager -right-> "1" UserPrefs
-UserPrefs .up.|> ReadOnlyUserPrefs
-
-AddressBook *--> "1" UniquePersonList
-UniquePersonList --> "~* all" Person
-Person *--> Name
-Person *--> Phone
-Person *--> Email
-Person *--> Address
-Person *--> "*" Tag
-
-Person -[hidden]up--> I
-UniquePersonList -[hidden]right-> I
-
-Name -[hidden]right-> Phone
-Phone -[hidden]right-> Address
-Address -[hidden]right-> Email
-
-ModelManager --> "~* filtered" Person
+legend bottom
+  Domain containers are lazy; immutable entities can be shared by snapshots.
+  The member collection retains active and deleted records.
+  Four stable views publish records and history before notifying observers.
+  Public wrappers, other entity details and history internals are omitted.
+endlegend
 @enduml
