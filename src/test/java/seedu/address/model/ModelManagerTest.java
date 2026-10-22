@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.equipment.Availability;
@@ -35,6 +36,7 @@ import seedu.address.model.member.NusId;
 import seedu.address.model.member.exceptions.DuplicateMemberException;
 import seedu.address.model.member.exceptions.MemberNotFoundException;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.Person;
 import seedu.address.testutil.AddressBookBuilder;
 
 public class ModelManagerTest {
@@ -392,6 +394,120 @@ public class ModelManagerTest {
         assertTrue(equipment.isEmpty());
         assertTrue(loans.isEmpty());
     }
+
+    @Test
+    public void recordAndHistoryChanges_listenersObserveMatchingState() {
+        Model candidate = modelManager.createTransactionSnapshot();
+        candidate.addPerson(ALICE);
+        candidate.addMember(MEMBER);
+        candidate.addEquipment(EQUIPMENT);
+        candidate.addLoan(LOAN);
+        candidate.recordAddressBook(modelManager.getAddressBook(), "test setup");
+        List<HistoryObservation> observations = observeHistoryChanges();
+
+        modelManager.publishTransaction(candidate);
+        assertObservedHistory(observations, true, false);
+        observations.clear();
+
+        modelManager.undoAddressBook();
+        assertObservedHistory(observations, false, true);
+        observations.clear();
+
+        modelManager.redoAddressBook();
+        assertObservedHistory(observations, true, false);
+        observations.clear();
+
+        modelManager.setAddressBook(new AddressBook());
+        assertObservedHistory(observations, false, false);
+    }
+
+    @Test
+    public void unchangedRecords_updateHistoryWithoutListNotifications() {
+        Model candidate = modelManager.createTransactionSnapshot();
+        candidate.addEquipment(EQUIPMENT);
+        candidate.recordAddressBook(modelManager.getAddressBook(), "equipment add");
+        modelManager.publishTransaction(candidate);
+        List<HistoryObservation> observations = observeHistoryChanges();
+
+        modelManager.setAddressBook(modelManager.getAddressBook());
+        assertFalse(modelManager.canUndoAddressBook());
+        assertFalse(modelManager.canRedoAddressBook());
+        assertEquals(candidate.getAddressBook(), modelManager.getAddressBook());
+        assertTrue(observations.isEmpty());
+
+        modelManager.publishTransaction(candidate);
+        assertSame(candidate.getAddressBookHistory(), modelManager.getAddressBookHistory());
+        assertTrue(modelManager.canUndoAddressBook());
+        assertTrue(observations.isEmpty());
+    }
+
+    @Test
+    public void invalidReplacements_preserveRecordsHistoryAndNotifications() {
+        Model candidate = modelManager.createTransactionSnapshot();
+        candidate.addEquipment(EQUIPMENT);
+        candidate.recordAddressBook(modelManager.getAddressBook(), "equipment add");
+        modelManager.publishTransaction(candidate);
+        AddressBook before = new AddressBook(modelManager.getAddressBook());
+        AddressBookHistory history = modelManager.getAddressBookHistory();
+        List<HistoryObservation> observations = observeHistoryChanges();
+        AddressBook invalid = new AddressBook() {
+            @Override
+            public ObservableList<Equipment> getEquipmentList() {
+                return FXCollections.observableArrayList(EQUIPMENT, EQUIPMENT);
+            }
+        };
+        Model invalidCandidate = new ModelManager() {
+            @Override
+            public ReadOnlyAddressBook getAddressBook() {
+                return invalid;
+            }
+        };
+
+        assertThrows(DuplicateEquipmentException.class, () -> modelManager.setAddressBook(invalid));
+        assertEquals(before, modelManager.getAddressBook());
+        assertSame(history, modelManager.getAddressBookHistory());
+        assertThrows(DuplicateEquipmentException.class, () -> modelManager.publishTransaction(invalidCandidate));
+        assertEquals(before, modelManager.getAddressBook());
+        assertSame(history, modelManager.getAddressBookHistory());
+        assertTrue(observations.isEmpty());
+    }
+
+    /**
+     * Captures history availability and record values synchronously at each public list notification.
+     */
+    private List<HistoryObservation> observeHistoryChanges() {
+        List<HistoryObservation> observations = new ArrayList<>();
+        Runnable observe = () -> observations.add(new HistoryObservation(modelManager.canUndoAddressBook(),
+                modelManager.canRedoAddressBook(), modelManager.getAddressBookHistory(),
+                new AddressBook(modelManager.getAddressBook())));
+        modelManager.getAddressBook().getPersonList().addListener((ListChangeListener<Person>) change -> observe.run());
+        modelManager.getMemberList().addListener((ListChangeListener<Member>) change -> observe.run());
+        modelManager.getEquipmentList().addListener((ListChangeListener<Equipment>) change -> observe.run());
+        modelManager.getLoanList().addListener((ListChangeListener<Loan>) change -> observe.run());
+        return observations;
+    }
+
+    /**
+     * Verifies that notifications expose the final history and its matching records, never an intermediate state.
+     */
+    private void assertObservedHistory(List<HistoryObservation> observations, boolean canUndo, boolean canRedo) {
+        assertFalse(observations.isEmpty());
+        for (HistoryObservation observation : observations) {
+            assertEquals(canUndo, observation.canUndo());
+            assertEquals(canRedo, observation.canRedo());
+            assertSame(modelManager.getAddressBookHistory(), observation.history());
+            assertEquals(modelManager.getAddressBook(), observation.records());
+            if (canUndo || canRedo) {
+                assertEquals(observation.history().getCurrentState(), observation.records());
+            }
+        }
+    }
+
+    /**
+     * Immutable observation of model data at the instant a collection listener is called.
+     */
+    private record HistoryObservation(boolean canUndo, boolean canRedo, AddressBookHistory history,
+            AddressBook records) { }
 
     @Test
     public void equals() {

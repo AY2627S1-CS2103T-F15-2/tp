@@ -73,6 +73,12 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void describeAction_singleWordWithWhitespace_preservesCommandName() {
+        assertEquals("undo", LogicManager.describeAction("undo"));
+        assertEquals("redo", LogicManager.describeAction(" \tredo \n"));
+    }
+
+    @Test
     public void execute_validCommand_success() throws Exception {
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
         assertCommandSuccess("member list", String.format(MemberListCommand.MESSAGE_SUCCESS, 0), expectedModel);

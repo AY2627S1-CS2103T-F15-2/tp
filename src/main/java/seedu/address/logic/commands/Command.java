@@ -19,6 +19,13 @@ public abstract class Command {
     }
 
     /**
+     * Returns whether a successful transaction records a new history entry instead of navigating history.
+     */
+    public boolean recordsHistory() {
+        return isTransactional();
+    }
+
+    /**
      * Executes the command and returns the result message.
      *
      * @param model {@code Model} which the command should operate on.

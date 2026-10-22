@@ -55,6 +55,10 @@ public class LogicManager implements Logic {
             return commandResult;
         }
 
+        if (command.recordsHistory()) {
+            executionModel.recordAddressBook(model.getAddressBook(), describeAction(commandText));
+        }
+
         try {
             storage.saveAddressBook(executionModel.getAddressBook());
         } catch (AccessDeniedException e) {
@@ -66,9 +70,17 @@ public class LogicManager implements Logic {
 
         if (command.isTransactional()) {
             // Preserve the existing observable root; publish the validated snapshot only after its atomic save.
-            model.setAddressBook(executionModel.getAddressBook());
+            model.publishTransaction(executionModel);
         }
         return commandResult;
+    }
+
+    /**
+     * Returns the command family and action without retaining parameter values in history descriptions.
+     */
+    static String describeAction(String commandText) {
+        String[] words = commandText.trim().split("\\s+", 3);
+        return words.length > 1 ? words[0] + " " + words[1] : words[0];
     }
 
     @Override

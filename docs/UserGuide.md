@@ -190,7 +190,7 @@ The old top-level commands `add`, `edit`, `delete`, `clear`, `find`, and `list` 
 They return `Unknown command.` and do not change records or save the data file, even when arguments
 are supplied. For example, use `member list` instead of `list members`, `equipment list` to view
 inventory, and `member search q/Alex` to search members. There is no supported bulk-clear command.
-Use the member, equipment and loan commands documented below, or `mode`, `help` and `exit`.
+Use the member, equipment and loan commands documented below, or `undo`, `redo`, `mode`, `help` and `exit`.
 
 ### Shared field rules
 
@@ -612,6 +612,57 @@ For a batch, feedback lists the number of units and their UUIDs without naming o
 A rejected return leaves the loan, return date, holder and availability unchanged. Completed loans
 appear in the Loans tab and in member and equipment details.
 
+### Undo a record change: `undo`
+
+```text
+undo
+```
+
+Undo the most recent successful record-changing command. Laplace retains **up to ten changes in the
+current session**. An eleventh successful change discards the oldest undo step. Each command counts as
+one step: a batch equipment creation, loan assignment or return is undone together.
+
+Supported changes are member/equipment addition, editing, deletion and restoration, plus loan assignment
+and return. Undo restores linked records, original UUIDs, loan dates and conditions together. For example,
+undoing a loan return reopens the loan and restores its previous holder and equipment condition.
+Undoing equipment creation removes those units; redoing it restores their original UUIDs.
+
+Success reports the action, for example `Undid: equipment add.`. If none is available, the error is
+`Nothing to undo.`. Undo takes no arguments: `undo 2` is rejected. The current screen refreshes while
+preserving search criteria; if the displayed record no longer exists, its directory appears instead.
+Active filters can hide restored records; use the directory's list command to reset the search.
+
+### Redo an undone change: `redo`
+
+```text
+redo
+```
+
+Restore the most recently undone change. Up to ten redo steps are available after ten undos. Success
+reports, for example, `Redid: equipment add.`. If none is available, the error is `Nothing to redo.`.
+Redo takes no arguments. It restores the recorded state without generating new UUIDs or dates.
+
+A **new successful record-changing command after undo clears redo**. Listing, searching, viewing, Help,
+appearance changes, rejected commands and no-change edits neither add history nor clear redo. Window
+preferences, appearance and search criteria are not undone. The command input's arrow-key history is
+separate from record undo/redo.
+
+Every successful undo/redo is saved automatically. A save failure leaves records and undo/redo history
+unchanged; correct the file-access problem and retry. History is kept **only until Laplace closes**.
+Restarting loads the most recently saved records with no undo/redo steps available. The ten-step limit
+also means this feature does not replace a backup.
+
+Example:
+
+```text
+equipment add name/Camera category/Photo condition/GOOD count/3
+undo
+redo
+```
+
+This creates three units, removes all three, then restores the same three units. Type these commands in
+the existing command input; there are no dedicated undo/redo buttons or keyboard shortcuts.
+
 ## A complete issue-and-return workflow
 
 Use a new member ID if the example ID already exists. The dates below are examples for a computer date
@@ -701,7 +752,7 @@ and user-selected sorting. Batch equipment registration supports 1–100 physica
 `equipment add` command using `count/COUNT`; each unit receives its own UUID. Loan assignment and return
 also accept multiple equipment UUIDs in one command. Bulk editing, deletion and restoration are not supported.
 
-The MVP excludes separate find/member-loans/holder commands, import/export, undo/redo, fuzzy search
+The MVP excludes separate find/member-loans/holder commands, import/export, fuzzy search
 and automatic overdue notifications. Copying a backup file while the app
 is closed is a file-management task, not an import/export command. Data is local to one operator;
 authentication and concurrent multi-user operation are not provided.
@@ -727,7 +778,9 @@ authentication and concurrent multi-user operation are not provided.
 | Open the Loans tab | `loans list` |
 | Assign equipment | `loans add uuid/UUID[,UUID...] nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |
 | Return equipment | `loans return uuid/UUID[,UUID...] returned/ACTUAL_RETURN_DATE [condition/CONDITION]` |
+| Undo the last record change | `undo` |
+| Redo the last undone change | `redo` |
 
 See [search, filters and sorting](commands/search-and-planning.md) for accepted search parameter values.
 
-Application utilities: `help` (or F1) opens Help; `exit` closes Laplace.
+Application utilities: `undo` and `redo` navigate up to ten record changes per session; `mode dark` / `mode light` change appearance; `help` (or F1) opens Help; `exit` closes Laplace.

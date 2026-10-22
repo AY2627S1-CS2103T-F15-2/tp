@@ -12,10 +12,12 @@ import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ModeCommand;
+import seedu.address.logic.commands.RedoCommand;
+import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
 /**
- * Parses supported Laplace command families, appearance, help, and exit.
+ * Parses supported Laplace command families, history, appearance, help, and exit.
  */
 public class AddressBookParser {
 
@@ -48,6 +50,8 @@ public class AddressBookParser {
         logger.fine("Command word: " + commandWord + "; Arguments: " + arguments);
 
         return switch (commandWord) {
+            case UndoCommand.COMMAND_WORD -> new UndoCommandParser().parse(arguments);
+            case RedoCommand.COMMAND_WORD -> new RedoCommandParser().parse(arguments);
             case ModeCommand.COMMAND_WORD -> new ModeCommandParser().parse(arguments);
             case "member" -> new MemberCommandParser().parse(arguments);
             case "equipment" -> new EquipmentCommandParser().parse(arguments);

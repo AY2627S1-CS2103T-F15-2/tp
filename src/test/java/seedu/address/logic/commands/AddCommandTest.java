@@ -21,6 +21,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
+import seedu.address.model.AddressBookHistory;
 import seedu.address.model.Model;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
@@ -96,6 +97,41 @@ public class AddCommandTest {
      * A default model stub that has all of the methods failing.
      */
     private class ModelStub implements Model {
+        @Override
+        public void publishTransaction(Model candidate) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public AddressBookHistory getAddressBookHistory() {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void recordAddressBook(ReadOnlyAddressBook previous, String description) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public boolean canUndoAddressBook() {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public boolean canRedoAddressBook() {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public String undoAddressBook() {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public String redoAddressBook() {
+            throw new AssertionError("This method should not be called.");
+        }
+
         @Override
         public ReadOnlyUserPrefs getUserPrefs() {
             throw new AssertionError("This method should not be called.");
