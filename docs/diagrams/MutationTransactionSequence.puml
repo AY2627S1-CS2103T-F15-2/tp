@@ -22,7 +22,7 @@ note right of logic
   and isReadOnly() is false.
 end note
 logic -> live : createTransactionSnapshot()
-live --> logic : candidate (independent containers)
+live --> logic : candidate (copied records/preferences; immutable history shared)
 logic -> command : execute(candidate)
 activate command
 command -> candidate : domain operations
@@ -31,6 +31,15 @@ deactivate command
 alt validation or execution fails
   [<-- logic : exception (no save or publication)
 else execution succeeds
+  opt command.recordsHistory() is true
+    logic -> live : getAddressBook()
+    live --> logic : previousData
+    logic -> candidate : recordAddressBook(previousData, describeAction(text))
+    note right of candidate
+      Stage a new immutable history value for a real change.
+      Undo/redo navigate history instead of recording again.
+    end note
+  end
   logic -> candidate : getAddressBook()
   candidate --> logic : candidateData
   logic -> json : saveAddressBook(candidateData)\nvia StorageManager (forwarding omitted)
@@ -51,22 +60,23 @@ else execution succeeds
   alt persistence throws IOException
     [<-- logic : CommandException with original cause
     note over live, writer
-      No live publication; previous destination bytes remain intact.
+      No live records/history publication; previous destination bytes remain intact.
       Writer failures attempt temporary-file cleanup;
       cleanup failure is suppressed on the original failure.
     end note
   else atomic replacement succeeds
-    logic -> live : setAddressBook(candidateData)
+    logic -> live : publishTransaction(candidate)
     ref over live
       RootModelResetSequence:
-      validate and publish through existing root/views
+      validate records, adopt history, then notify existing views
     end ref
     [<-- logic : result
   end
 end
 deactivate logic
 note over logic, live
-  Current pure queries execute on live and return before saving.
-  Legacy commands that do not opt into transactions are outside this flow.
+  If isReadOnly() is true, execution returns before history recording or saving.
+  Nontransactional legacy/navigation paths are outside this flow.
+  Current history coordination comes from #137/#138, not Keith's #97.
 end note
 @enduml

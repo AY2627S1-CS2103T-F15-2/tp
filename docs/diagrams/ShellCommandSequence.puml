@@ -24,7 +24,7 @@ window -> logic : execute(text)
 activate logic
 ref over logic
   Parsing and execution; transactional mutations use
-  MutationTransactionSequence, queries bypass saving
+  MutationTransactionSequence; isReadOnly() bypasses saving
 end ref
 logic --> window : result or ParseException / CommandException
 deactivate logic

@@ -194,7 +194,8 @@ their windows and must not shut down the shared toolkit.
 
 `MainWindow` supplies the live read-only address book to `CommandBox`. `CompletionService` computes
 replacement ranges and ordered candidates without calling logic, history or storage. Command constants
-and shared search prefix constants define all accepted routes and fields. Search enum options follow
+and shared search prefix constants define the completion vocabulary. The newly merged `undo`/`redo`
+parser routes are not currently registered in `CompletionService`. Search enum options follow
 `DirectoryQuery`; dates, numeric counts, new member IDs and free-form notes are entered manually.
 Batch loan completion replaces only the active UUID entry and excludes neighboring identities.
 `CompletionController` owns cycling and resets after input, caret, focus or model changes. Enter retains
@@ -279,9 +280,12 @@ belongs to `AddressBook`, rather than the UI or serialization layer.
 
 `resetData` first copies and validates every replacement collection and loan reference, and resolves all
 replacement backing views. Only then does it replace live fields and views, deferring notifications until
-the complete dataset is visible. Validation failure leaves the old state intact; an unchanged reset emits
-no notifications. The diagram covers validation/publication ordering, not recovery from arbitrary
-exceptions thrown by external observer callbacks.
+the complete dataset is visible. The current package overload also runs a model-state callback before
+notifications so observers see matching records and session history. It runs that callback even when
+records are unchanged, without list notifications; the public overload supplies a no-op callback.
+This coordination is supporting behavior from #137/#138. Validation failure leaves records/history
+intact. The callback must not throw or mutate records; the diagram does not promise recovery from
+arbitrary exceptions thrown by publication actions or external observer callbacks.
 
 <puml src="diagrams/RootModelResetSequence.puml" alt="Root reset validation and complete publication before notification" />
 
@@ -397,8 +401,10 @@ permanent deletion and related-history cleanup in the original #62/#86 implement
 
 PR #97 introduced the transaction boundary used by current Laplace mutations. Commands explicitly opt
 in with `isTransactional()`. `LogicManager` executes on independent candidate containers, saves the
-candidate atomically, then resets the existing observable root. Read-only commands return before saving.
+candidate atomically, then calls `publishTransaction` to publish records and matching session history
+through the existing observable root. Commands marked `isReadOnly()` return before recording or saving.
 This contract does not turn remaining legacy commands into transactional mutations automatically.
+The history steps are supporting context from #137/#138; see [Undo/redo](#undo-redo-feature).
 
 <puml src="diagrams/MutationTransactionClass.puml" alt="Domain transaction and atomic storage class relationships" />
 
@@ -407,7 +413,10 @@ This contract does not turn remaining legacy commands into transactional mutatio
 Serialization precedes writing. The writer flushes a sibling temporary file and requires an atomic
 replacement, without a non-atomic overwrite fallback. Parse/execution failures and handled persistence
 failures do not publish candidate state. A partial write or failed replacement preserves the previous
-save file. Original I/O causes remain attached to the reported command failure.
+save file. Original I/O causes remain attached to the reported command failure. Ordinary transactional
+mutations stage a history entry after execution and before saving; undo/redo navigate existing history
+instead. Failed saving leaves live records and history untouched, and successful publication adopts
+matching history before record observers run.
 
 <puml src="diagrams/MutationTransactionSequence.puml" alt="Isolated mutation, atomic persistence, failure and live publication" />
 

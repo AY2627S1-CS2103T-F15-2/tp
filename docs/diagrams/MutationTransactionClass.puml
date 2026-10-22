@@ -16,17 +16,20 @@ class LogicManager {
 abstract class Command {
   +isTransactional(): boolean
   +isReadOnly(): boolean
+  +recordsHistory(): boolean
   {abstract} +execute(model: Model): CommandResult
 }
 interface Model {
   +createTransactionSnapshot(): Model
   +getAddressBook(): ReadOnlyAddressBook
-  +setAddressBook(data: ReadOnlyAddressBook): void
+  +recordAddressBook(previous, description): void
+  +publishTransaction(candidate: Model): void
 }
 class ModelManager
 class AddressBook {
-  +resetData(data: ReadOnlyAddressBook): void
+  ~resetData(data, publishModelState): void
 }
+class AddressBookHistory
 interface Storage {
   +saveAddressBook(data: ReadOnlyAddressBook): void
 }
@@ -46,14 +49,17 @@ LogicManager .left.> Command : parses and executes
 Command .down.> Model : execute parameter
 ModelManager .up.|> Model
 ModelManager "0..*" --> "1" AddressBook : addressBook
+ModelManager "0..*" --> "1" AddressBookHistory : history
 StorageManager .up.|> Storage
 StorageManager "0..*" --> "1" JsonAddressBookStorage : addressBookStorage
 JsonAddressBookStorage "0..*" --> "1" AtomicFileWriter : fileWriter
 
 note bottom of Model
   Default createTransactionSnapshot constructs a ModelManager
-  from the current root and preferences; containers are copied.
-  Publication resets the live root, preserving its identity.
+  from current records, preferences and immutable history.
+  Records/preferences are copied; history is initially shared.
+  Publication resets the live root and adopts matching history
+  before notifying record observers, preserving root identity.
 end note
 note bottom of AtomicFileWriter
   Serialize before writing; write and flush a sibling file;
@@ -64,5 +70,7 @@ legend bottom
   Selected APIs only; parser and JSON adapter dependencies omitted.
   Live and candidate models own independent collection containers.
   Flags shown on Command are overridden by concrete domain commands.
+  History coordination is supporting behavior from #137/#138;
+  see UndoRedoClassDiagram for the complete history design.
 endlegend
 @enduml

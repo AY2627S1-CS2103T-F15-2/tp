@@ -14,6 +14,7 @@ title Root collections and stable views
 interface ReadOnlyAddressBook
 class AddressBook {
   +resetData(newData: ReadOnlyAddressBook): void
+  ~resetData(newData, publishModelState): void
 }
 class "AddressBook.CollectionView<E>" as CollectionView {
   -notificationsSuspended: boolean
@@ -51,6 +52,8 @@ end note
 note bottom of CollectionView
   Each public list has a stable unmodifiable wrapper.
   Reset replaces backing lists before notifying observers.
+  The package overload publishes related model history
+  before notifications, including for unchanged records.
   Wrappers and factory fields are omitted.
 end note
 legend bottom

@@ -6,18 +6,23 @@ skinparam sequenceMessageAlign left
 skinparam maxMessageSize 220
 title Validated root replacement
 
-participant "caller" as caller
+participant "caller:ModelManager" as caller
 participant "root:AddressBook" as root
 participant "newData:ReadOnlyAddressBook" as source
 participant "views:CollectionView" as views
 participant "observer" as observer
 
-caller -> root : resetData(newData)
+caller -> root : resetData(newData, publishModelState)
 activate root
+note over caller, root
+  Model publication uses the package overload with a history callback.
+  Public resetData(newData) delegates with a no-op callback.
+end note
 root -> source : getPersonList(), getMemberList(),\ngetEquipmentList(), getLoanList()
 source --> root : lists
 root -> root : List.copyOf(each list)
 alt all four lists equal the current lists
+  root -> caller : publishModelState.run()\n(adopt related history; callback lifeline omitted)
   root --> caller : return (no notifications)
 else replacement differs
   root -> root : create fresh collection containers;\nsetPersons / setMembers / setEquipment / setLoans
@@ -41,16 +46,23 @@ else replacement differs
       root -> views : set(replacement backing list)
       note right of views : Replacement events are deferred.
     end
+    root -> caller : publishModelState.run()\n(adopt related history before notifications)
     loop all four stable views (finally)
       root -> views : resumeNotifications()
       opt replacement notification pending
         views -> observer : change / invalidation callback
         observer -> root : read current lists
         root --> observer : complete replacement dataset
+        observer -> caller : getAddressBookHistory()
+        caller --> observer : matching published history
       end
     end
     root --> caller : return
   end
 end
 deactivate root
+note over caller, root
+  The publication callback must not throw or mutate records.
+  Its history coordination is current supporting behavior from #137/#138.
+end note
 @enduml
