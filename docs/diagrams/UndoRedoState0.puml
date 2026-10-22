@@ -22,8 +22,7 @@ note bottom of history
 end note
 
 legend bottom
-  Each sN is a complete stored record snapshot; unrelated records are omitted from its label.
-  The highlighted snapshot matches live record values after saving and publication.
-  The live observable AddressBook remains a separate object.
+  s0 denotes the loaded live baseline, not a stored snapshot yet.
+  The live observable AddressBook remains separate from future stored snapshots.
 endlegend
 @enduml

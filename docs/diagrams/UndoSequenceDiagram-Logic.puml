@@ -12,6 +12,7 @@ hide footbox
 title Undo: parse, stage, save, then publish
 participant ":LogicManager" as logic
 participant ":AddressBookParser" as parser
+participant ":UndoCommandParser" as undoParser
 participant "undo:UndoCommand" as command
 participant "live:ModelManager" as live
 participant "candidate:ModelManager" as candidate
@@ -21,12 +22,18 @@ participant ":Storage" as storage
 activate logic
 logic -> parser : parseCommand("undo")
 activate parser
-note right of parser
-  UndoCommandParser.parse("") validates no arguments.
+create undoParser
+parser -> undoParser : new UndoCommandParser()
+parser -> undoParser : parse("")
+activate undoParser
+note right of undoParser
+  Validates no arguments using LaplaceArgumentParser.
   Invalid syntax throws before a candidate is created.
 end note
 create command
-parser -> command : new UndoCommand()
+undoParser -> command : new UndoCommand()
+undoParser --> parser : command
+deactivate undoParser
 parser --> logic : command
 deactivate parser
 logic -> command : isTransactional()

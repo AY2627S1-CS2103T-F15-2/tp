@@ -13,10 +13,14 @@ abstract class Command <<logic>> {
   {abstract} + execute(model: Model): CommandResult
 }
 class UndoCommand <<logic>> {
+  + isTransactional(): boolean
   + recordsHistory(): boolean
+  + execute(model: Model): CommandResult
 }
 class RedoCommand <<logic>> {
+  + isTransactional(): boolean
   + recordsHistory(): boolean
+  + execute(model: Model): CommandResult
 }
 interface Storage <<storage>> {
   + saveAddressBook(data): void
