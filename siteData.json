@@ -55,7 +55,7 @@
         "implementation": "Implementation",
         "adding-multiple-physical-equipment-units": "Adding multiple physical equipment units",
         "equipment-editing-deletion-and-restoration": "Equipment editing, deletion and restoration",
-        "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
+        "undo-redo-feature": "Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
         "appendix-requirements": "Appendix: Requirements",
@@ -71,7 +71,8 @@
         "rejection-of-retired-commands": "Rejection of retired commands",
         "adding-a-batch-of-equipment": "Adding a batch of equipment",
         "editing-deleting-and-restoring-equipment": "Editing, deleting and restoring equipment",
-        "saving-data": "Saving data"
+        "saving-data": "Saving data",
+        "undo-and-redo": "Undo and redo"
       },
       "headingKeywords": {}
     },
@@ -176,6 +177,8 @@
         "open-the-loans-tab-loans-list": "Open the Loans tab: loans list",
         "assign-equipment-loans-add": "Assign equipment: loans add",
         "return-equipment-loans-return": "Return equipment: loans return",
+        "undo-a-record-change-undo": "Undo a record change: undo",
+        "redo-an-undone-change-redo": "Redo an undone change: redo",
         "a-complete-issue-and-return-workflow": "A complete issue-and-return workflow",
         "saving-file-access-and-recovery": "Saving, file access and recovery",
         "faq": "FAQ",
@@ -199,7 +202,8 @@
         "laplace-command-routing-reference": "Laplace command routing reference",
         "integration-status": "Integration status",
         "loan-rules": "Loan rules",
-        "integration-verification": "Integration verification"
+        "integration-verification": "Integration verification",
+        "undo-and-redo": "Undo and redo"
       },
       "headingKeywords": {}
     },
@@ -313,6 +317,13 @@
       "headingKeywords": {}
     },
     {
+      "src": "commands/redo.md",
+      "headings": {
+        "redo-an-undone-change": "Redo an undone change"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "commands/search-and-planning.md",
       "headings": {
         "search-and-inventory-planning": "Search and inventory planning",
@@ -321,6 +332,13 @@
         "input-refresh-and-navigation": "Input, refresh and navigation",
         "inventory-groups-and-duplicates": "Inventory groups and duplicates",
         "integration-contract": "Integration contract"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "commands/undo.md",
+      "headings": {
+        "undo-a-record-change": "Undo a record change"
       },
       "headingKeywords": {}
     },
