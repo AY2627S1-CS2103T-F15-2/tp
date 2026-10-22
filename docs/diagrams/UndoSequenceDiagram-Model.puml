@@ -43,11 +43,13 @@ restored -> copy : new AddressBook(states[position])
 copy --> restored : independent record copy
 restored --> candidate : copy
 deactivate restored
-candidate -> root : resetData(copy)
+candidate -> root : resetData(copy, publishHistory)
 root --> candidate : return
 note over candidate, root
   The candidate keeps its existing root object.
-  After resetData succeeds, candidate.history = restored.
+  The replacement helper is abbreviated.
+  After validation, the publication action assigns
+  candidate.history = restored before list notifications.
 end note
 [<-- candidate : description
 deactivate candidate

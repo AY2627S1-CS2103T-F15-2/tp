@@ -83,8 +83,8 @@ alt save succeeds
   logic -> live : publishTransaction(candidate)
   activate live
   note over live, command
-    resetData publishes the candidate records.
-    The live model then adopts candidate history.
+    resetData installs candidate records and adopts history
+    before resuming collection notifications.
     Existing observable root/views remain in use.
   end note
   live --> logic : return
