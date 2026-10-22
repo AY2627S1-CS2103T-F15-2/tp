@@ -1165,11 +1165,15 @@ testers are expected to do more *exploratory* testing.
     1. Relaunch with `java -jar Laplace.jar`.<br>
        Expected: The most recent window size and location are retained.
 
-**Known packaging limitation:** The current fat JAR contains Intel macOS JavaFX native libraries.
-An Apple Silicon launch without the JDK's bundled JavaFX fails with an incompatible native architecture;
-using a JavaFX-enabled JDK can mask this. Resolve and verify architecture-compatible packaging before
-releasing to users with a plain ARM64 Java 25 installation. GUI tests use a separate matching native
-test runtime, so a green test suite alone does not establish distributable-JAR portability.
+**Architecture-specific packaging:** Download `Laplace.jar` for Windows, Linux or Intel macOS, or
+`Laplace-mac-arm64.jar` for Apple Silicon macOS. Substitute the selected filename in launch commands.
+Both are self-contained; macOS native libraries cannot be combined by ordinary JAR merging because
+their resource names are identical. Build with `./gradlew shadowJar -PjavafxMacPlatform=mac` or
+`./gradlew shadowJar -PjavafxMacPlatform=mac-aarch64`, respectively. The default follows the build
+machine's processor architecture. JavaFX versions and application behavior are identical in both builds.
+The packaged keyboard probe uses only the JAR's production classes and native libraries. CI uses a
+plain JDK, so neither matching test dependencies nor a JavaFX-enabled JDK can mask missing native libraries.
+Run the probe on the target architecture and smoke-test the selected JAR before publication.
 
 ### Grouped equipment, command assistance and appearance
 
