@@ -8,6 +8,11 @@ plugins {
 
 application {
     mainClass = 'seedu.address.Main'
+    applicationDefaultJvmArgs = ['-ea']
+}
+
+tasks.withType(JavaExec).configureEach {
+    enableAssertions = true
 }
 
 java {
@@ -38,6 +43,7 @@ String javaFxTestPlatform = operatingSystem.contains('mac') ? (isArm ? 'mac-aarc
 
 test {
     useJUnitPlatform()
+    enableAssertions = true
     // A JDK with bundled JavaFX must not silently replace the declared test runtime.
     jvmArgs '--limit-modules=java.se,jdk.unsupported', '--enable-native-access=ALL-UNNAMED'
     classpath = configurations.javafxTestRuntime + sourceSets.test.runtimeClasspath.filter {
