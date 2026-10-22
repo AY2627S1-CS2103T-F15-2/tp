@@ -3,6 +3,7 @@ package seedu.address.ui;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 
@@ -125,7 +126,7 @@ public class MainWindowShellTest {
             assertEquals("", field().getText());
             assertTrue(rows().getItems().isEmpty());
             assertTrue(label("queryContext").contains("robin"));
-            assertEquals(null, node("memberNusId"));
+            assertNull(node("memberNusId"));
             submit("redo");
             assertEquals(dispatches + 2, logic.commands.size());
             assertEquals(1, rows().getItems().size());
@@ -140,7 +141,7 @@ public class MainWindowShellTest {
             String uuid = detailLabel("equipmentUuid");
             submit("undo");
             assertEquals("Success", feedbackStatus());
-            assertEquals(null, node("equipmentUuid"));
+            assertNull(node("equipmentUuid"));
             assertEquals(3, model.getEquipmentList().size());
             submit("redo");
             assertEquals(4, model.getEquipmentList().size());

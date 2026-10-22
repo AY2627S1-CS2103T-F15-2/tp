@@ -1,0 +1,60 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam maxMessageSize 105
+<style>
+participant {
+  padding 10
+}
+</style>
+hide footbox
+
+title Redo within the transaction candidate
+participant "candidate:ModelManager" as candidate
+participant "before:AddressBookHistory" as before
+participant "restored:AddressBookHistory" as restored
+participant "copy:AddressBook" as copy
+participant "root:AddressBook" as root
+
+note over candidate, before
+  Command has checked canRedoAddressBook().
+  Only this candidate is modified during execution.
+end note
+[-> candidate : redoAddressBook()
+activate candidate
+candidate -> before : getRedoDescription()
+before --> candidate : description
+candidate -> before : redo()
+activate before
+before -> before : requireRedo()
+create restored
+before -> restored : new AddressBookHistory(states, descriptions, position + 1)
+restored --> before : restored
+before --> candidate : restored
+deactivate before
+note over before, restored
+  History values are immutable; private snapshots may be shared.
+  No command is replayed and no UUID or date is regenerated.
+end note
+candidate -> restored : getCurrentState()
+activate restored
+create copy
+restored -> copy : new AddressBook(states[position])
+copy --> restored : independent record copy
+restored --> candidate : copy
+deactivate restored
+candidate -> root : resetData(copy, publishHistory)
+root --> candidate : return
+note over candidate, root
+  The candidate keeps its existing root object.
+  The replacement helper is abbreviated.
+  After validation, the publication action assigns
+  candidate.history = restored before list notifications.
+end note
+[<-- candidate : description
+deactivate candidate
+note over candidate, root
+  LogicManager must save these records before publishing
+  this candidate's records and history to the live model.
+end note
+@enduml

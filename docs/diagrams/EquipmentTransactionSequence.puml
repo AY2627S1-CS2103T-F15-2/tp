@@ -3,7 +3,11 @@ skinparam shadowing false
 skinparam defaultFontName Arial
 hide footbox
 skinparam maxMessageSize 150
-skinparam ParticipantPadding 10
+<style>
+participant {
+  padding 10
+}
+</style>
 
 participant ":LogicManager" as logic
 participant "live:ModelManager" as live
@@ -18,12 +22,16 @@ activate logic
 logic -> live : createTransactionSnapshot()
 activate live
 create candidate
-live -> candidate : ModelManager(getAddressBook(), getUserPrefs())
+live -> candidate : ModelManager(data, prefs, history)
 activate candidate
 candidate --> live : candidate
 deactivate candidate
 live --> logic : candidate
 deactivate live
+note over live, candidate
+  Copy records and preferences.
+  Initially share only immutable session history.
+end note
 logic -> command : execute(candidate)
 activate command
 command -> command : prepareUnits(candidate)
@@ -51,6 +59,17 @@ loop each prepared physical unit
 end
 command --> logic : result:CommandResult
 deactivate command
+logic -> command : recordsHistory()
+command --> logic : true
+logic -> live : getAddressBook()
+live --> logic : previousData
+logic -> candidate : recordAddressBook(previousData, "equipment add")
+note right of candidate
+  Stage one history entry for the whole batch.
+  Clear redo only for a real record change.
+  Retain at most 10 changes / 11 snapshots.
+end note
+candidate --> logic : return
 logic -> candidate : getAddressBook()
 candidate --> logic : candidateData
 logic -> storage : saveAddressBook(candidateData)
@@ -61,10 +80,11 @@ note over candidate, storage
 end note
 alt save succeeds
   storage --> logic : return
-  logic -> live : setAddressBook(candidateData)
+  logic -> live : publishTransaction(candidate)
   activate live
   note over live, command
-    resetData validates and publishes.
+    resetData installs candidate records and adopts history
+    before resuming collection notifications.
     Existing observable root/views remain in use.
   end note
   live --> logic : return
@@ -74,7 +94,7 @@ else save throws IOException
   storage --> logic : IOException
   [<-- logic : CommandException with original cause
   note over logic, live
-    No publication; live records and previous data file stay intact.
+    No publication; live records, history and previous data file stay intact.
   end note
 end
 deactivate logic

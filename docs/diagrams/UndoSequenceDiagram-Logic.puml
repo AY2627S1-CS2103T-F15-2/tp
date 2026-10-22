@@ -1,46 +1,96 @@
 @startuml
-!include style.puml
-skinparam ArrowFontStyle plain
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam maxMessageSize 110
+<style>
+participant {
+  padding 10
+}
+</style>
+hide footbox
 
-box Logic LOGIC_COLOR_T1
-participant ":LogicManager" as LogicManager LOGIC_COLOR
-participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
-participant "u:UndoCommand" as UndoCommand LOGIC_COLOR
-end box
+title Undo: parse, stage, save, then publish
+participant ":LogicManager" as logic
+participant ":AddressBookParser" as parser
+participant ":UndoCommandParser" as undoParser
+participant "undo:UndoCommand" as command
+participant "live:ModelManager" as live
+participant "candidate:ModelManager" as candidate
+participant ":Storage" as storage
 
-box Model MODEL_COLOR_T1
-participant ":Model" as Model MODEL_COLOR
-end box
-[-> LogicManager : execute(undo)
-activate LogicManager
-
-LogicManager -> AddressBookParser : parseCommand(undo)
-activate AddressBookParser
-
-create UndoCommand
-AddressBookParser -> UndoCommand
-activate UndoCommand
-
-UndoCommand --> AddressBookParser
-deactivate UndoCommand
-
-AddressBookParser --> LogicManager : u
-deactivate AddressBookParser
-
-LogicManager -> UndoCommand : execute()
-activate UndoCommand
-
-UndoCommand -> Model : undoAddressBook()
-activate Model
-
-Model --> UndoCommand
-deactivate Model
-
-UndoCommand --> LogicManager : result
-deactivate UndoCommand
-UndoCommand -[hidden]-> LogicManager : result
-destroy UndoCommand
-
-[<--LogicManager
-deactivate LogicManager
+[-> logic : execute("undo")
+activate logic
+logic -> parser : parseCommand("undo")
+activate parser
+create undoParser
+parser -> undoParser : new UndoCommandParser()
+parser -> undoParser : parse("")
+activate undoParser
+note right of undoParser
+  Validates no arguments using LaplaceArgumentParser.
+  Invalid syntax throws before a candidate is created.
+end note
+create command
+undoParser -> command : new UndoCommand()
+undoParser --> parser : command
+deactivate undoParser
+parser --> logic : command
+deactivate parser
+logic -> command : isTransactional()
+command --> logic : true
+logic -> live : createTransactionSnapshot()
+activate live
+create candidate
+live -> candidate : new ModelManager(data, prefs, history)
+live --> logic : candidate
+deactivate live
+note over live, candidate
+  Candidate collections and preferences are copied.
+  The immutable history value is initially shared.
+end note
+logic -> command : execute(candidate)
+command -> candidate : canUndoAddressBook()
+candidate --> command : available
+alt undo available
+  command -> candidate : undoAddressBook()
+  ref over candidate
+    UndoSequenceDiagram-Model:
+    restore candidate records and history
+  end ref
+  candidate --> command : description
+  command --> logic : result:CommandResult
+  note right of command
+    Feedback: "Undid: ACTION."
+    DisplayRequest.unchanged()
+  end note
+  logic -> command : recordsHistory()
+  command --> logic : false
+  logic -> candidate : getAddressBook()
+  candidate --> logic : restoredData
+  logic -> storage : saveAddressBook(restoredData)
+  alt atomic save succeeds
+    storage --> logic : return
+    logic -> live : publishTransaction(candidate)
+    note over live, candidate
+      Publish candidate records and history.
+      Preserve the live root and current preferences.
+    end note
+    live --> logic : return
+    [<-- logic : result
+  else save throws IOException
+    storage --> logic : IOException
+    [<-- logic : CommandException (original cause)
+    note over logic, live
+      No publication: live records, history position
+      and the preceding data file remain unchanged.
+    end note
+  end
+else no undo available
+  command --> logic : CommandException("Nothing to undo.")
+  [<-- logic : CommandException
+  note over logic, storage
+    No save and no history entry.
+  end note
+end
+deactivate logic
 @enduml

@@ -1,21 +1,28 @@
 @startuml
-!include style.puml
-skinparam ClassFontColor #000000
-skinparam ClassBorderColor #000000
-skinparam ClassBackgroundColor #FFFFAA
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam objectAttributeIconSize 0
+skinparam objectBackgroundColor #F6F8FA
+skinparam objectBorderColor #59636E
+skinparam ArrowColor #59636E
+hide empty members
 
-title Initial state
+title After launch: session history is empty
 
-package States {
-    class State1 as "<u>ab0:AddressBook</u>"
-    class State2 as "<u>ab1:AddressBook</u>"
-    class State3 as "<u>ab2:AddressBook</u>"
+object "<u>h0:AddressBookHistory</u>" as history {
+  position = 0
+  states = []
+  descriptions = []
 }
-State1 -[hidden]right-> State2
-State2 -[hidden]right-> State3
-hide State2
-hide State3
 
-class Pointer as "Current State" #FFFFFF
-Pointer -up-> State1
-@end
+note bottom of history
+  No snapshots are recorded until a successful mutation.
+  The loaded live records are the baseline s0.
+end note
+
+legend bottom
+  s0 denotes the loaded live baseline, not a stored snapshot yet.
+  The live observable AddressBook remains separate from future stored snapshots.
+endlegend
+@enduml
