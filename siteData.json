@@ -54,6 +54,7 @@
         "storage-component": "Storage component",
         "common-classes": "Common classes",
         "implementation": "Implementation",
+        "directory-search-and-inventory-planning": "Directory search and inventory planning",
         "identity-based-deletion": "Identity-based deletion",
         "domain-mutation-transactions": "Domain mutation transactions",
         "adding-multiple-physical-equipment-units": "Adding multiple physical equipment units",
