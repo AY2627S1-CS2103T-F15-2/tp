@@ -1,0 +1,68 @@
+@startuml
+!include style.puml
+skinparam classBackgroundColor LOGIC_COLOR_T1
+skinparam classFontColor #111111
+skinparam classStereotypeFontColor #111111
+skinparam classBorderColor LOGIC_COLOR_T4
+skinparam arrowColor LOGIC_COLOR_T4
+skinparam classAttributeIconSize 0
+show members
+hide empty members
+title Identity-based deletion
+
+class "<<interface>>\nParser<T>" as Parser
+class MemberDeleteCommandParser
+class EquipmentDeleteCommandParser
+class LaplaceArgumentParser
+class ParserUtil
+class "{abstract}\nCommand" as Command {
+  {abstract} +execute(model: Model): CommandResult
+  +isTransactional(): boolean
+}
+class MemberDeleteCommand {
+  -targetNusId: NusId
+  +execute(model: Model): CommandResult
+  +isTransactional(): boolean
+}
+class EquipmentDeleteCommand {
+  -targetUuid: UUID
+  +execute(model: Model): CommandResult
+  +isTransactional(): boolean
+}
+class "<<interface>>\nModel" as Model {
+  +findMember(id: NusId): Optional<Member>
+  +findEquipment(id: UUID): Optional<Equipment>
+  +deleteMember(member: Member): void
+  +deleteEquipment(equipment: Equipment): void
+}
+class ModelManager
+class AddressBook
+class CommandResult
+
+MemberDeleteCommandParser ..|> Parser
+EquipmentDeleteCommandParser ..|> Parser
+MemberDeleteCommandParser ..> LaplaceArgumentParser
+EquipmentDeleteCommandParser ..> LaplaceArgumentParser
+MemberDeleteCommandParser ..> ParserUtil
+EquipmentDeleteCommandParser ..> ParserUtil
+MemberDeleteCommandParser ..> MemberDeleteCommand : creates
+EquipmentDeleteCommandParser ..> EquipmentDeleteCommand : creates
+MemberDeleteCommand --|> Command
+EquipmentDeleteCommand --|> Command
+Command ..> Model : execute parameter
+MemberDeleteCommand ..> CommandResult : returns
+EquipmentDeleteCommand ..> CommandResult : returns
+ModelManager ..|> Model
+ModelManager "0..*" --> "1" AddressBook : addressBook
+
+note bottom of AddressBook
+  removeMember / removeEquipment enforce open-loan blocking.
+  Current behavior marks the stored record deleted;
+  identity, details and closed loans remain retained.
+end note
+legend bottom
+  Parsers require exactly one nus/ or uuid/ parameter.
+  Both commands are transactional; Model is passed to execute,
+  not retained as a command field. Unrelated APIs are omitted.
+endlegend
+@enduml

@@ -1,0 +1,69 @@
+@startuml
+!include style.puml
+skinparam ParticipantBackgroundColor UI_COLOR_T1
+skinparam ParticipantFontColor #111111
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 220
+title Shared JavaFX test execution
+
+participant "test caller" as caller
+participant "<<class>>\nFxTestUtil" as helper
+participant "<<class>>\nPlatform" as platform
+participant "FX thread" as fx
+participant "task:FutureTask" as task
+
+caller -> helper : runAndWait(action)
+activate helper
+helper -> platform : isFxApplicationThread()
+platform --> helper : boolean
+alt caller already on FX thread
+  helper -> platform : setImplicitExit(false)
+  helper -> helper : action.run()
+  helper --> caller : return or original failure
+else caller off FX thread
+  helper -> helper : awaitStartup()
+  note over helper, platform : Startup lock protects initialization only; waits occur outside it.
+  opt no shared startup result yet (under startup lock)
+    helper -> platform : startup(ready)
+    alt toolkit already started (IllegalStateException)
+      helper -> platform : runLater(ready)
+    else startup RuntimeException or Error
+      helper -> helper : startup.completeExceptionally(failure)
+    else toolkit starts normally
+      note right of platform : Readiness callback is scheduled.
+    end
+  end
+  opt readiness callback scheduled (possibly by another caller)
+    platform ->> fx : ready callback
+    fx -> platform : setImplicitExit(false)
+    fx -> helper : complete shared startup result
+  end
+  helper -> helper : await(startup) outside lock
+  alt startup wait fails
+    helper --> caller : propagated failure / AssertionError
+  else startup ready
+    helper -> platform : runLater(task)
+    platform ->> fx : run queued task
+    fx -> task : run() executes action
+    helper -> task : get(30, SECONDS)
+    alt action completes
+      task --> helper : completion
+      helper --> caller : return
+    else action throws
+      task --> helper : ExecutionException(cause)
+      helper --> caller : original RuntimeException / Error;\notherwise AssertionError(cause)
+    else caller interrupted or wait times out
+      helper -> helper : preserve interrupt flag if interrupted
+      opt task not done (finally)
+        helper -> task : cancel(false)
+      end
+      helper --> caller : AssertionError(cause)
+    end
+  end
+end
+deactivate helper
+note over caller, task
+  Startup and action waits are bounded. Concurrent callers reuse startup.
+  Canceling a queued task cannot roll back an action already running.
+end note
+@enduml

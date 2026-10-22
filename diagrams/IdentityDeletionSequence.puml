@@ -1,0 +1,85 @@
+@startuml
+!include style.puml
+skinparam ParticipantBackgroundColor LOGIC_COLOR_T1
+skinparam ParticipantFontColor #111111
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 220
+title Member deletion on the transaction candidate
+
+participant "logic:LogicManager" as logic
+participant "parser:\nMemberDeleteCommandParser" as parser
+participant "<<class>>\nLaplaceArgumentParser" as argParser
+participant "<<class>>\nParserUtil" as parserUtil
+participant "command:\nMemberDeleteCommand" as command
+participant "candidate:\nModelManager" as model
+participant "root:\nAddressBook" as root
+
+activate logic
+logic -> parser : parse(args)\nvia root and family parsers
+activate parser
+parser -> argParser : parse(args, {nus/}, ...)
+activate argParser
+argParser --> parser : arguments, or ParseException for an\ninvalid, missing, duplicate or unknown parameter
+deactivate argParser
+opt valid identity
+  parser -> parserUtil : parseNusId(value)
+  activate parserUtil
+  parserUtil --> parser : nusId
+  deactivate parserUtil
+  create command
+  parser -> command : new MemberDeleteCommand(nusId)
+end
+parser --> logic : command, or ParseException with usage
+deactivate parser
+
+opt parsing succeeded (candidate creation omitted)
+  logic -> command : execute(candidate)
+  activate command
+  command -> model : findMember(targetNusId)
+  activate model
+  model -> root : findMember(targetNusId)
+  activate root
+  root --> model : Optional<Member>
+  deactivate root
+  model --> command : Optional<Member>
+  deactivate model
+  opt member exists
+    command -> model : findOpenLoansForMember(targetNusId)
+    activate model
+    model --> command : open loans (held count)
+    deactivate model
+    command -> model : deleteMember(storedMember)
+    activate model
+    model -> root : removeMember(storedMember)
+    activate root
+    alt active member without open loans
+      root -> root : members.setDeleted(nusId, true)\n(collection lifeline omitted)
+    else already deleted
+      note right of root : throws MemberDeletedException
+    else open loan exists
+      note right of root : throws IllegalStateException
+    end
+    root --> model : return, or exception
+    deactivate root
+    model --> command : return, or same exception
+    deactivate model
+  end
+  command --> logic : CommandResult, or CommandException with cause
+  deactivate command
+  note right of command
+    Unknown identity: not-found message.
+    Already deleted: restore guidance.
+    Open loan: held count.
+    Success: CommandResult(name + ID,
+    DisplayRequest.members()).
+  end note
+end
+note over logic, root
+  Equipment deletion follows the same identity-based route using uuid/.
+  It rejects an already-deleted unit before deleteEquipment, and captures
+  the current holder NUS ID with findOpenLoan for blocked feedback.
+  Neither successful deletion removes the identity or closed history.
+  Only successful execution continues to atomic save/publication:
+  see MutationTransactionSequence.
+end note
+@enduml

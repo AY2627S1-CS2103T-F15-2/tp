@@ -1,0 +1,68 @@
+@startuml
+!include style.puml
+skinparam ParticipantBackgroundColor MODEL_COLOR_T1
+skinparam ParticipantFontColor #111111
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 220
+title Validated root replacement
+
+participant "caller:ModelManager" as caller
+participant "root:AddressBook" as root
+participant "newData:ReadOnlyAddressBook" as source
+participant "views:CollectionView" as views
+participant "observer" as observer
+
+caller -> root : resetData(newData, publishModelState)
+activate root
+note over caller, root
+  Model publication uses the package overload with a history callback.
+  Public resetData(newData) delegates with a no-op callback.
+end note
+root -> source : getPersonList(), getMemberList(),\ngetEquipmentList(), getLoanList()
+source --> root : lists
+root -> root : List.copyOf(each list)
+alt all four lists equal the current lists
+  root -> caller : publishModelState.run()\n(adopt related history; callback lifeline omitted)
+  root --> caller : return (no notifications)
+else replacement differs
+  root -> root : create fresh collection containers;\nsetPersons / setMembers / setEquipment / setLoans
+  root -> root : requireLoanReferences(each loan, members, equipment)
+  note right of root
+    Validate before changing live fields.
+    Each loan resolves retained member/equipment IDs.
+    Open loans must reference active records.
+    Collection validation rejects duplicate identities
+    and duplicate open loans for one unit.
+  end note
+  alt validation or resolving a replacement view fails
+    root --> caller : exception
+    note right of root : Existing containers, views and notifications are unchanged.
+  else all replacement views resolved
+    loop all four stable views
+      root -> views : suspendNotifications()
+    end
+    root -> root : replace persons, members, equipment and loans
+    loop all four stable views
+      root -> views : set(replacement backing list)
+      note right of views : Replacement events are deferred.
+    end
+    root -> caller : publishModelState.run()\n(adopt related history before notifications)
+    loop all four stable views (finally)
+      root -> views : resumeNotifications()
+      opt replacement notification pending
+        views -> observer : change / invalidation callback
+        observer -> root : read current lists
+        root --> observer : complete replacement dataset
+        observer -> caller : getAddressBookHistory()
+        caller --> observer : matching published history
+      end
+    end
+    root --> caller : return
+  end
+end
+deactivate root
+note over caller, root
+  The publication callback must not throw or mutate records.
+  Its history coordination is current supporting behavior from #137/#138.
+end note
+@enduml
