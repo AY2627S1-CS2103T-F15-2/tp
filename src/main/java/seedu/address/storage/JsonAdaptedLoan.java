@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.member.NusId;
 
@@ -26,6 +27,8 @@ class JsonAdaptedLoan {
     private final String assignedDate;
     private final String expectedReturnDate;
     private final String returnedDate;
+    private final String issueCondition;
+    private final String returnCondition;
 
     /** Constructs an adapter from raw JSON fields. */
     @JsonCreator
@@ -33,12 +36,22 @@ class JsonAdaptedLoan {
             @JsonProperty("memberNusId") String memberNusId,
             @JsonProperty("assignedDate") String assignedDate,
             @JsonProperty("expectedReturnDate") String expectedReturnDate,
-            @JsonProperty("returnedDate") String returnedDate) {
+            @JsonProperty("returnedDate") String returnedDate,
+            @JsonProperty("issueCondition") String issueCondition,
+            @JsonProperty("returnCondition") String returnCondition) {
         this.equipmentUuid = equipmentUuid;
         this.memberNusId = memberNusId;
         this.assignedDate = assignedDate;
         this.expectedReturnDate = expectedReturnDate;
         this.returnedDate = returnedDate;
+        this.issueCondition = issueCondition;
+        this.returnCondition = returnCondition;
+    }
+
+    /** Preserves the five-field adapter constructor used by existing callers and tests. */
+    public JsonAdaptedLoan(String equipmentUuid, String memberNusId, String assignedDate,
+            String expectedReturnDate, String returnedDate) {
+        this(equipmentUuid, memberNusId, assignedDate, expectedReturnDate, returnedDate, null, null);
     }
 
     /** Constructs an adapter from a domain loan. */
@@ -49,6 +62,8 @@ class JsonAdaptedLoan {
         assignedDate = source.getAssignedDate().toString();
         expectedReturnDate = source.getExpectedReturnDate().toString();
         returnedDate = source.getReturnedDate().map(Object::toString).orElse(null);
+        issueCondition = source.getIssueCondition().map(Enum::name).orElse(null);
+        returnCondition = source.getReturnCondition().map(Enum::name).orElse(null);
     }
 
     /** Converts this adapter to its domain type. */
@@ -68,7 +83,8 @@ class JsonAdaptedLoan {
         LocalDate modelReturnedDate = returnedDate == null ? null : parseDate(returnedDate, "returnedDate");
         try {
             return new Loan(UUID.fromString(equipmentUuid), new NusId(memberNusId), modelAssignedDate,
-                    modelExpectedDate, modelReturnedDate);
+                    modelExpectedDate, modelReturnedDate, parseCondition(issueCondition),
+                    parseCondition(returnCondition));
         } catch (IllegalArgumentException exception) {
             throw new IllegalValueException(exception.getMessage(), exception);
         }
@@ -85,6 +101,17 @@ class JsonAdaptedLoan {
             return LocalDate.parse(value);
         } catch (DateTimeParseException exception) {
             throw new IllegalValueException("Loan " + field + " must be a valid ISO calendar date.", exception);
+        }
+    }
+
+    private static Condition parseCondition(String value) throws IllegalValueException {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Condition.valueOf(value);
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalValueException("Loan condition is invalid: " + value, exception);
         }
     }
 }

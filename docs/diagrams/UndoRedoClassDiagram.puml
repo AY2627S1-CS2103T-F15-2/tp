@@ -1,0 +1,67 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+
+class LogicManager <<logic>> {
+  + execute(commandText): CommandResult
+}
+abstract class Command <<logic>> {
+  + isTransactional(): boolean
+  + recordsHistory(): boolean
+  {abstract} + execute(model: Model): CommandResult
+}
+class UndoCommand <<logic>> {
+  + isTransactional(): boolean
+  + recordsHistory(): boolean
+  + execute(model: Model): CommandResult
+}
+class RedoCommand <<logic>> {
+  + isTransactional(): boolean
+  + recordsHistory(): boolean
+  + execute(model: Model): CommandResult
+}
+interface Storage <<storage>> {
+  + saveAddressBook(data): void
+}
+interface Model <<model>> {
+  + createTransactionSnapshot(): Model
+  + recordAddressBook(previous, description): void
+  + publishTransaction(candidate): void
+  + undoAddressBook(): String
+  + redoAddressBook(): String
+}
+class ModelManager <<model>>
+class AddressBook <<model>>
+class AddressBookHistory <<immutable>> {
+  {static} + MAX_CHANGES: int = 10
+  - position: int
+  - descriptions: List<String>
+  + record(...): AddressBookHistory
+  + canUndo(): boolean
+  + canRedo(): boolean
+  + undo(): AddressBookHistory
+  + redo(): AddressBookHistory
+  + getCurrentState(): ReadOnlyAddressBook
+}
+
+UndoCommand -up-|> Command
+RedoCommand -up-|> Command
+LogicManager .left.> Command : executes
+LogicManager "0..*" -down-> "1" Model : live model
+LogicManager "0..*" -right-> "1" Storage : saves before publication
+Command ..> Model : operates on candidate
+ModelManager .up.|> Model
+ModelManager "0..1" *-down-> "1" AddressBook : addressBook
+ModelManager "0..*" -right-> "1" AddressBookHistory : history
+AddressBookHistory "0..*" -left-> "0..11" AddressBook : states {ordered}
+
+legend bottom
+  Operation parameter types are abbreviated; unrelated members are omitted.
+  UndoCommand and RedoCommand are transactional; recordsHistory() returns false.
+  Live/candidate roots are separate from the history's private snapshots.
+  History values may share snapshots; getters return defensive record copies.
+  descriptions.size() = max(0, states.size() - 1).
+endlegend
+@enduml

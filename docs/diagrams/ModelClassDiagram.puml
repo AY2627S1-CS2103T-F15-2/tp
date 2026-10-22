@@ -1,33 +1,50 @@
 @startuml
 !include style.puml
+!pragma layout smetana
 skinparam classAttributeFontColor #FFFFFF
 skinparam classAttributeIconSize 0
 skinparam arrowThickness 1.1
 skinparam arrowColor MODEL_COLOR
 skinparam classBackgroundColor MODEL_COLOR
-skinparam linetype ortho
+hide empty members
 
-title Member model: immutable details and retained deletion state
+title Root collections, stable views and immutable members
 
 package Model as ModelPackage {
     class Model <<interface>> {
         +setMember(target: Member, editedMember: Member): void
         +deleteMember(member: Member): void
         +restoreMember(member: Member): void
+        +publishTransaction(candidate: Model): void
     }
     class ReadOnlyAddressBook <<interface>>
     class ReadOnlyUserPrefs <<interface>>
     class ModelManager
     class UserPrefs
+    class AddressBookHistory
     class AddressBook {
+        +resetData(newData: ReadOnlyAddressBook): void
+        ~resetData(newData: ReadOnlyAddressBook, publishModelState: Runnable): void
         +setMember(target: Member, editedMember: Member): void
         +removeMember(member: Member): void
         +restoreMember(member: Member): void
     }
+    class "AddressBook.CollectionView<E>" as CollectionView {
+        -notificationsSuspended: boolean
+        -notificationPending: boolean
+        -suspendNotifications(): void
+        -resumeNotifications(): void
+    }
+    class UniquePersonList
+    class UniqueEquipmentList
+    class UniqueLoanList
     class UniqueMemberList {
         +setMember(target: Member, editedMember: Member): void
         +setDeleted(nusId: NusId, isDeleted: boolean): void
     }
+    class Person
+    class Equipment
+    class Loan
     class Member {
         -deleted: boolean {readOnly}
         +isDeleted(): boolean
@@ -38,43 +55,40 @@ package Model as ModelPackage {
     class Phone
     class Email
 }
+package "JavaFX" {
+    class "SimpleListProperty<E>" as SimpleListProperty
+}
 show Model methods
 show AddressBook methods
 show UniqueMemberList methods
 show Member members
+show CollectionView members
 
 ModelManager ..|> Model
 ModelManager --> "1" AddressBook
 ModelManager --> "1" UserPrefs
+ModelManager --> "1" AddressBookHistory
 AddressBook ..|> ReadOnlyAddressBook
 UserPrefs ..|> ReadOnlyUserPrefs
-Model ..> ReadOnlyAddressBook
-Model ..> ReadOnlyUserPrefs
+AddressBook --> "4" CollectionView
+CollectionView --|> SimpleListProperty
+AddressBook --> "1" UniquePersonList
 AddressBook --> "0..1" UniqueMemberList
-UniqueMemberList --> "0..*" Member
+AddressBook --> "0..1" UniqueEquipmentList
+AddressBook --> "0..1" UniqueLoanList
+UniquePersonList "0..*" --> "0..*" Person
+UniqueMemberList "0..*" --> "0..*" Member
+UniqueEquipmentList "0..*" --> "0..*" Equipment
+UniqueLoanList "0..*" --> "0..*" Loan
 Member --> "1" NusId
 Member --> "1" Name
 Member --> "1" Phone
 Member --> "1" Email
 
-note right of UniqueMemberList
-  Includes active and deleted members.
-  Replacements retain identity and list position.
-  Edits cannot change deletion state.
-  Deleted members must be restored before editing.
-end note
-note bottom of Member
-  Member instances are immutable.
-  The four value references are read-only.
-  Four-field constructor defaults deleted to false.
-  Five-field constructor accepts deletion state.
-  Equality and hashing include deleted;
-  isSameMember compares only the NUS ID.
-end note
-note left of AddressBook
-  Member-focused view: equipment, loans and
-  legacy Person collections are omitted.
-  Member storage is initialized lazily.
-  Closed loan history and deleted IDs are retained.
-end note
+legend bottom
+  Domain containers are lazy; immutable entities can be shared by snapshots.
+  The member collection retains active and deleted records.
+  Four stable views publish records and history before notifying observers.
+  Public wrappers, other entity details and history internals are omitted.
+endlegend
 @enduml

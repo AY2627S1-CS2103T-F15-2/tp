@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -19,7 +20,9 @@ import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
 import seedu.address.model.query.DirectoryQuery;
 
-/** Sorted read-only member rows. Only explicit user activation invokes the callback. */
+/**
+ * Sorted read-only member rows. Only explicit user activation invokes the callback.
+ */
 public class MemberListPanel extends UiPart<Region> {
 
     private final ReadOnlyAddressBook data;
@@ -31,7 +34,9 @@ public class MemberListPanel extends UiPart<Region> {
     @FXML
     private ListView<Member> rows;
 
-    /** Creates the list from non-null dependencies; the shell owns listeners and initial selection. */
+    /**
+     * Creates the list from non-null dependencies; the shell owns listeners and initial selection.
+     */
     public MemberListPanel(ReadOnlyAddressBook data, Consumer<NusId> onSelect) {
         super("MemberListPanel.fxml");
         this.data = requireNonNull(data);
@@ -46,28 +51,45 @@ public class MemberListPanel extends UiPart<Region> {
         refresh();
     }
 
-    /** Sets transient criteria; the parent refreshes once after coordinating both directory components. */
+    /**
+     * Sets transient criteria; the parent refreshes once after coordinating both directory components.
+     */
     public void setQuery(DirectoryQuery query) {
         this.query = requireNonNull(query);
     }
 
-    /** Returns a fresh sorted query snapshot for identity-preserving shell selection recovery. */
+    /**
+     * Returns the active transient directory criteria.
+     */
+    public DirectoryQuery getQuery() {
+        return query;
+    }
+
+    /**
+     * Returns a fresh sorted query snapshot for identity-preserving shell selection recovery.
+     */
     public List<Member> getDisplayedItems() {
         return query.members(data);
     }
 
-    /** Rebuilds real card snapshots, preserving an existing identity without invoking the callback. */
+    /**
+     * Rebuilds real card snapshots, preserving an existing identity without invoking the callback.
+     */
     public void refresh() {
         Optional<NusId> selected = getSelection();
-        rows.getItems().setAll(getDisplayedItems());
+        List<Member> displayed = getDisplayedItems();
+        if (!rows.getItems().equals(displayed)) {
+            rows.getItems().setAll(displayed);
+        }
         long deleted = rows.getItems().stream().filter(Member::isDeleted).count();
         countLabel.setText(query.equals(DirectoryQuery.all())
                 ? (rows.getItems().size() - deleted) + " active"
                         + (deleted == 0 ? "" : " \u00b7 " + deleted + " deleted")
                 : rows.getItems().size() + " of " + data.getMemberList().size() + " shown");
-        Label emptyState = new Label(data.getMemberList().isEmpty() ? "No members yet. Use member add to get started."
+        Label emptyState = new Label(data.getMemberList().isEmpty() ? "No members yet"
                 : "No matching members. Use member list to reset the search.");
         emptyState.setWrapText(true);
+        emptyState.setAlignment(Pos.CENTER);
         emptyState.setMaxWidth(Double.MAX_VALUE);
         emptyState.setMinWidth(0);
         rows.setPlaceholder(emptyState);
@@ -75,14 +97,21 @@ public class MemberListPanel extends UiPart<Region> {
         select(selected);
     }
 
-    /** Returns the selected identity, if any. */
+    /**
+     * Returns the selected identity, if any.
+     */
     public Optional<NusId> getSelection() {
         return Optional.ofNullable(rows.getSelectionModel().getSelectedItem()).map(Member::getNusId);
     }
 
-    /** Selects an existing identity or clears an absent selection, without invoking the callback. */
+    /**
+     * Selects an existing identity or clears an absent selection, without invoking the callback.
+     */
     public void select(Optional<NusId> selected) {
         requireNonNull(selected);
+        if (getSelection().equals(selected)) {
+            return;
+        }
         rows.getSelectionModel().clearSelection();
         selected.filter(id -> data.getMemberList().stream().anyMatch(item -> item.getNusId().equals(id)))
                 .flatMap(id -> rows.getItems().stream()
@@ -93,7 +122,9 @@ public class MemberListPanel extends UiPart<Region> {
                 });
     }
 
-    /** Reusable cells let the parent ListView own the selected-row style. */
+    /**
+     * Reusable cells let the parent ListView own the selected-row style.
+     */
     private class DirectoryCell extends ListCell<Member> {
         DirectoryCell() {
             setPrefWidth(0);

@@ -13,8 +13,9 @@ Type commands to register records, find an exact member or item, issue equipment
 remove erroneous records. Lists and details show who holds each item and what each member holds.
 
 This guide describes **seventeen member, equipment and loan commands**, including member and equipment
-editing/restoration, batch equipment registration and search: seven member commands, seven equipment
-commands and three loan commands. Use it with the matching release supplied by the team;
+editing/restoration, batch equipment registration and search, with Tab autocomplete throughout:
+seven member commands, seven equipment commands and three loan commands.
+Use it with the matching release supplied by the team;
 earlier builds may not support every behavior described here. Laplace is a local, single-user application.
 
 <page-nav-print />
@@ -33,18 +34,54 @@ earlier builds may not support every behavior described here. Laplace is a local
    to open each directory and the current-loans tab.
 7. Use `help` or **F1** to open Help, and `exit` to close the application normally.
 
-![Laplace directory layout reference](images/Ui.png)
+![Laplace equipment groups in light mode](images/BetterUi.png)
 
-The image is a layout reference. Your rows, counts and selected record depend on your data.
+Command text uses [IBM Plex Mono](https://github.com/IBM/plex), distributed under the SIL Open Font License.
+
+Your rows, counts and selected record depend on your data. Both light and dark appearance are supported.
 If startup fails, check the JAR filename and Java version and keep the terminal error for the team.
 Do not delete your data file to troubleshoot startup.
+
+### Completing commands and fields with Tab
+
+Type part of a command in the command box and press **Tab** to complete it. For example,
+`mem` becomes `member`, `member ad` becomes `member add`, and `member add na` becomes
+`member add name/`. Member editing is supported too: `member ed` becomes `member edit`, with
+`nus/`, `name/`, `phone/` and `email/` field and value suggestions. Member names always come from the
+member directory, including during edits. Press Space yourself to begin the next word or field.
+
+When several suggestions match, press Tab repeatedly to cycle through them in alphabetical order.
+During that cycle, **Shift+Tab** selects the previous suggestion. Editing the input, moving the caret,
+submitting a command, leaving the input, or changing the records starts a fresh cycle.
+
+Laplace also completes existing field values: member names, phone numbers and emails; member IDs in
+reference fields; equipment UUIDs, names and categories; and the four equipment conditions. For example,
+`equipment add condition/g` completes to `equipment add condition/GOOD`. Values match without regard
+to case and retain their stored spelling. Suggestions use the current records, including records added
+since startup. Identical values appear once.
+
+Command words and field prefixes are case-sensitive. Field suggestions depend on the command and omit
+non-repeatable prefixes already present. All seventeen member, equipment and loan commands plus `help`,
+`exit`, `mode dark` and `mode light` have command completion. Search supports `q/`, the applicable filters, sorting and ordering;
+finite options such as `status/de` complete to `status/DELETED`. Query text can reuse searchable stored
+values. Equipment editing and both restoration commands support their fields and existing references.
+Batch equipment creation includes `count/`; batch loan UUID completion fills the active comma-separated
+entry, preserves the others and excludes UUIDs already listed. Return conditions are supported too.
+New member IDs, dates, numeric counts and free-form notes remain manual. Completion does not guarantee that a command
+can execute: ordinary validation still runs when you press Enter.
+
+Tab changes only the active token or field value and preserves later fields and their separators,
+including Unicode spaces copied into the input. It never executes a command or saves records. Press **Enter** to submit the completed input. With blank input, selected text, an
+unsupported context, at the start of an existing field marker, or with no matching suggestion,
+normal Tab navigation remains available. An untouched following marker and its value are preserved. Shift+Tab also
+keeps its normal navigation behavior outside an active completion cycle.
 
 ### Sample records on first launch
 
 When there is no saved data file, Laplace starts with five fictional members and seven equipment items.
 The samples include two cameras, a damaged tripod, a microphone, a speaker, a projector under repair
 and an event laptop. Three open loans illustrate current holders, one overdue item and a member holding
-multiple items. One closed loan is retained internally and is hidden from the Loans tab.
+multiple items. One closed loan appears in the Loans tab history.
 
 Dates are relative to the day of first launch. Try `member list`, `equipment list` and `loans list`,
 then copy displayed identities to view details or try a return. These are ordinary records:
@@ -67,7 +104,7 @@ issue, return or delete records.
 
 To explore without changing the sample records:
 
-1. Run `loans list`. The Loans tab shows three open loans; the closed speaker loan is hidden.
+1. Run `loans list`. The Loans tab shows three open loans and the closed speaker loan in history.
 2. Run `member view nus/A0123456X`. Alex's details show the camera and laptop under Held Equipment.
 3. Run `equipment view uuid/550e8400-e29b-41d4-a716-446655440003`. The microphone's details identify
    Jamie as the holder and show its assignment and expected return dates.
@@ -75,15 +112,53 @@ To explore without changing the sample records:
 
 ## Using the window
 
-- **Members** opens the member directory. **Equipment** opens the equipment directory.
-- The left panel contains selectable records. The right panel shows a directory summary or record
-  details. Startup selects the first member, when present, while leaving the summary visible.
-- Click a record, or focus its row and press **Enter** or **Space**, to open its details.
-  Identically named records remain distinguishable by NUS ID or equipment UUID.
-- The **Loans** tab shows current open assignments and links to their member and equipment.
-  Type `loans list` to open the same tab. Completed loan history is not a user-facing feature.
-- The feedback area reports the last command's result. The command box and Enter hint appear below it.
-- At smaller sizes, use the list/detail scrollbars to reach long identifiers, notes and holdings.
+- **Members**, **Equipment** and **Loans** switch views. Member/equipment search criteria remain active
+  when switching tabs or opening details. **Back to results** returns to the current filtered summary;
+  **Reset search**, `member list` or `equipment list` clears that directory's criteria and sorting.
+- The left equipment directory groups units with the same normalized category and name, including units
+  registered in different batches. Open a group with a click, **Enter** or **Space**, then select a row in
+  its physical-unit table. Each unit still has its own UUID, condition, notes, holder and lifecycle state.
+- Group counts distinguish **matching** units from **retained** units. Availability counts exclude deleted
+  units. **Show all units** reveals group members outside the active search, including deleted records.
+  Direct `equipment view uuid/UUID` opens that exact unit, enabling Show all units if needed.
+  Unchecking it narrows the table again while retaining the selected unit's details; a message explains
+  when that unit is outside the table filter.
+  Short table identifiers are display labels only: hover for the full UUID, or copy it from unit details.
+- Member rows open member details. Copy buttons preserve full identifiers and contact fields. Related
+  member/equipment links open the exact record. **Commands for this unit/member** contains command previews:
+  **Copy** copies plain text; **Use command** prepares the input and never executes it. Replace the marked
+  uppercase placeholders and press Enter yourself. Availability and validation rules still apply.
+- The **Loans** tab shows current open assignments, exact-identity links, assigned/due dates and an
+  **Overdue** or **Due today** label when applicable. Rows reflow at narrower widths. **Prepare return command**
+  fills the input with the unit UUID and today's local date; review it before pressing Enter.
+  Urgency updates when you open Loans, execute a command or change records. Reopen Loans after midnight
+  to refresh the labels. Completed loans show return dates and recorded issue/return conditions, without
+  urgency labels or return actions. Filter both sections by NUS ID and equipment UUID. `loans list` opens
+  this same tab; member and equipment details also show the selected record's loan history.
+- **Last result** sits above the command feedback and stays after switching tabs. A green box is a
+  successful command, a red box is an error, and the box is neutral before the first command.
+  The heading displays only **Last result**; assistive text includes the status and full message.
+  **Details** expands the complete feedback and **Copy** includes all UUIDs from batch creation.
+- The command input, identifiers and command examples use IBM Plex Mono. **↑/↓** browse up to 100 recent submissions in this session,
+  preserving an unfinished draft. **Ctrl+Space** offers command-name or parameter-prefix completion at
+  the end of the input. Choose an entry to insert it; **Escape** dismisses suggestions. Tab completes the
+  active token or value as described above; with no applicable suggestion it retains normal focus navigation. History is cleared when the application closes.
+- **F1** or `help` opens a scrollable command reference with copyable templates and the user-guide link.
+- Drag the directory divider to resize its panels. Scroll long lists/details vertically; the data filename
+  appears in the footer, with the full path available on hover.
+
+### Appearance: `mode dark` and `mode light`
+
+```text
+mode dark
+mode light
+```
+
+Use these commands or the header button labeled **Dark mode** or **Light mode**. The button names the appearance it will apply. **Menu** contains Help and Exit. The main window and Help switch together.
+Light is the default for new and older preference files. The chosen mode is saved with window preferences
+on normal exit and restored on the next launch. Changing mode preserves the current search and records.
+Only `dark` and `light` are accepted; missing/extra arguments are errors. These are appearance utilities,
+in addition to the seventeen member, equipment and loan commands.
 
 ## Command format and feedback
 
@@ -115,7 +190,7 @@ The old top-level commands `add`, `edit`, `delete`, `clear`, `find`, and `list` 
 They return `Unknown command.` and do not change records or save the data file, even when arguments
 are supplied. For example, use `member list` instead of `list members`, `equipment list` to view
 inventory, and `member search q/Alex` to search members. There is no supported bulk-clear command.
-Use the member, equipment and loan commands documented below, or `help` and `exit`.
+Use the member, equipment and loan commands documented below, or `undo`, `redo`, `mode`, `help` and `exit`.
 
 ### Shared field rules
 
@@ -200,7 +275,7 @@ active, deleted and displayed counts. Archival is not supported.
 
 The result is `Listed N active members.` Deleted records are counted separately when present.
 If there are no records, the list displays:
-`No members yet. Use member add to get started.`
+`No members yet`
 
 This command takes no parameters. For example, `member list nus/A0123456X` is rejected; use
 `member view nus/A0123456X` for an exact lookup. A syntax failure leaves the current screen unchanged.
@@ -345,9 +420,11 @@ during creation or saving commits no new units. There is no stored quantity repl
 equipment list
 ```
 
-Show every equipment item, including retained deleted units, ordered by normalized **category, name, then UUID**. Rows expose the UUID,
-name, category, condition, derived availability and current holder when assigned. An unassigned item has
-no current holder. Identical descriptions remain separate rows.
+Show all retained physical units, including deleted units, grouped by normalized **category and name**.
+Groups follow category/name order; select a group to inspect its distinct units. The table shows condition,
+availability, holder and lifecycle status, with the full UUID in a tooltip and the selected unit's details.
+Matching descriptions share a directory row but retain separate identities. Default unit order is UUID;
+a search's sorting applies to its matching units. Clicking a table heading temporarily sorts the table.
 
 Feedback is `Listed N equipment items.` An empty list displays:
 `No equipment yet. Use equipment add to get started.`
@@ -412,7 +489,7 @@ Soft-delete one exact item **only when it has no open loan**. Its condition does
 The unit, UUID, details and closed loans are retained. Feedback includes the identity and name:
 `Deleted equipment UUID: EQUIPMENT_NAME.` The equipment directory appears with its existing filters.
 Deleted units remain visible in all-record lists, labeled `[DELETED]`; active-only searches exclude them.
-They cannot be assigned and are excluded from inventory group and availability totals.
+They cannot be assigned and are excluded from active availability totals. Group retained counts include them.
 
 | Situation | Result or correction |
 | --- | --- |
@@ -439,7 +516,7 @@ Equipment search defaults to active units. Use `status/active`, `status/deleted`
 other search filters; values are case-insensitive. Deleted units have derived UNAVAILABLE status, so
 `equipment search status/deleted availability/available` returns no matches. `equipment list` resets
 filters and includes both states. Total counts include retained units; availability counts and inventory
-groups cover active units only. Deleted equipment can still be opened with `equipment view uuid/UUID`.
+availability summaries cover active units only; retained group counts include deleted units. Deleted equipment can still be opened with `equipment view uuid/UUID`.
 
 ### Open the Loans tab: `loans list`
 
@@ -447,9 +524,9 @@ groups cover active units only. Deleted equipment can still be opened with `equi
 loans list
 ```
 
-Open the existing Loans tab, just as clicking **Loans** does. It shows current open loans and links
-to the corresponding member and equipment details. If there are no open loans, the tab shows its
-empty state. Closed loan history is not displayed.
+Open the existing Loans tab, just as clicking **Loans** does. It shows current and completed loans,
+with links to the corresponding member and equipment details. Use the NUS ID and UUID fields to
+filter both sections. Each section has its own count and empty state.
 
 Feedback is `Showing current loans.` This command does not create, return, delete or change any
 member, equipment or loan records. It uses the same save/error handling as the other list commands.
@@ -457,10 +534,10 @@ Extra text or parameters, such as `loans list uuid/UUID`, are rejected and leave
 
 ### Assign equipment: `loans add`
 
-Assign one AVAILABLE physical item to an existing member.
+Assign one or more AVAILABLE physical items to an existing member.
 
 ```text
-loans add uuid/UUID nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE
+loans add uuid/UUID[,UUID...] nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE
 ```
 
 All four parameters are required. Use the actual UUID from `equipment list` and the NUS ID from
@@ -477,12 +554,15 @@ Success creates an open loan and immediately changes availability to ASSIGNED. E
 the holder/dates; the member's current holdings and item count update. Feedback is:
 `Assigned EQUIPMENT_NAME (UUID) to MEMBER_NAME (NUS_ID) on ASSIGNMENT_DATE; expected return: EXPECTED_RETURN_DATE.`
 
-A member may hold several different items. Assigning an already assigned item is rejected, even if the
-new loan names the same member. Reaching the expected return date does not automatically return an item.
+A member may hold several different items. Separate multiple UUIDs with commas; every item shares the
+member and dates, and the request succeeds or fails as a whole. The condition of each item at issue is
+recorded in its loan history. Assigning an already assigned item is rejected, even if the new loan names
+the same member. Reaching the expected return date does not automatically return an item.
 
 | Situation | Result or correction |
 | --- | --- |
 | Equipment/member does not exist | `No equipment with UUID UUID exists.` or `No member with NUS ID NUS_ID exists.` Check the corresponding list. |
+| Equipment or member is deleted | Restore that record before assigning it; an invalid unit rejects the entire batch. |
 | Item already has an open loan | `Equipment UUID is unavailable because it is assigned to CURRENT_NUS_ID.` Return it before assigning it again. |
 | Condition is DAMAGED/UNDER_REPAIR | `Equipment UUID is unavailable (condition: CONDITION).` Choose an AVAILABLE item. |
 | Expected date precedes assignment | `Expected return date cannot be before assigned date` |
@@ -495,10 +575,10 @@ On failure, no loan is created. Availability, holder, holdings, view and selecti
 ### Return equipment: `loans return`
 
 ```text
-loans return uuid/UUID returned/ACTUAL_RETURN_DATE
+loans return uuid/UUID[,UUID...] returned/ACTUAL_RETURN_DATE [condition/CONDITION]
 ```
 
-Both parameters are required. The equipment must exist and have an open loan. Its referenced member
+UUID and date are required. Equipment must exist and have open loans. Referenced members
 must also exist. The return date must be **from the assignment date through the computer's local date**,
 inclusive. Same-day, early and late returns are valid; the expected return date does not limit returns.
 
@@ -513,6 +593,12 @@ holder/loan dates, the item leaves the member's current holdings, and open-loan 
 Availability becomes AVAILABLE for GOOD/FAIR, or UNAVAILABLE for DAMAGED/UNDER_REPAIR.
 Feedback is `Returned EQUIPMENT_NAME (UUID) from MEMBER_NAME (NUS_ID) on ACTUAL_RETURN_DATE.`
 
+Multiple UUIDs return in one request. If `condition/` is supplied, it is recorded for every item
+and updates each item's current condition. Use separate commands for different observed conditions.
+If omitted, the current equipment condition stays unchanged and history shows the return condition
+as "Not recorded". A failed item prevents the entire batch from being returned.
+For a batch, feedback lists the number of units and their UUIDs without naming one borrower for all of them.
+
 | Situation | Result or correction |
 | --- | --- |
 | Equipment does not exist | `No equipment with UUID UUID exists.` Check the full UUID. |
@@ -523,8 +609,59 @@ Feedback is `Returned EQUIPMENT_NAME (UUID) from MEMBER_NAME (NUS_ID) on ACTUAL_
 | Open loan refers to a missing member | `Cannot return equipment UUID: its open loan refers to a missing member.` Preserve the data and report the error to the team. |
 | Saving fails | No return is recorded and no records change; correct file access and retry. |
 
-A rejected return leaves the loan, return date, holder and availability unchanged. Closing a loan retains
-its record internally; the MVP does not provide a completed-history screen.
+A rejected return leaves the loan, return date, holder and availability unchanged. Completed loans
+appear in the Loans tab and in member and equipment details.
+
+### Undo a record change: `undo`
+
+```text
+undo
+```
+
+Undo the most recent successful record-changing command. Laplace retains **up to ten changes in the
+current session**. An eleventh successful change discards the oldest undo step. Each command counts as
+one step: a batch equipment creation, loan assignment or return is undone together.
+
+Supported changes are member/equipment addition, editing, deletion and restoration, plus loan assignment
+and return. Undo restores linked records, original UUIDs, loan dates and conditions together. For example,
+undoing a loan return reopens the loan and restores its previous holder and equipment condition.
+Undoing equipment creation removes those units; redoing it restores their original UUIDs.
+
+Success reports the action, for example `Undid: equipment add.`. If none is available, the error is
+`Nothing to undo.`. Undo takes no arguments: `undo 2` is rejected. The current screen refreshes while
+preserving search criteria; if the displayed record no longer exists, its directory appears instead.
+Active filters can hide restored records; use the directory's list command to reset the search.
+
+### Redo an undone change: `redo`
+
+```text
+redo
+```
+
+Restore the most recently undone change. Up to ten redo steps are available after ten undos. Success
+reports, for example, `Redid: equipment add.`. If none is available, the error is `Nothing to redo.`.
+Redo takes no arguments. It restores the recorded state without generating new UUIDs or dates.
+
+A **new successful record-changing command after undo clears redo**. Listing, searching, viewing, Help,
+appearance changes, rejected commands and no-change edits neither add history nor clear redo. Window
+preferences, appearance and search criteria are not undone. The command input's arrow-key history is
+separate from record undo/redo.
+
+Every successful undo/redo is saved automatically. A save failure leaves records and undo/redo history
+unchanged; correct the file-access problem and retry. History is kept **only until Laplace closes**.
+Restarting loads the most recently saved records with no undo/redo steps available. The ten-step limit
+also means this feature does not replace a backup.
+
+Example:
+
+```text
+equipment add name/Camera category/Photo condition/GOOD count/3
+undo
+redo
+```
+
+This creates three units, removes all three, then restores the same three units. Type these commands in
+the existing command input; there are no dedicated undo/redo buttons or keyboard shortcuts.
 
 ## A complete issue-and-return workflow
 
@@ -612,11 +749,11 @@ use **Copy URL** to copy its address and open it in your browser.
 
 The MVP supports member and equipment editing, soft deletion and restoration, plus search with filters
 and user-selected sorting. Batch equipment registration supports 1–100 physical units per
-`equipment add` command using `count/COUNT`; each unit receives its own UUID. Other batch operations,
-such as bulk editing, deletion, restoration or loan assignment, are not supported.
+`equipment add` command using `count/COUNT`; each unit receives its own UUID. Loan assignment and return
+also accept multiple equipment UUIDs in one command. Bulk editing, deletion and restoration are not supported.
 
-The MVP excludes separate find/member-loans/holder commands, completed loan-history viewing,
-import/export, undo/redo, fuzzy search and automatic overdue notifications. Copying a backup file while the app
+The MVP excludes separate find/member-loans/holder commands, import/export, fuzzy search
+and automatic overdue notifications. Copying a backup file while the app
 is closed is a file-management task, not an import/export command. Data is local to one operator;
 authentication and concurrent multi-user operation are not provided.
 
@@ -639,9 +776,11 @@ authentication and concurrent multi-user operation are not provided.
 | Restore equipment | `equipment restore uuid/UUID` |
 | Delete equipment | `equipment delete uuid/UUID` |
 | Open the Loans tab | `loans list` |
-| Assign equipment | `loans add uuid/UUID nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |
-| Return equipment | `loans return uuid/UUID returned/ACTUAL_RETURN_DATE` |
+| Assign equipment | `loans add uuid/UUID[,UUID...] nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |
+| Return equipment | `loans return uuid/UUID[,UUID...] returned/ACTUAL_RETURN_DATE [condition/CONDITION]` |
+| Undo the last record change | `undo` |
+| Redo the last undone change | `redo` |
 
 See [search, filters and sorting](commands/search-and-planning.md) for accepted search parameter values.
 
-Application utilities: `help` (or F1) opens Help; `exit` closes Laplace.
+Application utilities: `undo` and `redo` navigate up to ten record changes per session; `mode dark` / `mode light` change appearance; `help` (or F1) opens Help; `exit` closes Laplace.

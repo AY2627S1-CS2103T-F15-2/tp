@@ -50,9 +50,9 @@ public class DirectoryPreviewTest {
                     ListView<?> rows = (ListView<?>) root.lookup("#rows");
                     ListCell<?> selected = rows.lookupAll(".list-cell").stream().map(node -> (ListCell<?>) node)
                             .filter(cell -> cell.isSelected() && !cell.isEmpty()).findFirst().orElseThrow();
-                    assertEquals(Color.web("#E3F2FD"), selected.getBackground().getFills().getFirst().getFill());
+                    assertEquals(Color.web("#ddf4ff"), selected.getBackground().getFills().getFirst().getFill());
                     assertTrue(selected.getGraphic().getStyleClass()
-                            .contains(equipment ? "equipment-card" : "member-card"));
+                            .contains(equipment ? "equipment-group-card" : "member-card"));
                     render(root, equipment ? "equipment" : "members", size[0], size[1]);
                 }
             }
@@ -89,7 +89,7 @@ public class DirectoryPreviewTest {
             EquipmentDirectorySummary details = new EquipmentDirectorySummary(model.getAddressBook(),
                     model::getAvailability);
             EquipmentListPanel panel = new EquipmentListPanel(model.getAddressBook(), model::getAvailability,
-                    uuid -> details.refresh(Optional.of(uuid)));
+                    key -> details.refresh(Optional.empty()));
             Optional<UUID> selected = model.getEquipmentList().stream().map(Equipment::getUuid).findFirst();
             panel.select(selected);
             details.refresh(selected);

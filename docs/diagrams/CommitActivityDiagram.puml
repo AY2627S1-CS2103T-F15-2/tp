@@ -1,18 +1,63 @@
 @startuml
-skin rose
-skinparam ActivityFontSize 15
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam ActivityFontSize 13
 skinparam ArrowFontSize 12
+
+title Command execution and record-history publication
 start
-:User executes command;
-
-'Since the beta syntax does not support placing the condition outside the
-'diamond we place it as the true branch instead.
-
-if () then ([command commits AddressBook])
-    :Purge redundant states;
-    :Save AddressBook to
-    addressBookStateList;
-else ([else])
+:Parse command;
+if (Parsing succeeds?) then (yes)
+else (no)
+  :Report ParseException and
+leave records and history unchanged;
+  stop
+endif
+if (isTransactional()?) then (yes)
+  :Copy records and preferences into a candidate\nand initially share immutable history;
+else (no)
+  :Use the live model;
+endif
+:Execute command on the chosen model;
+note right
+  Undo/redo navigate candidate history here.
+  Unavailable steps are execution failures.
+end note
+if (Execution succeeds?) then (yes)
+else (no)
+  :Report execution error and
+do not save or publish;
+  stop
+endif
+if (isReadOnly()?) then (yes)
+  :Return result without a domain save
+or history entry;
+  stop
+else (no)
+endif
+if (recordsHistory()?) then (yes)
+  :Record candidate relative to live records;
+  note right
+    If data changed: discard redo, append state,
+    retain at most 10 changes / 11 snapshots.
+    If unchanged: preserve history and redo.
+    All history changes remain candidate-only.
+  end note
+else (no)
+  :Keep the chosen model's history and
+do not append another action;
+endif
+:Atomically save the chosen model's records;
+if (Save succeeds?) then (yes)
+  if (isTransactional()?) then (yes)
+    :publishTransaction(candidate) to
+publish records and history to live model;
+  else (no)
+  endif
+  :Return successful command result;
+else (no)
+  :Report CommandException with I/O cause and
+do not publish candidate records or history;
 endif
 stop
 @enduml

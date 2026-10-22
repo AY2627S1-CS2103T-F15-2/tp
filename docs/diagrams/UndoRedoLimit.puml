@@ -1,0 +1,33 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam objectAttributeIconSize 0
+skinparam objectBackgroundColor #F6F8FA
+skinparam objectBorderColor #59636E
+
+title Published history after twelve successful changes
+object "<u>history:AddressBookHistory</u>" as history {
+  position = 10
+  states = [s2, s3, ..., s12]
+  descriptions = [action3, action4, ..., action12]
+}
+object "<u>s2:AddressBook</u>" as oldest {
+  records after change 2
+}
+object "<u>s12:AddressBook</u>" as latest #DDF4FF {
+  records after change 12
+}
+history --> oldest : states[0]
+history --> latest : states[10]
+oldest -[hidden]right-> latest
+note bottom of oldest
+  s0, s1 and their actions are no longer retained.
+  Ten undos reach s2 at position 0.
+  A further undo is unavailable.
+end note
+note bottom of latest
+  Nine intermediate snapshots are omitted here.
+  From s2, ten redos restore s12.
+  A failed save never evicts live history.
+end note
+@enduml

@@ -30,6 +30,8 @@ Member soft-delete and unlimited restoration are supported. Archival remains out
 | loans add | `loans add uuid/UUID nus/NUS_ID assigned/DATE expected/DATE` | [Assign equipment](loans-add.md) |
 | loans return | `loans return uuid/UUID returned/DATE` | [Return equipment](loans-return.md) |
 | loans list | `loans list` | [Open Loans tab](loans-list.md) |
+| undo | `undo` | [Undo record change](undo.md) |
+| redo | `redo` | [Redo record change](redo.md) |
 
 Families/subcommands are lowercase and case-sensitive. Parameter order is free, and
 spaces/tabs separate arguments. List commands accept whitespace only. Other implemented
@@ -44,12 +46,11 @@ rejection and save failures preserve all records; rejected operations do not sav
 writes and failed replacements preserve the prior data file and useful I/O causes. See
 [MVP fields and failure behavior](MvpFields.md) for normalization and ordered diagnostics.
 
-Existing person commands and data remain supported. `loans list` opens the existing Loans tab,
-a read-only presentation of current open loans. Closed records remain stored without a history presentation.
+`loans list` opens the Loans tab with current assignments and completed loan history.
 
 ## Loan rules
 
-Assignments require an existing member, existing AVAILABLE equipment, an assigned date
+Assignments require an existing active member, existing active AVAILABLE equipment, an assigned date
 on or before today, and an expected return on or after assignment. GOOD/FAIR equipment
 is available when it has no open loan; DAMAGED/UNDER_REPAIR items cannot be assigned.
 Expected returns may be after today. Returns require an open loan and its existing member,
@@ -71,3 +72,11 @@ packaged-window acceptance remain tracked separately in milestone integration is
 
 Member deletion now retains records and history. See [Restore member](member-restore.md) for lifecycle,
 persistence and feature-integration guarantees. Equipment deletion remains unchanged.
+
+## Undo and redo
+
+`undo` and `redo` are no-argument top-level commands. They navigate up to ten successful record changes
+per session. Batches are single steps; new successful mutations discard redo. Queries, appearance changes
+and failed commands do not affect history. Candidates contain both records and immutable history;
+LogicManager publishes both only after the existing atomic save succeeds. Restart clears history while
+retaining the last saved records. See [Undo](undo.md) and [Redo](redo.md).

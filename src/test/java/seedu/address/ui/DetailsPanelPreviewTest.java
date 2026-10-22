@@ -118,7 +118,7 @@ public class DetailsPanelPreviewTest {
         if (equipment) {
             EquipmentDetailsPanel panel = new EquipmentDetailsPanel(model.getAddressBook(), model::getAvailability);
             EquipmentListPanel rows = new EquipmentListPanel(model.getAddressBook(), model::getAvailability,
-                    panel::showEquipment);
+                    unused -> { });
             if (select) {
                 panel.showEquipment(CAMERA.getUuid());
                 rows.select(Optional.of(CAMERA.getUuid()));
