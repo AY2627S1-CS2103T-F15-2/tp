@@ -27,6 +27,29 @@ import seedu.address.testutil.ViewTestData;
 /** Uses real JavaFX event dispatch and focus traversal rather than calling private handlers. */
 public class CompletionControllerTest {
     @Test
+    public void tab_equivalentWhitespace_preservesFollowingFieldAndStoredSpelling() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = ViewTestData.model();
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("OK");
+            }, model::getAddressBook);
+            new Scene(new VBox(box.getRoot()));
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            for (String separator : List.of("  ", "\u2003", "\u00a0")) {
+                type(field, "member edit name/alex" + separator + "T" + separator + "phone/91234567");
+                field.positionCaret(field.getText().indexOf("phone/") - separator.length());
+                tab(field);
+                assertEquals("member edit name/Alex Tan" + separator + "phone/91234567", field.getText());
+                assertEquals("member edit name/Alex Tan".length(), field.getCaretPosition());
+            }
+            assertTrue(executed.isEmpty());
+            assertEquals(ViewTestData.ALEX, model.findMember(ViewTestData.ALEX.getNusId()).orElseThrow());
+        });
+    }
+
+    @Test
     public void tab_cycleAndReverse_wrapsAndDoesNotExecute() {
         FxTestUtil.runAndWait(() -> {
             ModelManager model = ViewTestData.model();

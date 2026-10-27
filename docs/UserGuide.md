@@ -62,6 +62,10 @@ reference fields; equipment UUIDs, names and categories; and the four equipment 
 to case and retain their stored spelling. Suggestions use the current records, including records added
 since startup. Identical values appear once.
 
+Value matching treats repeated spaces and Unicode whitespace within a value as ordinary single spaces.
+For example, `member edit name/Alex  T` can complete the stored name `Alex Tan`. The replacement keeps
+the stored spelling, and all text and separators outside that value remain unchanged.
+
 Command words and field prefixes are case-sensitive. Field suggestions depend on the command and omit
 non-repeatable prefixes already present. All seventeen member, equipment and loan commands plus `help`,
 `exit`, `mode dark` and `mode light` have command completion. Search supports `q/`, the applicable filters, sorting and ordering;

@@ -1219,6 +1219,11 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
 7. Add or edit a record, then retry completion. Expected: current values are suggested. Tab alone never
    changes records or saves; Enter uses normal parser validation. Restart after a valid mutation and
    verify the saved records. New IDs, dates, numeric counts and notes remain manually entered.
+8. With an existing member named `Alex Tan`, type `member edit name/Alex  T phone/91234567`
+   using two spaces between `Alex` and `T`. Place the caret after `T` and press Tab.
+   Expected: `name/Alex Tan`, retaining the following phone field and its separator. Repeat with
+   an em space (`U+2003`) and nonbreaking space (`U+00A0`) inside the partial name. The caret ends
+   immediately after the stored name; Tab does not execute the command or rewrite surrounding input.
 
 ### Rejection of retired commands
 
