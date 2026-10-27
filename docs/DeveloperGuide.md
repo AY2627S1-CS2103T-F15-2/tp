@@ -396,12 +396,17 @@ and shows selected structure; lifecycle behavior is explained in the text above.
 
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
-<puml src="diagrams/StorageClassDiagram.puml" width="550" />
+<puml src="diagrams/StorageClassDiagram.puml" width="850" alt="Current storage adapters and relationships" />
 
 The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
+
+`JsonSerializableAddressBook` stores collections of member, equipment and loan adapters alongside
+the retained legacy person adapters. Loan adapters store the member NUS ID and equipment UUID,
+preserving references without duplicating either record. The diagram shows storage types and
+adapter collections; value fields and conversion methods are omitted.
 
 ### Common classes
 
