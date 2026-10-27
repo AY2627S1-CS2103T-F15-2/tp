@@ -1149,6 +1149,13 @@ Given below are instructions to test the app manually.
 testers are expected to do more *exploratory* testing.
 </box>
 
+### Unicode command separators
+
+With disposable data, replace each space in `member view nus/A0123456X` with an EM SPACE (U+2003)
+or nonbreaking space (U+00A0), including surrounding whitespace. The same existing member must open.
+Repeat with `member list`, `equipment list` and `loans list`. Unknown actions, uppercase command words,
+duplicate parameters and unknown parameters must retain their normal diagnostics.
+
 ### Launch and shutdown
 
 1. Initial launch
