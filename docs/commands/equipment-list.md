@@ -6,8 +6,8 @@ Takes no parameters. Spaces and tabs after the subcommand are allowed; text or p
 markers are rejected. Families and subcommands are lowercase and case-sensitive.
 
 Reports the total count and requests the equipment directory through `DisplayRequest`.
-The command does not change entities, loans or stored collection order. It uses the existing
-LogicManager save pipeline, which may report a save error even for a read-only command.
+The command changes neither entities nor loans, nor does it save the data file. It is marked read-only,
+so it can display loaded records even when saving is unavailable.
 
 The directory uses the shared Laplace sort order: normalized category, name, then UUID text.
 Each physical UUID remains a separate item.
