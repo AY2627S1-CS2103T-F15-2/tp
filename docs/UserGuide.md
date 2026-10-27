@@ -561,6 +561,10 @@ member and dates, and the request succeeds or fails as a whole. The condition of
 recorded in its loan history. Assigning an already assigned item is rejected, even if the new loan names
 the same member. Reaching the expected return date does not automatically return an item.
 
+A new assignment must be on or after that unit's latest recorded actual return date. Same-day handoffs
+are allowed. A conflicting UUID rejects the entire batch; expected-return dates do not determine
+historical availability. This check applies to new assignments and does not rewrite retained history.
+
 | Situation | Result or correction |
 | --- | --- |
 | Equipment/member does not exist | `No equipment with UUID UUID exists.` or `No member with NUS ID NUS_ID exists.` Check the corresponding list. |
@@ -568,6 +572,7 @@ the same member. Reaching the expected return date does not automatically return
 | Item already has an open loan | `Equipment UUID is unavailable because it is assigned to CURRENT_NUS_ID.` Return it before assigning it again. |
 | Condition is DAMAGED/UNDER_REPAIR | `Equipment UUID is unavailable (condition: CONDITION).` Choose an AVAILABLE item. |
 | Expected date precedes assignment | `Expected return date cannot be before assigned date` |
+| Assignment precedes a retained actual return | `Equipment UUID cannot be assigned before its last recorded return date DATE.` Use that date or later. |
 | Assignment is in the future | `Assigned date cannot be after today (TODAY).` Check your entry and the computer's date. |
 | Field syntax/date is invalid | Correct the first reported parameter and retry; use a real `yyyy-MM-dd` date. |
 | Saving fails | No loan is recorded and no records change; correct file access before retrying. |

@@ -1177,6 +1177,13 @@ Run the probe on the target architecture and smoke-test the selected JAR before 
 
 ### Grouped equipment, command assistance and appearance
 
+Historical assignment regression: assign an available UUID on `2026-01-10`, return it on
+`2026-01-20`, then try assigning it to a second member on `2026-01-15`. Expect rejection with the
+last actual return date and unchanged records, file and undo/redo history. Repeat with a batch whose
+last UUID conflicts; no earlier UUID may be assigned. A new assignment on `2026-01-20` is allowed.
+`LoanAddCommand` validates each new open interval against retained actual returns before applying any
+batch. Existing stored history remains readable; this change adds no storage migration or repair.
+
 Use a separate empty writable JAR folder. Keep any real dataset untouched.
 
 1. Run `equipment add name/UI Camera category/Photo condition/GOOD count/4`. Expect one group containing
