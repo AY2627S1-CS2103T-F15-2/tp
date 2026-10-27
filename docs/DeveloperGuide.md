@@ -1431,11 +1431,66 @@ new restriction relative to today's date.
        to check navigation, Help and Exit remain available. They also check unchanged records and redo
        history, and that real mutations still save. Do not change permissions on a real dataset.
 
-1. Dealing with missing/corrupted data files
+2. Invalid saved data
 
-    1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+Use a disposable folder containing the matching release JAR. Confirm Java 25 with `java -version`,
+then launch with `java -jar "Laplace.jar"` (substitute the actual downloaded filename). Check the
+status area's data path. Close Laplace before editing files; keep a separate untouched backup of
+`data/addressbook.json`. Never use your real inventory for these tests.
 
-1. _{ more test cases … }_
+1. **Missing file and first save:** Start with no `data/addressbook.json`. Expect sample members,
+   equipment and four loans (three open and one completed). Add a uniquely identified test member
+   using the User Guide syntax, close and restart. Expect that member and the sample records to remain.
+   A valid empty file `{"persons":[],"members":[],"equipment":[],"loans":[]}` must instead load an
+   empty dataset without injecting samples.
+
+2. **Repeated loan cycles and reload:** Create a fresh available unit U with no loan history, then
+   with active test members A and B assign U to A using today's date for assignment and expected
+   return. Return U today with `condition/FAIR`; assign U to B today. Restart. Expect A's completed
+   history to remain, B to be the current holder, U to be ASSIGNED, and U to appear only in B's current
+   holdings. Return U with `condition/DAMAGED` and restart again: expect exactly two completed loans,
+   recorded issue/return conditions, no holder or current holdings, and UNAVAILABLE equipment. Do not
+   infer missing historical conditions.
+
+3. **Rejected batches:** Use two available units and a valid member. Try an assignment containing a
+   duplicate UUID, then a valid UUID followed by a nonexistent UUID. Expect rejection of the whole
+   command, no new loans and no file changes. Assign both units successfully, then attempt a return
+   containing one assigned unit and one unit with no open loan. Expect both original loans to remain
+   open. A valid batch return must close both; repeating it must fail. Restart and compare counts,
+   holders and conditions with the state before shutdown.
+
+4. **Earlier valid data:** On a copy, remove `deleted` from member/equipment records and remove
+   `issueCondition`/`returnCondition` from loans. Restart: expect records to load as active and missing
+   conditions to display `Not recorded`, with UUIDs, dates, references and history preserved. Also test
+   `{"persons":[]}`: expect an empty dataset. Restore the backup before the next scenario.
+
+5. **Malformed or inconsistent data:** In separate copies, test invalid JSON (`{broken`), a JSON
+   `null` root, a loan with a nonexistent member/UUID, two open loans for one UUID, and an explicit
+   `"deleted": null` flag.
+   Storage must reject the complete load and leave the input bytes untouched. Expected: a recovery
+   error names the data file and explains preservation, backup and repair. After acknowledgment,
+   startup terminates unsuccessfully without an editable main window. The original data bytes remain
+   unchanged, including after shutdown.
+
+6. **Restore after invalid data:** Restore the untouched valid backup while the app is closed and
+   restart. Expect its records and relationships to return. A genuinely missing data file still starts
+   the sample dataset.
+
+7. **Save failure and retry:** Deterministically verify this with
+   `./gradlew test --tests 'seedu.address.storage.LaplaceTransactionTest'` under Java 25.
+   The test injects a partial temporary-file write and a failed atomic replacement for actual mutation
+   commands, including assignment and return. Expect a reported failure, unchanged live collections,
+   byte-for-byte preservation of the previous data file, and a successful retry after removing the
+   injected failure. Do not rely on making only the JSON file read-only: replacement permissions are
+   controlled by the containing directory. These are automated failure-injection checks, not a claim
+   that an arbitrary manual filesystem failure has been reproduced.
+
+Verification basis (27 October 2026): loan command/parser/panel, sample-data, storage and root JSON
+suites passed against commit `5dd5a2963e211777b4cefbab26e6f6c75d81df66`; transaction and undo/redo
+failure tests were run separately. The steps above are manual counterparts to those checks. Startup
+fail-closed behavior is covered by `MainAppTest` against the startup recovery path in
+[#200](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/200); a full manual GUI walkthrough of these
+scenarios remains a release smoke-test task.
 
 ### Undo and redo
 
