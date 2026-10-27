@@ -571,6 +571,11 @@ All four parameters are required. Use the actual UUID from `equipment list` and 
 `member list`. Both identities must exist. Assignment must be on or before the computer's local date;
 expected return must be on or after assignment. Expected return may be in the future.
 
+When saved history contains an assignment or actual return after the computer's date, loading retains
+the records and writes an identity-specific warning to `addressbook.log.*` beside the JAR. Verify the
+computer date first; if the saved dates are wrong, preserve the original and recover a backup. This
+warning accommodates clock rollback. It does not relax command date bounds or flag future expected returns.
+
 Example, assuming these identities exist and the assignment date is not in the future:
 
 ```text

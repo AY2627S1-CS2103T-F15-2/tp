@@ -394,6 +394,13 @@ and shows selected structure; lifecycle behavior is explained in the text above.
 
 ### Storage component
 
+After successful conversion, storage compares recorded assignment/actual-return dates with its local
+clock and logs an actionable warning containing equipment UUID, member ID and recorded dates. It does
+not reject or rewrite records on this basis: a clock rollback can make previously valid history appear
+future-dated. Expected dates remain unrestricted relative to today. Manual check with disposable data:
+load a 2099 assignment/actual return, inspect the warning and unchanged file, then load a future expected
+return only and confirm no warning. The command date restrictions remain enforced.
+
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
 <puml src="diagrams/StorageClassDiagram.puml" width="850" alt="Current storage adapters and relationships" />
