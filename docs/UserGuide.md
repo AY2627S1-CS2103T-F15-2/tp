@@ -772,8 +772,10 @@ allows a separate sample dataset to start; it does not recover the original reco
 categories, conditions and notes are allowed. Use the UUID to choose the unit you mean.
 
 **How do I find a member or current holder?** Use `member view nus/NUS_ID` for exact member details and
-holdings, or `equipment view uuid/UUID` for an exact item and its current holder. Partial/fuzzy searches
-and separate member-find/holder commands are outside the MVP.
+holdings, or `equipment view uuid/UUID` for an exact item and its current holder. To browse without an
+exact identifier, use `member search q/TEXT` or `equipment search q/TEXT`; `q/` matches a
+case-insensitive substring of the searchable fields. Fuzzy or typo-tolerant matching and separate
+member-find/holder commands are outside the MVP.
 
 **Why can I not delete a record?** A member with an open loan or equipment currently on loan cannot be
 deleted. Return the relevant items first. Closed loans do not block deletion. They are retained for
