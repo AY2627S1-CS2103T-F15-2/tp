@@ -1200,6 +1200,19 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
 8. Review at 1920×1080 with 100%/125% scaling and 1280×720 with 150% scaling on supported systems.
    Check wrapping, scrolling, visible focus and contrast. Logical-size snapshots alone do not verify OS scaling.
 
+### Retained inventory totals during filtering
+
+In a separate empty dataset, add two GOOD units named `Mixed` in category `Photo`, and one GOOD unit
+named `Retired` in category `Legacy`. Delete one `Mixed` unit and the only `Retired` unit by UUID.
+Do not create loans. Expected: three retained units, one active available unit, and two deleted units.
+
+Run `equipment search status/active`, `equipment search status/deleted`, and `equipment list`.
+The Displayed count must be one, two and three respectively. Throughout, the right-hand summary must
+retain both groups: `Photo` / `Mixed` has one available and one deleted unit; `Legacy` / `Retired` has
+zero active availability counts and one deleted unit. Equipment Total stays three and overall active
+availability stays one available, zero assigned and zero unavailable. Filters change matching units,
+not retained totals. Check the UG and linked search guide describe this same distinction.
+
 ### Tab completion across current commands
 
 1. In a disposable dataset, type `mem` and press Tab. Expected: `member`, with the caret at its end.
