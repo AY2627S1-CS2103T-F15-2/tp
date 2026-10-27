@@ -1243,6 +1243,10 @@ not retained totals. Check the UG and linked search guide describe this same dis
    Repeat with `equipment add category/Photo co`; expect `category/Photo Cover`. Check `Camera Case`
    and `Camera Notes` too. When no stored value matches, an unfinished token such as `notes/Keep co`
    still offers unused field prefixes; a trailing space starts a new field.
+10. After one or several valid comma-separated UUIDs, complete `loans add uuid/UUID nu`,
+    `loans return uuid/UUID re`, and `loans return uuid/UUID co`. Expect `nus/`, `returned/` and
+    `condition/` without changing the UUID list or later fields. Recheck UUID completion immediately
+    after a comma; it must still offer unused UUIDs rather than a new parameter.
 
 ### Rejection of retired commands
 

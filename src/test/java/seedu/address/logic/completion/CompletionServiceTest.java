@@ -360,6 +360,21 @@ public class CompletionServiceTest {
         assertTrue(service.complete(exhausted, exhausted.length(), model.getAddressBook()).isEmpty());
     }
 
+    @Test
+    public void complete_fieldAfterLoanIdentities_fallsBackToUnusedPrefix() {
+        String first = ViewTestData.CAMERA.getUuid().toString();
+        String second = ViewTestData.OTHER_CAMERA.getUuid().toString();
+        for (String identities : List.of(first, first + ", " + second)) {
+            assertCandidates("loans add uuid/" + identities + " nu", "nus/");
+            assertCandidates("loans return uuid/" + identities + " re", "returned/");
+            assertCandidates("loans return uuid/" + identities + " co", "condition/");
+            String input = "loans add uuid/" + identities + " nuJUNK   expected/2026-01-08";
+            Completion completion = service.complete(input, input.indexOf("JUNK"),
+                    model.getAddressBook()).orElseThrow();
+            assertEquals("loans add uuid/" + identities + " nus/   expected/2026-01-08", apply(input, completion));
+        }
+    }
+
     private Completion proposal(String text) {
         return service.complete(text, text.length(), model.getAddressBook()).orElseThrow();
     }

@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,6 +27,39 @@ import seedu.address.testutil.ViewTestData;
 
 /** Uses real JavaFX event dispatch and focus traversal rather than calling private handlers. */
 public class CompletionControllerTest {
+    @Test
+    public void tab_fieldAfterLoanIdentities_preservesBatchAndFollowingFields() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = ViewTestData.model();
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("OK");
+            }, model::getAddressBook);
+            new Scene(new VBox(box.getRoot()));
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            String first = ViewTestData.CAMERA.getUuid().toString();
+            String second = ViewTestData.OTHER_CAMERA.getUuid().toString();
+            for (String identities : List.of(first, first + ", " + second)) {
+                Map<String, String> replacements = Map.of(
+                        "loans add uuid/" + identities + " nu", "loans add uuid/" + identities + " nus/",
+                        "loans return uuid/" + identities + " re", "loans return uuid/" + identities + " returned/",
+                        "loans return uuid/" + identities + " co", "loans return uuid/" + identities + " condition/");
+                replacements.forEach((input, expected) -> {
+                    String following = input.startsWith("loans add") ? "   expected/2026-01-08"
+                            : input.endsWith(" re") ? "   condition/GOOD" : "   returned/2026-01-08";
+                    type(field, input + following);
+                    field.positionCaret(input.length());
+                    tab(field);
+                    assertEquals(expected + following, field.getText());
+                    assertEquals(expected.length(), field.getCaretPosition());
+                });
+            }
+            assertTrue(executed.isEmpty());
+            assertTrue(model.getLoanList().isEmpty());
+        });
+    }
+
     @Test
     public void tab_multiwordValueOverlapsPrefix_completesValueWithoutExecuting() {
         FxTestUtil.runAndWait(() -> {

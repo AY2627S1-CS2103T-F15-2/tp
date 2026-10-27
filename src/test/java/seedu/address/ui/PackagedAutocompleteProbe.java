@@ -60,6 +60,8 @@ public final class PackagedAutocompleteProbe {
         window.getPrimaryStage().getScene().getRoot().applyCss();
         TextField field = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
         try {
+            String first = ViewTestData.CAMERA.getUuid().toString();
+            String batch = first + ", " + ViewTestData.OTHER_CAMERA.getUuid();
             String[][] examples = {
                 {"mo", "mode"}, {"mode da", "mode dark"}, {"mode li", "mode light"},
                 {"mem", "member"}, {"member ad", "member add"}, {"member add na", "member add name/"},
@@ -87,6 +89,12 @@ public final class PackagedAutocompleteProbe {
                     {"equipment add cou", "equipment add count/"},
                     {"loans return co", "loans return condition/"},
                     {"loans return condition/fa", "loans return condition/FAIR"},
+                    {"loans add uuid/" + first + " nu", "loans add uuid/" + first + " nus/"},
+                    {"loans return uuid/" + first + " re", "loans return uuid/" + first + " returned/"},
+                    {"loans return uuid/" + first + " co", "loans return uuid/" + first + " condition/"},
+                    {"loans add uuid/" + batch + " nu", "loans add uuid/" + batch + " nus/"},
+                    {"loans return uuid/" + batch + " re", "loans return uuid/" + batch + " returned/"},
+                    {"loans return uuid/" + batch + " co", "loans return uuid/" + batch + " condition/"},
                     {"loans add uuid/00000000-0000-0000-0000-000000000001,00000000",
                         "loans add uuid/00000000-0000-0000-0000-000000000001,"
                             + "00000000-0000-0000-0000-000000000002"},

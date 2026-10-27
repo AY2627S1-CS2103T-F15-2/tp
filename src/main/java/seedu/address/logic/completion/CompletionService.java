@@ -205,7 +205,7 @@ public final class CompletionService {
                     end--;
                 }
                 if (command.startsWith("loans ") && markers.get(i).equals(PREFIX_EQUIPMENT_UUID.getPrefix())) {
-                    return loanIdentity(text, start, end, caret, data);
+                    return loanIdentity(text, start, end, caret, data).or(() -> prefix);
                 }
                 return suggest(start, end, text.substring(start, caret),
                         values(command, markers.get(i), data), true).or(() -> prefix);
