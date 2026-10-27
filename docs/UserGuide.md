@@ -207,7 +207,7 @@ Use the member, equipment and loan commands documented below, or `undo`, `redo`,
 | Category `category/` | 1–50 printable Unicode characters after normalization. Free text; control characters are rejected. |
 | Condition `condition/` | Exactly `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`, ignoring case. Stored uppercase. Use the underscore in `UNDER_REPAIR`. |
 | Notes `notes/` | Optional, at most 300 printable Unicode characters after trimming. Line breaks become spaces. Omitted or empty notes mean no notes. |
-| Dates | Exactly `yyyy-MM-dd` and a real Gregorian calendar date, such as `2026-10-15`. Assignment/actual-return dates cannot be later than the computer's local date. Expected return may be in the future. |
+| Dates | Exactly `yyyy-MM-dd` with a Gregorian year from `0001` through `9999`, such as `2026-10-15`. Assignment/actual-return dates cannot be later than the computer's local date. Expected return may be in the future. |
 
 Copy the actual UUID displayed by Laplace when issuing, viewing, returning or deleting equipment.
 The UUID in this guide is an example; it does not identify every newly added item.
@@ -689,6 +689,9 @@ Successful changes save automatically; there is no manual-save command. For the 
 data is stored in `data/addressbook.json` inside the folder containing `Laplace.jar`, even if you launch
 the JAR from another terminal folder. `preferences.json` and rotating `addressbook.log.*` files also
 stay beside the JAR. The window's status area identifies the data-file path.
+
+Saved loan dates must also use the four-digit Gregorian range `0001`–`9999`. Year zero, negative years,
+and five-digit years are invalid stored data. Loading does not compare historical dates with today's clock.
 
 If you previously launched from another folder, close Laplace and back up the old data and preferences
 before copying them into the matching locations beside the JAR. Data is not automatically read or moved

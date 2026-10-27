@@ -1271,6 +1271,11 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
 
 ### Saving data
 
+1. Stored date validation: in a disposable saved file, change each loan date field in turn to
+   `0000-01-01`, `-0001-01-01`, or `+10000-01-01`. Expect loading to report invalid data without
+   rewriting that file. Valid years `0001` and `9999` and valid legacy condition omissions remain
+   supported; storage does not impose a new restriction relative to today's date.
+
 1. Dealing with missing/corrupted data files
 
     1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
