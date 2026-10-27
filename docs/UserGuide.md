@@ -630,7 +630,7 @@ For a batch, feedback lists the number of units and their UUIDs without naming o
 | --- | --- |
 | Equipment does not exist | `No equipment with UUID UUID exists.` Check the full UUID. |
 | No open loan, including an already returned item | `Equipment UUID has no open loan to return.` A repeated return is rejected. |
-| Return is before assignment | `Returned date cannot be before assigned date` |
+| Return is before assignment | `Cannot return NAME (UUID) on RETURN_DATE: it was assigned on ASSIGNED_DATE.` Correct the identified unit's date; the whole batch remains unchanged. |
 | Return is in the future | `Returned date cannot be after today (TODAY).` |
 | Missing/repeated/unknown field or invalid date | Correct the reported parameter and use the full command syntax. |
 | Open loan refers to a missing member | `Cannot return equipment UUID: its open loan refers to a missing member.` Preserve the data and report the error to the team. |

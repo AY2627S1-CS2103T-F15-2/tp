@@ -1346,6 +1346,11 @@ not retained totals. Check the UG and linked search guide describe this same dis
    Automated transaction tests separately inject partial writes/failed atomic moves; do not simulate
    filesystem failures against a real user dataset.
 
+To verify return-date diagnostics, assign two disposable units on different days and return both on a
+date between their assignment dates. Expect the offending name, full UUID, attempted date and assignment
+date in the error, with neither loan closed and neither condition changed. A single-unit early return
+uses the same diagnostic. Assignment-day and today returns remain inclusive valid boundaries.
+
 ### Saving data
 
 1. Dealing with missing/corrupted data files

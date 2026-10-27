@@ -32,6 +32,8 @@ public class LoanReturnCommand extends Command {
     public static final String MESSAGE_NO_OPEN_LOAN = "Equipment %1$s has no open loan to return.";
     public static final String MESSAGE_MEMBER_NOT_FOUND =
             "Cannot return equipment %1$s: its open loan refers to a missing member.";
+    public static final String MESSAGE_RETURN_BEFORE_ASSIGNMENT =
+            "Cannot return %1$s (%2$s) on %3$s: it was assigned on %4$s.";
     public static final String MESSAGE_FUTURE_RETURN = "Returned date cannot be after today (%1$s).";
 
     private final List<UUID> equipmentUuids;
@@ -98,7 +100,8 @@ public class LoanReturnCommand extends Command {
                     new CommandException(String.format(MESSAGE_MEMBER_NOT_FOUND, uuid),
                             new MemberNotFoundException()));
             if (returnedDate.isBefore(open.getAssignedDate())) {
-                throw new CommandException(Loan.MESSAGE_RETURNED_DATE_CONSTRAINTS);
+                throw new CommandException(String.format(MESSAGE_RETURN_BEFORE_ASSIGNMENT,
+                        item.getName(), uuid, returnedDate, open.getAssignedDate()));
             }
             if (firstName == null) {
                 firstName = item.getName();

@@ -91,6 +91,20 @@ public class LoanBatchCommandTest {
     }
 
     @Test
+    public void batchReturn_mixedAssignmentDates_identifiesOffendingUnitAndKeepsWholeModel() {
+        ModelManager model = LoanCommandTestData.model();
+        model.addLoan(LoanCommandTestData.openLoan());
+        model.addLoan(new Loan(SECOND_UUID, SECOND_MEMBER.getNusId(), TODAY.minusDays(1), TODAY, null));
+        AddressBook before = new AddressBook(model.getAddressBook());
+        CommandException error = assertThrows(CommandException.class, () ->
+                new LoanReturnCommand(List.of(FIRST_UUID, SECOND_UUID), TODAY.minusDays(2),
+                        Condition.DAMAGED, CLOCK).execute(model));
+        assertEquals(String.format(LoanReturnCommand.MESSAGE_RETURN_BEFORE_ASSIGNMENT, "Camera", SECOND_UUID,
+                TODAY.minusDays(2), TODAY.minusDays(1)), error.getMessage());
+        assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
     public void batchReturn_updatesBothConditionsAndPreservesLoanHistory() throws Exception {
         ModelManager model = LoanCommandTestData.model();
         new LoanAddCommand(List.of(FIRST_UUID, SECOND_UUID), FIRST_MEMBER.getNusId(),
