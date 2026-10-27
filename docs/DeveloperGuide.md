@@ -201,8 +201,8 @@ their windows and must not shut down the shared toolkit.
 
 `MainWindow` supplies the live read-only address book to `CommandBox`. `CompletionService` computes
 replacement ranges and ordered candidates without calling logic, history or storage. Command constants
-and shared search prefix constants define the completion vocabulary. The newly merged `undo`/`redo`
-parser routes are not currently registered in `CompletionService`. Search enum options follow
+and shared search prefix constants define the completion vocabulary, including the `undo`/`redo`
+utilities. Help and explicit Ctrl+Space completion use `CommandCatalog`. Search enum options follow
 `DirectoryQuery`; dates, numeric counts, new member IDs and free-form notes are entered manually.
 Batch loan completion replaces only the active UUID entry and excludes neighboring identities.
 `CompletionController` owns cycling and resets after input, caret, focus or model changes. Enter retains
