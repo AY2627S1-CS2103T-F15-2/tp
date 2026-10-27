@@ -331,7 +331,10 @@ You can edit contact details while the member holds equipment. Matching another 
 or contacts does not merge records because NUS IDs identify members.
 
 Success reports `Edited member NUS_ID: NAME.` and opens the updated details. The directory
-re-sorts by name and NUS ID while keeping the edited member selected. Changes survive restart.
+re-evaluates its current filters and sort order. Name then NUS ID is the default ordering; an explicit
+sort such as `sort/id order/desc` remains active. The edited member stays selected when included in
+the filtered results; their details still open if the edit moves them outside those results.
+Changes survive restart.
 
 | Situation | Result or correction |
 | --- | --- |
