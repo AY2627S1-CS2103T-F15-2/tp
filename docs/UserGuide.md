@@ -62,6 +62,11 @@ reference fields; equipment UUIDs, names and categories; and the four equipment 
 to case and retain their stored spelling. Suggestions use the current records, including records added
 since startup. Identical values appear once.
 
+A matching stored value takes priority over an unfinished field prefix within that value. For example,
+with a stored equipment name `Camera Cover`, `equipment add name/Camera co` completes to
+`equipment add name/Camera Cover`. If no stored value matches, the final token can still complete
+to a new field prefix. A trailing space offers the unused fields for the command.
+
 Value matching treats repeated spaces and Unicode whitespace within a value as ordinary single spaces.
 For example, `member edit name/Alex  T` can complete the stored name `Alex Tan`. The replacement keeps
 the stored spelling, and all text and separators outside that value remain unchanged.
@@ -208,7 +213,7 @@ Use the member, equipment and loan commands documented below, or `undo`, `redo`,
 | Field | Accepted input and stored form |
 | --- | --- |
 | NUS ID `nus/` | One ASCII letter, exactly seven digits, and an optional final ASCII letter. Case-insensitive; stored/displayed uppercase, such as `A0123456X` or `E0123456`. |
-| Member name `name/` | 1–100 characters after normalization. Unicode letters, spaces, apostrophes, hyphens and periods only; must contain at least one letter. Example: `Anne-Marie O'Connor`. |
+| Member name `name/` | 1–100 Unicode code points after whitespace and NFC normalization. Unicode letters with combining marks, spaces, straight (`'`) or curly (`’`) apostrophes, hyphens and periods; must contain at least one letter. Combining marks must follow a letter or its marks. Examples: `அருண்`, `Anne O’Connor`. |
 | Phone `phone/` | Optional leading `+`, then 8–15 digits. Spaces and hyphens are removed: `+65 9123-4567` becomes `+6591234567`. |
 | Email `email/` | 3–254 ASCII characters, one `@`, no spaces and at least one domain dot. Local-part characters: letters, digits, `.`, `_`, `%`, `+`, `-`. Domain labels contain letters/digits/hyphens and cannot begin/end with a hyphen. Stored lowercase. |
 | Equipment UUID `uuid/` | Full `8-4-4-4-12` hexadecimal form, such as `550e8400-e29b-41d4-a716-446655440000`. Case-insensitive input; lowercase display. Shortened UUIDs are rejected. |
@@ -220,6 +225,10 @@ Use the member, equipment and loan commands documented below, or `undo`, `redo`,
 
 Copy the actual UUID displayed by Laplace when issuing, viewing, returning or deleting equipment.
 The UUID in this guide is an example; it does not identify every newly added item.
+
+Newly added or edited member names use Unicode NFC normalization: `José Tan` and `José Tan`
+(with a separate combining acute accent) are stored as the same canonical spelling. Existing saved
+names retain their exact spelling when loaded; editing another field does not rewrite the name.
 
 ### Availability
 

@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -110,6 +111,29 @@ public class CompletionServiceTest {
             assertTrue(service.complete(input, input.length(), model.getAddressBook()).isEmpty(), input);
         }
         assertTrue(service.complete("member view nus/A", 17, new AddressBook()).isEmpty());
+    }
+
+    @Test
+    public void complete_multiwordValueOverlapsPrefix_prefersStoredValue() {
+        for (String word : List.of("Cover", "Case", "Notes")) {
+            model.addEquipment(new Equipment(UUID.randomUUID(), "Camera " + word, "Photo " + word,
+                    ViewTestData.CAMERA.getCondition(), ""));
+            String fragment = word.substring(0, 2).toLowerCase();
+            assertCandidates("equipment add name/Camera " + fragment, "Camera " + word);
+            assertCandidates("equipment add category/Photo " + fragment, "Photo " + word);
+        }
+        String input = "equipment add name/Camera coJUNK   category/Photo condition/GOOD";
+        Completion completion = service.complete(input, input.indexOf("JUNK"),
+                model.getAddressBook()).orElseThrow();
+        assertEquals("equipment add name/Camera Cover   category/Photo condition/GOOD", apply(input, completion));
+    }
+
+    @Test
+    public void complete_noMatchingMultiwordValue_retainsPrefixCompletion() {
+        assertCandidates("equipment add name/Camera co", "condition/", "count/");
+        assertCandidates("equipment add category/Photo no", "notes/");
+        assertCandidates("equipment add notes/Keep co", "condition/", "count/");
+        assertCandidates("equipment add name/Camera ", "category/", "condition/", "count/", "notes/");
     }
 
     @Test
@@ -334,6 +358,21 @@ public class CompletionServiceTest {
         assertCandidates("loans return condition/g", "GOOD");
         String exhausted = "loans return uuid/" + first + "," + second + "," + third + ",";
         assertTrue(service.complete(exhausted, exhausted.length(), model.getAddressBook()).isEmpty());
+    }
+
+    @Test
+    public void complete_fieldAfterLoanIdentities_fallsBackToUnusedPrefix() {
+        String first = ViewTestData.CAMERA.getUuid().toString();
+        String second = ViewTestData.OTHER_CAMERA.getUuid().toString();
+        for (String identities : List.of(first, first + ", " + second)) {
+            assertCandidates("loans add uuid/" + identities + " nu", "nus/");
+            assertCandidates("loans return uuid/" + identities + " re", "returned/");
+            assertCandidates("loans return uuid/" + identities + " co", "condition/");
+            String input = "loans add uuid/" + identities + " nuJUNK   expected/2026-01-08";
+            Completion completion = service.complete(input, input.indexOf("JUNK"),
+                    model.getAddressBook()).orElseThrow();
+            assertEquals("loans add uuid/" + identities + " nus/   expected/2026-01-08", apply(input, completion));
+        }
     }
 
     private Completion proposal(String text) {

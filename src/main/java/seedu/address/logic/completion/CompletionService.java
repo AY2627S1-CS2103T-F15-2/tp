@@ -190,7 +190,8 @@ public final class CompletionService {
                 && LaplaceText.normalize(text.substring(argumentsStart, caret)).endsWith(",");
         Optional<Completion> prefix = isBatchEntry ? Optional.empty()
                 : suggest(tokenStart, tokenEnd, fragment, available, false);
-        if (prefix.isPresent()) {
+        // A blank token starts the next field; a nonempty token can still be part of a stored value.
+        if (fragment.isEmpty() && prefix.isPresent()) {
             return prefix;
         }
         for (int i = 0; i < markers.size(); i++) {
@@ -204,13 +205,13 @@ public final class CompletionService {
                     end--;
                 }
                 if (command.startsWith("loans ") && markers.get(i).equals(PREFIX_EQUIPMENT_UUID.getPrefix())) {
-                    return loanIdentity(text, start, end, caret, data);
+                    return loanIdentity(text, start, end, caret, data).or(() -> prefix);
                 }
                 return suggest(start, end, text.substring(start, caret),
-                        values(command, markers.get(i), data), true);
+                        values(command, markers.get(i), data), true).or(() -> prefix);
             }
         }
-        return Optional.empty();
+        return prefix;
     }
 
     /**

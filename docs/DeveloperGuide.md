@@ -379,6 +379,12 @@ retaining collection position, reserved identities and historical loan reference
 list remains observable and includes deleted records. The model also retains user preferences through
 `UserPrefs` and `ReadOnlyUserPrefs`.
 
+`Name.forMember` collapses whitespace and applies Unicode NFC before validating new names. Validation
+allows letters followed by combining marks, spaces, straight/curly apostrophes, hyphens and periods,
+requires at least one letter, and limits the result to 100 Unicode code points. Add and edit share this
+factory. `Name.fromStoredMember` accepts the expanded rule and legacy values while preserving their
+exact saved spelling. Editing another field retains the existing `Name`; no schema migration is needed.
+
 Deletion is blocked while a member has outstanding loans. Deleted members remain visible and
 recoverable indefinitely; editing and new loans require restoration first. Restoration has no expiry
 or automatic purge. Mutations use the existing transactional save-before-publish pipeline.
@@ -1237,11 +1243,21 @@ not retained totals. Check the UG and linked search guide describe this same dis
    Expected: `name/Alex Tan`, retaining the following phone field and its separator. Repeat with
    an em space (`U+2003`) and nonbreaking space (`U+00A0`) inside the partial name. The caret ends
    immediately after the stored name; Tab does not execute the command or rewrite surrounding input.
-9. Type `loans return co` and press Ctrl+Space. Expected: `loans return condition/` is offered.
-   Repeat after an existing `uuid/UUID` field; that field remains unchanged. After a used
-   `condition/GOOD` field, Ctrl+Space must not offer `condition/` again. Compare with Tab and the
-   loan-return template in Help; both expose the same optional return condition. Preparing a template
-   or accepting a suggestion must not execute a return.
+9. Register equipment named `Camera Cover` in category `Photo Cover`. Type
+   `equipment add name/Camera co category/Photo`, place the caret after `co`, and press Tab.
+   Expected: `name/Camera Cover`, with the following category field unchanged and no command executed.
+   Repeat with `equipment add category/Photo co`; expect `category/Photo Cover`. Check `Camera Case`
+   and `Camera Notes` too. When no stored value matches, an unfinished token such as `notes/Keep co`
+   still offers unused field prefixes; a trailing space starts a new field.
+10. After one or several valid comma-separated UUIDs, complete `loans add uuid/UUID nu`,
+    `loans return uuid/UUID re`, and `loans return uuid/UUID co`. Expect `nus/`, `returned/` and
+    `condition/` without changing the UUID list or later fields. Recheck UUID completion immediately
+    after a comma; it must still offer unused UUIDs rather than a new parameter.
+11. Type `loans return co` and press Ctrl+Space. Expected: `loans return condition/` is offered.
+    Repeat after an existing `uuid/UUID` field; that field remains unchanged. After a used
+    `condition/GOOD` field, Ctrl+Space must not offer `condition/` again. Compare with Tab and the
+    loan-return template in Help; both expose the same optional return condition. Preparing a template
+    or accepting a suggestion must not execute a return.
 
 ### Rejection of retired commands
 
@@ -1257,6 +1273,19 @@ not retained totals. Check the UG and linked search guide describe this same dis
    the rejected-input file comparison above.
 4. Restart the application. Expected: saved records still load normally. Existing JSON files with a
    `persons` array remain readable; no migration or removal of that array is required by this change.
+
+### Unicode member names
+
+1. In disposable data, add members named `அருண்`, `Anne O’Connor`, and `José Tan` (the `e` followed
+   by combining acute accent U+0301), using a different valid NUS ID for each. Expect success; the last
+   name is stored/displayed as NFC `José Tan`. Ordinary names such as `Anne-Marie O'Connor` still work.
+2. Give a member an open loan, then use `member edit nus/NUS_ID name/அருண்` and another valid Unicode
+   name. Expect the same NUS ID, contacts and loan references after each edit and after restarting.
+3. Try a leading combining mark, a mark after a space, a punctuation-only name and a name longer than
+   100 code points after normalization. Expect an error without saved-data changes. Equivalent names
+   at the limit must be counted after NFC composition, not by UTF-16 units or the raw pasted length.
+4. Load an existing file with a decomposed accented member name and repeated spaces. Expect exact saved
+   spelling to remain when loading, saving, and editing only the phone/email. New name input uses NFC.
 
 ### Adding a batch of equipment
 
