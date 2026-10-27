@@ -78,6 +78,27 @@ class EquipmentGroupPanelTest {
     }
 
     @Test
+    void showUnit_removedTarget_doesNotSelectOrRevealAnUnrelatedRow() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = model();
+            List<UUID> activations = new ArrayList<>();
+            EquipmentGroupPanel panel = new EquipmentGroupPanel(model.getAddressBook(), model::getAvailability,
+                    unused -> { }, unused -> { }, activations::add);
+            mount(panel);
+            panel.showUnit(CAMERA.getUuid(), DirectoryQuery.all());
+            TableView<?> units = (TableView<?>) panel.lookup("#physicalUnits");
+            assertEquals(CAMERA, units.getSelectionModel().getSelectedItem());
+            // A queued navigation request can outlive the records it originally referred to.
+            model.setAddressBook(new seedu.address.model.AddressBook());
+            panel.showUnit(CAMERA.getUuid(), DirectoryQuery.all());
+            assertTrue(units.getItems().isEmpty());
+            assertEquals(-1, units.getSelectionModel().getSelectedIndex());
+            assertEquals("Equipment group no longer exists", ((Label) panel.lookup("#groupTitle")).getText());
+            assertTrue(activations.isEmpty());
+        });
+    }
+
+    @Test
     void exactUnitOutsideFilter_canReturnToMatchingRowsWithoutLosingDetails() {
         FxTestUtil.runAndWait(() -> {
             ModelManager model = model();
