@@ -1200,6 +1200,19 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
 8. Review at 1920×1080 with 100%/125% scaling and 1280×720 with 150% scaling on supported systems.
    Check wrapping, scrolling, visible focus and contrast. Logical-size snapshots alone do not verify OS scaling.
 
+### Retained inventory totals during filtering
+
+In a separate empty dataset, add two GOOD units named `Mixed` in category `Photo`, and one GOOD unit
+named `Retired` in category `Legacy`. Delete one `Mixed` unit and the only `Retired` unit by UUID.
+Do not create loans. Expected: three retained units, one active available unit, and two deleted units.
+
+Run `equipment search status/active`, `equipment search status/deleted`, and `equipment list`.
+The Displayed count must be one, two and three respectively. Throughout, the right-hand summary must
+retain both groups: `Photo` / `Mixed` has one available and one deleted unit; `Legacy` / `Retired` has
+zero active availability counts and one deleted unit. Equipment Total stays three and overall active
+availability stays one available, zero assigned and zero unavailable. Filters change matching units,
+not retained totals. Check the UG and linked search guide describe this same distinction.
+
 ### Tab completion across current commands
 
 1. In a disposable dataset, type `mem` and press Tab. Expected: `member`, with the caret at its end.
@@ -1219,7 +1232,12 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
 7. Add or edit a record, then retry completion. Expected: current values are suggested. Tab alone never
    changes records or saves; Enter uses normal parser validation. Restart after a valid mutation and
    verify the saved records. New IDs, dates, numeric counts and notes remain manually entered.
-8. Type `loans return co` and press Ctrl+Space. Expected: `loans return condition/` is offered.
+8. With an existing member named `Alex Tan`, type `member edit name/Alex  T phone/91234567`
+   using two spaces between `Alex` and `T`. Place the caret after `T` and press Tab.
+   Expected: `name/Alex Tan`, retaining the following phone field and its separator. Repeat with
+   an em space (`U+2003`) and nonbreaking space (`U+00A0`) inside the partial name. The caret ends
+   immediately after the stored name; Tab does not execute the command or rewrite surrounding input.
+9. Type `loans return co` and press Ctrl+Space. Expected: `loans return condition/` is offered.
    Repeat after an existing `uuid/UUID` field; that field remains unchanged. After a used
    `condition/GOOD` field, Ctrl+Space must not offer `condition/` again. Compare with Tab and the
    loan-return template in Help; both expose the same optional return condition. Preparing a template
