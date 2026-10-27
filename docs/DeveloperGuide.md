@@ -1219,6 +1219,11 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
 7. Add or edit a record, then retry completion. Expected: current values are suggested. Tab alone never
    changes records or saves; Enter uses normal parser validation. Restart after a valid mutation and
    verify the saved records. New IDs, dates, numeric counts and notes remain manually entered.
+8. Type `loans return co` and press Ctrl+Space. Expected: `loans return condition/` is offered.
+   Repeat after an existing `uuid/UUID` field; that field remains unchanged. After a used
+   `condition/GOOD` field, Ctrl+Space must not offer `condition/` again. Compare with Tab and the
+   loan-return template in Help; both expose the same optional return condition. Preparing a template
+   or accepting a suggestion must not execute a return.
 
 ### Rejection of retired commands
 
