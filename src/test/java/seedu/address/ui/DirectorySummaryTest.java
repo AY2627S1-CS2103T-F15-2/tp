@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.imageio.ImageIO;
@@ -154,6 +155,25 @@ public class DirectorySummaryTest {
             panel.refresh(Optional.empty());
             assertLabel(panel, "availableCount", "2");
             assertTrue(panel.getRoot().lookup("#status").getStyleClass().contains("laplace-success"));
+        });
+    }
+
+    @Test
+    public void equipment_separatorInsideFields_keepsGroupLabelsDistinct() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = new ModelManager();
+            model.addEquipment(new Equipment(new UUID(0, 1), "C", "A · B", Condition.GOOD, ""));
+            model.addEquipment(new Equipment(new UUID(0, 2), "B · C", "A", Condition.DAMAGED, ""));
+            EquipmentDirectorySummary panel = new EquipmentDirectorySummary(model.getAddressBook(),
+                    model::getAvailability);
+            mount(panel.getRoot(), 720, 500);
+            String groups = label(panel, "inventoryGroups");
+            List<String> lines = List.of(groups.split("\n"));
+            assertEquals(2, lines.size());
+            assertEquals(2, new java.util.HashSet<>(lines).size());
+            assertTrue(lines.stream().anyMatch(line -> line.startsWith("\"A · B\" / \"C\": 1 available")));
+            assertTrue(lines.stream().anyMatch(line -> line.startsWith("\"A\" / \"B · C\": 0 available")));
+            assertLabel(panel, "totalCount", "2");
         });
     }
 
