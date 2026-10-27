@@ -597,6 +597,12 @@ the same member. Reaching the expected return date does not automatically return
 | Field syntax/date is invalid | Correct the first reported parameter and retry; use a real `yyyy-MM-dd` date. |
 | Saving fails | No loan is recorded and no records change; correct file access before retrying. |
 
+
+When several units fail validation, the result summarizes how many are invalid and lists each UUID's
+first blocking reason in input order. Open **Details** to expand the complete list or **Copy** to copy
+it. One invalid unit keeps its specific diagnostic. Shared member/date and syntax errors are reported
+before unit checks when they prevent meaningful validation. No loans or conditions change on rejection.
+
 On failure, no loan is created. Availability, holder, holdings, view and selection stay unchanged.
 
 ### Return equipment: `loans return`
@@ -636,6 +642,7 @@ For a batch, feedback lists the number of units and their UUIDs without naming o
 | Open loan refers to a missing member | `Cannot return equipment UUID: its open loan refers to a missing member.` Preserve the data and report the error to the team. |
 | Saving fails | No return is recorded and no records change; correct file access and retry. |
 
+Batch return errors use the same combined result and Details/Copy actions as assignment errors.
 A rejected return leaves the loan, return date, holder and availability unchanged. Completed loans
 appear in the Loans tab and in member and equipment details.
 

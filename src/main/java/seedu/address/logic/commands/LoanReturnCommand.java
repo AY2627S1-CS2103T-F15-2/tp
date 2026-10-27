@@ -5,6 +5,7 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -80,35 +81,22 @@ public class LoanReturnCommand extends Command {
         if (returnedDate.isAfter(today)) {
             throw new CommandException(String.format(MESSAGE_FUTURE_RETURN, today));
         }
-        String firstName = null;
-        String firstMemberName = null;
-        String firstMemberId = null;
+        List<CommandException> errors = new ArrayList<>();
         for (UUID uuid : equipmentUuids) {
-            Equipment item;
-            Loan open;
             try {
-                item = model.findEquipment(uuid).orElseThrow(EquipmentNotFoundException::new);
-            } catch (EquipmentNotFoundException exception) {
-                throw new CommandException(String.format(MESSAGE_EQUIPMENT_NOT_FOUND, uuid), exception);
-            }
-            try {
-                open = model.findOpenLoan(uuid).orElseThrow(OpenLoanNotFoundException::new);
-            } catch (OpenLoanNotFoundException exception) {
-                throw new CommandException(String.format(MESSAGE_NO_OPEN_LOAN, uuid), exception);
-            }
-            var member = model.findMember(open.getMemberNusId()).orElseThrow(() ->
-                    new CommandException(String.format(MESSAGE_MEMBER_NOT_FOUND, uuid),
-                            new MemberNotFoundException()));
-            if (returnedDate.isBefore(open.getAssignedDate())) {
-                throw new CommandException(String.format(MESSAGE_RETURN_BEFORE_ASSIGNMENT,
-                        item.getName(), uuid, returnedDate, open.getAssignedDate()));
-            }
-            if (firstName == null) {
-                firstName = item.getName();
-                firstMemberName = member.getName().toString();
-                firstMemberId = member.getNusId().toString();
+                validateReturn(model, uuid);
+            } catch (CommandException exception) {
+                errors.add(exception);
             }
         }
+        LoanBatchValidation.rejectInvalidUnits(errors, equipmentUuids.size());
+        UUID first = equipmentUuids.getFirst();
+        Equipment firstItem = model.findEquipment(first).orElseThrow();
+        Loan firstLoan = model.findOpenLoan(first).orElseThrow();
+        var firstMember = model.findMember(firstLoan.getMemberNusId()).orElseThrow();
+        String firstName = firstItem.getName();
+        String firstMemberName = firstMember.getName().toString();
+        String firstMemberId = firstMember.getNusId().toString();
         try {
             if (equipmentUuids.size() == 1 && returnCondition == null) {
                 model.closeLoan(equipmentUuids.get(0), returnedDate);
@@ -122,7 +110,6 @@ public class LoanReturnCommand extends Command {
         } catch (IllegalArgumentException | IllegalStateException exception) {
             throw new CommandException("Could not return equipment: " + exception.getMessage(), exception);
         }
-        UUID first = equipmentUuids.get(0);
         String identifiers = equipmentUuids.size() == 1 ? first.toString() : equipmentUuids.toString();
         DisplayRequest display = equipmentUuids.size() == 1
                 ? DisplayRequest.equipmentDetails(first) : DisplayRequest.loans();
@@ -130,6 +117,31 @@ public class LoanReturnCommand extends Command {
                 ? String.format(MESSAGE_SUCCESS, firstName, identifiers, firstMemberName, firstMemberId, returnedDate)
                 : String.format(MESSAGE_BATCH_SUCCESS, equipmentUuids.size(), identifiers, returnedDate);
         return new CommandResult(feedback, display);
+    }
+
+    /**
+     * Validates a unit and its references without closing loans or changing conditions.
+     */
+    private void validateReturn(Model model, UUID uuid) throws CommandException {
+        Equipment item;
+        Loan open;
+        try {
+            item = model.findEquipment(uuid).orElseThrow(EquipmentNotFoundException::new);
+        } catch (EquipmentNotFoundException exception) {
+            throw new CommandException(String.format(MESSAGE_EQUIPMENT_NOT_FOUND, uuid), exception);
+        }
+        try {
+            open = model.findOpenLoan(uuid).orElseThrow(OpenLoanNotFoundException::new);
+        } catch (OpenLoanNotFoundException exception) {
+            throw new CommandException(String.format(MESSAGE_NO_OPEN_LOAN, uuid), exception);
+        }
+        model.findMember(open.getMemberNusId()).orElseThrow(() ->
+                new CommandException(String.format(MESSAGE_MEMBER_NOT_FOUND, uuid),
+                        new MemberNotFoundException()));
+        if (returnedDate.isBefore(open.getAssignedDate())) {
+            throw new CommandException(String.format(MESSAGE_RETURN_BEFORE_ASSIGNMENT,
+                    item.getName(), uuid, returnedDate, open.getAssignedDate()));
+        }
     }
 
     @Override

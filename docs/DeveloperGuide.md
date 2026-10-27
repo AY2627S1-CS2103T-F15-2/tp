@@ -1376,3 +1376,18 @@ Use temporary data. Do not test against a real inventory.
    edits must leave redo available. `undo 2` and `redo count/2` must be rejected without changing data.
 6. Restart after an undo. The restored records must still load, but undo and redo must both be unavailable.
    Automated tests inject failed saves and verify records, history and prior file bytes survive for retry.
+
+### Batch loan validation diagnostics
+
+Assignment and return commands validate shared prerequisites first, then inspect every supplied unit
+without mutating the candidate. Each unit contributes its first blocking reason, including its UUID;
+return-date errors retain both dates and the unit name. `LoanBatchValidation` rejects before the model
+mutation: a sole error retains its original exception, while multiple errors produce an ordered summary
+and full details, retaining causes. The existing `ResultDisplay` Details/Copy actions expose long lists.
+Transaction, persistence and domain relationships are unchanged; no serialization or UML changes apply.
+
+Manual check in a disposable dataset: batch an available unit, a damaged unit and two nonexistent UUIDs.
+Expect three errors, including all invalid UUIDs, and no new loans. Assign the available unit separately,
+then return it alongside an unassigned unit and nonexistent UUID: both errors should appear, and the
+valid loan must remain open with its condition unchanged. Expand Details and copy the complete result.
+A future shared assignment/return date should instead report its shared date error alone.

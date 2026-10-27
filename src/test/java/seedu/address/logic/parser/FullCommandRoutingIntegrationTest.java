@@ -71,6 +71,20 @@ public class FullCommandRoutingIntegrationTest {
     }
 
     @Test
+    public void aggregateLoanErrors_rejectWithoutSavingOrChangingRecords() throws Exception {
+        LocalDate today = LocalDate.now();
+        String ids = firstItem + "," + UNKNOWN + "," + secondItem;
+        execute(addLoan(secondItem, FIRST, today, today), DisplayRequest.equipmentDetails(secondItem));
+        assertRejected(CommandException.class, "loans add uuid/" + ids + " nus/" + FIRST
+                + " assigned/" + today + " expected/" + today);
+        assertRejected(CommandException.class, "loans return uuid/" + ids + " returned/" + today
+                + " condition/DAMAGED");
+        reload();
+        assertTrue(model.findOpenLoan(secondItem).isPresent());
+        assertTrue(model.findOpenLoan(firstItem).isEmpty());
+    }
+
+    @Test
     public void allTenRoutes_memberAndEquipmentDeletionRetainsHistory() throws Exception {
         LocalDate assigned = LocalDate.now().minusDays(3);
         LocalDate expected = assigned.plusDays(10);

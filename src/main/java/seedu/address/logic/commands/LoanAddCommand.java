@@ -107,29 +107,18 @@ public class LoanAddCommand extends Command {
         }
         List<Loan> newLoans = new ArrayList<>();
         List<String> names = new ArrayList<>();
+        List<CommandException> errors = new ArrayList<>();
         for (UUID uuid : equipmentUuids) {
-            Equipment equipment;
             try {
-                equipment = model.findEquipment(uuid).orElseThrow(EquipmentNotFoundException::new);
-            } catch (EquipmentNotFoundException exception) {
-                throw new CommandException(String.format(MESSAGE_EQUIPMENT_NOT_FOUND, uuid), exception);
+                Equipment equipment = validateEquipment(model, uuid);
+                newLoans.add(new Loan(uuid, memberNusId, assignedDate, expectedReturnDate,
+                        null, equipment.getCondition(), null));
+                names.add(equipment.getName());
+            } catch (CommandException exception) {
+                errors.add(exception);
             }
-            if (equipment.isDeleted()) {
-                throw new CommandException(String.format(MESSAGE_DELETED, uuid));
-            }
-            Availability availability = model.getAvailability(uuid);
-            if (availability == Availability.ASSIGNED) {
-                String holder = model.findOpenLoan(uuid).map(loan -> loan.getMemberNusId().toString())
-                        .orElse("an unknown member");
-                throw new CommandException(String.format(MESSAGE_ASSIGNED, uuid, holder));
-            }
-            if (availability != Availability.AVAILABLE) {
-                throw new CommandException(String.format(MESSAGE_UNAVAILABLE, uuid, equipment.getCondition()));
-            }
-            newLoans.add(new Loan(uuid, memberNusId, assignedDate, expectedReturnDate,
-                    null, equipment.getCondition(), null));
-            names.add(equipment.getName());
         }
+        LoanBatchValidation.rejectInvalidUnits(errors, equipmentUuids.size());
         try {
             if (newLoans.size() == 1) {
                 model.addLoan(newLoans.get(0));
@@ -153,6 +142,31 @@ public class LoanAddCommand extends Command {
                 ? DisplayRequest.equipmentDetails(first) : DisplayRequest.loans();
         return new CommandResult(String.format(MESSAGE_SUCCESS, name, identifiers, member.getName(), memberNusId,
                 assignedDate, expectedReturnDate), display);
+    }
+
+    /**
+     * Returns an assignable unit or identifies its first blocking validation rule.
+     */
+    private Equipment validateEquipment(Model model, UUID uuid) throws CommandException {
+        Equipment equipment;
+        try {
+            equipment = model.findEquipment(uuid).orElseThrow(EquipmentNotFoundException::new);
+        } catch (EquipmentNotFoundException exception) {
+            throw new CommandException(String.format(MESSAGE_EQUIPMENT_NOT_FOUND, uuid), exception);
+        }
+        if (equipment.isDeleted()) {
+            throw new CommandException(String.format(MESSAGE_DELETED, uuid));
+        }
+        Availability availability = model.getAvailability(uuid);
+        if (availability == Availability.ASSIGNED) {
+            String holder = model.findOpenLoan(uuid).map(loan -> loan.getMemberNusId().toString())
+                    .orElse("an unknown member");
+            throw new CommandException(String.format(MESSAGE_ASSIGNED, uuid, holder));
+        }
+        if (availability != Availability.AVAILABLE) {
+            throw new CommandException(String.format(MESSAGE_UNAVAILABLE, uuid, equipment.getCondition()));
+        }
+        return equipment;
     }
 
     @Override
