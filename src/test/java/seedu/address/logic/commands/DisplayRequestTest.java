@@ -13,10 +13,29 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.model.member.NusId;
 import seedu.address.model.query.InventoryGroups;
+import seedu.address.model.query.LoanQuery;
 
 public class DisplayRequestTest {
     private static final NusId NUS_ID = new NusId("a0123456x");
     private static final UUID UUID_ONE = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+
+    @Test
+    public void loansQuery_distinguishesPreservationFromReplacementAndReset() {
+        LoanQuery query = new LoanQuery("A012", "abcd");
+        DisplayRequest request = DisplayRequest.loans(query);
+        assertEquals(Optional.of(query), request.getLoanQuery());
+        assertEquals(DisplayRequest.Type.LOANS, request.getType());
+        assertEquals(request, DisplayRequest.loans(new LoanQuery("A012", "abcd")));
+        assertEquals(request.hashCode(), DisplayRequest.loans(query).hashCode());
+        assertNotEquals(request, DisplayRequest.loans());
+        assertNotEquals(request, DisplayRequest.loans(LoanQuery.all()));
+        assertNotEquals(DisplayRequest.loans(), DisplayRequest.loans(LoanQuery.all()));
+        assertTrue(DisplayRequest.loans().getLoanQuery().isEmpty());
+        assertTrue(request.getQuery().isEmpty());
+        assertTrue(request.getMemberNusId().isEmpty());
+        assertTrue(request.toString().contains("A012"));
+        assertThrows(NullPointerException.class, () -> DisplayRequest.loans(null));
+    }
 
     @Test
     public void groupTarget_normalizesDescriptionsWithoutChoosingAUnit() {

@@ -266,6 +266,7 @@ public class MainWindow extends UiPart<Stage> {
             return;
         }
         currentDisplay = request;
+        request.getLoanQuery().ifPresent(loans::setQuery);
         if (request.getType() == DisplayRequest.Type.MEMBERS) {
             request.getQuery().ifPresent(query -> {
                 members.setQuery(query);

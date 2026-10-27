@@ -957,6 +957,44 @@ public class MainWindowShellTest {
     }
 
     @Test
+    public void loanFilters_commandsAndGui_shareWholeHistoryAndExplicitResetWithoutSaving() {
+        FxTestUtil.runAndWait(() -> {
+            UUID item = new UUID(0, 1);
+            LocalDate date = LocalDate.of(2026, 1, 2);
+            model.closeLoan(item, date);
+            model.addLoan(new Loan(item, id(1), date.plusDays(1), date.plusDays(2), null));
+            AddressBook before = new AddressBook(model.getAddressBook());
+            submit("loans list nus/a0000001 uuid/000000000001");
+            assertEquals("a0000001", ((TextField) node("memberFilter")).getText());
+            assertEquals("000000000001", ((TextField) node("equipmentFilter")).getText());
+            assertTrue(label("filterSummary").contains("1 of 1 open loans; 1 of 1 completed loans"));
+            render("loan-command-filters", 760, 500);
+            int commands = logic.commands.size();
+            TextField memberFilter = (TextField) node("memberFilter");
+            memberFilter.setText("NoMatch");
+            assertEquals(commands, logic.commands.size());
+            submit("loans list");
+            assertEquals("NoMatch", ((TextField) node("memberFilter")).getText());
+            assertTrue(label("filterSummary").contains("0 of 1 open loans; 0 of 1 completed loans"));
+            reject("loans list nus/a nus/b");
+            assertEquals("NoMatch", ((TextField) node("memberFilter")).getText());
+            submit("loans list uuid/000000000001");
+            assertEquals("", ((TextField) node("memberFilter")).getText());
+            assertEquals("000000000001", ((TextField) node("equipmentFilter")).getText());
+            submit("loans reset");
+            assertEquals("", ((TextField) node("memberFilter")).getText());
+            assertEquals("", ((TextField) node("equipmentFilter")).getText());
+            assertTrue(button("resetFilters").isDisabled());
+            assertTrue(label("filterSummary").contains("1 of 1 open loans; 1 of 1 completed loans"));
+            render("loan-command-reset", 1100, 700);
+            assertEquals(0, storage.saves);
+            assertFalse(Files.exists(storage.getAddressBookFilePath()));
+            assertEquals(before, model.getAddressBook());
+            assertFalse(model.canUndoAddressBook());
+        });
+    }
+
+    @Test
     public void loansList_typedCommand_opensExistingLoansTabWithoutChangingRecords() {
         FxTestUtil.runAndWait(() -> {
             AddressBook before = new AddressBook(model.getAddressBook());

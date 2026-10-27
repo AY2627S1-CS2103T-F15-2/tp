@@ -91,7 +91,8 @@ public final class CompletionService {
                     List.of(PREFIX_EQUIPMENT_UUID, PREFIX_NUS_ID, PREFIX_ASSIGNED_DATE, PREFIX_EXPECTED_RETURN_DATE)),
             Map.entry(LoanReturnCommand.COMMAND_WORD,
                     List.of(PREFIX_EQUIPMENT_UUID, PREFIX_RETURNED_DATE, PREFIX_CONDITION)),
-            Map.entry(LoanListCommand.COMMAND_WORD, List.of()),
+            Map.entry(LoanListCommand.COMMAND_WORD, List.of(PREFIX_NUS_ID, PREFIX_EQUIPMENT_UUID)),
+            Map.entry("loans reset", List.of()),
             Map.entry(ModeCommand.COMMAND_WORD + " dark", List.of()),
             Map.entry(ModeCommand.COMMAND_WORD + " light", List.of()),
             Map.entry(ExitCommand.COMMAND_WORD, List.of()), Map.entry(HelpCommand.COMMAND_WORD, List.of()));

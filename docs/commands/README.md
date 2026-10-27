@@ -29,12 +29,13 @@ Member soft-delete and unlimited restoration are supported. Archival remains out
 | equipment search | `equipment search [q/TEXT] [category/TEXT] [condition/VALUE] [availability/VALUE] [status/active\|deleted\|all] [sort/FIELD] [order/VALUE]` | [Search and planning](search-and-planning.md) |
 | loans add | `loans add uuid/UUID nus/NUS_ID assigned/DATE expected/DATE` | [Assign equipment](loans-add.md) |
 | loans return | `loans return uuid/UUID returned/DATE` | [Return equipment](loans-return.md) |
-| loans list | `loans list` | [Open Loans tab](loans-list.md) |
+| loans list | `loans list [nus/TEXT] [uuid/TEXT]` | [Open Loans tab](loans-list.md) |
+| loans reset | `loans reset` | [Reset Loans filters](loans-list.md) |
 | undo | `undo` | [Undo record change](undo.md) |
 | redo | `redo` | [Redo record change](redo.md) |
 
 Families/subcommands are lowercase and case-sensitive. Parameter order is free, and
-spaces/tabs separate arguments. List commands accept whitespace only. Other implemented
+spaces/tabs separate arguments. Member/equipment list and loans reset accept whitespace only. Loans list accepts optional identity filters. Other implemented
 routes reject missing/blank required values, repeated parameters, unknown markers and
 nonblank preamble. Optional notes may be empty. Markers matching the agreed
 start/whitespace-delimited `[A-Za-z][A-Za-z0-9_-]*/` grammar are reserved even inside free
@@ -46,7 +47,8 @@ rejection and save failures preserve all records; rejected operations do not sav
 writes and failed replacements preserve the prior data file and useful I/O causes. See
 [MVP fields and failure behavior](MvpFields.md) for normalization and ordered diagnostics.
 
-`loans list` opens the Loans tab with current assignments and completed loan history.
+`loans list` opens Loans and retains filters; optional identity substrings replace both filters.
+`loans reset` clears both. These commands are read-only and do not save.
 
 ## Loan rules
 

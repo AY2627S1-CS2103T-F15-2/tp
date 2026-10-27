@@ -77,7 +77,7 @@ public class LaplaceListIntegrationTest {
                 logic.execute("equipment list"));
         assertEquals(new CommandResult("Showing current loans.", DisplayRequest.loans()),
                 logic.execute("loans list"));
-        assertEquals(2, storage.saves);
+        assertEquals(1, storage.saves);
         assertEquals(before, model.getAddressBook());
         assertTrue(model.getFilteredPersonList().isEmpty());
         ModelManager reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
@@ -90,12 +90,27 @@ public class LaplaceListIntegrationTest {
     }
 
     @Test
+    public void execute_loanFiltersAndReset_preserveSavedBytesAndHistoryWithoutSaves() throws Exception {
+        storage.saveAddressBook(model.getAddressBook());
+        String saved = Files.readString(storage.getAddressBookFilePath());
+        AddressBook before = new AddressBook(model.getAddressBook());
+        for (String input : List.of("loans list nus/a000 uuid/0000", "loans list uuid/0002", "loans reset",
+                "loans list nus/ uuid/", "loans list")) {
+            logic.execute(input);
+            assertEquals(1, storage.saves);
+            assertEquals(saved, Files.readString(storage.getAddressBookFilePath()));
+            assertEquals(before, model.getAddressBook());
+            assertTrue(!model.canUndoAddressBook());
+        }
+    }
+
+    @Test
     public void execute_rejectedListArguments_preservesStateAndNeverSaves() throws Exception {
         storage.saveAddressBook(model.getAddressBook());
         String persisted = Files.readString(storage.getAddressBookFilePath());
         AddressBook before = new AddressBook(model.getAddressBook());
         for (String route : new String[] {"member list", "equipment list", "loans list"}) {
-            for (String args : new String[] {"extra", "unknown/x", "notes/ notes/", "nus/A0000001X"}) {
+            for (String args : new String[] {"extra", "unknown/x", "notes/ notes/", "nus/A0000001X nus/A0000002X"}) {
                 assertThrows(ParseException.class, () -> logic.execute(route + "\t" + args));
                 assertEquals(before, model.getAddressBook());
                 assertEquals(persisted, Files.readString(storage.getAddressBookFilePath()));
@@ -118,7 +133,11 @@ public class LaplaceListIntegrationTest {
         LogicManager failingLogic = new LogicManager(model, failingStorage);
         org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> failingLogic.execute("equipment list"));
         AddressBook before = new AddressBook(model.getAddressBook());
-        for (String route : new String[] {"member list", "loans list"}) {
+        for (String query : List.of("loans list", "loans list nus/a000 uuid/0000", "loans reset")) {
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> failingLogic.execute(query));
+            assertEquals(before, model.getAddressBook());
+        }
+        for (String route : new String[] {"member list"}) {
             CommandException failure = org.junit.jupiter.api.Assertions.assertThrows(CommandException.class, () ->
                     failingLogic.execute(route));
             assertSame(cause, failure.getCause());

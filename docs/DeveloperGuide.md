@@ -1378,3 +1378,33 @@ Use temporary data. Do not test against a real inventory.
    edits must leave redo available. `undo 2` and `redo count/2` must be rejected without changing data.
 6. Restart after an undo. The restored records must still load, but undo and redo must both be unavailable.
    Automated tests inject failed saves and verify records, history and prior file bytes survive for retry.
+
+### Command-based Loans filters
+
+`loans list [nus/TEXT] [uuid/TEXT]` is a read-only view command. Bare list preserves existing filters;
+any explicit field replaces both (omitted/blank fields clear). `loans reset` applies `LoanQuery.all()`.
+`LoanQuery` is an immutable value sharing case-insensitive identity-substring matching between CLI
+and GUI across open and completed history. It does not validate partial text as a complete identity.
+`DisplayRequest` optionally carries that query; `MainWindow` applies it without interpreting feedback.
+`LoanPanel.setQuery` updates both fields together and refreshes once; direct edits use the same predicate.
+No filter state is persisted or placed in undo history, and refresh/select never invokes command callbacks.
+The retained-filter summary/reset behavior introduced for #194 remains in effect.
+
+<puml src="diagrams/LoanFilterCommandSequence.puml" alt="Read-only loan filter command and synchronized panel fields" />
+
+Implemented user story: as a fast typist reviewing an equipment or member discrepancy, I can filter
+and reset whole loan history from the command box so I can inspect relevant records without the mouse.
+Use case: request `loans list nus/TEXT uuid/TEXT`, review both history sections, then `loans reset`.
+Unknown/repeated markers or extra reset arguments reject without changing view, criteria or records.
+NFR: these view operations must work even if data storage cannot be written, without saves or undo steps.
+
+#### Manual testing: loan filter commands
+
+In an isolated sample dataset, record the data bytes and run `loans list nus/a023 uuid/400004`.
+Check both visible fields, counts and identity matches in both sections. Open details and return with
+bare `loans list`; the filters must remain. Edit a filter by mouse, then run bare list again and check
+that edit remains. Run `loans list nus/a012`; UUID must clear. Try a duplicate `nus/` marker and verify
+that input/error remain while view and filters stay unchanged. Run `loans reset`; both fields clear
+and total history is visible. Repeat with the data file read-only: all valid filter commands still
+succeed with unchanged bytes and undo state. Existing hidden-batch-change tests also verify that
+mutation and refresh retain filters and that reset reveals every record.

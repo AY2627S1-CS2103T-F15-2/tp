@@ -20,10 +20,11 @@ public class LoansCommandParser implements Parser<Command> {
         String subcommand = parts[0];
         String arguments = parts.length == 2 ? parts[1] : "";
         return switch (subcommand) {
+            case "reset" -> new LoanResetCommandParser().parse(arguments);
             case "list" -> new LoanListCommandParser().parse(arguments);
             case "add" -> new LoanAddCommandParser().parse(arguments);
             case "return" -> new LoanReturnCommandParser().parse(arguments);
-            default -> throw new ParseException("Expected loans subcommand: add, list, return.");
+            default -> throw new ParseException("Expected loans subcommand: add, list, reset, return.");
         };
     }
 }

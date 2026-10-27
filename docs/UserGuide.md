@@ -145,8 +145,9 @@ To explore without changing the sample records:
   **Overdue** or **Due today** label when applicable. Rows reflow at narrower widths. **Prepare return command**
   fills the input with the unit UUID and today's local date; review it before pressing Enter.
   The filtered-result summary shows displayed versus total counts in both sections, including records
-  hidden after a successful batch command. **Reset filters** explicitly reveals all records. Commands,
-  tab navigation and `loans list` retain intentional filters; mutations never silently clear them.
+  hidden after a successful batch command. **Reset filters** explicitly reveals all records. Bare `loans list`,
+  tab navigation and mutations retain intentional filters. Use `loans list nus/TEXT uuid/TEXT` to
+  replace both filters, or `loans reset` to clear them.
   Urgency updates when you open Loans, execute a command or change records. Reopen Loans after midnight
   to refresh the labels. Completed loans show return dates and recorded issue/return conditions, without
   urgency labels or return actions. Filter both sections by NUS ID and equipment UUID. `loans list` opens
@@ -193,7 +194,8 @@ Commands and prefixes are **lowercase and case-sensitive**. Use `member add`, no
   `notes/` or `unknown/` is reserved as a marker. Unknown markers are errors, even inside free text.
   There is no quoting or escaping. An ordinary URL such as `https://example.com` is not a marker.
 - Use the full field names: `nus/`, `name/`, `phone/` and `email/`. Short alternatives are not accepted.
-- `member list`, `equipment list` and `loans list` take no arguments. Additional text or prefixes are rejected.
+- `member list` and `equipment list` take no arguments. `loans list` accepts optional identity filters;
+  `loans reset` takes no arguments. Extra text and unsupported prefixes are rejected.
 - An empty or whitespace-only submission does nothing.
 
 On success, the input clears and the requested list/details view appears. Newly added records are selected
@@ -548,19 +550,32 @@ other search filters; values are case-insensitive. Deleted units have derived UN
 filters and includes both states. Total counts include retained units; availability counts and inventory
 availability summaries cover active units only; retained group counts include deleted units. Deleted equipment can still be opened with `equipment view uuid/UUID`.
 
-### Open the Loans tab: `loans list`
+### Open and filter the Loans tab: `loans list`
 
 ```text
-loans list
+loans list [nus/TEXT] [uuid/TEXT]
+loans reset
 ```
 
-Open the existing Loans tab, just as clicking **Loans** does. It shows current and completed loans,
-with links to the corresponding member and equipment details. Use the NUS ID and UUID fields to
-filter both sections. Each section has its own count and empty state.
+Open the existing Loans tab, just as clicking **Loans** does. It shows current and completed loans
+with links to member and equipment details. Feedback is `Showing current loans.` These commands are
+read-only: they do not save data, change records or create undo steps.
 
-Feedback is `Showing current loans.` This command does not create, return, delete or change any
-member, equipment or loan records. It uses the same save/error handling as the other list commands.
-Extra text or parameters, such as `loans list uuid/UUID`, are rejected and leave the current view unchanged.
+Bare `loans list` retains both current filters. Supplying either parameter replaces **both** filters:
+any omitted or blank field becomes empty. For example, `loans list nus/a012` shows a member identity
+substring across all equipment; `loans list uuid/400004` searches a unit's entire loan history.
+Supply both fields to require both matches. Matching ignores case and surrounding whitespace and
+uses identity substrings, exactly like the panel fields. Partial identities are allowed; names are not
+searched. Filters include retained open and completed history, including records for deleted entities.
+
+`loans reset` clears both fields and shows all loans, just like **Reset filters**. You can also clear
+both with `loans list nus/ uuid/`. Commands update the visible filter fields and counts; direct edits
+to those fields take effect immediately and remain active through navigation and mutations.
+The summary shows displayed versus total counts in both sections so hidden records remain apparent.
+
+Unknown/repeated parameters and extra text are rejected with usage guidance, leaving the view and
+filters unchanged. Use `loans reset` without parameters. For example, `loans list nus/a nus/b` and
+`loans reset uuid/anything` are errors.
 
 ### Assign equipment: `loans add`
 
@@ -805,7 +820,8 @@ authentication and concurrent multi-user operation are not provided.
 | Edit equipment | `equipment edit uuid/UUID [name/NAME] [category/CATEGORY] [condition/CONDITION] [notes/NOTES]` |
 | Restore equipment | `equipment restore uuid/UUID` |
 | Delete equipment | `equipment delete uuid/UUID` |
-| Open the Loans tab | `loans list` |
+| Open/filter the Loans tab | `loans list [nus/TEXT] [uuid/TEXT]` |
+| Reset Loans filters | `loans reset` |
 | Assign equipment | `loans add uuid/UUID[,UUID...] nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |
 | Return equipment | `loans return uuid/UUID[,UUID...] returned/ACTUAL_RETURN_DATE [condition/CONDITION]` |
 | Undo the last record change | `undo` |
