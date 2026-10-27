@@ -30,6 +30,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -101,6 +102,15 @@ public final class CompletionService {
      * Invalid caret offsets are programmer errors; malformed or unsupported input has no suggestions.
      */
     public Optional<Completion> complete(String text, int caret, ReadOnlyAddressBook data) {
+        requireNonNull(data);
+        return completeWithDataSource(text, caret, () -> data);
+    }
+
+    /**
+     * Completes static vocabulary without reading records, acquiring live data only for record values.
+     * The supplier must return a non-null read-only root on the calling thread.
+     */
+    public Optional<Completion> completeWithDataSource(String text, int caret, Supplier<ReadOnlyAddressBook> data) {
         requireNonNull(text);
         requireNonNull(data);
         if (caret < 0 || caret > text.length()) {
@@ -114,7 +124,7 @@ public final class CompletionService {
     }
 
     /** Returns the completion for a validated caret, or nothing when the input has no completable token. */
-    private Optional<Completion> findCompletion(String text, int caret, ReadOnlyAddressBook data) {
+    private Optional<Completion> findCompletion(String text, int caret, Supplier<ReadOnlyAddressBook> data) {
         Matcher words = WORD.matcher(text);
         if (!words.find() || caret <= words.start()) {
             return Optional.empty();
@@ -146,7 +156,7 @@ public final class CompletionService {
 
     /** Identifies reserved field boundaries using the same marker grammar as LaplaceArgumentParser. */
     private Optional<Completion> fields(String text, int caret, int argumentsStart, String command,
-            List<Prefix> prefixes, ReadOnlyAddressBook data) {
+            List<Prefix> prefixes, Supplier<ReadOnlyAddressBook> data) {
         Set<String> allowed = new HashSet<>();
         prefixes.forEach(prefix -> allowed.add(prefix.getPrefix()));
         List<Integer> starts = new ArrayList<>();
@@ -221,7 +231,8 @@ public final class CompletionService {
     }
 
     /** Completes one batch entry while preserving neighboring UUIDs and excluding identities already listed. */
-    private Optional<Completion> loanIdentity(String text, int start, int end, int caret, ReadOnlyAddressBook data) {
+    private Optional<Completion> loanIdentity(String text, int start, int end, int caret,
+            Supplier<ReadOnlyAddressBook> data) {
         int entryStart = Math.max(start, text.lastIndexOf(',', caret - 1) + 1);
         int comma = text.indexOf(',', caret);
         int entryEnd = comma < 0 ? end : Math.min(end, comma);
@@ -235,31 +246,31 @@ public final class CompletionService {
             entryEnd--;
         }
         return suggest(entryStart, entryEnd, text.substring(entryStart, caret),
-                data.getEquipmentList().stream().map(item -> item.getUuid().toString())
+                data.get().getEquipmentList().stream().map(item -> item.getUuid().toString())
                         .filter(uuid -> !used.contains(uuid)), true);
     }
 
     /** New identities, dates, counts, and free-form notes remain manual; finite options use parser enum values. */
-    private Stream<String> values(String command, String prefix, ReadOnlyAddressBook data) {
+    private Stream<String> values(String command, String prefix, Supplier<ReadOnlyAddressBook> data) {
         switch (prefix) {
             case "nus/":
                 if (command.equals(MemberAddCommand.COMMAND_WORD)) {
                     return Stream.empty();
                 }
-                return data.getMemberList().stream().map(member -> member.getNusId().value);
+                return data.get().getMemberList().stream().map(member -> member.getNusId().value);
             case "uuid/":
-                return data.getEquipmentList().stream().map(equipment -> equipment.getUuid().toString());
+                return data.get().getEquipmentList().stream().map(equipment -> equipment.getUuid().toString());
             case "name/":
                 if (command.startsWith("member ")) {
-                    return data.getMemberList().stream().map(member -> member.getName().fullName);
+                    return data.get().getMemberList().stream().map(member -> member.getName().fullName);
                 }
-                return data.getEquipmentList().stream().map(equipment -> equipment.getName());
+                return data.get().getEquipmentList().stream().map(equipment -> equipment.getName());
             case "phone/":
-                return data.getMemberList().stream().map(member -> member.getPhone().value);
+                return data.get().getMemberList().stream().map(member -> member.getPhone().value);
             case "email/":
-                return data.getMemberList().stream().map(member -> member.getEmail().value);
+                return data.get().getMemberList().stream().map(member -> member.getEmail().value);
             case "category/":
-                return data.getEquipmentList().stream().map(equipment -> equipment.getCategory());
+                return data.get().getEquipmentList().stream().map(equipment -> equipment.getCategory());
             case "condition/":
                 return Arrays.stream(Condition.values()).map(Condition::name);
             case "availability/":
@@ -280,10 +291,10 @@ public final class CompletionService {
                 return Stream.of("asc", "desc");
             case "q/":
                 if (command.startsWith("member ")) {
-                    return data.getMemberList().stream().flatMap(member -> Stream.of(member.getNusId().value,
+                    return data.get().getMemberList().stream().flatMap(member -> Stream.of(member.getNusId().value,
                             member.getName().fullName, member.getPhone().value, member.getEmail().value));
                 }
-                return data.getEquipmentList().stream().flatMap(item -> Stream.of(item.getUuid().toString(),
+                return data.get().getEquipmentList().stream().flatMap(item -> Stream.of(item.getUuid().toString(),
                         item.getName(), item.getCategory(), item.getNotes())).filter(value -> !value.isBlank());
             default:
                 return Stream.empty();

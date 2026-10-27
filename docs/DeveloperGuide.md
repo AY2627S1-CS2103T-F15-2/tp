@@ -211,8 +211,12 @@ exercise real JavaFX events, and load production classes from the packaged JAR. 
 instruction, line and branch coverage for the feature, including its UI wiring. See [Testing](Testing.md).
 
 The controller is created by `CommandBox` and retained through the field's registered callbacks, rather
-than a `CommandBox` member field. It uses a detached root snapshot to detect model changes before each
-eligible Tab event, since the live root deliberately keeps its object identity.
+than a `CommandBox` member field. Static vocabulary uses no model reads. Record-value suggestions
+read the live root synchronously on the FX thread and observe member/equipment collection changes
+with weak listeners. These notifications invalidate record candidates after mutations, undo/redo
+and reload; rejected mutations and pure queries leave those collections unchanged. Cached record
+cycles check root identity cheaply, while unchanged candidates cycle without copying or rescanning
+records. Loan history and transaction validation are outside suggestion reads.
 
 <puml src="diagrams/AutocompleteClass.puml" alt="Tab completion service, controller and read-only data dependencies" />
 
@@ -1201,6 +1205,12 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
    Check wrapping, scrolling, visible focus and contrast. Logical-size snapshots alone do not verify OS scaling.
 
 ### Tab completion across current commands
+
+Capacity regression: with 10,000 valid retained loans, complete `member ` with Tab and cycle forward
+and backward. Expect no history-dependent pause. Repeat a record-name completion, edit or restore a
+record, undo/redo, and reload; expect current values. Structural controller tests reject person/loan
+collection reads, assert zero static-model reads and reuse of prepared record candidates. Measure
+responsiveness separately; structural checks do not claim a cross-platform timing benchmark.
 
 1. In a disposable dataset, type `mem` and press Tab. Expected: `member`, with the caret at its end.
    Add a space and cycle with Tab, then Shift+Tab. Expected: alphabetical subcommands and reverse cycling.
