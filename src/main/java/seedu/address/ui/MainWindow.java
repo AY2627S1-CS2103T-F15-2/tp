@@ -305,7 +305,7 @@ public class MainWindow extends UiPart<Stage> {
                     ? loans.getRoot() : personListPanel.getRoot());
         }
         request.getMemberNusId().ifPresent(id -> members.select(Optional.of(id)));
-        request.getEquipmentUuid().ifPresent(id -> equipment.select(Optional.of(id)));
+        request.getEquipmentUuid().ifPresent(equipment::reveal);
         setActive(membersNavigation, memberView);
         setActive(equipmentNavigation, equipmentView);
         setActive(loansNavigation, request.getType() == DisplayRequest.Type.LOANS);

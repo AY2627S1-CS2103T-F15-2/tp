@@ -1,6 +1,7 @@
 package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import seedu.address.model.ModelManager;
@@ -135,6 +137,40 @@ class EquipmentGroupPanelTest {
             assertEquals("Equipment group no longer exists", ((Label) panel.lookup("#groupTitle")).getText());
             assertTrue(((TableView<?>) panel.lookup("#physicalUnits")).getItems().isEmpty());
         });
+    }
+
+    @Test
+    void refresh_unchangedUnits_updatesRenderedLoanCellsWithoutCallbacks() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = model();
+            model.addMember(TypicalMembers.ALEX);
+            List<UUID> activations = new ArrayList<>();
+            EquipmentGroupPanel panel = new EquipmentGroupPanel(model.getAddressBook(), model::getAvailability,
+                    unused -> { }, unused -> { }, activations::add);
+            mount(panel);
+            panel.showUnit(CAMERA.getUuid(), DirectoryQuery.all());
+            assertTrue(renderedCells(panel).contains("Available"));
+            LocalDate date = LocalDate.of(2026, 10, 1);
+            model.addLoan(new Loan(CAMERA.getUuid(), TypicalMembers.ALEX.getNusId(), date, date, null));
+            panel.refresh();
+            assertTrue(renderedCells(panel).contains("Assigned"));
+            assertTrue(renderedCells(panel).contains(TypicalMembers.ALEX.getName().fullName));
+            model.closeLoan(CAMERA.getUuid(), date);
+            panel.refresh();
+            assertTrue(renderedCells(panel).contains("Available"));
+            assertFalse(renderedCells(panel).contains("Assigned"));
+            assertFalse(renderedCells(panel).contains(TypicalMembers.ALEX.getName().fullName));
+            assertTrue(activations.isEmpty());
+        });
+    }
+
+    /**
+     * Returns rendered table text after layout so stale derived holder/availability cells are detected.
+     */
+    private static List<String> renderedCells(EquipmentGroupPanel panel) {
+        panel.layout();
+        return panel.lookupAll(".table-cell").stream().map(TableCell.class::cast)
+                .filter(cell -> !cell.isEmpty()).map(TableCell::getText).toList();
     }
 
     @Test
