@@ -1212,6 +1212,11 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
    Show all units reveals the damaged sibling. Directly view that UUID and check exact selection.
    Uncheck Show all units: the table narrows again, the exact unit details remain visible, and a message
    explains that the selected unit is outside the table filter.
+   With enough groups and units to scroll, leave the directory and unit table at the top, then directly
+   view a UUID near the end. Both selected rows must scroll into view. Repeat after clicking a table
+   heading to sort: the sort and search filters must remain. Scroll away from the selected rows and
+   run the same view command again; both rows must reappear. A background refresh without navigation
+   must preserve browsing position and must not execute another command.
 3. Rename the damaged unit, delete it, then restore it with the documented equipment commands. Expect
    regrouping without UUID changes. Check deleted records never inflate available counts.
 4. Open a member's details, copy contact fields, and use a related equipment link. Switch tabs and use

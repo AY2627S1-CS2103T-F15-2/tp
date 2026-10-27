@@ -470,7 +470,9 @@ and partial matching are not supported.
 
 Details show the full UUID, name, category, condition, notes, lifecycle status and derived availability. An open loan also
 shows the holder's NUS ID, name, phone and email, plus assignment and expected return dates. The matching
-equipment row is selected when its list is visible. Long notes wrap and scroll with the details.
+group and physical-unit rows are selected and scrolled into view when included in the current filters.
+If the unit is outside those filters, its group opens with **Show all units** enabled. Current search
+filters and any clicked table sort remain unchanged. Long notes wrap and scroll with the details.
 
 | Item state | Example feedback |
 | --- | --- |

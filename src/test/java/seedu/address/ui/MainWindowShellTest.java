@@ -25,14 +25,21 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.geometry.Bounds;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Control;
+import javafx.scene.control.IndexedCell;
 import javafx.scene.control.Label;
 import javafx.scene.control.Labeled;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuButton;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
@@ -110,6 +117,118 @@ public class MainWindowShellTest {
             window.dispose();
             window.getPrimaryStage().hide();
         });
+    }
+
+    @Test
+    public void equipmentLookup_revealsLastGroupAndRepeatedLookupAfterSilentRefresh() {
+        UUID target = new UUID(0, 40);
+        int[] dispatches = new int[1];
+        FxTestUtil.runAndWait(() -> {
+            model.setAddressBook(new AddressBook());
+            for (int index = 1; index <= 40; index++) {
+                model.addEquipment(new Equipment(new UUID(0, index), String.format("Camera %02d", index),
+                        "Photo", Condition.GOOD, ""));
+            }
+            submit("equipment search category/Photo");
+            rows().scrollTo(0);
+            layout();
+            assertEquals(0, verticalScroll(rows()).getValue(), 0.001);
+            showEquipmentDetails(target);
+            assertEquals(39, rows().getSelectionModel().getSelectedIndex());
+            assertSelectedRowVisible(rows(), ".list-cell");
+            assertTrue(label("queryContext").contains("photo"));
+            rows().scrollTo(0);
+            layout();
+            assertEquals(0, verticalScroll(rows()).getValue(), 0.001);
+            dispatches[0] = logic.commands.size();
+            // A member change refreshes equipment without changing its selection or contents.
+            model.addMember(new Member(id(9), new Name("Refresh Member"),
+                    new Phone("91234567"), new Email("refresh@example.com")));
+        });
+        FxTestUtil.runAndWait(() -> {
+            layout();
+            assertEquals(0, verticalScroll(rows()).getValue(), 0.001);
+            assertEquals(39, rows().getSelectionModel().getSelectedIndex());
+            assertEquals(dispatches[0], logic.commands.size());
+            showEquipmentDetails(target);
+            assertSelectedRowVisible(rows(), ".list-cell");
+            assertEquals(dispatches[0] + 1, logic.commands.size());
+        });
+    }
+
+    @Test
+    public void equipmentLookup_revealsSortedUnitAndFilteredTargetWithoutExtraCallbacks() {
+        UUID target = new UUID(0, 1);
+        int[] dispatches = new int[1];
+        FxTestUtil.runAndWait(() -> {
+            model.setAddressBook(new AddressBook());
+            for (int index = 1; index <= 30; index++) {
+                model.addEquipment(new Equipment(new UUID(0, index), "Camera", "Photo",
+                        index == 1 ? Condition.DAMAGED : Condition.GOOD, ""));
+            }
+            submit("equipment search availability/available");
+            showEquipmentDetails(target);
+            TableView<?> table = (TableView<?>) node("physicalUnits");
+            assertTrue(((javafx.scene.control.CheckBox) node("showAllUnits")).isSelected());
+            assertEquals(30, table.getItems().size());
+            sortUnitsDescending(table);
+            table.scrollTo(0);
+            layout();
+            assertEquals(0, verticalScroll(table).getValue(), 0.001);
+            showEquipmentDetails(target);
+            assertEquals(29, table.getSelectionModel().getSelectedIndex());
+            assertEquals(target, ((Equipment) table.getSelectionModel().getSelectedItem()).getUuid());
+            assertSelectedRowVisible(table, ".table-row-cell");
+            assertTrue(label("queryContext").contains("Availability: AVAILABLE"));
+            table.scrollTo(0);
+            layout();
+            dispatches[0] = logic.commands.size();
+            model.addMember(new Member(id(9), new Name("Refresh Member"),
+                    new Phone("91234567"), new Email("refresh@example.com")));
+        });
+        FxTestUtil.runAndWait(() -> {
+            TableView<?> table = (TableView<?>) node("physicalUnits");
+            assertEquals(0, verticalScroll(table).getValue(), 0.001);
+            assertEquals(29, table.getSelectionModel().getSelectedIndex());
+            assertEquals(TableColumn.SortType.DESCENDING, table.getSortOrder().getFirst().getSortType());
+            assertEquals(dispatches[0], logic.commands.size());
+            showEquipmentDetails(target);
+            assertSelectedRowVisible(table, ".table-row-cell");
+            assertEquals(dispatches[0] + 1, logic.commands.size());
+        });
+    }
+
+    /**
+     * Sorts full test UUIDs through the production Unit column, whose displayed suffixes are distinct.
+     */
+    private static <T> void sortUnitsDescending(TableView<T> table) {
+        TableColumn<T, ?> unit = table.getColumns().getFirst();
+        unit.setSortType(TableColumn.SortType.DESCENDING);
+        table.getSortOrder().setAll(List.of(unit));
+        table.sort();
+    }
+
+    /**
+     * Returns the vertical scrollbar owned by the control's virtualized rows.
+     */
+    private static ScrollBar verticalScroll(Control control) {
+        return control.lookupAll(".scroll-bar").stream().map(ScrollBar.class::cast)
+                .filter(scroll -> scroll.getOrientation() == Orientation.VERTICAL).findFirst().orElseThrow();
+    }
+
+    /**
+     * Checks the realized selected row is inside its viewport rather than merely selected in the model.
+     */
+    private void assertSelectedRowVisible(Control control, String rowSelector) {
+        layout();
+        Node viewport = control.lookup(".clipped-container");
+        Bounds visible = viewport.localToScene(viewport.getBoundsInLocal());
+        assertTrue(control.lookupAll(rowSelector).stream().map(IndexedCell.class::cast)
+                .filter(cell -> !cell.isEmpty() && cell.isSelected())
+                .map(cell -> cell.localToScene(cell.getBoundsInLocal()))
+                .anyMatch(bounds -> bounds.getMinY() >= visible.getMinY() - 1
+                        && bounds.getMaxY() <= visible.getMaxY() + 1),
+                "Selected row must be realized and visible within the viewport");
     }
 
     @Test
