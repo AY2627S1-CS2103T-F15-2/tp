@@ -62,6 +62,11 @@ reference fields; equipment UUIDs, names and categories; and the four equipment 
 to case and retain their stored spelling. Suggestions use the current records, including records added
 since startup. Identical values appear once.
 
+A matching stored value takes priority over an unfinished field prefix within that value. For example,
+with a stored equipment name `Camera Cover`, `equipment add name/Camera co` completes to
+`equipment add name/Camera Cover`. If no stored value matches, the final token can still complete
+to a new field prefix. A trailing space offers the unused fields for the command.
+
 Command words and field prefixes are case-sensitive. Field suggestions depend on the command and omit
 non-repeatable prefixes already present. All seventeen member, equipment and loan commands plus `help`,
 `exit`, `mode dark` and `mode light` have command completion. Search supports `q/`, the applicable filters, sorting and ordering;

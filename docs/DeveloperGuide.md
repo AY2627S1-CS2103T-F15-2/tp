@@ -1219,6 +1219,12 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
 7. Add or edit a record, then retry completion. Expected: current values are suggested. Tab alone never
    changes records or saves; Enter uses normal parser validation. Restart after a valid mutation and
    verify the saved records. New IDs, dates, numeric counts and notes remain manually entered.
+8. Register equipment named `Camera Cover` in category `Photo Cover`. Type
+   `equipment add name/Camera co category/Photo`, place the caret after `co`, and press Tab.
+   Expected: `name/Camera Cover`, with the following category field unchanged and no command executed.
+   Repeat with `equipment add category/Photo co`; expect `category/Photo Cover`. Check `Camera Case`
+   and `Camera Notes` too. When no stored value matches, an unfinished token such as `notes/Keep co`
+   still offers unused field prefixes; a trailing space starts a new field.
 
 ### Rejection of retired commands
 

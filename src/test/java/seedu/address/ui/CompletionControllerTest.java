@@ -27,6 +27,30 @@ import seedu.address.testutil.ViewTestData;
 /** Uses real JavaFX event dispatch and focus traversal rather than calling private handlers. */
 public class CompletionControllerTest {
     @Test
+    public void tab_multiwordValueOverlapsPrefix_completesValueWithoutExecuting() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = ViewTestData.model();
+            Equipment equipment = new Equipment(ViewTestData.CAMERA.getUuid(), "Camera Cover", "Photo Cover",
+                    ViewTestData.CAMERA.getCondition(), "");
+            model.setEquipment(ViewTestData.CAMERA, equipment);
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("OK");
+            }, model::getAddressBook);
+            new Scene(new VBox(box.getRoot()));
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            type(field, "equipment add name/Camera co category/Photo");
+            field.positionCaret(field.getText().indexOf(" category/"));
+            tab(field);
+            assertEquals("equipment add name/Camera Cover category/Photo", field.getText());
+            assertEquals("equipment add name/Camera Cover".length(), field.getCaretPosition());
+            assertTrue(executed.isEmpty());
+            assertEquals(equipment, model.findEquipment(equipment.getUuid()).orElseThrow());
+        });
+    }
+
+    @Test
     public void tab_cycleAndReverse_wrapsAndDoesNotExecute() {
         FxTestUtil.runAndWait(() -> {
             ModelManager model = ViewTestData.model();
