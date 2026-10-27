@@ -1253,6 +1253,11 @@ not retained totals. Check the UG and linked search guide describe this same dis
     `loans return uuid/UUID re`, and `loans return uuid/UUID co`. Expect `nus/`, `returned/` and
     `condition/` without changing the UUID list or later fields. Recheck UUID completion immediately
     after a comma; it must still offer unused UUIDs rather than a new parameter.
+11. Type `loans return co` and press Ctrl+Space. Expected: `loans return condition/` is offered.
+    Repeat after an existing `uuid/UUID` field; that field remains unchanged. After a used
+    `condition/GOOD` field, Ctrl+Space must not offer `condition/` again. Compare with Tab and the
+    loan-return template in Help; both expose the same optional return condition. Preparing a template
+    or accepting a suggestion must not execute a return.
 
 ### Rejection of retired commands
 
