@@ -71,7 +71,7 @@ Value matching treats repeated spaces and Unicode whitespace within a value as o
 For example, `member edit name/Alex  T` can complete the stored name `Alex Tan`. The replacement keeps
 the stored spelling, and all text and separators outside that value remain unchanged.
 
-Command words and field prefixes are case-sensitive. Field suggestions depend on the command and omit
+Command words ignore case; field prefixes remain case-sensitive. Field suggestions depend on the command and omit
 non-repeatable prefixes already present. All seventeen member, equipment and loan commands plus `help`,
 `exit`, `mode dark` and `mode light` have command completion. Search supports `q/`, the applicable filters, sorting and ordering;
 finite options such as `status/de` complete to `status/DELETED`. Query text can reuse searchable stored
@@ -179,7 +179,11 @@ in addition to the seventeen member, equipment and loan commands.
 
 ## Command format and feedback
 
-Commands and prefixes are **lowercase and case-sensitive**. Use `member add`, not `Member Add`.
+Command words are **case-insensitive**: `Member Add` and `member add` are equivalent.
+`member`/`members` and `loan`/`loans` are explicit family aliases. `equipment` is uncountable;
+`equipments`, `lists` and `returns` are not aliases. Field prefixes remain lowercase and case-sensitive.
+Parameter values retain their existing validation and case rules; names and notes preserve their case.
+Help, usage messages and Tab suggestions use the canonical `member`, `equipment` and `loans` spellings.
 
 - Replace uppercase placeholders with your values: replace `NUS_ID` with `A0123456X`, for example.
 - Square brackets mean an optional parameter; do not type them. Optional parameters are marked in each command's syntax.

@@ -71,6 +71,23 @@ public class FullCommandRoutingIntegrationTest {
     }
 
     @Test
+    public void commandAliases_assignAndReturnThroughSamePersistenceBoundary() throws Exception {
+        LocalDate today = LocalDate.now();
+        execute("MEMBERS EDIT nus/" + FIRST + " name/Mixed Case Name", DisplayRequest.memberDetails(FIRST));
+        execute("LOAN ADD uuid/" + firstItem + " nus/" + FIRST + " assigned/" + today + " expected/" + today,
+                DisplayRequest.equipmentDetails(firstItem));
+        reload();
+        assertEquals("Mixed Case Name", model.findMember(FIRST).orElseThrow().getName().fullName);
+        assertEquals(FIRST, model.findOpenLoan(firstItem).orElseThrow().getMemberNusId());
+        execute("LoAnS ReTuRn uuid/" + firstItem + " returned/" + today,
+                DisplayRequest.equipmentDetails(firstItem));
+        reload();
+        assertTrue(model.findOpenLoan(firstItem).isEmpty());
+        assertEquals(today, model.getLoanList().getFirst().getReturnedDate().orElseThrow());
+        assertRejected(ParseException.class, "MEMBERS EDIT nus/" + FIRST + " NAME/Changed");
+    }
+
+    @Test
     public void allTenRoutes_memberAndEquipmentDeletionRetainsHistory() throws Exception {
         LocalDate assigned = LocalDate.now().minusDays(3);
         LocalDate expected = assigned.plusDays(10);

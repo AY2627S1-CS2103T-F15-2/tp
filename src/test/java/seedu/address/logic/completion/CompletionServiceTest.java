@@ -53,7 +53,7 @@ public class CompletionServiceTest {
                 "member", "equipment", "loans")) {
             assertCandidates(word, word);
         }
-        for (String input : List.of("add", "edit", "delete", "clear", "find", "list", "MEM", "xyz",
+        for (String input : List.of("add", "edit", "delete", "clear", "find", "list", "xyz",
                 "member zz", "help ", "member unknown ", "member list ",
                 "equipment list ", "loans list ")) {
             assertTrue(service.complete(input, input.length(), model.getAddressBook()).isEmpty(), input);
@@ -66,6 +66,24 @@ public class CompletionServiceTest {
         assertEquals(7, gap.start());
         assertEquals(7, gap.end());
         assertEquals(List.of("add", "delete", "edit", "list", "restore", "search", "view"), gap.candidates());
+    }
+
+    @Test
+    public void complete_aliasesAndCase_suggestsCanonicalWordsAndPreservesValues() {
+        assertCandidates("MEM", "member");
+        assertCandidates("Members", "member");
+        assertCandidates("Loan", "loans");
+        assertCandidates("LOAN LI", "list");
+        assertCandidates("MEMBERS ED", "edit");
+        assertCandidates("LOAN ADD ", "assigned/", "expected/", "nus/", "uuid/");
+        assertCandidates("Members Edit name/al", "Alex Tan");
+        String input = "MEMBERS EDIT name/alJUNK phone/91234567";
+        Completion completion = service.complete(input, input.indexOf("JUNK"),
+                model.getAddressBook()).orElseThrow();
+        assertEquals("MEMBERS EDIT name/Alex Tan phone/91234567", apply(input, completion));
+        for (String invalid : List.of("equipments ", "loans returns ", "MEMBERS ADD NAME/A")) {
+            assertTrue(service.complete(invalid, invalid.length(), model.getAddressBook()).isEmpty(), invalid);
+        }
     }
 
     @Test
@@ -283,7 +301,7 @@ public class CompletionServiceTest {
         assertCandidates("mode ", "dark", "light");
         assertCandidates("mode da", "dark");
         assertCandidates("mode li", "light");
-        assertTrue(service.complete("mode DARK", 9, model.getAddressBook()).isEmpty());
+        assertCandidates("mode DARK", "dark");
         assertCandidates("h", "help");
         assertCandidates("l", "loans");
     }

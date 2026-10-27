@@ -3,7 +3,8 @@
 Usage: `member list`
 
 Takes no parameters. Spaces and tabs after the subcommand are allowed; text or parameter
-markers are rejected. Families and subcommands are lowercase and case-sensitive.
+markers are rejected. Command words ignore case; `members` and `loan` alias `member` and `loans`.
+Field prefixes remain lowercase and case-sensitive.
 
 Reports active counts and any deleted count, and requests the full directory through `DisplayRequest`.
 The command does not change entities, loans or stored collection order. It uses the existing

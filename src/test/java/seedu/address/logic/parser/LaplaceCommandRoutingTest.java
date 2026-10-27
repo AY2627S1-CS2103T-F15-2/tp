@@ -28,11 +28,11 @@ import seedu.address.logic.parser.exceptions.ParseException;
 public class LaplaceCommandRoutingTest {
 
     @Test
-    public void parseCommand_missingUnknownOrWrongCase_throwsParseException() {
+    public void parseCommand_missingOrUnknown_throwsParseException() {
         AddressBookParser parser = new AddressBookParser();
-        for (String input : new String[] {"", " \t", "member", "equipment \t", "loans", "members list",
+        for (String input : new String[] {"", " \t", "member", "equipment \t", "loans", "equipments list",
             "equipmentx list", "loan add", "member unknown", "equipment return", "loans unknown",
-            "Member list", "member LIST", "equipment ADD", "loans Return", "loans LIST", "member addExtra"}) {
+            "member lists", "equipment ADD", "loans Return", "loans LIST extra", "member addExtra"}) {
             assertThrows(ParseException.class, () -> parser.parseCommand(input));
         }
     }

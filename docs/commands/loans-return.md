@@ -19,7 +19,8 @@ loans return uuid/UUID[,UUID...] returned/DATE [condition/CONDITION]
 ```
 
 Both parameters are required and may appear in either order. Family and subcommand names are
-lowercase and case-sensitive. Spaces and tabs separate parameters. Use the equipment UUID and
+case-insensitive; `loan` aliases `loans`. Prefixes remain lowercase and case-sensitive.
+Spaces and tabs separate parameters. Use the equipment UUID and
 a real calendar date in `yyyy-MM-dd` format.
 
 Example for the sample camera already held by Alex Tan:

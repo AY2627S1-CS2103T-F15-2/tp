@@ -22,14 +22,14 @@ class RedoCommandParserTest {
     }
 
     @Test
-    void parse_extraArgumentsAndWrongCase_rejectsWithoutExecuting() {
+    void parse_extraArguments_rejectsWithoutExecuting() throws Exception {
         for (String argument : List.of("1", "redo", "uuid/value", "unknown/value", "count/2 count/3")) {
             ParseException error = assertThrows(ParseException.class, () ->
                     new RedoCommandParser().parse(argument));
             assertTrue(error.getMessage().contains(RedoCommand.MESSAGE_USAGE));
             assertThrows(ParseException.class, () -> new AddressBookParser().parseCommand("redo " + argument));
         }
-        assertThrows(ParseException.class, () -> new AddressBookParser().parseCommand("REDO"));
+        assertInstanceOf(RedoCommand.class, new AddressBookParser().parseCommand("REDO"));
         assertThrows(NullPointerException.class, () -> new RedoCommandParser().parse(null));
     }
 }

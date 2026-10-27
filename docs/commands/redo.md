@@ -4,7 +4,7 @@
 redo
 ```
 
-This lowercase, no-argument command restores the state of the most recently undone record mutation.
+This case-insensitive, no-argument command restores the state of the most recently undone record mutation.
 Whitespace is accepted; extra text, prefixes, counts and wrong-case command words are rejected.
 
 Success reports `Redid: ACTION.`, such as `Redid: equipment add.`. No available step reports

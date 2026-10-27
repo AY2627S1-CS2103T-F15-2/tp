@@ -1371,3 +1371,17 @@ Use temporary data. Do not test against a real inventory.
    edits must leave redo available. `undo 2` and `redo count/2` must be rejected without changing data.
 6. Restart after an undo. The restored records must still load, but undo and redo must both be unavailable.
    Automated tests inject failed saves and verify records, history and prior file bytes survive for retry.
+
+### Command-word aliases and casing
+
+`CommandWords.canonicalFamily` maps only `members` to `member` and `loan` to `loans`, using
+`Locale.ROOT` casing. Family parsers normalize only their action token; leaf parsers still receive
+unchanged parameter text. Top-level command words and appearance actions also ignore case. The same
+family vocabulary drives `CompletionService`, which offers canonical words and preserves replacement
+boundaries and parameter text. Help describes the aliases; command examples remain canonical.
+
+Manual check: enter `LOAN LIST`, `Members View nus/A0123456X`, then a mixed-case `MEMBERS EDIT`
+with a mixed-case name. Verify the same navigation and case-preserved name as canonical commands.
+Try `equipments list`, `loan returns` and `MEMBERS ADD NAME/Camera`; expect the existing validation
+and canonical guidance. Tab after `LOAN LI` should suggest `list`; Tab after `Members` suggests `member`.
+No model, persistence, transaction or UML relationships change.
