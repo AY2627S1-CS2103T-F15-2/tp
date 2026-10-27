@@ -725,6 +725,10 @@ Older member/equipment records without a `deleted` field load as active;
 explicit null or non-boolean values are invalid. Do not open lifecycle-aware data in an older release
 that may discard deletion state.
 
+JSON property names must be unique within each object. Repeated collection or record fields are
+rejected rather than choosing one value and losing the other. If loading reports a duplicate field,
+close Laplace without entering commands, preserve the original file and repair a separate copy.
+
 Back up the data file while Laplace is closed. Do not edit it while the app is running or run multiple
 instances against the same file. Manual data editing is not an MVP operation. If startup or a view
 reports invalid/inconsistent data, preserve the original file and report the message; do not overwrite

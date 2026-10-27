@@ -407,6 +407,11 @@ The `Storage` component,
 
 Classes used by multiple components are in the `seedu.address.commons` package.
 
+`JsonUtil` enables Jackson's strict duplicate-property detection for JSON reads, including data and
+preferences. Repeated names in one object fail parsing before model conversion, even when their values
+are identical; the same field names in separate records remain valid. The checked loading exception
+retains the parser's duplicate-field name and location. Reading a rejected file does not rewrite it.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Implementation**
@@ -1322,6 +1327,13 @@ not retained totals. Check the UG and linked search guide describe this same dis
    filesystem failures against a real user dataset.
 
 ### Saving data
+
+To check duplicate-property validation, use a disposable JAR folder and a backup of synthetic data.
+With Laplace closed, add a second `"loans": []` property to a valid saved root object. Launch the JAR
+and check the log for `Duplicate field 'loans'`. Do not enter commands after a loading error; close
+Laplace and verify the rejected file's bytes are unchanged. Restore the backup, then repeat with a
+second `returnedDate` property inside one loan. Removing the duplicate must allow the original
+members, equipment and open/completed loans to load and survive a save/reload.
 
 1. Dealing with missing/corrupted data files
 
