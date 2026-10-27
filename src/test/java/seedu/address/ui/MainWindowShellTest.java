@@ -271,7 +271,7 @@ public class MainWindowShellTest {
                 field().fireEvent(key(KeyCode.ENTER));
                 assertEquals(List.of("member view nus/A0000001X"), logic.commands);
                 assertEquals("", field().getText());
-                assertEquals(1, storage.saves);
+                assertEquals(0, storage.saves);
                 recordOutcome("member view nus/A0000001X [Enter]");
                 reject("member view nus/invalid");
                 succeed("member list");
@@ -877,7 +877,7 @@ public class MainWindowShellTest {
             assertTrue(logic.commands.contains("equipment view uuid/" + new UUID(0, 1)));
             assertEquals("Success", feedbackStatus());
             assertTrue(node("detailsTitle") != null);
-            assertEquals(4, storage.saves);
+            assertEquals(0, storage.saves);
         });
     }
 
@@ -913,11 +913,11 @@ public class MainWindowShellTest {
     }
 
     @Test
-    public void activation_spaceSaveFailure_returnsCorrectionFocusAfterKeyReleaseWithoutLeakingSpace() {
+    public void activation_spaceMissingMember_returnsCorrectionFocusAfterKeyReleaseWithoutLeakingSpace() {
         FxTestUtil.runAndWait(() -> {
+            model.setAddressBook(new AddressBook());
             AddressBook before = new AddressBook(model.getAddressBook());
             rows().requestFocus();
-            storage.fail = true;
             rows().fireEvent(key(KeyCode.SPACE));
             assertEquals("Error", feedbackStatus());
             assertEquals(rows(), window.getPrimaryStage().getScene().getFocusOwner());
@@ -943,7 +943,7 @@ public class MainWindowShellTest {
             assertEquals(rows(), window.getPrimaryStage().getScene().getFocusOwner());
             assertEquals("", field().getText());
             assertEquals(List.of("member view nus/A0000001X"), logic.commands);
-            assertEquals(1, storage.saves);
+            assertEquals(0, storage.saves);
         });
     }
 
@@ -951,7 +951,7 @@ public class MainWindowShellTest {
     public void activation_disposedBeforeSpaceRelease_detachesPendingCorrectionFocus() {
         FxTestUtil.runAndWait(() -> {
             rows().requestFocus();
-            storage.fail = true;
+            model.setAddressBook(new AddressBook());
             rows().fireEvent(key(KeyCode.SPACE));
             Node focusBeforeDisposal = window.getPrimaryStage().getScene().getFocusOwner();
             assertEquals(rows(), focusBeforeDisposal);
@@ -1019,6 +1019,31 @@ public class MainWindowShellTest {
             assertFalse(window.getPrimaryStage().isShowing());
             assertEquals(0, Stage.getWindows().stream().filter(javafx.stage.Window::isShowing).count());
             assertEquals((int) window.getPrimaryStage().getX(), model.getGuiSettings().getWindowCoordinates().x);
+        });
+    }
+
+    @Test
+    public void readOnlyCommands_storageUnavailable_keepsNavigationHelpAndExitAvailable() {
+        FxTestUtil.runAndWait(() -> {
+            AddressBook before = new AddressBook(model.getAddressBook());
+            storage.fail = true;
+            for (String command : List.of("member list", "loans list", "member view nus/A0000001X",
+                    "equipment view uuid/" + new UUID(0, 1))) {
+                submit(command);
+                assertEquals("Success", feedbackStatus(), command + ": " + feedback());
+                assertEquals("", field().getText(), command);
+            }
+            assertEquals(new UUID(0, 1).toString(), detailLabel("equipmentUuid"));
+            assertEquals("Assigned", detailLabel("availability"));
+            submit("help");
+            assertEquals("Success", feedbackStatus());
+            assertEquals(2, Stage.getWindows().stream().filter(javafx.stage.Window::isShowing).count());
+            submit("exit");
+            assertFalse(window.getPrimaryStage().isShowing());
+            assertEquals(0, Stage.getWindows().stream().filter(javafx.stage.Window::isShowing).count());
+            assertEquals(0, storage.saves);
+            assertEquals(before, model.getAddressBook());
+            assertFalse(Files.exists(storage.getAddressBookFilePath()));
         });
     }
 
@@ -1141,7 +1166,7 @@ public class MainWindowShellTest {
             showEquipmentDetails(new UUID(0, 1));
             assertEquals(new UUID(0, 1).toString(), detailLabel("equipmentUuid"));
             assertEquals("2026-01-02", detailLabel("expectedReturnDate"));
-            assertEquals(4, storage.saves);
+            assertEquals(0, storage.saves);
         });
     }
 
@@ -1250,6 +1275,7 @@ public class MainWindowShellTest {
 
     @Test
     public void storageFailure_laplaceDelete_preservesDetailsSelectionInputAndLaterSavedRecords() throws Exception {
+        storage.saveAddressBook(model.getAddressBook());
         FxTestUtil.runAndWait(() -> {
             succeed("member view nus/A0000002X");
             AddressBook before = new AddressBook(model.getAddressBook());
@@ -1270,7 +1296,7 @@ public class MainWindowShellTest {
             assertEquals(saved, model.getAddressBook());
             succeed("member delete nus/A0000002X");
             assertTrue(model.findMember(id(2)).orElseThrow().isDeleted());
-            assertEquals(3, storage.saves);
+            assertEquals(2, storage.saves);
         });
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
     }
@@ -1296,7 +1322,7 @@ public class MainWindowShellTest {
             storage.fail = false;
             succeed("member list");
             assertEquals(before, model.getAddressBook());
-            assertTrue(Files.exists(temporaryDirectory.resolve("laplace.json")));
+            assertFalse(Files.exists(temporaryDirectory.resolve("laplace.json")));
         });
     }
 
@@ -1379,6 +1405,7 @@ public class MainWindowShellTest {
 
     @Test
     public void reload_savedData_rebuildsInitialSelectionFromRealJson() throws Exception {
+        storage.saveAddressBook(model.getAddressBook());
         FxTestUtil.runAndWait(() -> submit("member list"));
         ReadOnlyAddressBook restored = storage.readAddressBook().orElseThrow();
         assertEquals(model.getAddressBook(), restored);
@@ -1420,7 +1447,7 @@ public class MainWindowShellTest {
             session.add("Commands executed: " + logic.commands);
             session.add("Successful saves: " + storage.saves);
             assertEquals(6, logic.commands.size());
-            assertEquals(3, storage.saves);
+            assertEquals(0, storage.saves);
         });
         Path path = Path.of("build", "reports", "laplace", "shell-session.txt");
         Files.createDirectories(path.getParent());
@@ -1677,14 +1704,18 @@ public class MainWindowShellTest {
         });
     }
 
-    /** Checks one real successful dispatch and one successful JSON save. */
+    /**
+     * Checks one successful dispatch and whether that command should save records.
+     */
     private void succeed(String command) {
         int saves = storage.saves;
         int dispatched = logic.commands.size();
         submit(command);
         assertEquals("Success", feedbackStatus(), command + ": " + feedback());
         assertEquals("", field().getText(), command);
-        assertEquals(saves + (command.equals("equipment list") ? 0 : 1), storage.saves, command);
+        boolean isQuery = command.endsWith(" list") || command.startsWith("member view ")
+                || command.startsWith("equipment view ");
+        assertEquals(saves + (isQuery ? 0 : 1), storage.saves, command);
         assertEquals(dispatched + 1, logic.commands.size(), command);
         recordOutcome(command);
     }
@@ -1746,7 +1777,9 @@ public class MainWindowShellTest {
         return "loans add uuid/" + item + " nus/" + member + " assigned/" + assigned + " expected/" + expected;
     }
 
-    /** Uses the same real family route and autosave as command input. */
+    /**
+     * Uses the same read-only member-view route as command input.
+     */
     private void showMemberDetails(NusId identity) {
         submit("member view nus/" + identity.value);
         assertEquals("Success", feedbackStatus());
