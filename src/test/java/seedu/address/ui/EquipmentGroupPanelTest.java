@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import seedu.address.model.ModelManager;
@@ -29,6 +30,29 @@ import seedu.address.testutil.TypicalMembers;
 class EquipmentGroupPanelTest {
     private static final Equipment CAMERA = new Equipment(new UUID(0, 1), "Camera", "Photo", Condition.GOOD, "");
     private static final Equipment DAMAGED = new Equipment(new UUID(0, 2), "camera", "PHOTO", Condition.DAMAGED, "");
+
+    @Test
+    void showUnit_identityChanges_resetVisibleScrollWhileRefreshPreservesPosition() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = model();
+            EquipmentGroupPanel panel = new EquipmentGroupPanel(model.getAddressBook(), model::getAvailability,
+                    unused -> { }, unused -> { }, unused -> { });
+            mount(panel);
+            panel.showUnit(CAMERA.getUuid(), DirectoryQuery.all());
+            ScrollPane scroll = (ScrollPane) panel.getChildren().getFirst();
+            scroll.setVvalue(1);
+            panel.refresh();
+            assertEquals(1, scroll.getVvalue());
+            panel.showUnit(CAMERA.getUuid(), DirectoryQuery.all());
+            assertEquals(1, scroll.getVvalue());
+            panel.showUnit(DAMAGED.getUuid(), DirectoryQuery.all());
+            assertEquals(0, scroll.getVvalue());
+            assertEquals(DAMAGED.getUuid().toString(), ((Label) panel.lookup("#equipmentUuid")).getText());
+            scroll.setVvalue(0.5);
+            panel.showUnit(CAMERA.getUuid(), DirectoryQuery.all());
+            assertEquals(0, scroll.getVvalue());
+        });
+    }
 
     @Test
     void normalizedGroups_keepDistinctUnitsAndSeparateMatchingCounts() {

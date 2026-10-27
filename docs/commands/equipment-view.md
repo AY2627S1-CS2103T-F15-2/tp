@@ -27,6 +27,10 @@ not an unassigned item. Notes wrap; vertical scrolling keeps long content access
 
 ## Integration status
 
+Opening a different UUID resets the visible group/details scroll area to the top. Refreshing or
+reopening the same UUID preserves the scroll position.
+
+
 Merged #95 activates the real route, and merged #93 mounts the existing details panel and
 coordinates exact selection and refresh. View commands do not mutate records. LogicManager retains
 the existing read-command save behavior; Laplace mutations use the new staged/atomic boundary.
