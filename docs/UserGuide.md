@@ -92,7 +92,8 @@ keeps its normal navigation behavior outside an active completion cycle.
 When there is no saved data file, Laplace starts with five fictional members and seven equipment items.
 The samples include two cameras, a damaged tripod, a microphone, a speaker, a projector under repair
 and an event laptop. Three open loans illustrate current holders, one overdue item and a member holding
-multiple items. One closed loan appears in the Loans tab history.
+multiple items. Two closed loans show a FAIR speaker return and a GOOD-to-DAMAGED tripod return.
+The assigned camera intentionally has no issue observation to demonstrate older unknown history.
 
 Dates are relative to the day of first launch. Try `member list`, `equipment list` and `loans list`,
 then copy displayed identities to view details or try a return. These are ordinary records:
@@ -115,7 +116,7 @@ issue, return or delete records.
 
 To explore without changing the sample records:
 
-1. Run `loans list`. The Loans tab shows three open loans and the closed speaker loan in history.
+1. Run `loans list`. The Loans tab shows three open loans and the closed speaker/tripod loans in history.
 2. Run `member view nus/A0123456X`. Alex's details show the camera and laptop under Held Equipment.
 3. Run `equipment view uuid/550e8400-e29b-41d4-a716-446655440003`. The microphone's details identify
    Jamie as the holder and show its assignment and expected return dates.

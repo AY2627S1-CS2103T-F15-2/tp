@@ -1162,6 +1162,11 @@ testers are expected to do more *exploratory* testing.
 
 ### Launch and shutdown
 
+On a fresh disposable first run, verify the sample speaker history records FAIR at issue/return, the
+tripod records GOOD at issue and DAMAGED on return with UNAVAILABLE availability, and the assigned camera
+intentionally shows an unknown issue condition. Save/reload must preserve these observations and UUIDs.
+Samples are never appended to an existing dataset.
+
 1. Initial launch
 
     1. Download the JAR file and copy it into an empty folder.

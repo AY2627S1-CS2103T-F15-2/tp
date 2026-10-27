@@ -84,6 +84,7 @@ public class SampleDataUtil {
                 "Strap included"));
         sampleAb.addEquipment(new Equipment(UUID.fromString("550e8400-e29b-41d4-a716-446655440002"),
                 "Tripod", "Photography", Condition.DAMAGED, "Loose leg; do not issue"));
+        // This intentional legacy example has no recorded issue observation.
         sampleAb.addLoan(new Loan(assignedCameraId, alexId, today.minusDays(2), today.plusDays(5), null));
         addMoreSampleData(sampleAb, today, alexId);
         return sampleAb;
@@ -109,10 +110,14 @@ public class SampleDataUtil {
         book.addEquipment(new Equipment(laptopId, "Event Laptop", "Computing", Condition.GOOD,
                 "Power adapter and carry case included"));
 
-        book.addLoan(new Loan(microphoneId, new NusId("A0234567R"), today.minusDays(7), today.minusDays(1), null));
-        book.addLoan(new Loan(laptopId, alexId, today.minusDays(1), today.plusDays(3), null));
+        book.addLoan(new Loan(microphoneId, new NusId("A0234567R"), today.minusDays(7), today.minusDays(1),
+                null, Condition.GOOD, null));
+        book.addLoan(new Loan(laptopId, alexId, today.minusDays(1), today.plusDays(3), null, Condition.GOOD, null));
         book.addLoan(new Loan(speakerId, new NusId("A0345678M"), today.minusDays(5), today.minusDays(2),
-                today.minusDays(3)));
+                today.minusDays(3), Condition.FAIR, Condition.FAIR));
+        book.addLoan(new Loan(UUID.fromString("550e8400-e29b-41d4-a716-446655440002"),
+                new NusId("A0456789B"), today.minusDays(10), today.minusDays(5), today.minusDays(4),
+                Condition.GOOD, Condition.DAMAGED));
     }
 
     /**
