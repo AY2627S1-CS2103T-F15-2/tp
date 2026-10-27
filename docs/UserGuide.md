@@ -62,6 +62,11 @@ reference fields; equipment UUIDs, names and categories; and the four equipment 
 to case and retain their stored spelling. Suggestions use the current records, including records added
 since startup. Identical values appear once.
 
+A matching stored value takes priority over an unfinished field prefix within that value. For example,
+with a stored equipment name `Camera Cover`, `equipment add name/Camera co` completes to
+`equipment add name/Camera Cover`. If no stored value matches, the final token can still complete
+to a new field prefix. A trailing space offers the unused fields for the command.
+
 Value matching treats repeated spaces and Unicode whitespace within a value as ordinary single spaces.
 For example, `member edit name/Alex  T` can complete the stored name `Alex Tan`. The replacement keeps
 the stored spelling, and all text and separators outside that value remain unchanged.

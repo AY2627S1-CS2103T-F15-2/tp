@@ -1237,6 +1237,16 @@ not retained totals. Check the UG and linked search guide describe this same dis
    Expected: `name/Alex Tan`, retaining the following phone field and its separator. Repeat with
    an em space (`U+2003`) and nonbreaking space (`U+00A0`) inside the partial name. The caret ends
    immediately after the stored name; Tab does not execute the command or rewrite surrounding input.
+9. Register equipment named `Camera Cover` in category `Photo Cover`. Type
+   `equipment add name/Camera co category/Photo`, place the caret after `co`, and press Tab.
+   Expected: `name/Camera Cover`, with the following category field unchanged and no command executed.
+   Repeat with `equipment add category/Photo co`; expect `category/Photo Cover`. Check `Camera Case`
+   and `Camera Notes` too. When no stored value matches, an unfinished token such as `notes/Keep co`
+   still offers unused field prefixes; a trailing space starts a new field.
+10. After one or several valid comma-separated UUIDs, complete `loans add uuid/UUID nu`,
+    `loans return uuid/UUID re`, and `loans return uuid/UUID co`. Expect `nus/`, `returned/` and
+    `condition/` without changing the UUID list or later fields. Recheck UUID completion immediately
+    after a comma; it must still offer unused UUIDs rather than a new parameter.
 
 ### Rejection of retired commands
 
