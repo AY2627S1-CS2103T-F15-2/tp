@@ -66,6 +66,13 @@ class JsonAdaptedLoan {
         returnCondition = source.getReturnCondition().map(Enum::name).orElse(null);
     }
 
+    /**
+     * Returns stored identities for diagnostics even when value conversion fails.
+     */
+    String describeIdentity() {
+        return "equipment " + equipmentUuid + ", member " + memberNusId;
+    }
+
     /** Converts this adapter to its domain type. */
     public Loan toModelType() throws IllegalValueException {
         requireField(equipmentUuid, "equipmentUuid");
@@ -100,7 +107,8 @@ class JsonAdaptedLoan {
         try {
             return LocalDate.parse(value);
         } catch (DateTimeParseException exception) {
-            throw new IllegalValueException("Loan " + field + " must be a valid ISO calendar date.", exception);
+            throw new IllegalValueException("Loan " + field + " '" + value
+                    + "' must be a valid ISO calendar date.", exception);
         }
     }
 

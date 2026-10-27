@@ -394,6 +394,12 @@ and shows selected structure; lifecycle behavior is explained in the text above.
 
 ### Storage component
 
+Record conversion and root-reference failures include a zero-based collection index plus stored NUS ID/
+UUID, even if that identity is invalid. Original checked/domain causes remain attached. Null records
+report their position with identity unavailable; date errors include the rejected text. Diagnostics
+avoid echoing contact details. For manual checks, use disposable copies with an invalid loan date,
+missing reference, duplicate identity and invalid condition; verify context and unchanged source bytes.
+
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
 <puml src="diagrams/StorageClassDiagram.puml" width="850" alt="Current storage adapters and relationships" />

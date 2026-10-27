@@ -107,6 +107,13 @@ class JsonAdaptedEquipment {
         return new Equipment(modelUuid, name, category, modelCondition, modelNotes, deleted);
     }
 
+    /**
+     * Returns stored identities for diagnostics even when value conversion fails.
+     */
+    String describeIdentity() {
+        return "UUID " + uuid + ", condition " + condition;
+    }
+
     private static UUID parseUuid(String rawUuid) throws IllegalValueException {
         if (!STANDARD_IDENTIFIER_PATTERN.matcher(rawUuid).matches()) {
             throw new IllegalValueException(INVALID_IDENTIFIER_MESSAGE);
