@@ -20,6 +20,7 @@ import seedu.address.logic.parser.CliSyntax;
 import seedu.address.logic.parser.Prefix;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
+import seedu.address.model.equipment.Equipment;
 import seedu.address.testutil.ViewTestData;
 
 /** Exercises contextual replacement, reference values, and unsupported-input boundaries. */
@@ -124,6 +125,26 @@ public class CompletionServiceTest {
         String beforeMarker = "member add name/Alex phone/9";
         assertTrue(service.complete(beforeMarker, beforeMarker.indexOf("phone/") + 3,
                 model.getAddressBook()).isPresent());
+    }
+
+    @Test
+    public void complete_equivalentWhitespace_matchesValuesWithoutMovingReplacementBoundaries() {
+        Equipment camera = ViewTestData.CAMERA;
+        model.setEquipment(camera, new Equipment(camera.getUuid(), "Camera Cover", "Photo Cover",
+                camera.getCondition(), camera.getNotes()));
+        for (String separator : List.of("  ", "\u2003", "\u00a0", "\u202f", "\u0085", "\u3000", "\t")) {
+            assertCandidates("member edit name/aLeX" + separator + "T", "Alex Tan");
+            assertCandidates("member search q/alex" + separator + "t", "Alex Tan");
+            assertCandidates("equipment add name/camera" + separator + "cov", "Camera Cover");
+            assertCandidates("equipment add category/photo" + separator + "cov", "Photo Cover");
+
+            String input = "member edit name/  aLeX" + separator + "TJUNK" + separator + "phone/91234567";
+            Completion completion = service.complete(input, input.indexOf("JUNK"),
+                    model.getAddressBook()).orElseThrow();
+            assertEquals("member edit name/  ".length(), completion.start());
+            assertEquals(input.indexOf("JUNK") + "JUNK".length(), completion.end());
+            assertEquals("member edit name/  Alex Tan" + separator + "phone/91234567", apply(input, completion));
+        }
     }
 
     @Test

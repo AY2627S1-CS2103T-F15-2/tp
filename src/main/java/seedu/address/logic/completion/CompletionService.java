@@ -293,9 +293,9 @@ public final class CompletionService {
     /** Filters and freezes an ordered candidate list, including an exact match as an idempotent completion. */
     private Optional<Completion> suggest(int start, int end, String fragment, Stream<String> candidates,
             boolean ignoreCase) {
-        String comparison = ignoreCase ? fragment.toLowerCase(Locale.ROOT) : fragment;
+        String comparison = ignoreCase ? LaplaceText.normalize(fragment).toLowerCase(Locale.ROOT) : fragment;
         List<String> matches = candidates.filter(candidate -> {
-            String value = ignoreCase ? candidate.toLowerCase(Locale.ROOT) : candidate;
+            String value = ignoreCase ? LaplaceText.normalize(candidate).toLowerCase(Locale.ROOT) : candidate;
             return value.startsWith(comparison);
         }).distinct().sorted().toList();
         if (matches.isEmpty()) {
