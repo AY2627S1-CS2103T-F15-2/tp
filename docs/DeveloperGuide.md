@@ -1202,6 +1202,11 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
 
 ### Tab completion across current commands
 
+History-command registration: open Help and locate the `undo` and `redo` examples. Use each example;
+expect the exact command prepared without execution. Type `und`/`red` and test both Tab and Ctrl+Space;
+expect `undo`/`redo` suggestions. Press Enter separately to invoke history. The in-app catalog and
+Tab vocabulary both include these no-argument utilities, with command-name highlighting in previews.
+
 1. In a disposable dataset, type `mem` and press Tab. Expected: `member`, with the caret at its end.
    Add a space and cycle with Tab, then Shift+Tab. Expected: alphabetical subcommands and reverse cycling.
 2. Try `member restore n`, `equipment edit co`, `equipment add cou`, and `loans return co`, pressing

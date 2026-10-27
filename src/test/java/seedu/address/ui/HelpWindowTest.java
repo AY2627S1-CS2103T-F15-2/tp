@@ -12,13 +12,51 @@ import org.junit.jupiter.api.Test;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import seedu.address.testutil.FxTestUtil;
+import seedu.address.testutil.ViewTestData;
 
 /** Checks the real Help message and Copy URL action against the published Laplace guide. */
 public class HelpWindowTest {
+    @Test
+    public void historyCommands_helpAndBothCompletionPaths_prepareWithoutExecuting() {
+        FxTestUtil.runAndWait(() -> {
+            List<String> prepared = new ArrayList<>();
+            HelpWindow help = new HelpWindow(new Stage(), prepared::add);
+            TextField field = new TextField();
+            new CompletionController(field, () -> ViewTestData.model().getAddressBook());
+            try {
+                for (String command : List.of("undo", "redo")) {
+                    String fragment = command.substring(0, 3);
+                    assertEquals(List.of(command + " "), CommandCatalog.complete(fragment));
+                    field.setText(fragment);
+                    field.positionCaret(fragment.length());
+                    field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.TAB,
+                            false, false, false, false));
+                    assertEquals(command, field.getText());
+                    help.show();
+                    help.getRoot().getScene().getRoot().applyCss();
+                    Text name = help.getRoot().getScene().getRoot().lookupAll(".command-name").stream()
+                            .map(node -> (Text) node).filter(text -> text.getText().equals(command))
+                            .findFirst().orElseThrow();
+                    CommandPreview preview = (CommandPreview) name.getParent().getParent();
+                    preview.lookupAll(".button").stream().map(node -> (Button) node)
+                            .filter(button -> button.getText().equals("Use command")).findFirst().orElseThrow().fire();
+                    assertFalse(help.isShowing());
+                }
+                assertEquals(List.of("undo", "redo"), prepared);
+            } finally {
+                help.hide();
+            }
+        });
+    }
+
     @Test
     public void useExample_preparesTemplateAndClosesHelp() {
         FxTestUtil.runAndWait(() -> {
