@@ -82,7 +82,7 @@ public class EquipmentGroupPanel extends VBox {
         units.setMinHeight(0);
         units.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         units.setPlaceholder(new Label("No units match these filters. Try Show all units or reset search."));
-        addColumn("Unit", unit -> "…" + unit.getUuid().toString().substring(28));
+        addColumn("Unit", unit -> EquipmentPresentation.shortUuid(unit.getUuid()));
         addColumn("Condition", unit -> EquipmentPresentation.label(unit.getCondition()));
         addColumn("Availability", this::availability);
         addColumn("Holder", this::holder);

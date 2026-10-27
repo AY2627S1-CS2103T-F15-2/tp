@@ -67,6 +67,25 @@ class EquipmentGroupPanelTest {
     }
 
     @Test
+    void unitColumn_showsUuidPrefixAndSuffix() {
+        UUID first = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+        UUID second = UUID.fromString("a1b2c3d4-e5f6-47a8-9b0c-123455440000");
+        ModelManager model = new ModelManager();
+        model.addEquipment(new Equipment(first, "Camera", "Photo", Condition.GOOD, ""));
+        model.addEquipment(new Equipment(second, "Camera", "Photo", Condition.GOOD, ""));
+        FxTestUtil.runAndWait(() -> {
+            EquipmentGroupPanel panel = new EquipmentGroupPanel(model.getAddressBook(), model::getAvailability,
+                    unused -> { }, unused -> { }, unused -> { });
+            mount(panel);
+            panel.showGroup(InventoryGroups.keyOf(CAMERA), DirectoryQuery.all());
+            TableView<?> units = (TableView<?>) panel.lookup("#physicalUnits");
+            TableColumn<?, ?> identity = units.getColumns().getFirst();
+            assertEquals("550e8400…0000", identity.getCellObservableValue(0).getValue());
+            assertEquals("a1b2c3d4…0000", identity.getCellObservableValue(1).getValue());
+        });
+    }
+
+    @Test
     void exactNavigation_outsideFilterAndRegrouping_preservesUuidWithoutCallbacks() {
         FxTestUtil.runAndWait(() -> {
             ModelManager model = model();
