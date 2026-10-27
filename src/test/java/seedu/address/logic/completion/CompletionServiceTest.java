@@ -152,6 +152,26 @@ public class CompletionServiceTest {
     }
 
     @Test
+    public void complete_equivalentWhitespace_matchesValuesWithoutMovingReplacementBoundaries() {
+        Equipment camera = ViewTestData.CAMERA;
+        model.setEquipment(camera, new Equipment(camera.getUuid(), "Camera Cover", "Photo Cover",
+                camera.getCondition(), camera.getNotes()));
+        for (String separator : List.of("  ", "\u2003", "\u00a0", "\u202f", "\u0085", "\u3000", "\t")) {
+            assertCandidates("member edit name/aLeX" + separator + "T", "Alex Tan");
+            assertCandidates("member search q/alex" + separator + "t", "Alex Tan");
+            assertCandidates("equipment add name/camera" + separator + "cov", "Camera Cover");
+            assertCandidates("equipment add category/photo" + separator + "cov", "Photo Cover");
+
+            String input = "member edit name/  aLeX" + separator + "TJUNK" + separator + "phone/91234567";
+            Completion completion = service.complete(input, input.indexOf("JUNK"),
+                    model.getAddressBook()).orElseThrow();
+            assertEquals("member edit name/  ".length(), completion.start());
+            assertEquals(input.indexOf("JUNK") + "JUNK".length(), completion.end());
+            assertEquals("member edit name/  Alex Tan" + separator + "phone/91234567", apply(input, completion));
+        }
+    }
+
+    @Test
     public void complete_unicodeFieldSeparators_preservesValuesPrefixesAndParserBoundaries() {
         for (String separator : List.of("\u2003", "\u00a0", "\u202f", "\u0085", "\u3000", "\t")) {
             String input = "member edit nus/A0123456X name/Alex" + separator + "phone/91234567"

@@ -67,6 +67,10 @@ with a stored equipment name `Camera Cover`, `equipment add name/Camera co` comp
 `equipment add name/Camera Cover`. If no stored value matches, the final token can still complete
 to a new field prefix. A trailing space offers the unused fields for the command.
 
+Value matching treats repeated spaces and Unicode whitespace within a value as ordinary single spaces.
+For example, `member edit name/Alex  T` can complete the stored name `Alex Tan`. The replacement keeps
+the stored spelling, and all text and separators outside that value remain unchanged.
+
 Command words and field prefixes are case-sensitive. Field suggestions depend on the command and omit
 non-repeatable prefixes already present. All seventeen member, equipment and loan commands plus `help`,
 `exit`, `mode dark` and `mode light` have command completion. Search supports `q/`, the applicable filters, sorting and ordering;
@@ -127,6 +131,8 @@ To explore without changing the sample records:
   its physical-unit table. Each unit still has its own UUID, condition, notes, holder and lifecycle state.
 - Group counts distinguish **matching** units from **retained** units. Availability counts exclude deleted
   units. **Show all units** reveals group members outside the active search, including deleted records.
+  The right-hand **All retained groups** summary includes deleted-only groups regardless of the active
+  filter. Such a group shows zero active availability counts and its retained deleted count.
   Direct `equipment view uuid/UUID` opens that exact unit, enabling Show all units if needed.
   Unchecking it narrows the table again while retaining the selected unit's details; a message explains
   when that unit is outside the table filter.
