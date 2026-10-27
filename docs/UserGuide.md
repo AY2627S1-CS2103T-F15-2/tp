@@ -725,6 +725,13 @@ unchanged. An error is not a successful addition, deletion, assignment or return
 available for correction. Fix the folder/file access problem, then retry. Do not repeatedly resubmit a
 successful command: duplicate members, already-assigned items and repeated returns are rejected.
 
+Atomic saves preserve an existing file's POSIX owner, group and permission bits where supported,
+and its access-control list (ACL) and owner where the filesystem exposes an ACL view (such as Windows).
+A POSIX file with no write bits or a file with the Windows read-only attribute rejects saving even
+when its parent folder permits replacement. Restore write permissions before retrying. New files use
+secure platform temporary-file defaults (owner-only access on POSIX). Timestamps, DOS archive/hidden/system
+flags and extended attributes are not preserved. Keep the parent folder writable for atomic replacement.
+
 Data includes members, equipment and open/closed loan records. Availability and holders are derived;
 do not try to maintain separate holder/availability fields. Member deletion retains the record,
 its `deleted` boolean and closed loans for unlimited restoration. Equipment follows the same policy.

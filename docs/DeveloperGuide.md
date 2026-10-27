@@ -1371,3 +1371,18 @@ Use temporary data. Do not test against a real inventory.
    edits must leave redo available. `undo 2` and `redo count/2` must be rejected without changing data.
 6. Restart after an undo. The restored records must still load, but undo and redo must both be unavailable.
    Automated tests inject failed saves and verify records, history and prior file bytes survive for retry.
+
+### Atomic-save access policy
+
+`AtomicFileWriter` writes and flushes a sibling candidate, then copies supported access attributes
+before the atomic move. Existing POSIX owner/group/mode and ACL-view owner/ACL are retained; failure
+to read or apply that policy aborts without replacing the destination. POSIX files with no write bits
+and DOS read-only files explicitly reject saving. This policy is separate from effective access checks:
+no preliminary `isWritable()` check can guarantee a later replacement. New files retain platform
+`createTempFile` defaults. Other metadata is not copied. No serialization schema changes are involved.
+
+Manual check in a disposable folder: save a valid file, set mode `0644` on POSIX, make a record change,
+and confirm `0644` survives. Set `0444`, retry a change, and confirm rejection, unchanged records and
+unchanged file bytes. On Windows, repeat with a custom ACL and the read-only attribute. Restore write
+access, retry, and reload. `AtomicFileWriterTest` checks the platform's available attribute views,
+new-file defaults, read-only rejection and injected metadata failure cleanup.
