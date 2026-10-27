@@ -1,5 +1,6 @@
 package seedu.address.ui;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -35,6 +36,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -105,6 +107,45 @@ public class LoanPanelTest {
             assertEquals("Alex Tan\nNUS ID: " + SECOND_MEMBER.getNusId(),
                     memberButton(row(panel, "openLoans", 1)).getText());
             assertEquals("Camera\nUUID: " + SECOND_UUID, equipmentButton(row(panel, "openLoans", 1)).getText());
+        });
+    }
+
+    @Test
+    public void filters_hiddenBatchChanges_showTotalsAndResetBothSectionsWithoutMutation() {
+        FxTestUtil.runAndWait(() -> {
+            AddressBook data = mixedBook();
+            UUID third = UUID.fromString("30000000-0000-0000-0000-000000000000");
+            UUID fourth = UUID.fromString("40000000-0000-0000-0000-000000000000");
+            data.addEquipment(new Equipment(third, "Case", "Storage", Condition.GOOD, ""));
+            data.addEquipment(new Equipment(fourth, "Case", "Storage", Condition.GOOD, ""));
+            ModelManager model = new ModelManager(data, new UserPrefs());
+            LoanPanel panel = panel(model.getAddressBook());
+            TextField member = (TextField) panel.getRoot().lookup("#memberFilter");
+            TextField equipment = (TextField) panel.getRoot().lookup("#equipmentFilter");
+            member.setText(FIRST_MEMBER.getNusId().toString());
+            equipment.setText(FIRST_UUID.toString());
+            AddressBookParser parser = new AddressBookParser();
+            assertDoesNotThrow(() -> parser.parseCommand("loans add uuid/" + third + "," + fourth
+                    + " nus/" + SECOND_MEMBER.getNusId() + " assigned/" + ASSIGNED
+                    + " expected/" + ASSIGNED.plusDays(2)).execute(model));
+            panel.refresh();
+            Label summary = (Label) panel.getRoot().lookup("#filterSummary");
+            assertTrue(summary.getText().contains("1 of 4 open loans"));
+            assertEquals(FIRST_MEMBER.getNusId().toString(), member.getText());
+            assertDoesNotThrow(() -> parser.parseCommand("loans return uuid/" + third + "," + fourth
+                    + " returned/" + ASSIGNED).execute(model));
+            panel.refresh();
+            assertTrue(summary.getText().contains("of 5 completed loans"));
+            assertEquals(FIRST_UUID.toString(), equipment.getText());
+            AddressBook beforeReset = new AddressBook(model.getAddressBook());
+            Button reset = (Button) panel.getRoot().lookup("#resetFilters");
+            assertFalse(reset.isDisabled());
+            reset.fire();
+            assertEquals("", member.getText());
+            assertEquals("", equipment.getText());
+            assertTrue(summary.getText().contains("2 of 2 open loans; 5 of 5 completed loans"));
+            assertTrue(reset.isDisabled());
+            assertEquals(beforeReset, model.getAddressBook());
         });
     }
 

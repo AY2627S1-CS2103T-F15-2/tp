@@ -144,6 +144,9 @@ To explore without changing the sample records:
 - The **Loans** tab shows current open assignments, exact-identity links, assigned/due dates and an
   **Overdue** or **Due today** label when applicable. Rows reflow at narrower widths. **Prepare return command**
   fills the input with the unit UUID and today's local date; review it before pressing Enter.
+  The filtered-result summary shows displayed versus total counts in both sections, including records
+  hidden after a successful batch command. **Reset filters** explicitly reveals all records. Commands,
+  tab navigation and `loans list` retain intentional filters; mutations never silently clear them.
   Urgency updates when you open Loans, execute a command or change records. Reopen Loans after midnight
   to refresh the labels. Completed loans show return dates and recorded issue/return conditions, without
   urgency labels or return actions. Filter both sections by NUS ID and equipment UUID. `loans list` opens
