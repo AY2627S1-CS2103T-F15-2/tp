@@ -323,6 +323,12 @@ values can outlive or be shared by their containers.
 | Availability | `ModelManager` returns UNAVAILABLE for deleted units; otherwise the calculator returns ASSIGNED for an open loan, AVAILABLE for GOOD/FAIR, and UNAVAILABLE for DAMAGED/UNDER_REPAIR. |
 
 Availability, holders and inventory totals are derived, never persisted as independent fields.
+
+Historical `issueCondition` accepts all defined condition values, including DAMAGED/UNDER_REPAIR.
+This preserves observations of events outside current command rules; it is not a new-assignment
+eligibility check. Missing/null observations remain unknown. Loading and save/reload must preserve
+these values independently of current equipment condition. For a manual check, use disposable data
+and load one loan for each condition, then save/reload and compare its identity and observation.
 `AvailabilityCalculator` only accepts condition and open-loan state; the deletion check belongs to
 `ModelManager`. `AddressBook` validates cross-record references, while `UniqueLoanList` enforces the
 one-open-loan-per-unit rule. `UniqueEquipmentList` checks UUID uniqueness and identity-preserving

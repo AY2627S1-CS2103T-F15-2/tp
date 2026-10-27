@@ -586,6 +586,10 @@ member and dates, and the request succeeds or fails as a whole. The condition of
 recorded in its loan history. Assigning an already assigned item is rejected, even if the new loan names
 the same member. Reaching the expected return date does not automatically return an item.
 
+Historical issue conditions are retained observations, including DAMAGED or UNDER_REPAIR if an older
+record contains them. They do not change the item's current condition or authorize a new assignment.
+Missing/null historical conditions remain "Not recorded"; Laplace never guesses an observation.
+
 | Situation | Result or correction |
 | --- | --- |
 | Equipment/member does not exist | `No equipment with UUID UUID exists.` or `No member with NUS ID NUS_ID exists.` Check the corresponding list. |
