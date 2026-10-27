@@ -241,11 +241,13 @@ names retain their exact spelling when loaded; editing another field does not re
 
 | Item state | Displayed availability | Can be assigned? |
 | --- | --- | --- |
+| Deleted unit, regardless of condition | `UNAVAILABLE` | No |
 | Has an open loan, regardless of condition | `ASSIGNED` | No |
-| No open loan and condition `GOOD` or `FAIR` | `AVAILABLE` | Yes |
-| No open loan and condition `DAMAGED` or `UNDER_REPAIR` | `UNAVAILABLE` | No |
+| Active, no open loan and condition `GOOD` or `FAIR` | `AVAILABLE` | Yes |
+| Active, no open loan and condition `DAMAGED` or `UNDER_REPAIR` | `UNAVAILABLE` | No |
 
 You do not enter availability or a holder manually. Laplace derives both from the item and its open loan.
+Deleted units are retained for history but are UNAVAILABLE and cannot be assigned; restore the unit first.
 A member can hold multiple different items; one physical item can have only one open loan.
 
 ### Correcting common errors
