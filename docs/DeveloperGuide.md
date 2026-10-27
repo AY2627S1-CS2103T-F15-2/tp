@@ -1191,8 +1191,9 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
    regrouping without UUID changes. Check deleted records never inflate available counts.
 4. Open a member's details, copy contact fields, and use a related equipment link. Switch tabs and use
    Back to results. The previous filter persists until Reset search or a list command.
-5. Use a command preview. Expect only input preparation; review and press Enter. Test history up/down
-   with an unfinished draft, Ctrl+Space completion, Escape dismissal and keyboard focus navigation.
+5. Use a command preview. Expect only input preparation; review and press Enter. Test unmodified
+   history up/down with an unfinished draft. Shift/Ctrl/Alt/Meta+Up/Down should retain normal text editing
+   without recalling history. Test Ctrl+Space completion, Escape dismissal and keyboard focus navigation.
 6. Open Loans. Verify due/overdue labels against the computer's local date and the stored due date.
    Prepare a return; verify the UUID/date and that the loan remains open until submission.
 7. Run `mode dark`, open Help, then switch back using the header appearance button. Repeat list/table selection, previews and errors
