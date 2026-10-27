@@ -126,7 +126,9 @@ public record DirectoryQuery(String text, String category, Condition condition, 
         return false;
     }
 
-    /** Returns whitespace-normalized simple case keys for substring matching. */
+    /**
+     * Returns whitespace-normalized simple case keys for substring matching.
+     */
     private static String normalizeForMatching(String value) {
         return LaplaceText.caseKey(LaplaceText.normalize(value));
     }

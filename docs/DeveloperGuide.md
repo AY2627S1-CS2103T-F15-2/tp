@@ -1149,13 +1149,6 @@ Given below are instructions to test the app manually.
 testers are expected to do more *exploratory* testing.
 </box>
 
-### Unicode search and completion
-
-Add `member add nus/A8400001X name/ΝΙΚΟΣ phone/91234567 email/nikos@example.com` in a disposable folder.
-Search with `member search q/Σ` and `member search q/νικοσ`: both must find the member before and after
-restart. Type `member edit name/νικοσ` and press Tab: it must suggest `ΝΙΚΟΣ` without changing or saving
-the record. Existing forward/reverse Tab cycling must continue to work.
-
 ### Launch and shutdown
 
 1. Initial launch
@@ -1208,6 +1201,11 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
    Check wrapping, scrolling, visible focus and contrast. Logical-size snapshots alone do not verify OS scaling.
 
 ### Tab completion across current commands
+
+Add `member add nus/A8400001X name/ΝΙΚΟΣ phone/91234567 email/nikos@example.com` in a disposable folder.
+Search with `member search q/Σ` and `member search q/νικοσ`: both must find the member before and after
+restart. Type `member edit name/νικοσ` and press Tab: it must suggest `ΝΙΚΟΣ` without changing or saving
+the record. Existing forward/reverse Tab cycling must continue to work.
 
 1. In a disposable dataset, type `mem` and press Tab. Expected: `member`, with the caret at its end.
    Add a space and cycle with Tab, then Shift+Tab. Expected: alphabetical subcommands and reverse cycling.
