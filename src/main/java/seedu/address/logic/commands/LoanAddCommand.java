@@ -107,6 +107,7 @@ public class LoanAddCommand extends Command {
         }
         List<Loan> newLoans = new ArrayList<>();
         List<String> names = new ArrayList<>();
+        List<String> details = new ArrayList<>();
         for (UUID uuid : equipmentUuids) {
             Equipment equipment;
             try {
@@ -129,6 +130,7 @@ public class LoanAddCommand extends Command {
             newLoans.add(new Loan(uuid, memberNusId, assignedDate, expectedReturnDate,
                     null, equipment.getCondition(), null));
             names.add(equipment.getName());
+            details.add(equipment.getName() + " (" + uuid + ")");
         }
         try {
             if (newLoans.size() == 1) {
@@ -151,8 +153,13 @@ public class LoanAddCommand extends Command {
         String identifiers = equipmentUuids.size() == 1 ? first.toString() : equipmentUuids.toString();
         DisplayRequest display = equipmentUuids.size() == 1
                 ? DisplayRequest.equipmentDetails(first) : DisplayRequest.loans();
-        return new CommandResult(String.format(MESSAGE_SUCCESS, name, identifiers, member.getName(), memberNusId,
-                assignedDate, expectedReturnDate), display);
+        String feedback = equipmentUuids.size() == 1
+                ? String.format(MESSAGE_SUCCESS, name, identifiers, member.getName(), memberNusId,
+                        assignedDate, expectedReturnDate)
+                : "Assigned " + equipmentUuids.size() + " units to " + member.getName() + " (" + memberNusId
+                        + ") on " + assignedDate + "; expected return: " + expectedReturnDate + ".\n"
+                        + String.join("\n", details);
+        return new CommandResult(feedback, display);
     }
 
     @Override

@@ -330,6 +330,12 @@ replacement. These responsibilities keep editing and restoration from breaking l
 
 #### Loan workflow and history
 
+Successful batch feedback carries a compact count/date summary followed by per-unit identity lines.
+Return lines capture each borrower before mutation, avoiding attribution to only the first borrower.
+The existing ResultDisplay Details/Copy controls expose long results without expanding the compact
+feedback area by default. Manual check: return two disposable units from different borrowers, expand
+and copy feedback, and verify every name/full UUID/NUS ID against the retained loans.
+
 The following class diagram traces batch assignment and return from their parsers to the
 model, JSON adapter and history views. It lists the loan-facing methods relevant to this
 workflow; shared infrastructure and unrelated methods are omitted. `AddressBook` validates
