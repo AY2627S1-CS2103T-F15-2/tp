@@ -690,6 +690,10 @@ data is stored in `data/addressbook.json` inside the folder containing `Laplace.
 the JAR from another terminal folder. `preferences.json` and rotating `addressbook.log.*` files also
 stay beside the JAR. The window's status area identifies the data-file path.
 
+Command diagnostics record that input was received and, at detailed log levels, the recognized command
+type. They omit raw input and contact values, including rejected input. Existing logs from older
+versions may still contain commands recorded before this change.
+
 If you previously launched from another folder, close Laplace and back up the old data and preferences
 before copying them into the matching locations beside the JAR. Data is not automatically read or moved
 from the old working folder. Moving only the JAR to a new empty folder starts a separate sample dataset.

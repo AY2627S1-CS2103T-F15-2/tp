@@ -1271,6 +1271,11 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
 
 ### Saving data
 
+1. Command-log privacy: in a disposable folder, add/edit a synthetic member, search for their name,
+   and submit a malformed command containing a synthetic phone/email. Inspect `addressbook.log.*`;
+   expect input-received diagnostics without raw commands or contact values. `CommandLogPrivacyTest`
+   also verifies persisted output with the LogicManager and parser loggers enabled at all levels.
+
 1. Dealing with missing/corrupted data files
 
     1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
