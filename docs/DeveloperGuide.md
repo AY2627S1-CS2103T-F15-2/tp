@@ -1171,6 +1171,20 @@ testers are expected to do more *exploratory* testing.
     1. Relaunch with `java -jar Laplace.jar`.<br>
        Expected: The most recent window size and location are retained.
 
+1. Recovering invalid window preferences
+
+    1. In a disposable JAR folder, close Laplace and back up `data/addressbook.json`.
+       Replace `preferences.json` with `{"guiSettings":null}`.
+
+    1. Relaunch with `java -jar Laplace.jar`.<br>
+       Expected: The GUI opens with default light appearance and window geometry. The log reports
+       that preferences could not be loaded, and `preferences.json` contains default settings.
+       `data/addressbook.json` remains unchanged.
+
+    1. Repeat with `{}` in `preferences.json`.<br>
+       Expected: Missing settings continue to use defaults. Valid saved geometry and dark mode
+       still restore when present.
+
 **Architecture-specific packaging:** Download `Laplace.jar` for Windows, Linux or Intel macOS, or
 `Laplace-mac-arm64.jar` for Apple Silicon macOS. Substitute the selected filename in launch commands.
 Both are self-contained; macOS native libraries cannot be combined by ordinary JAR merging because
