@@ -15,7 +15,9 @@ import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.model.equipment.Condition;
 import seedu.address.testutil.ViewTestData;
 
-/** Checks agreement between return syntax, Tab completion and the shared Help/popup catalog. */
+/**
+ * Checks agreement between return syntax, Tab completion and the shared Help/popup catalog.
+ */
 public class CommandCatalogTest {
     @Test
     public void complete_returnCondition_offersUnusedPrefixAndPreservesEarlierFields() {
