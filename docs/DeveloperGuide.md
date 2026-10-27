@@ -403,6 +403,14 @@ The `Storage` component,
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
+`JsonAdaptedLoan` rejects every unrecognized loan property using a Jackson `JsonAnySetter`, even when
+its value is null. The diagnostic names the field and lists supported spellings; Jackson retains the
+underlying cause through the checked loading failure. This prevents unknown lifecycle keys from being
+discarded before an intended completed loan is interpreted as open. Missing/null `returnedDate` still
+denotes an open loan; missing/null issue/return conditions remain unknown historical observations.
+Loan schema extensions require an updated reader, rather than silent forward-field loss. Other
+adapters retain their existing unknown-property policy; global unknown-property handling is unchanged.
+
 ### Common classes
 
 Classes used by multiple components are in the `seedu.address.commons` package.
@@ -1328,6 +1336,14 @@ not retained totals. Check the UG and linked search guide describe this same dis
     1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
 
 1. _{ more test cases … }_
+
+To check loan-field validation, use synthetic data in a disposable JAR folder. With Laplace closed,
+rename a completed loan's `returnedDate` to `returnDate` and `returnCondition` to `returnCondtion`.
+Launch the JAR and check the log for `Unknown loan field` and the rejected name. Do not enter commands
+after a loading error; close Laplace and verify the rejected file is unchanged. Correct both spellings
+in a separate copy, then verify the completed loan's date/condition and the other records survive
+loading and save/reload. Older loans without condition fields and open loans without `returnedDate`
+must still load. An unknown loan field from a future format must produce the same diagnostic.
 
 ### Undo and redo
 

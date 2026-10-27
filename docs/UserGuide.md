@@ -718,6 +718,13 @@ unchanged. An error is not a successful addition, deletion, assignment or return
 available for correction. Fix the folder/file access problem, then retry. Do not repeatedly resubmit a
 successful command: duplicate members, already-assigned items and repeated returns are rejected.
 
+Saved loan fields are `equipmentUuid`, `memberNusId`, `assignedDate`, `expectedReturnDate`,
+`returnedDate`, `issueCondition` and `returnCondition`. Unknown loan fields are rejected so misspelled
+return details cannot silently become an open loan. Older records may omit the optional return date
+and condition fields. Files with additional loan fields require a release that understands them.
+If loading reports an unknown field, close Laplace without entering commands and preserve the original
+file before repairing a separate copy; do not simply delete unfamiliar historical information.
+
 Data includes members, equipment and open/closed loan records. Availability and holders are derived;
 do not try to maintain separate holder/availability fields. Member deletion retains the record,
 its `deleted` boolean and closed loans for unlimited restoration. Equipment follows the same policy.
