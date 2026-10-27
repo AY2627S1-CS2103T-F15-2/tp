@@ -256,12 +256,13 @@ All four parameters are required and follow the shared field rules. No address i
 Examples:
 
 ```text
-member add nus/A0123456X name/Alex Tan phone/91234567 email/alex.tan@u.nus.edu
+member add nus/A0678901D name/Jordan Lee phone/93456789 email/jordan.lee@u.nus.edu
 member add email/siti@u.nus.edu name/Siti Nur phone/+65 8123-4567 nus/E0123456
 ```
 
 Success adds the member, selects the new row and opens details showing the normalized values.
-For the first example, the result is `New member added: Alex Tan (A0123456X)`.
+For the first example, the result is `New member added: Jordan Lee (A0678901D)`.
+This example uses an ID absent from the bundled samples. If you have already added it, use another unused NUS ID.
 
 Two members are duplicates **only when their normalized NUS IDs are equal**. Different IDs can share
 a name, phone or email. A duplicate is rejected with a message such as:
