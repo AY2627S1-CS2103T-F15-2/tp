@@ -109,7 +109,7 @@ class JsonAdaptedLoan {
             return null;
         }
         try {
-            return Condition.valueOf(value);
+            return Condition.fromText(value);
         } catch (IllegalArgumentException exception) {
             throw new IllegalValueException("Loan condition is invalid: " + value, exception);
         }

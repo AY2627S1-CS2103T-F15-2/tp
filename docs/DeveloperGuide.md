@@ -323,6 +323,12 @@ values can outlive or be shared by their containers.
 | Availability | `ModelManager` returns UNAVAILABLE for deleted units; otherwise the calculator returns ASSIGNED for an open loan, AVAILABLE for GOOD/FAIR, and UNAVAILABLE for DAMAGED/UNDER_REPAIR. |
 
 Availability, holders and inventory totals are derived, never persisted as independent fields.
+
+`Condition.fromText` defines the shared command/storage normalization: strip surrounding whitespace,
+match the four enum names without case, and reject unknown or blank text. Equipment still requires a
+condition; missing/null loan observations remain unknown. Adapters always serialize uppercase enum
+names. Manual check: load disposable equipment/loan fields with `good`, ` FaIr ` and `under_repair`,
+then save/reload; verify uppercase output, stable identities and rejection of `BROKEN`.
 `AvailabilityCalculator` only accepts condition and open-loan state; the deletion check belongs to
 `ModelManager`. `AddressBook` validates cross-record references, while `UniqueLoanList` enforces the
 one-open-loan-per-unit rule. `UniqueEquipmentList` checks UUID uniqueness and identity-preserving
