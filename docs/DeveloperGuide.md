@@ -394,6 +394,13 @@ and shows selected structure; lifecycle behavior is explained in the text above.
 
 ### Storage component
 
+The supported unversioned schema treats omitted/null `members`, `equipment` and `loans` as empty.
+Retain both forms for legacy compatibility; saves canonicalize them to `[]` without touching populated
+collections. No migration or warning distinguishes null from absence in this schema. Missing member/
+equipment `deleted` flags still mean active; explicit null flags remain invalid. For manual verification,
+load a legacy persons-only file with each collection omitted, null and empty, save/reload, and compare
+the retained persons. Use only disposable data.
+
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
 <puml src="diagrams/StorageClassDiagram.puml" width="850" alt="Current storage adapters and relationships" />
