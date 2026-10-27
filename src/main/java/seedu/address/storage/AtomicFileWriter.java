@@ -6,11 +6,14 @@ import java.nio.channels.FileChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.AclFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributeView;
+import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Set;
@@ -52,10 +55,12 @@ class AtomicFileWriter {
      * New files retain the temporary file's platform defaults. Metadata failures abort the save.
      */
     void preserveAccessPolicy(Path temporary, Path target) throws IOException {
-        if (!Files.exists(target, LinkOption.NOFOLLOW_LINKS)) {
+        try {
+            Files.readAttributes(target, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+        } catch (NoSuchFileException exception) {
             return;
         }
-        PosixFileAttributeView posix = Files.getFileAttributeView(target, PosixFileAttributeView.class);
+        PosixFileAttributeView posix = attributeView(target, PosixFileAttributeView.class);
         if (posix != null) {
             var attributes = posix.readAttributes();
             Set<PosixFilePermission> permissions = attributes.permissions();
@@ -64,7 +69,7 @@ class AtomicFileWriter {
                     && !permissions.contains(PosixFilePermission.OTHERS_WRITE)) {
                 throw new AccessDeniedException(target.toString(), null, "Data file is marked read-only");
             }
-            var candidate = Files.getFileAttributeView(temporary, PosixFileAttributeView.class);
+            var candidate = attributeView(temporary, PosixFileAttributeView.class);
             if (!candidate.readAttributes().owner().equals(attributes.owner())) {
                 candidate.setOwner(attributes.owner());
             }
@@ -73,18 +78,25 @@ class AtomicFileWriter {
             }
             candidate.setPermissions(permissions);
         }
-        AclFileAttributeView acl = Files.getFileAttributeView(target, AclFileAttributeView.class);
+        AclFileAttributeView acl = attributeView(target, AclFileAttributeView.class);
         if (acl != null) {
-            var candidate = Files.getFileAttributeView(temporary, AclFileAttributeView.class);
+            var candidate = attributeView(temporary, AclFileAttributeView.class);
             if (!candidate.getOwner().equals(acl.getOwner())) {
                 candidate.setOwner(acl.getOwner());
             }
             candidate.setAcl(acl.getAcl());
         }
-        DosFileAttributeView dos = Files.getFileAttributeView(target, DosFileAttributeView.class);
+        DosFileAttributeView dos = attributeView(target, DosFileAttributeView.class);
         if (dos != null && dos.readAttributes().isReadOnly()) {
             throw new AccessDeniedException(target.toString(), null, "Data file is marked read-only");
         }
+    }
+
+    /**
+     * Returns a platform attribute view, allowing policy tests to exercise other filesystem capabilities.
+     */
+    <V extends FileAttributeView> V attributeView(Path path, Class<V> type) {
+        return Files.getFileAttributeView(path, type);
     }
 
     /** A failed replacement must never fall back to truncating or copying over the live data file. */
