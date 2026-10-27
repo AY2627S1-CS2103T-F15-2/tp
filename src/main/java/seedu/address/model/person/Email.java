@@ -65,7 +65,9 @@ public class Email {
                         + "(?:\\." + MEMBER_DOMAIN_LABEL + ")+");
     }
 
-    /** Normalizes and validates new Laplace member input without changing legacy AB3 parsing. */
+    /**
+     * Normalizes and validates new Laplace member input without changing legacy AB3 parsing.
+     */
     public static Email forMember(String value) {
         String normalized = LaplaceText.normalize(value);
         checkArgument(isValidMemberEmail(normalized), MEMBER_MESSAGE_CONSTRAINTS);

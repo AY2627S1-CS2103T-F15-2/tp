@@ -21,7 +21,9 @@ import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
 import seedu.address.testutil.ViewTestData;
 
-/** Verifies rejected email input cannot mutate or save a real member/loan dataset. */
+/**
+ * Verifies rejected email input cannot mutate or save a real member/loan dataset.
+ */
 public class MemberEmailValidationIntegrationTest {
     @TempDir
     public Path directory;
