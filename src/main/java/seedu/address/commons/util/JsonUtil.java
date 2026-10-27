@@ -90,7 +90,10 @@ public class JsonUtil {
      * @return The instance of T with the specified values in the JSON string
      */
     public static <T> T fromJsonString(String json, Class<T> instanceClass) throws IOException {
-        return objectMapper.readValue(json, instanceClass);
+        requireNonNull(json);
+        // A UTF-8 editor marker is permitted only at the beginning, never inside JSON syntax.
+        String content = json.startsWith("\ufeff") ? json.substring(1) : json;
+        return objectMapper.readValue(content, instanceClass);
     }
 
     /**

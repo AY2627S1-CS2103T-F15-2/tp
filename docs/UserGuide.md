@@ -720,6 +720,10 @@ before copying them into the matching locations beside the JAR. Data is not auto
 from the old working folder. Moving only the JAR to a new empty folder starts a separate sample dataset.
 When running development classes with Gradle, runtime files remain relative to the project working folder.
 
+A single UTF-8 byte-order mark at the very start of a JSON file is accepted for editor compatibility.
+Saving writes ordinary UTF-8 without a BOM. Embedded text characters are preserved; repeated or
+misplaced markers and genuinely malformed JSON remain invalid.
+
 For Laplace mutation commands, a failed save leaves the live records and previously saved data
 unchanged. An error is not a successful addition, deletion, assignment or return. The command remains
 available for correction. Fix the folder/file access problem, then retry. Do not repeatedly resubmit a

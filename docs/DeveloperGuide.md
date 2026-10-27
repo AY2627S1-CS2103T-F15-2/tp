@@ -412,6 +412,11 @@ adapter collections; value fields and conversion methods are omitted.
 
 Classes used by multiple components are in the `seedu.address.commons` package.
 
+`JsonUtil.fromJsonString` accepts one leading U+FEFF editor marker before Jackson parsing. It does
+not trim or remove markers elsewhere. Manual check: save synthetic data, prepend UTF-8 bytes EF BB BF,
+load it, then save/reload and compare all records. The saved file should have no leading marker. A
+second marker or one inside object syntax must still fail; U+FEFF within a string remains data.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Implementation**
