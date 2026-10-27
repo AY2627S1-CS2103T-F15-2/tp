@@ -25,6 +25,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
@@ -264,6 +265,35 @@ public class LoanPanelTest {
                     assertEquals(missingMember ? List.of() : List.of(FIRST_MEMBER.getNusId()), memberSelections);
                 }
             }
+        });
+    }
+
+    @Test
+    public void prepareReturn_explicitObservationAndIntentionalOmission_doNotExecute() {
+        FxTestUtil.runAndWait(() -> {
+            AddressBook data = mixedBook();
+            AddressBook before = new AddressBook(data);
+            List<String> commands = new ArrayList<>();
+            LoanPanel panel = new LoanPanel(data, unused -> { }, unused -> { }, commands::add,
+                    Clock.fixed(ASSIGNED.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC));
+            new Scene(panel.getRoot(), 760, 500);
+            panel.getRoot().applyCss();
+            VBox row = row(panel, "openLoans", 0);
+            ComboBox<?> observed = (ComboBox<?>) row.lookup(".loan-return-condition");
+            Button prepare = (Button) row.getChildren().getLast();
+            assertEquals("Not recorded", observed.getValue());
+            for (String condition : List.of("DAMAGED", "Not recorded", "FAIR")) {
+                observed.getSelectionModel().select(observed.getItems().indexOf(condition));
+                prepare.fire();
+                String suffix = condition.equals("Not recorded") ? "" : " condition/" + condition;
+                assertEquals("loans return uuid/" + FIRST_UUID + " returned/" + ASSIGNED + suffix, commands.getLast());
+                assertEquals(before, data);
+            }
+            assertEquals(3, commands.size());
+            observed.setValue(null);
+            prepare.fire();
+            assertEquals("loans return uuid/" + FIRST_UUID + " returned/" + ASSIGNED, commands.getLast());
+            assertEquals(before, data);
         });
     }
 
