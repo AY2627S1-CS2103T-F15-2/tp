@@ -152,8 +152,9 @@ To explore without changing the sample records:
   successful command, a red box is an error, and the box is neutral before the first command.
   The heading displays only **Last result**; assistive text includes the status and full message.
   **Details** expands the complete feedback and **Copy** includes all UUIDs from batch creation.
-- The command input, identifiers and command examples use IBM Plex Mono. **↑/↓** browse up to 100 recent submissions in this session,
-  preserving an unfinished draft. **Ctrl+Space** offers command-name or parameter-prefix completion at
+- The command input, identifiers and command examples use IBM Plex Mono. Unmodified **↑/↓** browse up to
+  100 recent submissions in this session, preserving an unfinished draft. Modified arrows retain normal
+  text selection and caret navigation. **Ctrl+Space** offers command-name or parameter-prefix completion at
   the end of the input. Choose an entry to insert it; **Escape** dismisses suggestions. Tab completes the
   active token or value as described above; with no applicable suggestion it retains normal focus navigation. History is cleared when the application closes.
 - **F1** or `help` opens a scrollable command reference with copyable templates and the user-guide link.
