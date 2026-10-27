@@ -32,8 +32,8 @@ public record DirectoryQuery(String text, String category, Condition condition, 
 
     /** Null condition/availability mean no restriction; all other criteria are required. */
     public DirectoryQuery {
-        text = normalize(text);
-        category = normalize(category);
+        text = normalizeForMatching(text);
+        category = normalizeForMatching(category);
         requireNonNull(holding);
         requireNonNull(sort);
         requireNonNull(status);
@@ -105,7 +105,7 @@ public record DirectoryQuery(String text, String category, Condition condition, 
         return data.getEquipmentList().stream().filter(eligible)
                 .filter(item -> matchesStatus(item.isDeleted()))
                 .filter(item -> matches(item.getUuid().toString(), item.getName(), item.getCategory(), item.getNotes()))
-                .filter(item -> normalize(item.getCategory()).contains(category))
+                .filter(item -> normalizeForMatching(item.getCategory()).contains(category))
                 .filter(item -> condition == null || item.getCondition() == condition)
                 .filter(item -> availability == null || lookup.apply(item.getUuid()) == availability)
                 .sorted(comparator).toList();
@@ -119,11 +119,16 @@ public record DirectoryQuery(String text, String category, Condition condition, 
 
     private boolean matches(String... fields) {
         for (String field : fields) {
-            if (normalize(field).contains(text)) {
+            if (normalizeForMatching(field).contains(text)) {
                 return true;
             }
         }
         return false;
+    }
+
+    /** Returns whitespace-normalized simple case keys for substring matching. */
+    private static String normalizeForMatching(String value) {
+        return LaplaceText.caseKey(LaplaceText.normalize(value));
     }
 
     public static String normalize(String value) {

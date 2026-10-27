@@ -1149,6 +1149,13 @@ Given below are instructions to test the app manually.
 testers are expected to do more *exploratory* testing.
 </box>
 
+### Unicode search and completion
+
+Add `member add nus/A8400001X name/ΝΙΚΟΣ phone/91234567 email/nikos@example.com` in a disposable folder.
+Search with `member search q/Σ` and `member search q/νικοσ`: both must find the member before and after
+restart. Type `member edit name/νικοσ` and press Tab: it must suggest `ΝΙΚΟΣ` without changing or saving
+the record. Existing forward/reverse Tab cycling must continue to work.
+
 ### Launch and shutdown
 
 1. Initial launch
