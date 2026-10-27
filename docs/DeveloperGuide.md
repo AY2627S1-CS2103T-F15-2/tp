@@ -1179,6 +1179,14 @@ Run the probe on the target architecture and smoke-test the selected JAR before 
 
 Use a separate empty writable JAR folder. Keep any real dataset untouched.
 
+Large-history regression: use 1,000 members, 5,000 equipment units and 10,000 completed loans,
+including a member/unit with a long history. Open both details views and Loans, scroll within the
+history list to its oldest entry, then filter Loans to no matches and clear the filter. Expect full
+counts and accessible records without creating every row's controls. `LoanHistoryCapacityTest`
+checks this capacity structurally; it does not replace the 100-trial NFR07 timing benchmark.
+`LoanRows` renders up to ten rows inline and uses bounded JavaFX `ListView` cells above that size
+for both detail timelines and loan-directory sections, including panels refreshed in the background.
+
 1. Run `equipment add name/UI Camera category/Photo condition/GOOD count/4`. Expect one group containing
    four distinct UUIDs. Expand/copy Last result to capture all four. Open the group and select one unit;
    Copy UUID must copy its complete UUID. Register another matching unit; expect five units in the same group.
