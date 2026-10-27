@@ -251,6 +251,26 @@ class EquipmentGroupPanelTest {
         assertEquals(DAMAGED, units.getSelectionModel().getSelectedItem());
     }
 
+    @Test
+    void reopenedGroup_clearsClickedColumnSortAndRestoresQueryOrder() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = model();
+            EquipmentGroupPanel panel = new EquipmentGroupPanel(model.getAddressBook(), model::getAvailability,
+                    unused -> { }, unused -> { }, unused -> { });
+            mount(panel);
+            panel.showGroup(InventoryGroups.keyOf(CAMERA), DirectoryQuery.all());
+            @SuppressWarnings("unchecked")
+            TableView<Equipment> units = (TableView<Equipment>) panel.lookup("#physicalUnits");
+            units.getSortOrder().add(units.getColumns().get(1));
+            panel.refresh();
+            assertEquals(List.of(DAMAGED, CAMERA), units.getItems());
+            // A list reset or a new search opens the group again and must not keep the clicked sort.
+            panel.showGroup(InventoryGroups.keyOf(CAMERA), DirectoryQuery.all());
+            assertTrue(units.getSortOrder().isEmpty());
+            assertEquals(List.of(CAMERA, DAMAGED), units.getItems());
+        });
+    }
+
     private static void mount(EquipmentGroupPanel panel) {
         panel.getStyleClass().add("laplace-root");
         Scene scene = new Scene(panel, 700, 600);
