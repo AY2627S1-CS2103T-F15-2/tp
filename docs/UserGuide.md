@@ -732,6 +732,11 @@ Older member/equipment records without a `deleted` field load as active;
 explicit null or non-boolean values are invalid. Do not open lifecycle-aware data in an older release
 that may discard deletion state.
 
+The saved root still requires a `persons` array for legacy compatibility. For a dataset with no legacy
+contacts, keep `"persons": []`; omitting it or writing null is rejected with `Persons list is missing.`
+Populated legacy arrays are retained and saved even though their old commands are unavailable. Do not
+remove an existing array during recovery. Current saves always include it.
+
 Back up the data file while Laplace is closed. Do not edit it while the app is running or run multiple
 instances against the same file. Manual data editing is not an MVP operation. If startup or a view
 reports invalid/inconsistent data, preserve the original file and report the message; do not overwrite
