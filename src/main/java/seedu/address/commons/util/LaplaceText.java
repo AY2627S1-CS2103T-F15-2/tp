@@ -12,7 +12,9 @@ public final class LaplaceText {
         return requireNonNull(value).replaceAll("(?U)\\s+", " ").strip();
     }
 
-    /** Removes surrounding Unicode whitespace without changing whitespace inside values. */
+    /**
+     * Removes surrounding Unicode whitespace without changing whitespace inside values.
+     */
     public static String stripWhitespace(String value) {
         return requireNonNull(value).replaceAll("(?U)^\\s+|\\s+$", "");
     }

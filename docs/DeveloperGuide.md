@@ -1149,13 +1149,6 @@ Given below are instructions to test the app manually.
 testers are expected to do more *exploratory* testing.
 </box>
 
-### Unicode command separators
-
-With disposable data, replace each space in `member view nus/A0123456X` with an EM SPACE (U+2003)
-or nonbreaking space (U+00A0), including surrounding whitespace. The same existing member must open.
-Repeat with `member list`, `equipment list` and `loans list`. Unknown actions, uppercase command words,
-duplicate parameters and unknown parameters must retain their normal diagnostics.
-
 ### Launch and shutdown
 
 1. Initial launch
@@ -1181,6 +1174,13 @@ machine's processor architecture. JavaFX versions and application behavior are i
 The packaged keyboard probe uses only the JAR's production classes and native libraries. CI uses a
 plain JDK, so neither matching test dependencies nor a JavaFX-enabled JDK can mask missing native libraries.
 Run the probe on the target architecture and smoke-test the selected JAR before publication.
+
+### Unicode command separators
+
+With disposable data, replace each space in `member view nus/A0123456X` with an EM SPACE (U+2003)
+or nonbreaking space (U+00A0), including surrounding whitespace. The same existing member must open.
+Repeat with `member list`, `equipment list` and `loans list`. Unknown actions, uppercase command words,
+duplicate parameters and unknown parameters must retain their normal diagnostics.
 
 ### Grouped equipment, command assistance and appearance
 
