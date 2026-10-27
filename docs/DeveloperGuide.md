@@ -1370,8 +1370,9 @@ the record. Existing forward/reverse Tab cycling must continue to work.
 
 1. In a separate temporary dataset, run
    `equipment add name/Batch Test Camera category/Photography condition/GOOD count/3 notes/Shared kit`.
-   Expected: three new rows with distinct UUIDs, AVAILABLE status and identical supplied details;
-   feedback lists all three UUIDs and the full equipment directory opens.
+   Expected: one new group for Batch Test Camera (or an extension of an existing matching group);
+   feedback lists all three UUIDs and the full equipment directory opens. Open the group and verify
+   three physical-unit rows with distinct UUIDs, AVAILABLE status and identical supplied details.
 2. Repeat without `count/`, then with `count/1`. Each command adds one unit and opens its details.
 3. Try `count/0`, `count/-1`, `count/101`, `count/1.5`, a blank `count/`, and `count/2 count/3`.
    Expected: an error, no new records, and no save. Correct the input and retry.
