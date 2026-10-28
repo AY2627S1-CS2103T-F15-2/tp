@@ -187,7 +187,8 @@ Commands and prefixes are **lowercase and case-sensitive**. Use `member add`, no
 - Square brackets mean an optional parameter; do not type them. Optional parameters are marked in each command's syntax.
 - Put spaces between command words and parameters. Parameters may appear in any order; tabs also separate fields.
 - Each prefix may appear **at most once**, including `notes/`.
-- Leading/trailing whitespace is ignored. Runs of whitespace in text values become one ordinary space.
+- Unicode whitespace, including EM SPACE and nonbreaking space, separates command words and parameters.
+  Leading/trailing whitespace is ignored. Runs of whitespace in text values become one ordinary space.
 - A value continues to the next parameter marker. A start-of-value or whitespace-delimited token such as
   `notes/` or `unknown/` is reserved as a marker. Unknown markers are errors, even inside free text.
   There is no quoting or escaping. An ordinary URL such as `https://example.com` is not a marker.
@@ -218,13 +219,16 @@ Use the member, equipment and loan commands documented below, or `undo`, `redo`,
 | NUS ID `nus/` | One ASCII letter, exactly seven digits, and an optional final ASCII letter. Case-insensitive; stored/displayed uppercase, such as `A0123456X` or `E0123456`. |
 | Member name `name/` | 1–100 Unicode code points after whitespace and NFC normalization. Unicode letters with combining marks, spaces, straight (`'`) or curly (`’`) apostrophes, hyphens and periods; must contain at least one letter. Combining marks must follow a letter or its marks. Examples: `அருண்`, `Anne O’Connor`. |
 | Phone `phone/` | Optional leading `+`, then 8–15 digits. Spaces and hyphens are removed: `+65 9123-4567` becomes `+6591234567`. |
-| Email `email/` | 3–254 ASCII characters, one `@`, no spaces and at least one domain dot. Local-part characters: letters, digits, `.`, `_`, `%`, `+`, `-`. Domain labels contain letters/digits/hyphens and cannot begin/end with a hyphen. Stored lowercase. |
+| Email `email/` | 3–254 ASCII characters, one `@`, no spaces and at least one domain dot. Local-part characters: letters, digits, `.`, `_`, `%`, `+`, `-`. Domain labels contain letters/digits/hyphens and cannot begin/end with a hyphen. ASCII validation occurs before conversion to lowercase; non-ASCII lookalikes such as `K` are rejected. Stored lowercase. |
 | Equipment UUID `uuid/` | Full `8-4-4-4-12` hexadecimal form, such as `550e8400-e29b-41d4-a716-446655440000`. Case-insensitive input; lowercase display. Shortened UUIDs are rejected. |
 | Equipment name `name/` | 1–100 printable Unicode characters after whitespace normalization. Punctuation and model numbers are allowed; control characters are rejected. |
 | Category `category/` | 1–50 printable Unicode characters after normalization. Free text; control characters are rejected. |
 | Condition `condition/` | Exactly `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`, ignoring case. Stored uppercase. Use the underscore in `UNDER_REPAIR`. |
 | Notes `notes/` | Optional, at most 300 printable Unicode characters after trimming. Line breaks become spaces. Omitted or empty notes mean no notes. |
-| Dates | Exactly `yyyy-MM-dd` and a real Gregorian calendar date, such as `2026-10-15`. Assignment/actual-return dates cannot be later than the computer's local date. Expected return may be in the future. |
+| Dates | Exactly `yyyy-MM-dd` with a Gregorian year from `0001` through `9999`, such as `2026-10-15`. Assignment/actual-return dates cannot be later than the computer's local date. Expected return may be in the future. |
+
+Saved loan dates must also use the four-digit Gregorian range `0001`–`9999`. Year zero, negative years,
+and five-digit years are invalid stored data. Loading does not compare historical dates with today's clock.
 
 Copy the actual UUID displayed by Laplace when issuing, viewing, returning or deleting equipment.
 The UUID in this guide is an example; it does not identify every newly added item.
@@ -715,12 +719,20 @@ on or after 20 September 2026; choose valid actual dates for your own operation.
 8. If these were erroneous/test records, remove them with `equipment delete uuid/UUID` and
    `member delete nus/E0678901C`. Both deletions retain records; use `equipment restore` or `member restore` to recover them.
 
+Unicode name search and value completion treat `Σ`, `σ` and `ς` as case-equivalent.
+For example, searching for `Σ` or `νικοσ` finds a stored member named `ΝΙΚΟΣ`;
+Tab completion of `member edit name/νικοσ` suggests the original spelling `ΝΙΚΟΣ`.
+
 ## Saving, file access and recovery
 
 Successful changes save automatically; there is no manual-save command. For the packaged application,
 data is stored in `data/addressbook.json` inside the folder containing `Laplace.jar`, even if you launch
 the JAR from another terminal folder. `preferences.json` and rotating `addressbook.log.*` files also
 stay beside the JAR. The window's status area identifies the data-file path.
+
+Command diagnostics record that input was received and, at detailed log levels, the recognized command
+type. They omit raw input and contact values, including rejected input. Existing logs from older
+versions may still contain commands recorded before this change.
 
 List, search and view commands, `help`, and `exit` do not save member, equipment or loan records.
 They remain usable when the loaded data cannot be saved, and do not rewrite the data file or create
@@ -747,6 +759,12 @@ Back up the data file while Laplace is closed. Do not edit it while the app is r
 instances against the same file. Manual data editing is not an MVP operation. If startup or a view
 reports invalid/inconsistent data, preserve the original file and report the message; do not overwrite
 it with an empty file or assume that an incomplete view is safe to use.
+
+If an existing data file cannot be loaded, Laplace shows recovery guidance and its path, then stops
+startup after you dismiss the error. No editable directory or command box opens. Invalid files include
+a JSON `null` root and any non-whitespace content after the root object. The data file remains unchanged.
+While Laplace is closed, back it up and repair it before restarting. Moving the file to a safe location
+allows a separate sample dataset to start; it does not recover the original records.
 
 ## FAQ
 

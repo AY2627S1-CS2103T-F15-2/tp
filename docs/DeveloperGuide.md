@@ -1167,6 +1167,13 @@ Given below are instructions to test the app manually.
 testers are expected to do more *exploratory* testing.
 </box>
 
+### Member email validation
+
+In a disposable dataset, try `member add nus/A8000099X name/Kelvin Probe phone/91234567 email/K@example.com`
+and `member edit nus/A0123456X email/K.updated@example.com` for an existing member. Both must reject
+the non-ASCII email without changing records or the data file. An uppercase ASCII email must save
+lowercase and retain the member identity and loan references after restart.
+
 ### Launch and shutdown
 
 1. Initial launch
@@ -1175,6 +1182,21 @@ testers are expected to do more *exploratory* testing.
 
     1. In that folder, run `java -jar Laplace.jar` with Java 25.<br>
        Expected: The GUI opens in light mode with sample members, grouped equipment and open loans.
+
+1. Invalid saved data
+
+    1. In a disposable JAR folder, save a synthetic dataset containing members and closed loans.
+       Close Laplace and keep a byte-for-byte backup.
+
+    1. Test a malformed file, a JSON `null` root, an invalid member email, and a valid object followed
+       by another object or garbage. Relaunch for each case.<br>
+       Expected: A recovery error names the data file and explains preservation, backup and repair.
+       After acknowledgment, startup terminates unsuccessfully without an editable main window.
+       The original data bytes remain unchanged, including after shutdown.
+
+    1. Restore the valid backup and restart.<br>
+       Expected: All members and retained loan history load. Ordinary trailing whitespace is accepted.
+       A genuinely missing data file still starts the existing sample dataset.
 
 1. Saving window preferences
 
@@ -1206,6 +1228,13 @@ machine's processor architecture. JavaFX versions and application behavior are i
 The packaged keyboard probe uses only the JAR's production classes and native libraries. CI uses a
 plain JDK, so neither matching test dependencies nor a JavaFX-enabled JDK can mask missing native libraries.
 Run the probe on the target architecture and smoke-test the selected JAR before publication.
+
+### Unicode command separators
+
+With disposable data, replace each space in `member view nus/A0123456X` with an EM SPACE (U+2003)
+or nonbreaking space (U+00A0), including surrounding whitespace. The same existing member must open.
+Repeat with `member list`, `equipment list` and `loans list`. Unknown actions, uppercase command words,
+duplicate parameters and unknown parameters must retain their normal diagnostics.
 
 ### Grouped equipment, command assistance and appearance
 
@@ -1241,6 +1270,8 @@ for both detail timelines and loan-directory sections, including panels refreshe
    must preserve browsing position and must not execute another command.
 3. Rename the damaged unit, delete it, then restore it with the documented equipment commands. Expect
    regrouping without UUID changes. Check deleted records never inflate available counts.
+   Open a unit with long notes/history and scroll to the bottom. View a different UUID; expect the group
+   heading and unit identity at the top. Refresh or reopen the same UUID; expect its scroll position retained.
 4. Open a member's details, copy contact fields, and use a related equipment link. Switch tabs and use
    Back to results. The previous filter persists until Reset search or a list command.
 5. Use a command preview. Expect only input preparation; review and press Enter. Test unmodified
@@ -1273,6 +1304,11 @@ and backward. Expect no history-dependent pause. Repeat a record-name completion
 record, undo/redo, and reload; expect current values. Structural controller tests reject person/loan
 collection reads, assert zero static-model reads and reuse of prepared record candidates. Measure
 responsiveness separately; structural checks do not claim a cross-platform timing benchmark.
+
+Add `member add nus/A8400001X name/ΝΙΚΟΣ phone/91234567 email/nikos@example.com` in a disposable folder.
+Search with `member search q/Σ` and `member search q/νικοσ`: both must find the member before and after
+restart. Type `member edit name/νικοσ` and press Tab: it must suggest `ΝΙΚΟΣ` without changing or saving
+the record. Existing forward/reverse Tab cycling must continue to work.
 
 1. In a disposable dataset, type `mem` and press Tab. Expected: `member`, with the caret at its end.
    Add a space and cycle with Tab, then Shift+Tab. Expected: alphabetical subcommands and reverse cycling.
@@ -1374,7 +1410,21 @@ responsiveness separately; structural checks do not claim a cross-platform timin
    Automated transaction tests separately inject partial writes/failed atomic moves; do not simulate
    filesystem failures against a real user dataset.
 
+### Stored loan date validation
+
+In a disposable saved file, change each loan date field in turn to `0000-01-01`, `-0001-01-01`,
+or `+10000-01-01`. Expect loading to report invalid data without rewriting that file. Valid years
+`0001` and `9999` and valid legacy condition omissions remain supported; storage does not impose a
+new restriction relative to today's date.
+
 ### Saving data
+
+1. Command-log privacy: in a disposable folder, add/edit a synthetic member, search for their name,
+   and submit a malformed command containing a synthetic phone/email. Inspect `addressbook.log.*`;
+   expect input-received diagnostics without raw commands or contact values. `CommandLogPrivacyTest`
+   also verifies persisted output with the application logger hierarchy enabled at all levels,
+   including transaction snapshots and model initialization from reloaded records. Initialization logs
+   report the event without printing record or preference contents.
 
 1. Read-only navigation and utilities
 

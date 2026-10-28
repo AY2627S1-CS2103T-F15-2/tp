@@ -54,6 +54,18 @@ public class UiManager implements Ui {
         }
     }
 
+    /**
+     * Shows recovery guidance before startup aborts, without opening an editable main window.
+     */
+    public static void showDataLoadingError(Path dataFilePath) {
+        showAlertDialogAndWait(null, AlertType.ERROR, "Could not load saved data",
+                "Laplace cannot safely open this data file.",
+                "Data file: " + dataFilePath.toAbsolutePath() + "\n\n"
+                        + "The original data file has been preserved. Close Laplace and back up this file. "
+                        + "Repair it or move it to a safe location before restarting. "
+                        + "Moving the file starts a separate sample dataset; it does not recover your records.");
+    }
+
     private Image getImage(String imagePath) {
         return new Image(MainApp.class.getResourceAsStream(imagePath));
     }

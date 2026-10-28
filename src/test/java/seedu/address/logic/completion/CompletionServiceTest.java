@@ -21,13 +21,45 @@ import seedu.address.logic.parser.CliSyntax;
 import seedu.address.logic.parser.Prefix;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
+import seedu.address.model.member.Member;
+import seedu.address.model.member.NusId;
+import seedu.address.model.person.Email;
+import seedu.address.model.person.Name;
+import seedu.address.model.person.Phone;
 import seedu.address.testutil.ViewTestData;
 
 /** Exercises contextual replacement, reference values, and unsupported-input boundaries. */
 public class CompletionServiceTest {
     private final CompletionService service = new CompletionService();
     private final ModelManager model = ViewTestData.model();
+
+    @Test
+    public void complete_greekSigmaAndUnicodeWhitespace_preservesOriginalCandidate() {
+        ModelManager data = new ModelManager();
+        String name = "ΝΙΚΟΣ\u2003Camera";
+        data.addEquipment(new Equipment(new UUID(0, 99), name, "Photography", Condition.GOOD, ""));
+        String input = "equipment edit name/νικοσ c";
+        assertEquals(List.of(name), service.complete(input, input.length(), data.getAddressBook())
+                .orElseThrow().candidates());
+        assertEquals(name, data.getEquipmentList().getFirst().getName());
+    }
+
+    @Test
+    public void complete_greekSigmaVariants_suggestsOriginalSpelling() {
+        ModelManager data = new ModelManager();
+        data.addMember(new Member(new NusId("A8400001X"),
+                Name.forMember("ΝΙΚΟΣ"),
+                Phone.forMember("91234567"),
+                Email.forMember("nikos@example.com")));
+        for (String name : List.of("ΝΙΚΟΣ", "νικοσ", "νικος")) {
+            String input = "member edit name/" + name;
+            assertEquals(List.of("ΝΙΚΟΣ"), service.complete(input, input.length(), data.getAddressBook())
+                    .orElseThrow().candidates());
+        }
+        assertEquals("ΝΙΚΟΣ", data.getMemberList().getFirst().getName().fullName);
+    }
 
     @Test
     public void complete_invalidOffsetsAndNullInputs_rejectsProgrammerErrors() {
