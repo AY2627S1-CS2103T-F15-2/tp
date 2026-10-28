@@ -6,7 +6,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -244,9 +243,8 @@ public class ParserUtil {
      */
     public static Condition parseCondition(String value) throws ParseException {
         requireNonNull(value);
-        String normalizedValue = value.strip().toUpperCase(Locale.ROOT);
         try {
-            return Condition.valueOf(normalizedValue);
+            return Condition.fromText(value);
         } catch (IllegalArgumentException e) {
             throw new ParseException("Condition must be GOOD, FAIR, DAMAGED or UNDER_REPAIR.", e);
         }

@@ -763,7 +763,9 @@ Data includes members, equipment and open/closed loan records. Availability and 
 do not try to maintain separate holder/availability fields. Member deletion retains the record,
 its `deleted` boolean and closed loans for unlimited restoration. Equipment follows the same policy.
 Older member/equipment records without a `deleted` field load as active;
-explicit null or non-boolean values are invalid. Do not open lifecycle-aware data in an older release
+explicit null or non-boolean values are invalid. Stored equipment, issue and return conditions accept
+case-insensitive spellings and surrounding whitespace; saves use GOOD, FAIR, DAMAGED or UNDER_REPAIR.
+Blank/unknown values are rejected, while missing/null historical loan conditions remain unknown. Do not open lifecycle-aware data in an older release
 that may discard deletion state.
 
 The saved root still requires a `persons` array for legacy compatibility. For a dataset with no legacy
