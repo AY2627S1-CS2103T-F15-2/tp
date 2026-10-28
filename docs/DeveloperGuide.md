@@ -1163,6 +1163,13 @@ Given below are instructions to test the app manually.
 testers are expected to do more *exploratory* testing.
 </box>
 
+### Member email validation
+
+In a disposable dataset, try `member add nus/A8000099X name/Kelvin Probe phone/91234567 email/K@example.com`
+and `member edit nus/A0123456X email/K.updated@example.com` for an existing member. Both must reject
+the non-ASCII email without changing records or the data file. An uppercase ASCII email must save
+lowercase and retain the member identity and loan references after restart.
+
 ### Launch and shutdown
 
 1. Initial launch
