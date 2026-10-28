@@ -613,7 +613,7 @@ public class MainWindowShellTest {
             assertEquals(new UUID(0, 2), ((InventoryGroups.Group) rows().getItems().getFirst())
                     .matching().getFirst().getUuid());
             assertEquals("1", detailLabel("displayedCount"));
-            assertTrue(detailLabel("inventoryGroups").contains("Photography · Camera 1"));
+            assertTrue(detailLabel("inventoryGroups").contains("\"Photography\" / \"Camera 1\""));
             render("search-equipment", 1100, 700);
             render("search-equipment", 760, 500);
             int dispatches = logic.commands.size();
@@ -651,7 +651,7 @@ public class MainWindowShellTest {
             assertEquals(new UUID(0, 1).toString(), detailLabel("equipmentUuid"));
             submit("equipment search availability/available");
             assertEquals("2", detailLabel("displayedCount"));
-            assertTrue(detailLabel("inventoryGroups").contains("Camera 1: 1 available"));
+            assertTrue(detailLabel("inventoryGroups").contains("\"Camera 1\": 1 available"));
         });
     }
 
