@@ -77,11 +77,13 @@ public class CompletionServiceTest {
     @Test
     public void complete_commandWordsAndSubcommands_usesParserSpellingAndStableOrder() {
         assertCandidates("mem", "member");
+        assertCandidates("und", "undo");
+        assertCandidates("red", "redo");
         assertCandidates("member ad", "add");
         assertCandidates("member ", "add", "delete", "edit", "list", "restore", "search", "view");
         assertCandidates("equipment ", "add", "delete", "edit", "list", "restore", "search", "view");
         assertCandidates("loans ", "add", "list", "return");
-        for (String word : List.of("exit", "help",
+        for (String word : List.of("exit", "help", "undo", "redo",
                 "member", "equipment", "loans")) {
             assertCandidates(word, word);
         }

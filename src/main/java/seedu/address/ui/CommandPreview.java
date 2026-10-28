@@ -22,7 +22,8 @@ import javafx.util.Duration;
  * Readable plain-text command with explicit copy and prepare actions; never executes a command.
  */
 public class CommandPreview extends VBox {
-    private static final Pattern COMMAND_NAME = Pattern.compile("^(?:(?:member|equipment|loans|mode) \\w+|help|exit)");
+    private static final Pattern COMMAND_NAME = Pattern.compile(
+            "^(?:(?:member|equipment|loans|mode) \\w+|undo|redo|help|exit)");
     private static final Pattern PREFIX = Pattern.compile("(?<!\\S)[a-z]+/");
 
     /**

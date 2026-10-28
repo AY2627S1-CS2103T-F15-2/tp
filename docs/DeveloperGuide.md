@@ -201,8 +201,8 @@ their windows and must not shut down the shared toolkit.
 
 `MainWindow` supplies the live read-only address book to `CommandBox`. `CompletionService` computes
 replacement ranges and ordered candidates without calling logic, history or storage. Command constants
-and shared search prefix constants define the completion vocabulary. The newly merged `undo`/`redo`
-parser routes are not currently registered in `CompletionService`. Search enum options follow
+and shared search prefix constants define the completion vocabulary, including the `undo`/`redo`
+utilities. Help and explicit Ctrl+Space completion use `CommandCatalog`. Search enum options follow
 `DirectoryQuery`; dates, numeric counts, new member IDs and free-form notes are entered manually.
 Batch loan completion replaces only the active UUID entry and excludes neighboring identities.
 `CompletionController` owns cycling and resets after input, caret, focus or model changes. Enter retains
@@ -1454,3 +1454,7 @@ Use temporary data. Do not test against a real inventory.
    edits must leave redo available. `undo 2` and `redo count/2` must be rejected without changing data.
 6. Restart after an undo. The restored records must still load, but undo and redo must both be unavailable.
    Automated tests inject failed saves and verify records, history and prior file bytes survive for retry.
+7. Open Help and locate the `undo` and `redo` examples. Use each example; expect the exact command
+   prepared without execution. Type `und`/`red` and test both Tab and Ctrl+Space; expect `undo`/`redo`
+   suggestions. Press Enter separately to invoke history. Both no-argument utilities must have
+   command-name highlighting in previews.

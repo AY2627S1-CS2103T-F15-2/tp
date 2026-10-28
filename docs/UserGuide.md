@@ -652,6 +652,9 @@ appear in the Loans tab and in member and equipment details.
 
 ### Undo a record change: `undo`
 
+Both `undo` and `redo` appear in Help. Type `und` or `red` and use Tab or Ctrl+Space to complete
+the command name. Help's Use command action only prepares it; press Enter to execute.
+
 ```text
 undo
 ```
