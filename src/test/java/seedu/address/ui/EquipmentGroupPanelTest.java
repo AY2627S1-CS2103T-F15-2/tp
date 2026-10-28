@@ -18,6 +18,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.text.Text;
 import seedu.address.model.ModelManager;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.Condition;
@@ -83,6 +84,33 @@ class EquipmentGroupPanelTest {
             assertEquals("550e8400…0000", identity.getCellObservableValue(0).getValue());
             assertEquals("a1b2c3d4…0000", identity.getCellObservableValue(1).getValue());
         });
+    }
+
+    @Test
+    void unitColumn_atNarrowWidths_keepsBothUuidEndsVisible() {
+        UUID unitUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+        ModelManager model = new ModelManager();
+        model.addEquipment(new Equipment(unitUuid, "Camera", "Photo", Condition.GOOD, ""));
+        for (int width : List.of(500, 400)) {
+            FxTestUtil.runAndWait(() -> {
+                EquipmentGroupPanel panel = new EquipmentGroupPanel(model.getAddressBook(), model::getAvailability,
+                        unused -> { }, unused -> { }, unused -> { });
+                mount(panel, width);
+                panel.showGroup(InventoryGroups.keyOf(CAMERA), DirectoryQuery.all());
+                panel.applyCss();
+                panel.layout();
+                TableCell<?, ?> cell = panel.lookupAll(".table-cell").stream()
+                        .map(TableCell.class::cast)
+                        .filter(rendered -> "550e8400…0000".equals(rendered.getText()))
+                        .findFirst().orElseThrow();
+                Text renderedText = (Text) cell.lookup(".text");
+                double contentWidth = cell.getWidth() - cell.getInsets().getLeft() - cell.getInsets().getRight();
+                assertTrue(renderedText.getLayoutBounds().getWidth() <= contentWidth, () ->
+                        "UUID clipped at panel width " + width + ": content=" + contentWidth
+                                + ", text=" + renderedText.getLayoutBounds().getWidth()
+                                + ", column=" + identityWidth(panel));
+            });
+        }
     }
 
     @Test
@@ -271,10 +299,20 @@ class EquipmentGroupPanelTest {
     }
 
     private static void mount(EquipmentGroupPanel panel) {
+        mount(panel, 700);
+    }
+
+    private static void mount(EquipmentGroupPanel panel, int width) {
         panel.getStyleClass().add("laplace-root");
-        Scene scene = new Scene(panel, 700, 600);
+        Scene scene = new Scene(panel, width, 600);
         scene.getStylesheets().add(EquipmentGroupPanel.class.getResource("/view/LaplaceTheme.css").toExternalForm());
         panel.applyCss();
+        panel.layout();
+    }
+
+    private static double identityWidth(EquipmentGroupPanel panel) {
+        TableView<?> units = (TableView<?>) panel.lookup("#physicalUnits");
+        return units.getColumns().getFirst().getWidth();
     }
 
     private ModelManager model() {

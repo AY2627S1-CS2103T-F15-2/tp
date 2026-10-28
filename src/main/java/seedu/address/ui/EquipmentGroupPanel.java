@@ -205,8 +205,8 @@ public class EquipmentGroupPanel extends VBox {
                         : new Tooltip(caption + ": " + item + "\nUUID: " + unit.getUuid()));
             }
         });
-        column.setMinWidth(60);
-        column.setPrefWidth(110);
+        column.setMinWidth(caption.equals("Unit") ? 120 : 60);
+        column.setPrefWidth(caption.equals("Unit") ? 130 : 110);
         units.getColumns().add(column);
     }
 
