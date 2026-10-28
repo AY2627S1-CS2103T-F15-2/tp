@@ -5,7 +5,7 @@ or rewritten merely by loading the file.
 
 | Field | New Laplace input |
 | --- | --- |
-| Member name | 1-100 Unicode characters, at least one letter; letters, spaces, apostrophes, hyphens and periods only. |
+| Member name | 1-100 Unicode code points after whitespace and NFC normalization, with at least one letter; letters with attached combining marks, spaces, straight (`'`) or curly (`’`) apostrophes, hyphens and periods only. |
 | Phone | Optional leading `+`, then 8-15 digits after typed whitespace and hyphens are removed. |
 | Email | 3-254 ASCII characters; exactly one `@`; nonempty local part and dotted domain; local characters are letters/digits/`.`/`_`/`%`/`+`/`-`; domain labels cannot begin/end with `-`. Stored lowercase. |
 | Equipment name | 1-100 printable Unicode characters after normalization. |
@@ -21,6 +21,9 @@ Unicode whitespace runs in text are collapsed to an ordinary space and trimmed. 
 text count Unicode code points. Other controls, invisible formatting characters and unpaired surrogates
 are rejected. Phone formatting is removed before counting digits. Stored legacy values keep their exact
 representation, including former short phones, repeated spaces, uppercase emails and longer descriptions.
+Member names use canonical Unicode NFC composition before validation and length checking. Equivalent
+accented spellings such as `José Tan` and `José Tan` therefore have the same new stored form.
+Loading a saved name preserves its exact spelling; editing only another field does not normalize it.
 
 ## Error order
 

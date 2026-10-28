@@ -107,15 +107,16 @@ public class LaplaceTransactionTest {
                 try (var files = Files.list(folder)) {
                     assertFalse(files.anyMatch(path -> path.getFileName().toString().endsWith(".tmp")));
                 }
-                writer.fail = false;
                 logic.execute("member list");
-                assertEquals(before, root, "A later success must not persist an earlier failed operation");
+                assertEquals(before, root, "Read-only navigation must not publish an earlier failed operation");
                 assertArrayEquals(saved, Files.readAllBytes(disk.getAddressBookFilePath()));
                 assertEquals(0, notifications[0]);
-                assertEquals(2, storage.saved);
+                assertEquals(1, storage.saved);
+                assertEquals(attempts + 1, storage.attempts);
+                writer.fail = false;
                 logic.execute(command);
-                assertEquals(3, storage.saved);
-                assertEquals(attempts + 3, storage.attempts);
+                assertEquals(2, storage.saved);
+                assertEquals(attempts + 2, storage.attempts);
                 assertTrue(notifications[0] > 0);
                 assertEquals(root, new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs())
                         .getAddressBook());

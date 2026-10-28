@@ -29,7 +29,7 @@ the command nor panel modifies collections, persists selection or installs root 
 ## Integration status
 
 Merged #95 activates the real route; merged #93 mounts this existing detail panel and coordinates
-identity selection and refresh. Read-only view commands retain the existing LogicManager save behavior.
-Save errors remain visible. Laplace mutations use the staged/atomic boundary described in
+identity selection and refresh. Read-only view commands bypass domain-record saving and remain usable
+when record saving is unavailable. Laplace mutations use the staged/atomic boundary described in
 [MVP fields](MvpFields.md). Current combined acceptance is in
 [MvpCompletion.md](../gui/MvpCompletion.md).

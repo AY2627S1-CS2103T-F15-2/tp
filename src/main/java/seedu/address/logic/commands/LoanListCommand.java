@@ -11,6 +11,11 @@ public class LoanListCommand extends Command {
     public static final String MESSAGE_SUCCESS = "Showing current loans.";
 
     @Override
+    public boolean isReadOnly() {
+        return true;
+    }
+
+    @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
         return new CommandResult(MESSAGE_SUCCESS, DisplayRequest.loans());

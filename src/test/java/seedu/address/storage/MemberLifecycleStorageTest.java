@@ -26,6 +26,7 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.member.NusId;
 import seedu.address.model.person.Name;
+import seedu.address.testutil.ViewTestData;
 
 /**
  * Exercises deletion metadata and real persistence failures without changing the live dataset.
@@ -35,6 +36,63 @@ public class MemberLifecycleStorageTest {
 
     @TempDir
     public Path directory;
+
+    @Test
+    public void commands_unicodeMemberAddAndEdit_roundTripsWithStableLoanReferences() throws Exception {
+        ModelManager model = ViewTestData.model();
+        model.addLoan(ViewTestData.loan(ViewTestData.CAMERA, ViewTestData.ALEX, true));
+        model.addLoan(ViewTestData.loan(ViewTestData.OTHER_CAMERA, ViewTestData.ALEX, false));
+        var loans = List.copyOf(model.getLoanList());
+        Path file = directory.resolve("unicode-members.json");
+        JsonAddressBookStorage disk = new JsonAddressBookStorage(file);
+        StorageManager storage = new StorageManager(disk, new JsonUserPrefsStorage(directory.resolve("prefs.json")));
+        LogicManager logic = new LogicManager(model, storage);
+        String[] names = {"அருண்", "Anne O\u2019Connor", "Jose\u0301 Tan"};
+        for (int index = 0; index < names.length; index++) {
+            String name = names[index];
+            NusId addedId = new NusId("A800000" + index + "X");
+            logic.execute("member add nus/" + addedId + " name/" + name
+                    + " phone/91234567 email/member@example.com");
+            assertEquals(Name.forMember(name), model.findMember(addedId).orElseThrow().getName());
+            logic.execute("member edit nus/" + ID + " name/" + name);
+            var edited = model.findMember(ID).orElseThrow();
+            assertEquals(ID, edited.getNusId());
+            assertEquals(Name.forMember(name), edited.getName());
+            assertEquals(ViewTestData.ALEX.getPhone(), edited.getPhone());
+            assertEquals(ViewTestData.ALEX.getEmail(), edited.getEmail());
+            assertEquals(loans, model.getLoanList());
+            assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+        }
+        byte[] saved = Files.readAllBytes(file);
+        CommandException unchanged = assertThrows(CommandException.class, () ->
+                logic.execute("member edit nus/" + ID + " name/Jos\u00e9 Tan"));
+        assertEquals(MemberEditCommand.MESSAGE_NO_CHANGE, unchanged.getMessage());
+        assertArrayEquals(saved, Files.readAllBytes(file));
+    }
+
+    @Test
+    public void read_decomposedStoredMemberName_preservesExactSpellingAndLoanReferences() throws Exception {
+        ModelManager model = fullModel();
+        Path file = directory.resolve("decomposed-name.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        storage.saveAddressBook(model.getAddressBook());
+        String originalName = model.findMember(ID).orElseThrow().getName().fullName;
+        String storedName = "Jose\u0301  Tan";
+        Files.writeString(file, Files.readString(file).replace(originalName, storedName));
+        var reloaded = storage.readAddressBook().orElseThrow();
+        assertEquals(storedName, reloaded.getMemberList().stream()
+                .filter(member -> member.getNusId().equals(ID)).findFirst().orElseThrow().getName().fullName);
+        assertEquals(model.getLoanList(), reloaded.getLoanList());
+        storage.saveAddressBook(reloaded);
+        assertEquals(reloaded, storage.readAddressBook().orElseThrow());
+        ModelManager restored = new ModelManager(reloaded, new UserPrefs());
+        LogicManager logic = new LogicManager(restored,
+                new StorageManager(storage, new JsonUserPrefsStorage(directory.resolve("prefs.json"))));
+        logic.execute("member edit nus/" + ID + " phone/+6591234567");
+        assertEquals(storedName, restored.findMember(ID).orElseThrow().getName().fullName);
+        assertEquals(reloaded.getLoanList(), restored.getLoanList());
+        assertEquals(restored.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
 
     @Test
     public void commands_deleteEditRestoreEdit_rejectsDeletedEditsWithoutSaving() throws Exception {
