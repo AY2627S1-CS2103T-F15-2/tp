@@ -644,7 +644,10 @@ No issue/current condition is preselected as a new observation.
 
 If omitted, the current equipment condition stays unchanged and history shows the return condition
 as "Not recorded". A failed item prevents the entire batch from being returned.
-For a batch, feedback lists the number of units and their UUIDs without naming one borrower for all of them.
+Batch feedback starts with a concise count/date summary. Expand **Details** for each equipment name,
+full UUID and its own borrower name/NUS ID; **Copy** retains the complete result. Batch assignments
+similarly list names/full UUIDs beneath their shared borrower/date summary. Different borrowers are
+never attributed to a single borrower in a batch return.
 
 | Situation | Result or correction |
 | --- | --- |
