@@ -19,6 +19,13 @@ public class LaplaceTextTest {
     }
 
     @Test
+    public void stripWhitespace_unicodeBoundaries_preservesInternalSpacing() {
+        assertEquals("First  Second", LaplaceText.stripWhitespace("\u00a0First  Second\u2003"));
+        assertEquals("", LaplaceText.stripWhitespace("\u00a0\u2003"));
+        assertThrows(NullPointerException.class, () -> LaplaceText.stripWhitespace(null));
+    }
+
+    @Test
     public void isPrintable_codePointBounds_countsSupplementaryCharactersOnce() {
         String camera = new String(Character.toChars(0x1f4f7));
         assertTrue(LaplaceText.isPrintable(camera, 1, 1));

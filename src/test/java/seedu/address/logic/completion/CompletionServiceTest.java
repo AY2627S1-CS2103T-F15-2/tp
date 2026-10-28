@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -20,6 +21,8 @@ import seedu.address.logic.parser.CliSyntax;
 import seedu.address.logic.parser.Prefix;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
+import seedu.address.model.equipment.Condition;
+import seedu.address.model.equipment.Equipment;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
 import seedu.address.model.person.Email;
@@ -31,6 +34,17 @@ import seedu.address.testutil.ViewTestData;
 public class CompletionServiceTest {
     private final CompletionService service = new CompletionService();
     private final ModelManager model = ViewTestData.model();
+
+    @Test
+    public void complete_greekSigmaAndUnicodeWhitespace_preservesOriginalCandidate() {
+        ModelManager data = new ModelManager();
+        String name = "ΝΙΚΟΣ\u2003Camera";
+        data.addEquipment(new Equipment(new UUID(0, 99), name, "Photography", Condition.GOOD, ""));
+        String input = "equipment edit name/νικοσ c";
+        assertEquals(List.of(name), service.complete(input, input.length(), data.getAddressBook())
+                .orElseThrow().candidates());
+        assertEquals(name, data.getEquipmentList().getFirst().getName());
+    }
 
     @Test
     public void complete_greekSigmaVariants_suggestsOriginalSpelling() {
@@ -132,6 +146,29 @@ public class CompletionServiceTest {
     }
 
     @Test
+    public void complete_multiwordValueOverlapsPrefix_prefersStoredValue() {
+        for (String word : List.of("Cover", "Case", "Notes")) {
+            model.addEquipment(new Equipment(UUID.randomUUID(), "Camera " + word, "Photo " + word,
+                    ViewTestData.CAMERA.getCondition(), ""));
+            String fragment = word.substring(0, 2).toLowerCase();
+            assertCandidates("equipment add name/Camera " + fragment, "Camera " + word);
+            assertCandidates("equipment add category/Photo " + fragment, "Photo " + word);
+        }
+        String input = "equipment add name/Camera coJUNK   category/Photo condition/GOOD";
+        Completion completion = service.complete(input, input.indexOf("JUNK"),
+                model.getAddressBook()).orElseThrow();
+        assertEquals("equipment add name/Camera Cover   category/Photo condition/GOOD", apply(input, completion));
+    }
+
+    @Test
+    public void complete_noMatchingMultiwordValue_retainsPrefixCompletion() {
+        assertCandidates("equipment add name/Camera co", "condition/", "count/");
+        assertCandidates("equipment add category/Photo no", "notes/");
+        assertCandidates("equipment add notes/Keep co", "condition/", "count/");
+        assertCandidates("equipment add name/Camera ", "category/", "condition/", "count/", "notes/");
+    }
+
+    @Test
     public void complete_middleOfValue_preservesFollowingFieldsAndWhitespace() {
         String text = "member add name/  alex xx   phone/91234567";
         int caret = text.indexOf("alex") + 4;
@@ -144,6 +181,26 @@ public class CompletionServiceTest {
         String beforeMarker = "member add name/Alex phone/9";
         assertTrue(service.complete(beforeMarker, beforeMarker.indexOf("phone/") + 3,
                 model.getAddressBook()).isPresent());
+    }
+
+    @Test
+    public void complete_equivalentWhitespace_matchesValuesWithoutMovingReplacementBoundaries() {
+        Equipment camera = ViewTestData.CAMERA;
+        model.setEquipment(camera, new Equipment(camera.getUuid(), "Camera Cover", "Photo Cover",
+                camera.getCondition(), camera.getNotes()));
+        for (String separator : List.of("  ", "\u2003", "\u00a0", "\u202f", "\u0085", "\u3000", "\t")) {
+            assertCandidates("member edit name/aLeX" + separator + "T", "Alex Tan");
+            assertCandidates("member search q/alex" + separator + "t", "Alex Tan");
+            assertCandidates("equipment add name/camera" + separator + "cov", "Camera Cover");
+            assertCandidates("equipment add category/photo" + separator + "cov", "Photo Cover");
+
+            String input = "member edit name/  aLeX" + separator + "TJUNK" + separator + "phone/91234567";
+            Completion completion = service.complete(input, input.indexOf("JUNK"),
+                    model.getAddressBook()).orElseThrow();
+            assertEquals("member edit name/  ".length(), completion.start());
+            assertEquals(input.indexOf("JUNK") + "JUNK".length(), completion.end());
+            assertEquals("member edit name/  Alex Tan" + separator + "phone/91234567", apply(input, completion));
+        }
     }
 
     @Test
@@ -333,6 +390,21 @@ public class CompletionServiceTest {
         assertCandidates("loans return condition/g", "GOOD");
         String exhausted = "loans return uuid/" + first + "," + second + "," + third + ",";
         assertTrue(service.complete(exhausted, exhausted.length(), model.getAddressBook()).isEmpty());
+    }
+
+    @Test
+    public void complete_fieldAfterLoanIdentities_fallsBackToUnusedPrefix() {
+        String first = ViewTestData.CAMERA.getUuid().toString();
+        String second = ViewTestData.OTHER_CAMERA.getUuid().toString();
+        for (String identities : List.of(first, first + ", " + second)) {
+            assertCandidates("loans add uuid/" + identities + " nu", "nus/");
+            assertCandidates("loans return uuid/" + identities + " re", "returned/");
+            assertCandidates("loans return uuid/" + identities + " co", "condition/");
+            String input = "loans add uuid/" + identities + " nuJUNK   expected/2026-01-08";
+            Completion completion = service.complete(input, input.indexOf("JUNK"),
+                    model.getAddressBook()).orElseThrow();
+            assertEquals("loans add uuid/" + identities + " nus/   expected/2026-01-08", apply(input, completion));
+        }
     }
 
     private Completion proposal(String text) {

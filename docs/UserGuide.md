@@ -62,6 +62,15 @@ reference fields; equipment UUIDs, names and categories; and the four equipment 
 to case and retain their stored spelling. Suggestions use the current records, including records added
 since startup. Identical values appear once.
 
+A matching stored value takes priority over an unfinished field prefix within that value. For example,
+with a stored equipment name `Camera Cover`, `equipment add name/Camera co` completes to
+`equipment add name/Camera Cover`. If no stored value matches, the final token can still complete
+to a new field prefix. A trailing space offers the unused fields for the command.
+
+Value matching treats repeated spaces and Unicode whitespace within a value as ordinary single spaces.
+For example, `member edit name/Alex  T` can complete the stored name `Alex Tan`. The replacement keeps
+the stored spelling, and all text and separators outside that value remain unchanged.
+
 Command words and field prefixes are case-sensitive. Field suggestions depend on the command and omit
 non-repeatable prefixes already present. All seventeen member, equipment and loan commands plus `help`,
 `exit`, `mode dark` and `mode light` have command completion. Search supports `q/`, the applicable filters, sorting and ordering;
@@ -122,6 +131,8 @@ To explore without changing the sample records:
   its physical-unit table. Each unit still has its own UUID, condition, notes, holder and lifecycle state.
 - Group counts distinguish **matching** units from **retained** units. Availability counts exclude deleted
   units. **Show all units** reveals group members outside the active search, including deleted records.
+  The right-hand **All retained groups** summary includes deleted-only groups regardless of the active
+  filter. Such a group shows zero active availability counts and its retained deleted count.
   Direct `equipment view uuid/UUID` opens that exact unit, enabling Show all units if needed.
   Unchecking it narrows the table again while retaining the selected unit's details; a message explains
   when that unit is outside the table filter.
@@ -137,15 +148,21 @@ To explore without changing the sample records:
   to refresh the labels. Completed loans show return dates and recorded issue/return conditions, without
   urgency labels or return actions. Filter both sections by NUS ID and equipment UUID. `loans list` opens
   this same tab; member and equipment details also show the selected record's loan history.
+  Sections with more than ten loans use their own scrollable list. Scroll inside that list, or focus
+  it and use the arrow, Page Up/Down, Home and End keys, to reach all entries without loading every row at once.
 - **Last result** sits above the command feedback and stays after switching tabs. A green box is a
   successful command, a red box is an error, and the box is neutral before the first command.
   The heading displays only **Last result**; assistive text includes the status and full message.
   **Details** expands the complete feedback and **Copy** includes all UUIDs from batch creation.
-- The command input, identifiers and command examples use IBM Plex Mono. **↑/↓** browse up to 100 recent submissions in this session,
-  preserving an unfinished draft. **Ctrl+Space** offers command-name or parameter-prefix completion at
+- The command input, identifiers and command examples use IBM Plex Mono. Unmodified **↑/↓** browse up to
+  100 recent submissions in this session, preserving an unfinished draft. Modified arrows retain normal
+  text selection and caret navigation. **Ctrl+Space** offers command-name or parameter-prefix completion at
   the end of the input. Choose an entry to insert it; **Escape** dismisses suggestions. Tab completes the
   active token or value as described above; with no applicable suggestion it retains normal focus navigation. History is cleared when the application closes.
 - **F1** or `help` opens a scrollable command reference with copyable templates and the user-guide link.
+  The loan-return template includes `condition/GOOD` as an example of the optional observed return
+  condition. Ctrl+Space after `loans return co` also offers `condition/`; omit it to retain the existing
+  equipment condition, or supply one of the conditions documented in the loan-return section.
 - Drag the directory divider to resize its panels. Scroll long lists/details vertically; the data filename
   appears in the footer, with the full path available on hover.
 
@@ -170,7 +187,8 @@ Commands and prefixes are **lowercase and case-sensitive**. Use `member add`, no
 - Square brackets mean an optional parameter; do not type them. Optional parameters are marked in each command's syntax.
 - Put spaces between command words and parameters. Parameters may appear in any order; tabs also separate fields.
 - Each prefix may appear **at most once**, including `notes/`.
-- Leading/trailing whitespace is ignored. Runs of whitespace in text values become one ordinary space.
+- Unicode whitespace, including EM SPACE and nonbreaking space, separates command words and parameters.
+  Leading/trailing whitespace is ignored. Runs of whitespace in text values become one ordinary space.
 - A value continues to the next parameter marker. A start-of-value or whitespace-delimited token such as
   `notes/` or `unknown/` is reserved as a marker. Unknown markers are errors, even inside free text.
   There is no quoting or escaping. An ordinary URL such as `https://example.com` is not a marker.
@@ -199,9 +217,9 @@ Use the member, equipment and loan commands documented below, or `undo`, `redo`,
 | Field | Accepted input and stored form |
 | --- | --- |
 | NUS ID `nus/` | One ASCII letter, exactly seven digits, and an optional final ASCII letter. Case-insensitive; stored/displayed uppercase, such as `A0123456X` or `E0123456`. |
-| Member name `name/` | 1–100 characters after normalization. Unicode letters, spaces, apostrophes, hyphens and periods only; must contain at least one letter. Example: `Anne-Marie O'Connor`. |
+| Member name `name/` | 1–100 Unicode code points after whitespace and NFC normalization. Unicode letters with combining marks, spaces, straight (`'`) or curly (`’`) apostrophes, hyphens and periods; must contain at least one letter. Combining marks must follow a letter or its marks. Examples: `அருண்`, `Anne O’Connor`. |
 | Phone `phone/` | Optional leading `+`, then 8–15 digits. Spaces and hyphens are removed: `+65 9123-4567` becomes `+6591234567`. |
-| Email `email/` | 3–254 ASCII characters, one `@`, no spaces and at least one domain dot. Local-part characters: letters, digits, `.`, `_`, `%`, `+`, `-`. Domain labels contain letters/digits/hyphens and cannot begin/end with a hyphen. Stored lowercase. |
+| Email `email/` | 3–254 ASCII characters, one `@`, no spaces and at least one domain dot. Local-part characters: letters, digits, `.`, `_`, `%`, `+`, `-`. Domain labels contain letters/digits/hyphens and cannot begin/end with a hyphen. ASCII validation occurs before conversion to lowercase; non-ASCII lookalikes such as `K` are rejected. Stored lowercase. |
 | Equipment UUID `uuid/` | Full `8-4-4-4-12` hexadecimal form, such as `550e8400-e29b-41d4-a716-446655440000`. Case-insensitive input; lowercase display. Shortened UUIDs are rejected. |
 | Equipment name `name/` | 1–100 printable Unicode characters after whitespace normalization. Punctuation and model numbers are allowed; control characters are rejected. |
 | Category `category/` | 1–50 printable Unicode characters after normalization. Free text; control characters are rejected. |
@@ -211,6 +229,10 @@ Use the member, equipment and loan commands documented below, or `undo`, `redo`,
 
 Copy the actual UUID displayed by Laplace when issuing, viewing, returning or deleting equipment.
 The UUID in this guide is an example; it does not identify every newly added item.
+
+Newly added or edited member names use Unicode NFC normalization: `José Tan` and `José Tan`
+(with a separate combining acute accent) are stored as the same canonical spelling. Existing saved
+names retain their exact spelling when loaded; editing another field does not rewrite the name.
 
 ### Availability
 
@@ -250,12 +272,13 @@ All four parameters are required and follow the shared field rules. No address i
 Examples:
 
 ```text
-member add nus/A0123456X name/Alex Tan phone/91234567 email/alex.tan@u.nus.edu
+member add nus/A0678901D name/Jordan Lee phone/93456789 email/jordan.lee@u.nus.edu
 member add email/siti@u.nus.edu name/Siti Nur phone/+65 8123-4567 nus/E0123456
 ```
 
 Success adds the member, selects the new row and opens details showing the normalized values.
-For the first example, the result is `New member added: Alex Tan (A0123456X)`.
+For the first example, the result is `New member added: Jordan Lee (A0678901D)`.
+This example uses an ID absent from the bundled samples. If you have already added it, use another unused NUS ID.
 
 Two members are duplicates **only when their normalized NUS IDs are equal**. Different IDs can share
 a name, phone or email. A duplicate is rejected with a message such as:
@@ -325,7 +348,10 @@ You can edit contact details while the member holds equipment. Matching another 
 or contacts does not merge records because NUS IDs identify members.
 
 Success reports `Edited member NUS_ID: NAME.` and opens the updated details. The directory
-re-sorts by name and NUS ID while keeping the edited member selected. Changes survive restart.
+re-evaluates its current filters and sort order. Name then NUS ID is the default ordering; an explicit
+sort such as `sort/id order/desc` remains active. The edited member stays selected when included in
+the filtered results; their details still open if the edit moves them outside those results.
+Changes survive restart.
 
 | Situation | Result or correction |
 | --- | --- |
@@ -447,7 +473,9 @@ and partial matching are not supported.
 
 Details show the full UUID, name, category, condition, notes, lifecycle status and derived availability. An open loan also
 shows the holder's NUS ID, name, phone and email, plus assignment and expected return dates. The matching
-equipment row is selected when its list is visible. Long notes wrap and scroll with the details.
+group and physical-unit rows are selected and scrolled into view when included in the current filters.
+If the unit is outside those filters, its group opens with **Show all units** enabled. Current search
+filters and any clicked table sort remain unchanged. Long notes wrap and scroll with the details.
 
 | Item state | Example feedback |
 | --- | --- |
@@ -531,7 +559,7 @@ with links to the corresponding member and equipment details. Use the NUS ID and
 filter both sections. Each section has its own count and empty state.
 
 Feedback is `Showing current loans.` This command does not create, return, delete or change any
-member, equipment or loan records. It uses the same save/error handling as the other list commands.
+member, equipment or loan records. It does not save the data file.
 Extra text or parameters, such as `loans list uuid/UUID`, are rejected and leave the current view unchanged.
 
 ### Assign equipment: `loans add`
@@ -561,6 +589,10 @@ member and dates, and the request succeeds or fails as a whole. The condition of
 recorded in its loan history. Assigning an already assigned item is rejected, even if the new loan names
 the same member. Reaching the expected return date does not automatically return an item.
 
+A new assignment must be on or after that unit's latest recorded actual return date. Same-day handoffs
+are allowed. A conflicting UUID rejects the entire batch; expected-return dates do not determine
+historical availability. This check applies to new assignments and does not rewrite retained history.
+
 | Situation | Result or correction |
 | --- | --- |
 | Equipment/member does not exist | `No equipment with UUID UUID exists.` or `No member with NUS ID NUS_ID exists.` Check the corresponding list. |
@@ -568,6 +600,7 @@ the same member. Reaching the expected return date does not automatically return
 | Item already has an open loan | `Equipment UUID is unavailable because it is assigned to CURRENT_NUS_ID.` Return it before assigning it again. |
 | Condition is DAMAGED/UNDER_REPAIR | `Equipment UUID is unavailable (condition: CONDITION).` Choose an AVAILABLE item. |
 | Expected date precedes assignment | `Expected return date cannot be before assigned date` |
+| Assignment precedes a retained actual return | `Equipment UUID cannot be assigned before its last recorded return date DATE.` Use that date or later. |
 | Assignment is in the future | `Assigned date cannot be after today (TODAY).` Check your entry and the computer's date. |
 | Field syntax/date is invalid | Correct the first reported parameter and retry; use a real `yyyy-MM-dd` date. |
 | Saving fails | No loan is recorded and no records change; correct file access before retrying. |
@@ -693,6 +726,10 @@ Successful changes save automatically; there is no manual-save command. For the 
 data is stored in `data/addressbook.json` inside the folder containing `Laplace.jar`, even if you launch
 the JAR from another terminal folder. `preferences.json` and rotating `addressbook.log.*` files also
 stay beside the JAR. The window's status area identifies the data-file path.
+
+List, search and view commands, `help`, and `exit` do not save member, equipment or loan records.
+They remain usable when the loaded data cannot be saved, and do not rewrite the data file or create
+one on first launch. Normal exit still saves window and appearance preferences separately.
 
 If you previously launched from another folder, close Laplace and back up the old data and preferences
 before copying them into the matching locations beside the JAR. Data is not automatically read or moved

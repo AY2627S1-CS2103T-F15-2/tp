@@ -118,7 +118,9 @@ public class CommandBox extends UiPart<Region> {
                 completions.show(commandTextField, Side.TOP, 0, 0);
             }
             event.consume();
-        } else if (!completions.isShowing() && (event.getCode() == KeyCode.UP || event.getCode() == KeyCode.DOWN)) {
+        } else if (!completions.isShowing()
+                && !event.isShiftDown() && !event.isControlDown() && !event.isAltDown() && !event.isMetaDown()
+                && (event.getCode() == KeyCode.UP || event.getCode() == KeyCode.DOWN)) {
             if (historyIndex == history.size()) {
                 draft = commandTextField.getText();
             }

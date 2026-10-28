@@ -28,7 +28,7 @@ not an unassigned item. Notes wrap; vertical scrolling keeps long content access
 ## Integration status
 
 Merged #95 activates the real route, and merged #93 mounts the existing details panel and
-coordinates exact selection and refresh. View commands do not mutate records. LogicManager retains
-the existing read-command save behavior; Laplace mutations use the new staged/atomic boundary.
+coordinates exact selection and refresh. View commands declare themselves read-only, so LogicManager
+returns their results without saving records. Laplace mutations use the staged/atomic boundary.
 No alternate panel persistence or stored UI selection is introduced. See [MVP fields](MvpFields.md)
 and [completion evidence](../gui/MvpCompletion.md).

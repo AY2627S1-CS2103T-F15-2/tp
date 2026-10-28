@@ -190,7 +190,8 @@ public final class CompletionService {
                 && LaplaceText.normalize(text.substring(argumentsStart, caret)).endsWith(",");
         Optional<Completion> prefix = isBatchEntry ? Optional.empty()
                 : suggest(tokenStart, tokenEnd, fragment, available, false);
-        if (prefix.isPresent()) {
+        // A blank token starts the next field; a nonempty token can still be part of a stored value.
+        if (fragment.isEmpty() && prefix.isPresent()) {
             return prefix;
         }
         for (int i = 0; i < markers.size(); i++) {
@@ -204,13 +205,13 @@ public final class CompletionService {
                     end--;
                 }
                 if (command.startsWith("loans ") && markers.get(i).equals(PREFIX_EQUIPMENT_UUID.getPrefix())) {
-                    return loanIdentity(text, start, end, caret, data);
+                    return loanIdentity(text, start, end, caret, data).or(() -> prefix);
                 }
                 return suggest(start, end, text.substring(start, caret),
-                        values(command, markers.get(i), data), true);
+                        values(command, markers.get(i), data), true).or(() -> prefix);
             }
         }
-        return Optional.empty();
+        return prefix;
     }
 
     /**
@@ -293,9 +294,9 @@ public final class CompletionService {
     /** Filters and freezes an ordered candidate list, including an exact match as an idempotent completion. */
     private Optional<Completion> suggest(int start, int end, String fragment, Stream<String> candidates,
             boolean ignoreCase) {
-        String comparison = ignoreCase ? LaplaceText.caseKey(fragment) : fragment;
+        String comparison = ignoreCase ? LaplaceText.caseKey(LaplaceText.normalize(fragment)) : fragment;
         List<String> matches = candidates.filter(candidate -> {
-            String value = ignoreCase ? LaplaceText.caseKey(candidate) : candidate;
+            String value = ignoreCase ? LaplaceText.caseKey(LaplaceText.normalize(candidate)) : candidate;
             return value.startsWith(comparison);
         }).distinct().sorted().toList();
         if (matches.isEmpty()) {
