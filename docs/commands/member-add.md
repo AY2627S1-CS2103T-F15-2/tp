@@ -7,7 +7,10 @@ member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL
 Example: `member add nus/a0123456x name/Anne-Marie Lim phone/+65 9123-4567 email/ANNE@EXAMPLE.COM`
 
 All four fields are required in any order. NUS IDs are stored uppercase and identify a member exactly.
-Names allow 1-100 Unicode letters/spaces/apostrophes/hyphens/periods with at least one letter. Phone
+Names allow 1-100 Unicode code points after whitespace and NFC normalization, with at least one letter.
+Letters may carry combining marks; spaces, straight/curly apostrophes, hyphens and periods are allowed.
+Combining marks must follow a letter or its marks. For example, `அருண்`, `Anne O’Connor`, and both
+precomposed and decomposed spellings of `José Tan` are accepted. Phone
 whitespace/hyphens are removed, leaving 8-15 digits and an optional leading `+`. Emails follow the MVP
 ASCII syntax and are stored lowercase. Text whitespace is collapsed. See [MVP fields](MvpFields.md).
 

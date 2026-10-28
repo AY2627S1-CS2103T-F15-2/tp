@@ -54,7 +54,10 @@ field followed by the default comparator. Conditions/availability sort alphabeti
 Every physical UUID remains a separate row, including units with identical descriptions.
 Search defaults to `status/active`; use `status/deleted` to find retained units or `status/all` for both.
 Deleted units are UNAVAILABLE, labeled in the directory, and can be viewed/restored by UUID.
-The directory total includes deleted units, but availability counts and inventory groups exclude them.
+The directory total and retained inventory-group counts include deleted units. Availability counts
+(available, assigned and unavailable) exclude them. The right-hand **All retained groups** summary
+includes groups containing only deleted units; such a group shows zero active availability counts
+and its deleted count. A deleted unit's UNAVAILABLE state does not add to the active unavailable count.
 
 ## Input, refresh and navigation
 
@@ -64,9 +67,11 @@ selects the default comparator. Parameter order is free. Existing reserved-prefi
 whitespace-delimited `name/`-style tokens are parameters even inside free text, with no quoting or
 escaping. Ordinary URLs/embedded slashes remain text.
 
-The left list and Displayed count reflect the query. Equipment Total includes all retained units;
-overall availability and inventory groups describe all active equipment. Criteria and order are visible in the summary. Zero results shows a
-reset hint. Opening details retains the filtered list. Refresh reevaluates queries against current
+The left list and Displayed count reflect the query. Equipment Total includes all retained units.
+Overall availability counts cover active equipment only; the right-hand inventory summary covers
+all retained groups, including deleted-only groups, regardless of the current filter. Group details
+distinguish matching units from retained units. Criteria and order are visible in the summary.
+Zero results shows a reset hint. Opening details retains the filtered list. Refresh reevaluates queries against current
 data, including loan-only changes, without executing row callbacks. Errors retain criteria and input
 for correction. List commands clear filters.
 Deleting a result keeps the active filter and sort, including when no matches remain. Only an explicit
@@ -111,10 +116,11 @@ MainWindow integration sets query criteria on lists
 and summaries, recovers selection using displayed order, and retains criteria during details mode.
 Keith remains the shell integrator; no shared theme/main FXML changes are needed.
 
-Command.isReadOnly() defaults to false for compatibility and is true for searches. LogicManager
-bypasses saving for these commands. Isaac's history pipeline must likewise exclude queries.
-Existing list/legacy save behavior remains unchanged. Transfer PR #107 was closed without merging;
-team master has the integrated member lifecycle contracts. When later transfer/history changes touch
+Command.isReadOnly() defaults to false for compatibility. Searches, directory lists, detail views, Help
+and Exit declare themselves read-only. LogicManager bypasses record saving and history recording for
+these commands; legacy internal commands retain their own persistence behavior.
+Transfer PR #107 was closed without merging; team master has the integrated member lifecycle contracts.
+When later transfer/history changes touch
 Command/LogicManager/MainWindow, retain query dispatch and the no-save/no-history query boundary.
 The member parser and diagnostic retain `search`, `edit` and `restore`. No unmerged teammate
 implementation is copied into this branch. Other owners' feature acceptance remains separate from

@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
@@ -140,6 +141,86 @@ public class CompletionControllerTest {
         public ObservableList<Loan> getLoanList() {
             throw new AssertionError("Completion must not copy or validate loan history");
         }
+    }
+
+    @Test
+    public void tab_fieldAfterLoanIdentities_preservesBatchAndFollowingFields() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = ViewTestData.model();
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("OK");
+            }, model::getAddressBook);
+            new Scene(new VBox(box.getRoot()));
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            String first = ViewTestData.CAMERA.getUuid().toString();
+            String second = ViewTestData.OTHER_CAMERA.getUuid().toString();
+            for (String identities : List.of(first, first + ", " + second)) {
+                Map<String, String> replacements = Map.of(
+                        "loans add uuid/" + identities + " nu", "loans add uuid/" + identities + " nus/",
+                        "loans return uuid/" + identities + " re", "loans return uuid/" + identities + " returned/",
+                        "loans return uuid/" + identities + " co", "loans return uuid/" + identities + " condition/");
+                replacements.forEach((input, expected) -> {
+                    String following = input.startsWith("loans add") ? "   expected/2026-01-08"
+                            : input.endsWith(" re") ? "   condition/GOOD" : "   returned/2026-01-08";
+                    type(field, input + following);
+                    field.positionCaret(input.length());
+                    tab(field);
+                    assertEquals(expected + following, field.getText());
+                    assertEquals(expected.length(), field.getCaretPosition());
+                });
+            }
+            assertTrue(executed.isEmpty());
+            assertTrue(model.getLoanList().isEmpty());
+        });
+    }
+
+    @Test
+    public void tab_multiwordValueOverlapsPrefix_completesValueWithoutExecuting() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = ViewTestData.model();
+            Equipment equipment = new Equipment(ViewTestData.CAMERA.getUuid(), "Camera Cover", "Photo Cover",
+                    ViewTestData.CAMERA.getCondition(), "");
+            model.setEquipment(ViewTestData.CAMERA, equipment);
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("OK");
+            }, model::getAddressBook);
+            new Scene(new VBox(box.getRoot()));
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            type(field, "equipment add name/Camera co category/Photo");
+            field.positionCaret(field.getText().indexOf(" category/"));
+            tab(field);
+            assertEquals("equipment add name/Camera Cover category/Photo", field.getText());
+            assertEquals("equipment add name/Camera Cover".length(), field.getCaretPosition());
+            assertTrue(executed.isEmpty());
+            assertEquals(equipment, model.findEquipment(equipment.getUuid()).orElseThrow());
+        });
+    }
+
+    @Test
+    public void tab_equivalentWhitespace_preservesFollowingFieldAndStoredSpelling() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = ViewTestData.model();
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("OK");
+            }, model::getAddressBook);
+            new Scene(new VBox(box.getRoot()));
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            for (String separator : List.of("  ", "\u2003", "\u00a0")) {
+                type(field, "member edit name/alex" + separator + "T" + separator + "phone/91234567");
+                field.positionCaret(field.getText().indexOf("phone/") - separator.length());
+                tab(field);
+                assertEquals("member edit name/Alex Tan" + separator + "phone/91234567", field.getText());
+                assertEquals("member edit name/Alex Tan".length(), field.getCaretPosition());
+            }
+            assertTrue(executed.isEmpty());
+            assertEquals(ViewTestData.ALEX, model.findMember(ViewTestData.ALEX.getNusId()).orElseThrow());
+        });
     }
 
     @Test

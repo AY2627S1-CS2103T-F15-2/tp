@@ -26,6 +26,34 @@ import seedu.address.testutil.FxTestUtil;
 
 public class CommandBoxTest {
     @Test
+    public void completion_returnConditionPopup_preparesFieldWithoutExecuting() {
+        FxTestUtil.runAndWait(() -> {
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("Success");
+            });
+            TextField field = field(box);
+            Stage stage = new Stage();
+            try {
+                stage.setScene(field.getScene());
+                stage.show();
+                box.prepare("loans return co");
+                field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.SPACE, false, true, false, false));
+                ContextMenu menu = Window.getWindows().stream().filter(window -> window instanceof ContextMenu)
+                        .map(window -> (ContextMenu) window).filter(Window::isShowing).findFirst().orElseThrow();
+                assertEquals(List.of("loans return condition/"),
+                        menu.getItems().stream().map(item -> item.getText()).toList());
+                menu.getItems().getFirst().fire();
+                assertEquals("loans return condition/", field.getText());
+                assertTrue(executed.isEmpty());
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    @Test
     public void enter_blankAndSuccess_ignoresWhitespaceAndExecutesOnce() {
         FxTestUtil.runAndWait(() -> {
             List<String> executed = new ArrayList<>();
@@ -113,6 +141,93 @@ public class CommandBoxTest {
     }
 
     @Test
+    public void history_modifiedArrows_leaveTextEditingAndHistoryPositionIntact() {
+        FxTestUtil.runAndWait(() -> {
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("Success");
+            });
+            TextField field = field(box);
+            box.prepare("member list");
+            field.fireEvent(new ActionEvent());
+            box.prepare("equipment list");
+            field.fireEvent(new ActionEvent());
+            List<KeyCode> forwardedArrows = new ArrayList<>();
+            field.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+                if (!event.isConsumed()) {
+                    forwardedArrows.add(event.getCode());
+                }
+            });
+            String draft = "member add nus/A0000009X name/New Draft";
+            // Exercise each modifier separately and one combined platform shortcut.
+            for (int modifiers : List.of(1, 2, 4, 8, 15)) {
+                box.prepare(draft);
+                for (KeyCode arrow : List.of(KeyCode.UP, KeyCode.DOWN)) {
+                    field.fireEvent(modifiedArrow(arrow, modifiers));
+                    assertEquals(draft, field.getText());
+                }
+                field.fireEvent(modifiedArrow(KeyCode.UP, 0));
+                assertEquals("equipment list", field.getText());
+                for (KeyCode arrow : List.of(KeyCode.UP, KeyCode.DOWN)) {
+                    field.fireEvent(modifiedArrow(arrow, modifiers));
+                    assertEquals("equipment list", field.getText());
+                }
+                field.fireEvent(modifiedArrow(KeyCode.UP, 0));
+                assertEquals("member list", field.getText());
+                field.fireEvent(modifiedArrow(KeyCode.DOWN, 0));
+                assertEquals("equipment list", field.getText());
+                field.fireEvent(modifiedArrow(KeyCode.DOWN, 0));
+                assertEquals(draft, field.getText());
+            }
+            assertEquals(20, forwardedArrows.size());
+            for (int i = 0; i < forwardedArrows.size(); i += 2) {
+                assertEquals(List.of(KeyCode.UP, KeyCode.DOWN), forwardedArrows.subList(i, i + 2));
+            }
+            assertEquals(List.of("member list", "equipment list"), executed);
+        });
+    }
+
+    @Test
+    public void history_completionPopupArrows_preserveInputAndDraftWithoutSubmitting() {
+        FxTestUtil.runAndWait(() -> {
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("Success");
+            });
+            TextField field = field(box);
+            box.prepare("member list");
+            field.fireEvent(new ActionEvent());
+            Stage stage = new Stage();
+            try {
+                stage.setScene(field.getScene());
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+                box.prepare("equipment ad");
+                field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.SPACE, false, true, false, false));
+                ContextMenu menu = Window.getWindows().stream().filter(window -> window instanceof ContextMenu)
+                        .map(window -> (ContextMenu) window).filter(Window::isShowing).findFirst().orElseThrow();
+                for (KeyCode arrow : List.of(KeyCode.UP, KeyCode.DOWN)) {
+                    field.fireEvent(modifiedArrow(arrow, 0));
+                    assertEquals("equipment ad", field.getText());
+                    assertTrue(menu.isShowing());
+                }
+                field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ESCAPE, false, false, false, false));
+                assertFalse(menu.isShowing());
+                field.fireEvent(modifiedArrow(KeyCode.UP, 0));
+                assertEquals("member list", field.getText());
+                field.fireEvent(modifiedArrow(KeyCode.DOWN, 0));
+                assertEquals("equipment ad", field.getText());
+                assertEquals(List.of("member list"), executed);
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    @Test
     public void completion_popupPreparesWithoutExecutingAndEscapeDismisses() {
         FxTestUtil.runAndWait(() -> {
             List<String> executed = new ArrayList<>();
@@ -193,6 +308,18 @@ public class CommandBoxTest {
             }
             assertEquals("unfinished", field.getText());
         });
+    }
+
+    /**
+     * Returns an arrow event with Shift, Control, Alt and Meta represented by successive mask bits.
+     */
+    private static KeyEvent modifiedArrow(KeyCode arrow, int modifiers) {
+        boolean isShiftDown = (modifiers & 1) != 0;
+        boolean isControlDown = (modifiers & 2) != 0;
+        boolean isAltDown = (modifiers & 4) != 0;
+        boolean isMetaDown = (modifiers & 8) != 0;
+        return new KeyEvent(KeyEvent.KEY_PRESSED, "", "", arrow,
+                isShiftDown, isControlDown, isAltDown, isMetaDown);
     }
 
     private static TextField field(CommandBox box) {
