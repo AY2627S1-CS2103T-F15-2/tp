@@ -14,6 +14,11 @@ public class MemberListCommand extends Command {
     public static final String MESSAGE_SUCCESS = "Listed %d active members.";
 
     @Override
+    public boolean isReadOnly() {
+        return true;
+    }
+
+    @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
         long deleted = model.getMemberList().stream().filter(member -> member.isDeleted()).count();

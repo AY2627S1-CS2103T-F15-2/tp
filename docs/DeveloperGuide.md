@@ -581,8 +581,9 @@ from the successful execution path shown. A failure after candidate insertion st
 candidate, so a later successful command cannot accidentally save a failed batch.
 
 Editing, soft deletion and restoration use the same snapshot/save/publish boundary with different
-command bodies. Equipment list/search do not change records or create history entries, so they do not
-follow this mutation sequence. Existing navigation-save behavior is described under undo/redo below.
+command bodies. Member/equipment list, search and view commands, `loans list`, `help` and `exit` declare
+`isReadOnly()`. They return without saving records or creating history entries, so they do not follow
+this mutation sequence. Normal shutdown still saves user preferences separately.
 These diagrams describe a single-user command transaction, including history recording. They do not
 provide concurrent-writer coordination. [Undo/redo](#undo-redo-feature) uses the same save/publication
 boundary but navigates existing history instead of recording a new change.
@@ -694,7 +695,8 @@ history into `Nothing to undo.` or `Nothing to redo.`. Successful feedback ident
 with `IllegalStateException` and returns defensive copies of stored record states.
 
 Read-only queries, navigation, help, exit and appearance changes do not add history entries or invalidate
-redo. Existing list-command save behavior is preserved, but those saves do not record an action.
+redo. Their `isReadOnly()` declarations also bypass domain-record saving. A failed record save does not
+prevent navigation, Help or normal exit; shutdown preference saving remains separate.
 A new successful record mutation after undo discards the undone branch. Explicit whole-model replacement
 with `setAddressBook()` starts fresh history; transaction publication uses its separate API to retain it.
 
@@ -757,9 +759,10 @@ applies to the history retained by each model. A failed save cannot evict entrie
 
 <puml src="diagrams/UndoRedoLimit.puml" alt="Eleven retained snapshots permit at most ten undo or redo steps" />
 
-The activity diagram summarizes `LogicManager.execute()`. It preserves the existing distinction between
-`isReadOnly()` commands, which skip saving, and nontransactional navigation commands, which can still save
-without adding history. Only successful transactional saves publish candidate records and history.
+The activity diagram summarizes `LogicManager.execute()`. Public directory, details and utility commands
+take the `isReadOnly()` path without saving records or changing history. Only successful transactional
+saves publish candidate records and history. The nontransactional saving path remains for legacy
+internal commands that do not declare themselves read-only.
 
 <puml src="diagrams/CommitActivityDiagram.puml" alt="Parsing, staged execution, bounded history recording, atomic save and publication" />
 
@@ -1347,6 +1350,21 @@ not retained totals. Check the UG and linked search guide describe this same dis
    filesystem failures against a real user dataset.
 
 ### Saving data
+
+1. Read-only navigation and utilities
+
+    1. Use a separate writable JAR folder. Add one equipment unit and record its UUID so the sample
+       dataset is saved. Close Laplace and record the data file's bytes and modification time.
+    2. Relaunch. Run `member list`, `equipment list`, `loans list`,
+       `member view nus/A0123456X`, and `equipment view uuid/UUID`, using the recorded UUID.
+       Expected: each directory/details view opens and the assigned sample units retain their holders.
+    3. Run `help`, close Help, and run `exit`. Expected: Help opens and normal exit closes the application.
+       The data file's bytes and modification time remain unchanged. Window preferences may be saved.
+    4. Repeat list/view/Help/Exit in another empty JAR folder without performing a mutation.
+       Expected: sample records are browsable, but no `data/addressbook.json` is created.
+    5. Automated `ReadOnlyCommandIntegrationTest` and `MainWindowShellTest` inject record-save failures
+       to check navigation, Help and Exit remain available. They also check unchanged records and redo
+       history, and that real mutations still save. Do not change permissions on a real dataset.
 
 1. Dealing with missing/corrupted data files
 

@@ -556,7 +556,7 @@ with links to the corresponding member and equipment details. Use the NUS ID and
 filter both sections. Each section has its own count and empty state.
 
 Feedback is `Showing current loans.` This command does not create, return, delete or change any
-member, equipment or loan records. It uses the same save/error handling as the other list commands.
+member, equipment or loan records. It does not save the data file.
 Extra text or parameters, such as `loans list uuid/UUID`, are rejected and leave the current view unchanged.
 
 ### Assign equipment: `loans add`
@@ -714,6 +714,10 @@ Successful changes save automatically; there is no manual-save command. For the 
 data is stored in `data/addressbook.json` inside the folder containing `Laplace.jar`, even if you launch
 the JAR from another terminal folder. `preferences.json` and rotating `addressbook.log.*` files also
 stay beside the JAR. The window's status area identifies the data-file path.
+
+List, search and view commands, `help`, and `exit` do not save member, equipment or loan records.
+They remain usable when the loaded data cannot be saved, and do not rewrite the data file or create
+one on first launch. Normal exit still saves window and appearance preferences separately.
 
 If you previously launched from another folder, close Laplace and back up the old data and preferences
 before copying them into the matching locations beside the JAR. Data is not automatically read or moved
