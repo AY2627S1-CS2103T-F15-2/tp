@@ -161,36 +161,36 @@ public class MemberLifecycleStorageTest {
 
     @Test
     public void commands_partialWriteAndFailedMove_preservesStateAndAllowsRetry() throws Exception {
-        for (boolean initiallyDeleted : List.of(false, true)) {
-            for (boolean partialWrite : List.of(false, true)) {
-                verifyFailedMutation(initiallyDeleted, partialWrite);
+        for (boolean isInitiallyDeleted : List.of(false, true)) {
+            for (boolean shouldFailDuringWrite : List.of(false, true)) {
+                verifyFailedMutation(isInitiallyDeleted, shouldFailDuringWrite);
             }
         }
     }
 
-    private void verifyFailedMutation(boolean initiallyDeleted, boolean partialWrite) throws Exception {
-        Path run = Files.createDirectory(directory.resolve(initiallyDeleted + "-" + partialWrite));
+    private void verifyFailedMutation(boolean isInitiallyDeleted, boolean shouldFailDuringWrite) throws Exception {
+        Path run = Files.createDirectory(directory.resolve(isInitiallyDeleted + "-" + shouldFailDuringWrite));
         ModelManager model = fullModel();
-        if (initiallyDeleted) {
+        if (isInitiallyDeleted) {
             model.deleteMember(model.findMember(ID).orElseThrow());
         }
-        FailingWriter writer = new FailingWriter(partialWrite);
+        FailingWriter writer = new FailingWriter(shouldFailDuringWrite);
         JsonAddressBookStorage disk = new JsonAddressBookStorage(run.resolve("live.json"), writer);
         StorageManager storage = new StorageManager(disk, new JsonUserPrefsStorage(run.resolve("prefs.json")));
         storage.saveAddressBook(model.getAddressBook());
         byte[] saved = Files.readAllBytes(disk.getAddressBookFilePath());
         AddressBook before = new AddressBook(model.getAddressBook());
         LogicManager logic = new LogicManager(model, storage);
-        String command = (initiallyDeleted ? "member restore nus/" : "member delete nus/") + ID;
-        writer.fail = true;
+        String command = (isInitiallyDeleted ? "member restore nus/" : "member delete nus/") + ID;
+        writer.shouldFail = true;
         CommandException error = assertThrows(CommandException.class, () -> logic.execute(command));
         assertSame(writer.failure, error.getCause());
         assertEquals(before, model.getAddressBook());
         assertArrayEquals(saved, Files.readAllBytes(disk.getAddressBookFilePath()));
-        writer.fail = false;
+        writer.shouldFail = false;
         logic.execute(command);
         ModelManager reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
-        assertEquals(!initiallyDeleted, reloaded.findMember(ID).orElseThrow().isDeleted());
+        assertEquals(!isInitiallyDeleted, reloaded.findMember(ID).orElseThrow().isDeleted());
         assertEquals(before.getLoanList(), reloaded.getLoanList());
         assertEquals(model.getAddressBook(), reloaded.getAddressBook());
         assertThrows(CommandException.class, () -> logic.execute(command));
@@ -215,17 +215,17 @@ public class MemberLifecycleStorageTest {
      * Injects a real partial candidate write or a failed atomic installation.
      */
     private static class FailingWriter extends AtomicFileWriter {
-        private final boolean partialWrite;
+        private final boolean shouldFailDuringWrite;
         private final IOException failure = new IOException("Controlled lifecycle save failure");
-        private boolean fail;
+        private boolean shouldFail;
 
-        FailingWriter(boolean partialWrite) {
-            this.partialWrite = partialWrite;
+        FailingWriter(boolean shouldFailDuringWrite) {
+            this.shouldFailDuringWrite = shouldFailDuringWrite;
         }
 
         @Override
         void writeTemporaryFile(Path temporary, byte[] bytes) throws IOException {
-            if (fail && partialWrite) {
+            if (shouldFail && shouldFailDuringWrite) {
                 Files.write(temporary, new byte[] {bytes[0]});
                 throw failure;
             }
@@ -234,7 +234,7 @@ public class MemberLifecycleStorageTest {
 
         @Override
         void replaceFile(Path temporary, Path target) throws IOException {
-            if (fail) {
+            if (shouldFail) {
                 throw failure;
             }
             super.replaceFile(temporary, target);
