@@ -26,6 +26,14 @@ final class EquipmentPresentation {
     }
 
     /**
+     * Returns the UUID prefix and suffix shown in compact tables, retaining both ends for visual checks.
+     */
+    static String shortUuid(UUID uuid) {
+        String value = uuid.toString();
+        return value.substring(0, 8) + "…" + value.substring(value.length() - 4);
+    }
+
+    /**
      * Counts active availability and retained deletions within exactly the supplied unit scope.
      */
     static String counts(List<Equipment> units, Function<UUID, Availability> lookup) {

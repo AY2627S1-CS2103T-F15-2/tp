@@ -136,7 +136,8 @@ To explore without changing the sample records:
   Direct `equipment view uuid/UUID` opens that exact unit, enabling Show all units if needed.
   Unchecking it narrows the table again while retaining the selected unit's details; a message explains
   when that unit is outside the table filter.
-  Short table identifiers are display labels only: hover for the full UUID, or copy it from unit details.
+  Short table identifiers show the first eight and last four UUID characters, such as
+  `550e8400…0000`. They are display labels only: hover for the full UUID, or copy it from unit details.
 - Member rows open member details. Copy buttons preserve full identifiers and contact fields. Related
   member/equipment links open the exact record. **Commands for this unit/member** contains command previews:
   **Copy** copies plain text; **Use command** prepares the input and never executes it. Replace the marked

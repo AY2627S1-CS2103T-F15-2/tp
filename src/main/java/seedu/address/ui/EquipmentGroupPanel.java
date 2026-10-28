@@ -82,7 +82,7 @@ public class EquipmentGroupPanel extends VBox {
         units.setMinHeight(0);
         units.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         units.setPlaceholder(new Label("No units match these filters. Try Show all units or reset search."));
-        addColumn("Unit", unit -> "…" + unit.getUuid().toString().substring(28));
+        addColumn("Unit", unit -> EquipmentPresentation.shortUuid(unit.getUuid()));
         addColumn("Condition", unit -> EquipmentPresentation.label(unit.getCondition()));
         addColumn("Availability", this::availability);
         addColumn("Holder", this::holder);
@@ -207,8 +207,8 @@ public class EquipmentGroupPanel extends VBox {
                         : new Tooltip(caption + ": " + item + "\nUUID: " + unit.getUuid()));
             }
         });
-        column.setMinWidth(60);
-        column.setPrefWidth(110);
+        column.setMinWidth(caption.equals("Unit") ? 120 : 60);
+        column.setPrefWidth(caption.equals("Unit") ? 130 : 110);
         units.getColumns().add(column);
     }
 
