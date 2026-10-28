@@ -148,6 +148,8 @@ To explore without changing the sample records:
   to refresh the labels. Completed loans show return dates and recorded issue/return conditions, without
   urgency labels or return actions. Filter both sections by NUS ID and equipment UUID. `loans list` opens
   this same tab; member and equipment details also show the selected record's loan history.
+  Sections with more than ten loans use their own scrollable list. Scroll inside that list, or focus
+  it and use the arrow, Page Up/Down, Home and End keys, to reach all entries without loading every row at once.
 - **Last result** sits above the command feedback and stays after switching tabs. A green box is a
   successful command, a red box is an error, and the box is neutral before the first command.
   The heading displays only **Last result**; assistive text includes the status and full message.
