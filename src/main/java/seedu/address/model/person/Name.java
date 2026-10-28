@@ -3,6 +3,7 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.text.Normalizer;
 import java.util.function.Predicate;
 
 import seedu.address.commons.util.LaplaceText;
@@ -23,7 +24,8 @@ public class Name {
     public static final String VALIDATION_REGEX = "[\\p{Alnum}][\\p{Alnum} ]*";
 
     public static final String MEMBER_MESSAGE_CONSTRAINTS =
-            "Invalid member name. Use 1-100 letters with spaces, apostrophes, hyphens, or periods only.";
+            "Invalid member name. Use 1-100 characters: letters with optional combining marks, spaces, "
+                    + "apostrophes, hyphens, or periods. Include at least one letter.";
 
     public final String fullName;
 
@@ -42,15 +44,21 @@ public class Name {
         fullName = value;
     }
 
-    /** Validates a normalized MVP member name; legacy person names retain their original rules. */
+    /**
+     * Validates a member name, accepting combining marks only after a letter or its preceding marks.
+     * Legacy person names retain their original rules.
+     */
     public static boolean isValidMemberName(String value) {
-        return LaplaceText.isPrintable(value, 1, 100) && value.matches("[\\p{L} .'-]+")
+        return LaplaceText.isPrintable(value, 1, 100) && value.matches("(?:\\p{L}\\p{M}*|[ .'\u2019-])+")
                 && value.codePoints().anyMatch(Character::isLetter);
     }
 
-    /** Normalizes and validates new Laplace member input without changing legacy AB3 parsing. */
+    /**
+     * Normalizes whitespace and canonical Unicode spelling for new member input before validation.
+     * Existing stored member spelling and legacy AB3 parsing are unchanged.
+     */
     public static Name forMember(String value) {
-        String normalized = LaplaceText.normalize(value);
+        String normalized = Normalizer.normalize(LaplaceText.normalize(value), Normalizer.Form.NFC);
         return new Name(normalized, Name::isValidMemberName, MEMBER_MESSAGE_CONSTRAINTS);
     }
 

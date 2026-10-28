@@ -126,6 +126,10 @@ public class EquipmentGroupPanel extends VBox {
             showAll.setSelected(true);
         }
         refresh();
+        int index = units.getSelectionModel().getSelectedIndex();
+        if (index >= 0) {
+            units.scrollTo(index);
+        }
         if (hasIdentityChanged) {
             scroll.setVvalue(0);
         }
@@ -156,8 +160,14 @@ public class EquipmentGroupPanel extends VBox {
             List<Equipment> shown = showAll.isSelected() ? all : matching;
             availabilityCounts.setText((showAll.isSelected() ? "All units: " : "Matching units: ")
                     + EquipmentPresentation.counts(shown, lookup));
-            units.getItems().setAll(shown);
-            units.sort();
+            List<Equipment> ordered = units.getComparator() == null ? shown
+                    : shown.stream().sorted(units.getComparator()).toList();
+            // Replacing unchanged items resets the virtualized table's browsing position.
+            if (!units.getItems().equals(ordered)) {
+                units.getItems().setAll(ordered);
+                units.sort();
+            }
+            units.refresh();
             units.setPrefHeight(Math.min(230, Math.max(90, units.getItems().size() * 30 + 34)));
             units.setMinHeight(USE_PREF_SIZE);
             units.setMaxHeight(USE_PREF_SIZE);

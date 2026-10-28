@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import seedu.address.commons.util.ToStringBuilder;
@@ -26,6 +27,8 @@ import seedu.address.model.member.exceptions.MemberNotFoundException;
 
 /** Assigns available physical units to a member in one transaction. */
 public class LoanAddCommand extends Command {
+    public static final String MESSAGE_HISTORICAL_OVERLAP =
+            "Equipment %s cannot be assigned before its last recorded return date %s.";
     public static final String COMMAND_WORD = "loans add";
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Parameters: uuid/UUID[,UUID...] nus/NUS_ID assigned/DATE expected/DATE\n"
@@ -126,6 +129,7 @@ public class LoanAddCommand extends Command {
             if (availability != Availability.AVAILABLE) {
                 throw new CommandException(String.format(MESSAGE_UNAVAILABLE, uuid, equipment.getCondition()));
             }
+            requireHistoricalAvailability(model, uuid);
             newLoans.add(new Loan(uuid, memberNusId, assignedDate, expectedReturnDate,
                     null, equipment.getCondition(), null));
             names.add(equipment.getName());
@@ -153,6 +157,18 @@ public class LoanAddCommand extends Command {
                 ? DisplayRequest.equipmentDetails(first) : DisplayRequest.loans();
         return new CommandResult(String.format(MESSAGE_SUCCESS, name, identifiers, member.getName(), memberNusId,
                 assignedDate, expectedReturnDate), display);
+    }
+
+    /**
+     * Rejects new open intervals preceding a retained actual return, allowing same-day handoffs.
+     */
+    private void requireHistoricalAvailability(Model model, UUID uuid) throws CommandException {
+        Optional<LocalDate> lastReturn = model.getAddressBook().getLoanList().stream()
+                .filter(loan -> loan.getEquipmentUuid().equals(uuid))
+                .flatMap(loan -> loan.getReturnedDate().stream()).max(LocalDate::compareTo);
+        if (lastReturn.isPresent() && assignedDate.isBefore(lastReturn.orElseThrow())) {
+            throw new CommandException(String.format(MESSAGE_HISTORICAL_OVERLAP, uuid, lastReturn.orElseThrow()));
+        }
     }
 
     @Override

@@ -6,7 +6,9 @@ import java.util.List;
 import javafx.scene.layout.VBox;
 import seedu.address.model.loan.Loan;
 
-/** Renders a read-only loan timeline inside an existing details panel. */
+/**
+ * Renders a read-only loan timeline with a bounded scene graph inside an existing details panel.
+ */
 final class LoanHistoryContent {
     private LoanHistoryContent() {
     }
@@ -21,23 +23,29 @@ final class LoanHistoryContent {
         VBox rows = new VBox(10);
         rows.setId("loanHistory");
         content.getChildren().add(rows);
-        loans.stream().sorted(Comparator.comparing(Loan::getAssignedDate).reversed()
-                .thenComparing(loan -> loan.getEquipmentUuid().toString())).forEach(loan -> {
-                    VBox row = new VBox(4);
-                    row.getStyleClass().add("details-holding");
-                    DetailsPanelContent.field(row, "historyEquipmentUuid", "Equipment UUID", loan.getEquipmentUuid());
-                    DetailsPanelContent.field(row, "historyMemberNusId", "NUS ID", loan.getMemberNusId());
-                    DetailsPanelContent.field(row, "historyAssigned", "Assigned", loan.getAssignedDate());
-                    DetailsPanelContent.field(row, "historyExpected", "Expected return", loan.getExpectedReturnDate());
-                    DetailsPanelContent.field(row, "historyIssueCondition", "Issue condition",
-                            loan.getIssueCondition().map(Enum::name).orElse("Not recorded"));
-                    DetailsPanelContent.field(row, "historyReturned", "Returned",
-                            loan.getReturnedDate().map(Object::toString).orElse("Open"));
-                    if (!loan.isOpen()) {
-                        DetailsPanelContent.field(row, "historyReturnCondition", "Return condition",
-                                loan.getReturnCondition().map(Enum::name).orElse("Not recorded"));
-                    }
-                    rows.getChildren().add(row);
-                });
+        List<Loan> ordered = loans.stream().sorted(Comparator.comparing(Loan::getAssignedDate).reversed()
+                .thenComparing(loan -> loan.getEquipmentUuid().toString())).toList();
+        LoanRows.show(rows, ordered, LoanHistoryContent::createRow);
+    }
+
+    /**
+     * Builds one visible timeline entry from immutable loan facts.
+     */
+    private static VBox createRow(Loan loan) {
+        VBox row = new VBox(4);
+        row.getStyleClass().add("details-holding");
+        DetailsPanelContent.field(row, "historyEquipmentUuid", "Equipment UUID", loan.getEquipmentUuid());
+        DetailsPanelContent.field(row, "historyMemberNusId", "NUS ID", loan.getMemberNusId());
+        DetailsPanelContent.field(row, "historyAssigned", "Assigned", loan.getAssignedDate());
+        DetailsPanelContent.field(row, "historyExpected", "Expected return", loan.getExpectedReturnDate());
+        DetailsPanelContent.field(row, "historyIssueCondition", "Issue condition",
+                loan.getIssueCondition().map(Enum::name).orElse("Not recorded"));
+        DetailsPanelContent.field(row, "historyReturned", "Returned",
+                loan.getReturnedDate().map(Object::toString).orElse("Open"));
+        if (!loan.isOpen()) {
+            DetailsPanelContent.field(row, "historyReturnCondition", "Return condition",
+                    loan.getReturnCondition().map(Enum::name).orElse("Not recorded"));
+        }
+        return row;
     }
 }
