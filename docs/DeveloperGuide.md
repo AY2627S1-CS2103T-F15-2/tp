@@ -1251,6 +1251,8 @@ for both detail timelines and loan-directory sections, including panels refreshe
    must preserve browsing position and must not execute another command.
 3. Rename the damaged unit, delete it, then restore it with the documented equipment commands. Expect
    regrouping without UUID changes. Check deleted records never inflate available counts.
+   Open a unit with long notes/history and scroll to the bottom. View a different UUID; expect the group
+   heading and unit identity at the top. Refresh or reopen the same UUID; expect its scroll position retained.
 4. Open a member's details, copy contact fields, and use a related equipment link. Switch tabs and use
    Back to results. The previous filter persists until Reset search or a list command.
 5. Use a command preview. Expect only input preparation; review and press Enter. Test unmodified

@@ -43,6 +43,7 @@ public class EquipmentGroupPanel extends VBox {
     private final CheckBox showAll = new CheckBox("Show all units in this group, including deleted");
     private final TableView<Equipment> units = new TableView<>();
     private final StackPane detailArea = new StackPane();
+    private final ScrollPane scroll = new ScrollPane();
     private final Label prompt = new Label("Select a physical unit to view details and prepare commands.");
     private InventoryGroups.Key key;
     private DirectoryQuery query = DirectoryQuery.all();
@@ -96,7 +97,7 @@ public class EquipmentGroupPanel extends VBox {
         detailArea.getChildren().setAll(prompt);
         VBox body = new VBox(8, title, counts, availabilityCounts, showAll, units, detailArea);
         body.setMinWidth(0);
-        ScrollPane scroll = new ScrollPane(body);
+        scroll.setContent(body);
         scroll.setFitToWidth(true);
         scroll.setMinHeight(0);
         VBox.setVgrow(scroll, Priority.ALWAYS);
@@ -118,6 +119,7 @@ public class EquipmentGroupPanel extends VBox {
      * Resolves an exact UUID, showing all group units if that target lies outside the active filter.
      */
     public void showUnit(UUID uuid, DirectoryQuery query) {
+        boolean hasIdentityChanged = !requireNonNull(uuid).equals(selectedUuid);
         selectedUuid = requireNonNull(uuid);
         this.query = requireNonNull(query);
         if (query.equipment(data, lookup).stream().noneMatch(unit -> unit.getUuid().equals(uuid))) {
@@ -127,6 +129,9 @@ public class EquipmentGroupPanel extends VBox {
         int index = units.getSelectionModel().getSelectedIndex();
         if (index >= 0) {
             units.scrollTo(index);
+        }
+        if (hasIdentityChanged) {
+            scroll.setVvalue(0);
         }
     }
 
