@@ -15,7 +15,9 @@ import seedu.address.model.equipment.Condition;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.member.NusId;
 
-/** Jackson-facing contract for a {@link Loan}. */
+/**
+ * Jackson-facing contract for a {@link Loan}.
+ */
 class JsonAdaptedLoan {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Loan's %s field is missing!";
@@ -31,7 +33,9 @@ class JsonAdaptedLoan {
     private final String issueCondition;
     private final String returnCondition;
 
-    /** Constructs an adapter from raw JSON fields. */
+    /**
+     * Constructs an adapter from raw JSON fields.
+     */
     @JsonCreator
     public JsonAdaptedLoan(@JsonProperty("equipmentUuid") String equipmentUuid,
             @JsonProperty("memberNusId") String memberNusId,
@@ -49,13 +53,17 @@ class JsonAdaptedLoan {
         this.returnCondition = returnCondition;
     }
 
-    /** Preserves the five-field adapter constructor used by existing callers and tests. */
+    /**
+     * Constructs a legacy adapter without recorded condition observations.
+     */
     public JsonAdaptedLoan(String equipmentUuid, String memberNusId, String assignedDate,
             String expectedReturnDate, String returnedDate) {
         this(equipmentUuid, memberNusId, assignedDate, expectedReturnDate, returnedDate, null, null);
     }
 
-    /** Constructs an adapter from a domain loan. */
+    /**
+     * Constructs an adapter from a domain loan.
+     */
     public JsonAdaptedLoan(Loan source) {
         requireNonNull(source);
         equipmentUuid = source.getEquipmentUuid().toString();
@@ -67,7 +75,9 @@ class JsonAdaptedLoan {
         returnCondition = source.getReturnCondition().map(Enum::name).orElse(null);
     }
 
-    /** Converts this adapter to its domain type. */
+    /**
+     * Converts this adapter to its domain type.
+     */
     public Loan toModelType() throws IllegalValueException {
         requireField(equipmentUuid, "equipmentUuid");
         requireField(memberNusId, "memberNusId");
@@ -91,6 +101,9 @@ class JsonAdaptedLoan {
         }
     }
 
+    /**
+     * Rejects a missing required JSON field with its stored field name.
+     */
     private static void requireField(String value, String field) throws IllegalValueException {
         if (value == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, field));
@@ -116,6 +129,9 @@ class JsonAdaptedLoan {
         }
     }
 
+    /**
+     * Parses an optional observation while preserving the cause of invalid stored conditions.
+     */
     private static Condition parseCondition(String value) throws IllegalValueException {
         if (value == null) {
             return null;
