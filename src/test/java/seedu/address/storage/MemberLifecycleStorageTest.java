@@ -45,7 +45,7 @@ public class MemberLifecycleStorageTest {
         var loans = List.copyOf(model.getLoanList());
         Path file = directory.resolve("unicode-members.json");
         JsonAddressBookStorage disk = new JsonAddressBookStorage(file);
-        StorageManager storage = new StorageManager(disk, new JsonUserPrefsStorage(directory.resolve("prefs.json")));
+        StorageManager storage = storageFor(disk);
         LogicManager logic = new LogicManager(model, storage);
         String[] names = {"அருண்", "Anne O\u2019Connor", "Jose\u0301 Tan"};
         for (int index = 0; index < names.length; index++) {
@@ -86,8 +86,7 @@ public class MemberLifecycleStorageTest {
         storage.saveAddressBook(reloaded);
         assertEquals(reloaded, storage.readAddressBook().orElseThrow());
         ModelManager restored = new ModelManager(reloaded, new UserPrefs());
-        LogicManager logic = new LogicManager(restored,
-                new StorageManager(storage, new JsonUserPrefsStorage(directory.resolve("prefs.json"))));
+        LogicManager logic = new LogicManager(restored, storageFor(storage));
         logic.execute("member edit nus/" + ID + " phone/+6591234567");
         assertEquals(storedName, restored.findMember(ID).orElseThrow().getName().fullName);
         assertEquals(reloaded.getLoanList(), restored.getLoanList());
@@ -99,7 +98,7 @@ public class MemberLifecycleStorageTest {
         ModelManager model = fullModel();
         Path file = directory.resolve("edit-lifecycle.json");
         JsonAddressBookStorage disk = new JsonAddressBookStorage(file);
-        StorageManager storage = new StorageManager(disk, new JsonUserPrefsStorage(directory.resolve("prefs.json")));
+        StorageManager storage = storageFor(disk);
         LogicManager logic = new LogicManager(model, storage);
         String originalName = model.findMember(ID).orElseThrow().getName().fullName;
         logic.execute("member delete nus/" + ID);
@@ -176,7 +175,7 @@ public class MemberLifecycleStorageTest {
         }
         FailingWriter writer = new FailingWriter(shouldFailDuringWrite);
         JsonAddressBookStorage disk = new JsonAddressBookStorage(run.resolve("live.json"), writer);
-        StorageManager storage = new StorageManager(disk, new JsonUserPrefsStorage(run.resolve("prefs.json")));
+        StorageManager storage = storageFor(disk);
         storage.saveAddressBook(model.getAddressBook());
         byte[] saved = Files.readAllBytes(disk.getAddressBookFilePath());
         AddressBook before = new AddressBook(model.getAddressBook());
@@ -194,6 +193,14 @@ public class MemberLifecycleStorageTest {
         assertEquals(before.getLoanList(), reloaded.getLoanList());
         assertEquals(model.getAddressBook(), reloaded.getAddressBook());
         assertThrows(CommandException.class, () -> logic.execute(command));
+    }
+
+    /**
+     * Creates storage with preferences isolated beside the test dataset.
+     */
+    private StorageManager storageFor(JsonAddressBookStorage disk) {
+        Path preferences = disk.getAddressBookFilePath().resolveSibling("prefs.json");
+        return new StorageManager(disk, new JsonUserPrefsStorage(preferences));
     }
 
     private ModelManager fullModel() throws Exception {
