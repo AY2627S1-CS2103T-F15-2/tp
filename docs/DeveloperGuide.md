@@ -1543,6 +1543,13 @@ fail-closed behavior is covered by `MainAppTest` against the startup recovery pa
 [#200](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/200); a full manual GUI walkthrough of these
 scenarios remains a release smoke-test task.
 
+### Loan filter visibility
+
+Filter Loans to one borrower/UUID, then assign and return a batch for another borrower. Check that
+refresh retains both filters, the displayed/total summary explains hidden records in both sections,
+and Reset filters clears both fields and reveals all history without changing any records. A plain
+`loans list` retains the same filters. This reset policy also governs command-supplied criteria.
+
 ### Undo and redo
 
 Use temporary data. Do not test against a real inventory.

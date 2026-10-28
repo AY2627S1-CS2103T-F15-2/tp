@@ -55,6 +55,10 @@ public class LoanPanel extends UiPart<Region> {
     private TextField memberFilter;
     @FXML
     private TextField equipmentFilter;
+    @FXML
+    private Label filterSummary;
+    @FXML
+    private Button resetFilters;
 
     /**
      * Creates a panel using current records and callbacks supplied by the application shell.
@@ -94,11 +98,27 @@ public class LoanPanel extends UiPart<Region> {
                 .toList();
         openCount.setText(Integer.toString(open.size()));
         boolean hasFilter = !memberFilter.getText().isBlank() || !equipmentFilter.getText().isBlank();
+        long totalOpen = data.getLoanList().stream().filter(Loan::isOpen).count();
+        long totalClosed = data.getLoanList().size() - totalOpen;
+        filterSummary.setText("Showing " + open.size() + " of " + totalOpen + " open loans; "
+                + closed.size() + " of " + totalClosed + " completed loans. "
+                + (hasFilter ? "Filters are active; reset to reveal hidden records." : "No filters active."));
+        resetFilters.setDisable(!hasFilter);
         String openEmptyMessage = hasFilter ? "No open loans match these filters."
                 : "No open loans. Available equipment is ready to assign.";
         refreshSection(openLoans, open, openEmptyMessage);
         closedCount.setText(Integer.toString(closed.size()));
         refreshSection(closedLoans, closed, "No completed loans match these filters.");
+    }
+
+    /**
+     * Reveals all current and completed records only when the user explicitly resets the filters.
+     */
+    @FXML
+    private void handleResetFilters() {
+        memberFilter.clear();
+        equipmentFilter.clear();
+        refresh();
     }
 
     /**
