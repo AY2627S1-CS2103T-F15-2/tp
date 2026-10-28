@@ -419,6 +419,14 @@ the retained legacy person adapters. Loan adapters store the member NUS ID and e
 preserving references without duplicating either record. The diagram shows storage types and
 adapter collections; value fields and conversion methods are omitted.
 
+The legacy `persons` collection remains required: absent and explicit null are rejected; empty and
+populated arrays are accepted and round-trip. Keep this existing contract until a versioned migration
+can distinguish omission safely. Removing legacy command routes does not authorize dropping stored
+persons. `JsonSerializableAddressBookTest` covers missing/null rejection and older files;
+`JsonAddressBookStorageTest` covers current all-collection and legacy persons save/reload. To verify
+manually, use separate disposable copies with absent/null/empty/populated arrays and preserve originals
+after a load rejection; never replace a populated array with an empty one merely to make loading pass.
+
 ### Common classes
 
 Classes used by multiple components are in the `seedu.address.commons` package.
