@@ -754,6 +754,11 @@ unchanged. An error is not a successful addition, deletion, assignment or return
 available for correction. Fix the folder/file access problem, then retry. Do not repeatedly resubmit a
 successful command: duplicate members, already-assigned items and repeated returns are rejected.
 
+For compatibility with older files, absent or null `members`, `equipment` and `loans` collections
+mean empty collections, just like `[]`. Saving writes these forms as arrays. A null collection cannot
+recover records already removed from the input; restore a backup if records should have been present.
+No schema-version distinction is inferred from null.
+
 Data includes members, equipment and open/closed loan records. Availability and holders are derived;
 do not try to maintain separate holder/availability fields. Member deletion retains the record,
 its `deleted` boolean and closed loans for unlimited restoration. Equipment follows the same policy.
