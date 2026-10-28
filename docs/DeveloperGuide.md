@@ -405,6 +405,11 @@ list remains observable and includes deleted records. The model also retains use
 Passing its own observable view or a backed sublist therefore preserves the intended records instead
 of clearing the replacement. Invalid replacements leave the existing collection unchanged.
 
+Editing and lifecycle changes share an in-place replacement helper. Its assertion checks that a
+previously resolved member still belongs to the collection; invalid input is rejected with exceptions.
+Stored-member conversion validates identity, name, phone and email in that order through dedicated
+field converters, preserving supported legacy spelling and the existing validation messages.
+
 `Name.forMember` collapses whitespace and applies Unicode NFC before validating new names. Validation
 allows letters followed by combining marks, spaces, straight/curly apostrophes, hyphens and periods,
 requires at least one letter, and limits the result to 100 Unicode code points. Add and edit share this

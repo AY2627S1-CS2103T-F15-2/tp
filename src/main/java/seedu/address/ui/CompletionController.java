@@ -117,7 +117,8 @@ final class CompletionController {
      * Leaves static vocabulary cycles independent of unrelated record notifications.
      */
     private void invalidateRecordCandidates() {
-        if (usesRecordData) {
+        if (usesRecordData && completion != null) {
+            logger.fine("Invalidated completion cycle because member or equipment records changed.");
             completion = null;
         }
     }
