@@ -1380,6 +1380,13 @@ not retained totals. Check the UG and linked search guide describe this same dis
    Automated transaction tests separately inject partial writes/failed atomic moves; do not simulate
    filesystem failures against a real user dataset.
 
+### Stored loan date validation
+
+In a disposable saved file, change each loan date field in turn to `0000-01-01`, `-0001-01-01`,
+or `+10000-01-01`. Expect loading to report invalid data without rewriting that file. Valid years
+`0001` and `9999` and valid legacy condition omissions remain supported; storage does not impose a
+new restriction relative to today's date.
+
 ### Saving data
 
 1. Command-log privacy: in a disposable folder, add/edit a synthetic member, search for their name,
