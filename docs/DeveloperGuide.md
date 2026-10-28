@@ -1382,6 +1382,13 @@ not retained totals. Check the UG and linked search guide describe this same dis
 
 ### Saving data
 
+1. Command-log privacy: in a disposable folder, add/edit a synthetic member, search for their name,
+   and submit a malformed command containing a synthetic phone/email. Inspect `addressbook.log.*`;
+   expect input-received diagnostics without raw commands or contact values. `CommandLogPrivacyTest`
+   also verifies persisted output with the application logger hierarchy enabled at all levels,
+   including transaction snapshots and model initialization from reloaded records. Initialization logs
+   report the event without printing record or preference contents.
+
 1. Read-only navigation and utilities
 
     1. Use a separate writable JAR folder. Add one equipment unit and record its UUID so the sample

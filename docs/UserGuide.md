@@ -723,6 +723,10 @@ data is stored in `data/addressbook.json` inside the folder containing `Laplace.
 the JAR from another terminal folder. `preferences.json` and rotating `addressbook.log.*` files also
 stay beside the JAR. The window's status area identifies the data-file path.
 
+Command diagnostics record that input was received and, at detailed log levels, the recognized command
+type. They omit raw input and contact values, including rejected input. Existing logs from older
+versions may still contain commands recorded before this change.
+
 List, search and view commands, `help`, and `exit` do not save member, equipment or loan records.
 They remain usable when the loaded data cannot be saved, and do not rewrite the data file or create
 one on first launch. Normal exit still saves window and appearance preferences separately.
