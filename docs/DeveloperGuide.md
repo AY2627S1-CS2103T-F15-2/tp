@@ -1179,6 +1179,21 @@ lowercase and retain the member identity and loan references after restart.
     1. In that folder, run `java -jar Laplace.jar` with Java 25.<br>
        Expected: The GUI opens in light mode with sample members, grouped equipment and open loans.
 
+1. Invalid saved data
+
+    1. In a disposable JAR folder, save a synthetic dataset containing members and closed loans.
+       Close Laplace and keep a byte-for-byte backup.
+
+    1. Test a malformed file, a JSON `null` root, an invalid member email, and a valid object followed
+       by another object or garbage. Relaunch for each case.<br>
+       Expected: A recovery error names the data file and explains preservation, backup and repair.
+       After acknowledgment, startup terminates unsuccessfully without an editable main window.
+       The original data bytes remain unchanged, including after shutdown.
+
+    1. Restore the valid backup and restart.<br>
+       Expected: All members and retained loan history load. Ordinary trailing whitespace is accepted.
+       A genuinely missing data file still starts the existing sample dataset.
+
 1. Saving window preferences
 
     1. Resize the window to an optimal size. Move the window to a different location. Close the window.

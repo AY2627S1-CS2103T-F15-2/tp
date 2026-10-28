@@ -756,6 +756,12 @@ instances against the same file. Manual data editing is not an MVP operation. If
 reports invalid/inconsistent data, preserve the original file and report the message; do not overwrite
 it with an empty file or assume that an incomplete view is safe to use.
 
+If an existing data file cannot be loaded, Laplace shows recovery guidance and its path, then stops
+startup after you dismiss the error. No editable directory or command box opens. Invalid files include
+a JSON `null` root and any non-whitespace content after the root object. The data file remains unchanged.
+While Laplace is closed, back it up and repair it before restarting. Moving the file to a safe location
+allows a separate sample dataset to start; it does not recover the original records.
+
 ## FAQ
 
 **Why are two identical equipment items shown?** Each physical unit has its own UUID. Equal names,
