@@ -112,6 +112,8 @@ public class EquipmentGroupPanel extends VBox {
         this.query = requireNonNull(query);
         selectedUuid = null;
         showAll.setSelected(false);
+        // A fresh directory navigation restores the query order instead of reusing a clicked column sort.
+        units.getSortOrder().clear();
         refresh();
     }
 
