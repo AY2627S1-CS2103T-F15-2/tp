@@ -60,6 +60,8 @@ public final class PackagedAutocompleteProbe {
         window.getPrimaryStage().getScene().getRoot().applyCss();
         TextField field = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
         try {
+            String first = ViewTestData.CAMERA.getUuid().toString();
+            String batch = first + ", " + ViewTestData.OTHER_CAMERA.getUuid();
             String[][] examples = {
                 {"mo", "mode"}, {"mode da", "mode dark"}, {"mode li", "mode light"},
                 {"mem", "member"}, {"member ad", "member add"}, {"member add na", "member add name/"},
@@ -87,6 +89,12 @@ public final class PackagedAutocompleteProbe {
                     {"equipment add cou", "equipment add count/"},
                     {"loans return co", "loans return condition/"},
                     {"loans return condition/fa", "loans return condition/FAIR"},
+                    {"loans add uuid/" + first + " nu", "loans add uuid/" + first + " nus/"},
+                    {"loans return uuid/" + first + " re", "loans return uuid/" + first + " returned/"},
+                    {"loans return uuid/" + first + " co", "loans return uuid/" + first + " condition/"},
+                    {"loans add uuid/" + batch + " nu", "loans add uuid/" + batch + " nus/"},
+                    {"loans return uuid/" + batch + " re", "loans return uuid/" + batch + " returned/"},
+                    {"loans return uuid/" + batch + " co", "loans return uuid/" + batch + " condition/"},
                     {"loans add uuid/00000000-0000-0000-0000-000000000001,00000000",
                         "loans add uuid/00000000-0000-0000-0000-000000000001,"
                             + "00000000-0000-0000-0000-000000000002"},
@@ -153,8 +161,8 @@ public final class PackagedAutocompleteProbe {
             check(logic.commands == 0 && storage.saves == 0, "Completion must remain read-only");
             press(field, KeyCode.ENTER, false);
             check(field.getText().isEmpty(), "Enter must submit successfully");
-            check(logic.commands == 1 && storage.saves == 1, "Enter must execute and save exactly once");
-            session.add("ENTER: member view nus/A0123456X; commands=1, saves=1, input cleared.");
+            check(logic.commands == 1 && storage.saves == 0, "Viewing must execute without saving records");
+            session.add("ENTER: member view nus/A0123456X; commands=1, saves=0, input cleared.");
             field.setText("member ed");
             field.positionCaret(field.getLength());
             press(field, KeyCode.TAB, false);
@@ -163,13 +171,13 @@ public final class PackagedAutocompleteProbe {
             press(field, KeyCode.TAB, false);
             check(field.getText().equals("member edit nus/A0123456X phone/98765432"),
                     "Member editing must complete a member phone value");
-            check(logic.commands == 1 && storage.saves == 1, "Edit completion must remain read-only");
+            check(logic.commands == 1 && storage.saves == 0, "Edit completion must remain read-only");
             press(field, KeyCode.ENTER, false);
             check(field.getText().isEmpty(), "Completed member edit must submit successfully");
-            check(logic.commands == 2 && storage.saves == 2, "Member edit must execute and save exactly once");
+            check(logic.commands == 2 && storage.saves == 1, "Member edit must execute and save exactly once");
             check(model.findMember(ViewTestData.ALEX.getNusId()).orElseThrow().getPhone().value.equals("98765432"),
                     "Member edit must update the selected member");
-            session.add("ENTER: member edit nus/A0123456X phone/98765432; commands=2, saves=2, input cleared.");
+            session.add("ENTER: member edit nus/A0123456X phone/98765432; commands=2, saves=1, input cleared.");
             try {
                 check(model.getAddressBook().equals(storage.readAddressBook().orElseThrow()),
                         "Reloaded JSON must match the completed edit");

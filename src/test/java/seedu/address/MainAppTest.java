@@ -22,7 +22,9 @@ import javafx.scene.control.DialogPane;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import seedu.address.commons.core.AppPaths;
+import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
 import seedu.address.storage.JsonAddressBookStorage;
@@ -32,10 +34,58 @@ import seedu.address.storage.StorageManager;
 import seedu.address.testutil.FxTestUtil;
 import seedu.address.testutil.ViewTestData;
 
-/** Verifies runtime paths and fail-closed startup with real storage and JavaFX recovery guidance. */
+/**
+ * Verifies startup paths, preference recovery, and fail-closed startup with real storage and JavaFX guidance.
+ */
 public class MainAppTest {
     @TempDir
     public Path directory;
+
+    @Test
+    public void init_nullGuiSettings_recoversAndSavesDefaults() throws Exception {
+        assertStartupPreferences("{\"guiSettings\":null}", new UserPrefs());
+    }
+
+    @Test
+    public void init_missingGuiSettings_preservesDefaultPreferences() throws Exception {
+        assertStartupPreferences("{}", new UserPrefs());
+    }
+
+    @Test
+    public void init_validGuiSettings_preservesGeometryAndDarkMode() throws Exception {
+        UserPrefs expected = new UserPrefs();
+        expected.setGuiSettings(new GuiSettings(1200, 800, 50, 70).withDarkMode(true));
+        assertStartupPreferences(JsonUtil.toJsonString(expected), expected);
+    }
+
+    /**
+     * Verifies the real startup constructs a model and rewrites usable preferences.
+     */
+    private void assertStartupPreferences(String preferencesJson, UserPrefs expected) throws Exception {
+        Path prefsFile = directory.resolve("preferences.json");
+        Files.writeString(prefsFile, preferencesJson);
+        JsonUserPrefsStorage prefsStorage = new JsonUserPrefsStorage(prefsFile);
+        Storage isolatedStorage = new StorageManager(
+                new JsonAddressBookStorage(directory.resolve("data.json")), prefsStorage);
+        MainApp app = new MainApp() {
+            @Override
+            protected UserPrefs initPrefs(JsonUserPrefsStorage storage) {
+                return super.initPrefs(prefsStorage);
+            }
+
+            @Override
+            void initModel(Storage storage, ReadOnlyUserPrefs userPrefs) {
+                super.initModel(isolatedStorage, userPrefs);
+            }
+        };
+
+        app.init();
+
+        assertEquals(expected, app.model.getUserPrefs());
+        assertEquals(expected, prefsStorage.readUserPrefs().orElseThrow());
+        assertNotNull(app.logic);
+        assertNotNull(app.ui);
+    }
 
     @Test
     public void init_defaultStorage_usesRuntimeHomeForPreferencesAndData() throws Exception {

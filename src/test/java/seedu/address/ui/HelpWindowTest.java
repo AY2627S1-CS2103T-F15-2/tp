@@ -14,11 +14,37 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import seedu.address.testutil.FxTestUtil;
 
 /** Checks the real Help message and Copy URL action against the published Laplace guide. */
 public class HelpWindowTest {
+    @Test
+    public void returnExample_includesObservedConditionAndPreparesWithoutExecuting() {
+        FxTestUtil.runAndWait(() -> {
+            List<String> prepared = new ArrayList<>();
+            HelpWindow help = new HelpWindow(new Stage(), prepared::add);
+            try {
+                help.show();
+                help.getRoot().getScene().getRoot().applyCss();
+                CommandPreview example = help.getRoot().getScene().getRoot().lookupAll(".command-preview").stream()
+                        .map(node -> (CommandPreview) node)
+                        .filter(preview -> ((TextFlow) preview.getChildren().getFirst()).getChildren().stream()
+                                .map(node -> ((Text) node).getText()).reduce("", String::concat)
+                                .startsWith("loans return "))
+                        .findFirst().orElseThrow();
+                example.lookupAll(".button").stream().map(node -> (Button) node)
+                        .filter(button -> button.getText().equals("Use command")).findFirst().orElseThrow().fire();
+                assertEquals(List.of("loans return uuid/UUID returned/YYYY-MM-DD condition/GOOD"), prepared);
+                assertFalse(help.isShowing());
+            } finally {
+                help.hide();
+            }
+        });
+    }
+
     @Test
     public void useExample_preparesTemplateAndClosesHelp() {
         FxTestUtil.runAndWait(() -> {

@@ -379,6 +379,12 @@ retaining collection position, reserved identities and historical loan reference
 list remains observable and includes deleted records. The model also retains user preferences through
 `UserPrefs` and `ReadOnlyUserPrefs`.
 
+`Name.forMember` collapses whitespace and applies Unicode NFC before validating new names. Validation
+allows letters followed by combining marks, spaces, straight/curly apostrophes, hyphens and periods,
+requires at least one letter, and limits the result to 100 Unicode code points. Add and edit share this
+factory. `Name.fromStoredMember` accepts the expanded rule and legacy values while preserving their
+exact saved spelling. Editing another field retains the existing `Name`; no schema migration is needed.
+
 Deletion is blocked while a member has outstanding loans. Deleted members remain visible and
 recoverable indefinitely; editing and new loans require restoration first. Restoration has no expiry
 or automatic purge. Mutations use the existing transactional save-before-publish pipeline.
@@ -390,12 +396,17 @@ and shows selected structure; lifecycle behavior is explained in the text above.
 
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
-<puml src="diagrams/StorageClassDiagram.puml" width="550" />
+<puml src="diagrams/StorageClassDiagram.puml" width="850" alt="Current storage adapters and relationships" />
 
 The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
+
+`JsonSerializableAddressBook` stores collections of member, equipment and loan adapters alongside
+the retained legacy person adapters. Loan adapters store the member NUS ID and equipment UUID,
+preserving references without duplicating either record. The diagram shows storage types and
+adapter collections; value fields and conversion methods are omitted.
 
 ### Common classes
 
@@ -570,8 +581,9 @@ from the successful execution path shown. A failure after candidate insertion st
 candidate, so a later successful command cannot accidentally save a failed batch.
 
 Editing, soft deletion and restoration use the same snapshot/save/publish boundary with different
-command bodies. Equipment list/search do not change records or create history entries, so they do not
-follow this mutation sequence. Existing navigation-save behavior is described under undo/redo below.
+command bodies. Member/equipment list, search and view commands, `loans list`, `help` and `exit` declare
+`isReadOnly()`. They return without saving records or creating history entries, so they do not follow
+this mutation sequence. Normal shutdown still saves user preferences separately.
 These diagrams describe a single-user command transaction, including history recording. They do not
 provide concurrent-writer coordination. [Undo/redo](#undo-redo-feature) uses the same save/publication
 boundary but navigates existing history instead of recording a new change.
@@ -683,7 +695,8 @@ history into `Nothing to undo.` or `Nothing to redo.`. Successful feedback ident
 with `IllegalStateException` and returns defensive copies of stored record states.
 
 Read-only queries, navigation, help, exit and appearance changes do not add history entries or invalidate
-redo. Existing list-command save behavior is preserved, but those saves do not record an action.
+redo. Their `isReadOnly()` declarations also bypass domain-record saving. A failed record save does not
+prevent navigation, Help or normal exit; shutdown preference saving remains separate.
 A new successful record mutation after undo discards the undone branch. Explicit whole-model replacement
 with `setAddressBook()` starts fresh history; transaction publication uses its separate API to retain it.
 
@@ -746,9 +759,10 @@ applies to the history retained by each model. A failed save cannot evict entrie
 
 <puml src="diagrams/UndoRedoLimit.puml" alt="Eleven retained snapshots permit at most ten undo or redo steps" />
 
-The activity diagram summarizes `LogicManager.execute()`. It preserves the existing distinction between
-`isReadOnly()` commands, which skip saving, and nontransactional navigation commands, which can still save
-without adding history. Only successful transactional saves publish candidate records and history.
+The activity diagram summarizes `LogicManager.execute()`. Public directory, details and utility commands
+take the `isReadOnly()` path without saving records or changing history. Only successful transactional
+saves publish candidate records and history. The nontransactional saving path remains for legacy
+internal commands that do not declare themselves read-only.
 
 <puml src="diagrams/CommitActivityDiagram.puml" alt="Parsing, staged execution, bounded history recording, atomic save and publication" />
 
@@ -1149,6 +1163,13 @@ Given below are instructions to test the app manually.
 testers are expected to do more *exploratory* testing.
 </box>
 
+### Member email validation
+
+In a disposable dataset, try `member add nus/A8000099X name/Kelvin Probe phone/91234567 email/K@example.com`
+and `member edit nus/A0123456X email/K.updated@example.com` for an existing member. Both must reject
+the non-ASCII email without changing records or the data file. An uppercase ASCII email must save
+lowercase and retain the member identity and loan references after restart.
+
 ### Launch and shutdown
 
 1. Initial launch
@@ -1180,6 +1201,20 @@ testers are expected to do more *exploratory* testing.
     1. Relaunch with `java -jar Laplace.jar`.<br>
        Expected: The most recent window size and location are retained.
 
+1. Recovering invalid window preferences
+
+    1. In a disposable JAR folder, close Laplace and back up `data/addressbook.json`.
+       Replace `preferences.json` with `{"guiSettings":null}`.
+
+    1. Relaunch with `java -jar Laplace.jar`.<br>
+       Expected: The GUI opens with default light appearance and window geometry. The log reports
+       that preferences could not be loaded, and `preferences.json` contains default settings.
+       `data/addressbook.json` remains unchanged.
+
+    1. Repeat with `{}` in `preferences.json`.<br>
+       Expected: Missing settings continue to use defaults. Valid saved geometry and dark mode
+       still restore when present.
+
 **Architecture-specific packaging:** Download `Laplace.jar` for Windows, Linux or Intel macOS, or
 `Laplace-mac-arm64.jar` for Apple Silicon macOS. Substitute the selected filename in launch commands.
 Both are self-contained; macOS native libraries cannot be combined by ordinary JAR merging because
@@ -1190,9 +1225,31 @@ The packaged keyboard probe uses only the JAR's production classes and native li
 plain JDK, so neither matching test dependencies nor a JavaFX-enabled JDK can mask missing native libraries.
 Run the probe on the target architecture and smoke-test the selected JAR before publication.
 
+### Unicode command separators
+
+With disposable data, replace each space in `member view nus/A0123456X` with an EM SPACE (U+2003)
+or nonbreaking space (U+00A0), including surrounding whitespace. The same existing member must open.
+Repeat with `member list`, `equipment list` and `loans list`. Unknown actions, uppercase command words,
+duplicate parameters and unknown parameters must retain their normal diagnostics.
+
 ### Grouped equipment, command assistance and appearance
 
+Historical assignment regression: assign an available UUID on `2026-01-10`, return it on
+`2026-01-20`, then try assigning it to a second member on `2026-01-15`. Expect rejection with the
+last actual return date and unchanged records, file and undo/redo history. Repeat with a batch whose
+last UUID conflicts; no earlier UUID may be assigned. A new assignment on `2026-01-20` is allowed.
+`LoanAddCommand` validates each new open interval against retained actual returns before applying any
+batch. Existing stored history remains readable; this change adds no storage migration or repair.
+
 Use a separate empty writable JAR folder. Keep any real dataset untouched.
+
+Large-history regression: use 1,000 members, 5,000 equipment units and 10,000 completed loans,
+including a member/unit with a long history. Open both details views and Loans, scroll within the
+history list to its oldest entry, then filter Loans to no matches and clear the filter. Expect full
+counts and accessible records without creating every row's controls. `LoanHistoryCapacityTest`
+checks this capacity structurally; it does not replace the 100-trial NFR07 timing benchmark.
+`LoanRows` renders up to ten rows inline and uses bounded JavaFX `ListView` cells above that size
+for both detail timelines and loan-directory sections, including panels refreshed in the background.
 
 1. Run `equipment add name/UI Camera category/Photo condition/GOOD count/4`. Expect one group containing
    four distinct UUIDs. Expand/copy Last result to capture all four. Open the group and select one unit;
@@ -1202,18 +1259,37 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
    Show all units reveals the damaged sibling. Directly view that UUID and check exact selection.
    Uncheck Show all units: the table narrows again, the exact unit details remain visible, and a message
    explains that the selected unit is outside the table filter.
+   With enough groups and units to scroll, leave the directory and unit table at the top, then directly
+   view a UUID near the end. Both selected rows must scroll into view. Repeat after clicking a table
+   heading to sort: the sort and search filters must remain. Scroll away from the selected rows and
+   run the same view command again; both rows must reappear. A background refresh without navigation
+   must preserve browsing position and must not execute another command.
 3. Rename the damaged unit, delete it, then restore it with the documented equipment commands. Expect
    regrouping without UUID changes. Check deleted records never inflate available counts.
 4. Open a member's details, copy contact fields, and use a related equipment link. Switch tabs and use
    Back to results. The previous filter persists until Reset search or a list command.
-5. Use a command preview. Expect only input preparation; review and press Enter. Test history up/down
-   with an unfinished draft, Ctrl+Space completion, Escape dismissal and keyboard focus navigation.
+5. Use a command preview. Expect only input preparation; review and press Enter. Test unmodified
+   history up/down with an unfinished draft. Shift/Ctrl/Alt/Meta+Up/Down should retain normal text editing
+   without recalling history. Test Ctrl+Space completion, Escape dismissal and keyboard focus navigation.
 6. Open Loans. Verify due/overdue labels against the computer's local date and the stored due date.
    Prepare a return; verify the UUID/date and that the loan remains open until submission.
 7. Run `mode dark`, open Help, then switch back using the header appearance button. Repeat list/table selection, previews and errors
    in each appearance. Exit normally and relaunch; the selected mode persists. `mode sepia` is rejected.
 8. Review at 1920×1080 with 100%/125% scaling and 1280×720 with 150% scaling on supported systems.
    Check wrapping, scrolling, visible focus and contrast. Logical-size snapshots alone do not verify OS scaling.
+
+### Retained inventory totals during filtering
+
+In a separate empty dataset, add two GOOD units named `Mixed` in category `Photo`, and one GOOD unit
+named `Retired` in category `Legacy`. Delete one `Mixed` unit and the only `Retired` unit by UUID.
+Do not create loans. Expected: three retained units, one active available unit, and two deleted units.
+
+Run `equipment search status/active`, `equipment search status/deleted`, and `equipment list`.
+The Displayed count must be one, two and three respectively. Throughout, the right-hand summary must
+retain both groups: `Photo` / `Mixed` has one available and one deleted unit; `Legacy` / `Retired` has
+zero active availability counts and one deleted unit. Equipment Total stays three and overall active
+availability stays one available, zero assigned and zero unavailable. Filters change matching units,
+not retained totals. Check the UG and linked search guide describe this same distinction.
 
 ### Tab completion across current commands
 
@@ -1234,6 +1310,26 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
 7. Add or edit a record, then retry completion. Expected: current values are suggested. Tab alone never
    changes records or saves; Enter uses normal parser validation. Restart after a valid mutation and
    verify the saved records. New IDs, dates, numeric counts and notes remain manually entered.
+8. With an existing member named `Alex Tan`, type `member edit name/Alex  T phone/91234567`
+   using two spaces between `Alex` and `T`. Place the caret after `T` and press Tab.
+   Expected: `name/Alex Tan`, retaining the following phone field and its separator. Repeat with
+   an em space (`U+2003`) and nonbreaking space (`U+00A0`) inside the partial name. The caret ends
+   immediately after the stored name; Tab does not execute the command or rewrite surrounding input.
+9. Register equipment named `Camera Cover` in category `Photo Cover`. Type
+   `equipment add name/Camera co category/Photo`, place the caret after `co`, and press Tab.
+   Expected: `name/Camera Cover`, with the following category field unchanged and no command executed.
+   Repeat with `equipment add category/Photo co`; expect `category/Photo Cover`. Check `Camera Case`
+   and `Camera Notes` too. When no stored value matches, an unfinished token such as `notes/Keep co`
+   still offers unused field prefixes; a trailing space starts a new field.
+10. After one or several valid comma-separated UUIDs, complete `loans add uuid/UUID nu`,
+    `loans return uuid/UUID re`, and `loans return uuid/UUID co`. Expect `nus/`, `returned/` and
+    `condition/` without changing the UUID list or later fields. Recheck UUID completion immediately
+    after a comma; it must still offer unused UUIDs rather than a new parameter.
+11. Type `loans return co` and press Ctrl+Space. Expected: `loans return condition/` is offered.
+    Repeat after an existing `uuid/UUID` field; that field remains unchanged. After a used
+    `condition/GOOD` field, Ctrl+Space must not offer `condition/` again. Compare with Tab and the
+    loan-return template in Help; both expose the same optional return condition. Preparing a template
+    or accepting a suggestion must not execute a return.
 
 ### Rejection of retired commands
 
@@ -1249,6 +1345,19 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
    the rejected-input file comparison above.
 4. Restart the application. Expected: saved records still load normally. Existing JSON files with a
    `persons` array remain readable; no migration or removal of that array is required by this change.
+
+### Unicode member names
+
+1. In disposable data, add members named `அருண்`, `Anne O’Connor`, and `José Tan` (the `e` followed
+   by combining acute accent U+0301), using a different valid NUS ID for each. Expect success; the last
+   name is stored/displayed as NFC `José Tan`. Ordinary names such as `Anne-Marie O'Connor` still work.
+2. Give a member an open loan, then use `member edit nus/NUS_ID name/அருண்` and another valid Unicode
+   name. Expect the same NUS ID, contacts and loan references after each edit and after restarting.
+3. Try a leading combining mark, a mark after a space, a punctuation-only name and a name longer than
+   100 code points after normalization. Expect an error without saved-data changes. Equivalent names
+   at the limit must be counted after NFC composition, not by UTF-16 units or the raw pasted length.
+4. Load an existing file with a decomposed accented member name and repeated spaces. Expect exact saved
+   spelling to remain when loading, saving, and editing only the phone/email. New name input uses NFC.
 
 ### Adding a batch of equipment
 
@@ -1285,6 +1394,21 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
    filesystem failures against a real user dataset.
 
 ### Saving data
+
+1. Read-only navigation and utilities
+
+    1. Use a separate writable JAR folder. Add one equipment unit and record its UUID so the sample
+       dataset is saved. Close Laplace and record the data file's bytes and modification time.
+    2. Relaunch. Run `member list`, `equipment list`, `loans list`,
+       `member view nus/A0123456X`, and `equipment view uuid/UUID`, using the recorded UUID.
+       Expected: each directory/details view opens and the assigned sample units retain their holders.
+    3. Run `help`, close Help, and run `exit`. Expected: Help opens and normal exit closes the application.
+       The data file's bytes and modification time remain unchanged. Window preferences may be saved.
+    4. Repeat list/view/Help/Exit in another empty JAR folder without performing a mutation.
+       Expected: sample records are browsable, but no `data/addressbook.json` is created.
+    5. Automated `ReadOnlyCommandIntegrationTest` and `MainWindowShellTest` inject record-save failures
+       to check navigation, Help and Exit remain available. They also check unchanged records and redo
+       history, and that real mutations still save. Do not change permissions on a real dataset.
 
 1. Dealing with missing/corrupted data files
 
