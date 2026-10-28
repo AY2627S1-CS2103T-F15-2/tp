@@ -36,6 +36,27 @@ import seedu.address.model.member.exceptions.MemberNotFoundException;
 
 public class LoanAddCommandTest {
     @Test
+    public void execute_backdatedAssignment_checksActualReturnsForTheExactUnit() throws Exception {
+        ModelManager model = LoanCommandTestData.model();
+        LocalDate returned = TODAY.minusDays(5);
+        model.addLoan(new Loan(FIRST_UUID, FIRST_MEMBER.getNusId(), TODAY.minusDays(10),
+                TODAY.plusDays(20), returned));
+        model.addLoan(new Loan(FIRST_UUID, SECOND_MEMBER.getNusId(), TODAY.minusDays(20),
+                TODAY.minusDays(15), TODAY.minusDays(15)));
+        AddressBook before = new AddressBook(model.getAddressBook());
+        for (int daysAgo : List.of(12, 7, 6)) {
+            CommandException failure = assertThrows(CommandException.class, () ->
+                    command(TODAY.minusDays(daysAgo), TODAY).execute(model));
+            assertEquals(String.format(LoanAddCommand.MESSAGE_HISTORICAL_OVERLAP, FIRST_UUID, returned),
+                    failure.getMessage());
+            assertEquals(before, model.getAddressBook());
+        }
+        new LoanAddCommand(SECOND_UUID, FIRST_MEMBER.getNusId(), TODAY.minusDays(7), TODAY, CLOCK).execute(model);
+        command(returned, TODAY).execute(model);
+        assertEquals(returned, model.findOpenLoan(FIRST_UUID).orElseThrow().getAssignedDate());
+    }
+
+    @Test
     public void execute_availableEquipment_recordsOpenLoanAndExactIdentitiesWithDetailsRequest() throws Exception {
         ModelManager model = LoanCommandTestData.model();
         AddressBook before = new AddressBook(model.getAddressBook());

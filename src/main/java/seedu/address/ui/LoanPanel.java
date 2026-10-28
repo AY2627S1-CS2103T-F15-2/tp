@@ -117,7 +117,7 @@ public class LoanPanel extends UiPart<Region> {
         if (loans.isEmpty()) {
             section.getChildren().add(label(emptyMessage, "loan-empty"));
         } else {
-            loans.forEach(loan -> section.getChildren().add(createLoanRow(loan)));
+            LoanRows.show(section, loans, this::createLoanRow);
         }
     }
 
