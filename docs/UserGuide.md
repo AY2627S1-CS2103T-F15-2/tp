@@ -637,6 +637,11 @@ Feedback is `Returned EQUIPMENT_NAME (UUID) from MEMBER_NAME (NUS_ID) on ACTUAL_
 
 Multiple UUIDs return in one request. If `condition/` is supplied, it is recorded for every item
 and updates each item's current condition. Use separate commands for different observed conditions.
+The Loans row offers an **Observed return condition (optional)** choice before **Prepare return command**.
+Choose a condition you actually observed to include `condition/` in the prepared text, or leave
+**Not recorded** to omit it. Preparing never submits the command; review and press Enter yourself.
+No issue/current condition is preselected as a new observation.
+
 If omitted, the current equipment condition stays unchanged and history shows the return condition
 as "Not recorded". A failed item prevents the entire batch from being returned.
 For a batch, feedback lists the number of units and their UUIDs without naming one borrower for all of them.

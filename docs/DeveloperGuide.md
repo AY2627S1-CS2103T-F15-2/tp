@@ -95,6 +95,12 @@ omitted infrastructure and current behavior from the original PR's historical be
 
 ### UI component
 
+Open-loan rows expose an optional observed-condition selector. The default is Not recorded; only an
+explicit choice adds `condition/` to the prepared return. This is the current return shortcut shared
+by navigation from member/equipment details through Loans. For manual verification, choose DAMAGED,
+prepare and inspect the input without submitting; reset to Not recorded and verify omission. Submit
+separate disposable examples and check recorded condition versus intentional unknown history.
+
 The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/ui/Ui.java)
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
