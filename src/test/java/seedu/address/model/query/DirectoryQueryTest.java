@@ -27,6 +27,29 @@ import seedu.address.model.person.Phone;
 
 public class DirectoryQueryTest {
     @Test
+    public void members_greekSigmaVariants_matchesWithoutChangingStoredSpelling() {
+        AddressBook data = new AddressBook();
+        Member member = new Member(new NusId("A8400001X"), Name.forMember("ΝΙΚΟΣ"),
+                Phone.forMember("91234567"), Email.forMember("nikos@example.com"));
+        data.addMember(member);
+        for (String text : List.of("ΝΙΚΟΣ", "Σ", "σ", "ς", "νικοσ", "νικος")) {
+            assertEquals(List.of(member), query(text, "", null, null, DirectoryQuery.Holding.ANY,
+                    DirectoryQuery.Sort.DEFAULT, false).members(data), text);
+        }
+        assertEquals("ΝΙΚΟΣ", data.getMemberList().getFirst().getName().fullName);
+    }
+
+    @Test
+    public void equipment_greekSigmaCategoryAndText_matchesWithoutChangingStoredSpelling() {
+        ModelManager model = new ModelManager();
+        Equipment item = new Equipment(new UUID(0, 1), "ΟΣ", "ΝΙΚΟΣ", Condition.GOOD, "");
+        model.addEquipment(item);
+        assertEquals(List.of(item), query("σ", "νικοσ", null, null, DirectoryQuery.Holding.ANY,
+                DirectoryQuery.Sort.DEFAULT, false).equipment(model.getAddressBook(), model::getAvailability));
+        assertEquals("ΝΙΚΟΣ", item.getCategory());
+    }
+
+    @Test
     public void members_partialIdentityContactAndHolding_combinesWithoutMutating() {
         ModelManager model = sample();
         AddressBook before = new AddressBook(model.getAddressBook());

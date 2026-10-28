@@ -28,4 +28,14 @@ public final class LaplaceText {
                     && type != Character.SURROGATE && type != Character.UNASSIGNED;
         });
     }
+
+    /**
+     * Returns a locale-independent simple case key without context-sensitive whole-string lowercasing.
+     * Uppercasing first maps both Greek lowercase sigma forms to the same code point.
+     */
+    public static String caseKey(String value) {
+        return requireNonNull(value).codePoints()
+                .map(codePoint -> Character.toLowerCase(Character.toUpperCase(codePoint)))
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
+    }
 }

@@ -719,6 +719,10 @@ on or after 20 September 2026; choose valid actual dates for your own operation.
 8. If these were erroneous/test records, remove them with `equipment delete uuid/UUID` and
    `member delete nus/E0678901C`. Both deletions retain records; use `equipment restore` or `member restore` to recover them.
 
+Unicode name search and value completion treat `Σ`, `σ` and `ς` as case-equivalent.
+For example, searching for `Σ` or `νικοσ` finds a stored member named `ΝΙΚΟΣ`;
+Tab completion of `member edit name/νικοσ` suggests the original spelling `ΝΙΚΟΣ`.
+
 ## Saving, file access and recovery
 
 Successful changes save automatically; there is no manual-save command. For the packaged application,
