@@ -1,3 +1,7 @@
+> Current implementation amendment: all supported Laplace routes execute concrete commands.
+> The unused `NotImplementedCommand` scaffold and its dedicated tests have been removed;
+> placeholder routing described below records an earlier milestone only.
+
 > Legacy-command retirement amendment (21 October 2026): top-level `add`, `edit`, `delete`,
 > `clear`, `find`, and `list` are rejected. Earlier requirements below to preserve public person-command
 > routing are superseded. Stored persons, shared value types and legacy implementation/UI classes
