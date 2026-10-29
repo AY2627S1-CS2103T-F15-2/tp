@@ -139,7 +139,9 @@ filter scope, date boundaries, clipboard text, theme changes and preference comp
 are written under `build/reports/laplace` for visual review. Shell tests also render the logical scene a
 maximized window keeps at 1920×1080 (100%/125% scaling) and 1280×720 (150%), after the taskbar and title
 bar. Controls outside scrolling content must stay whole and inside the scene; each scrolling region must
-keep a readable viewport. Both windows are limited to their screen's visual bounds, so the end of a
+keep a readable viewport. A narrow-directory regression also checks both lists at 853×400 logical
+pixels with the divider at its minimum position. Compact header and keyboard-hint padding preserves
+space for rows when the hint wraps. Both windows are limited to their screen's visual bounds, so the end of a
 scrolling region never lies below the screen. Command text and identifiers use bundled
 IBM Plex Mono. `LaplaceFonts` registers those faces once and applies interface fonts by full face name:
 Helvetica/Helvetica Bold, then Arial/Arial Bold or Segoe UI/Segoe UI Bold when unavailable, with a system
