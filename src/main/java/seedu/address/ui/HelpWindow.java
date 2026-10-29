@@ -4,11 +4,13 @@ import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import javafx.fxml.FXML;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
 
@@ -83,8 +85,20 @@ public class HelpWindow extends UiPart<Stage> {
      */
     public void show() {
         logger.fine("Showing help page about the application.");
-        getRoot().show();
-        getRoot().centerOnScreen();
+        Stage stage = getRoot();
+        fitWithin(Screen.getScreensForRectangle(stage.getX(), stage.getY(), stage.getWidth(), stage.getHeight())
+                .stream().findFirst().orElse(Screen.getPrimary()).getVisualBounds());
+        stage.show();
+        stage.centerOnScreen();
+    }
+
+    /**
+     * Shrinks the window to fit the bounds; on a short scaled screen, an oversized window would place the end
+     * of the scrolling reference below the screen, where scrolling cannot reveal it.
+     */
+    void fitWithin(Rectangle2D bounds) {
+        getRoot().setWidth(Math.min(getRoot().getWidth(), bounds.getWidth()));
+        getRoot().setHeight(Math.min(getRoot().getHeight(), bounds.getHeight()));
     }
 
     /**
