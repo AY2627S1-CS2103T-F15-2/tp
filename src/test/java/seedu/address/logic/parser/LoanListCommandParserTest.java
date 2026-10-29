@@ -16,7 +16,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.ModelManager;
 import seedu.address.model.query.LoanQuery;
 
-/** Checks no-argument Loans navigation through both the individual and complete command parsers. */
+/** Checks Loans navigation, identity filters and reset through leaf and complete command parsers. */
 public class LoanListCommandParserTest {
     @Test
     public void parse_whitespaceOnly_returnsLoansNavigation() throws Exception {
@@ -69,6 +69,23 @@ public class LoanListCommandParserTest {
             assertInstanceOf(ParseException.class, failure.getCause());
         }
         assertThrows(NullPointerException.class, () -> parser.parse(null));
+    }
+
+    @Test
+    public void parse_aliasesAndCase_preservesFilterTextAndReadOnlyReset() throws Exception {
+        AddressBookParser parser = new AddressBookParser();
+        for (String input : List.of("LOAN LIST", "LoAnS LiSt")) {
+            var command = parser.parseCommand(input + " nus/a012 uuid/ABCD");
+            assertTrue(command.isReadOnly());
+            assertEquals(DisplayRequest.loans(new LoanQuery("a012", "ABCD")),
+                    command.execute(new ModelManager()).getDisplayRequest());
+        }
+        for (String input : List.of("LOAN RESET", "LoAnS ReSeT")) {
+            var command = parser.parseCommand(input);
+            assertTrue(command.isReadOnly());
+            assertEquals(DisplayRequest.loans(LoanQuery.all()),
+                    command.execute(new ModelManager()).getDisplayRequest());
+        }
     }
 
     @Test

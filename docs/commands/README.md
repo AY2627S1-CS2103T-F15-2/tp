@@ -34,8 +34,10 @@ Member soft-delete and unlimited restoration are supported. Archival remains out
 | undo | `undo` | [Undo record change](undo.md) |
 | redo | `redo` | [Redo record change](redo.md) |
 
-Families/subcommands are lowercase and case-sensitive. Parameter order is free, and
-spaces/tabs separate arguments. Member/equipment list and loans reset accept whitespace only. Loans list accepts optional identity filters. Other implemented
+Families/subcommands ignore case; `members` aliases `member` and `loan` aliases `loans`.
+Help and completion use canonical spellings. Field prefixes remain lowercase and case-sensitive. Parameter order is free, and
+spaces/tabs separate arguments. Member/equipment list and loans reset accept whitespace only.
+Loans list accepts optional identity filters. Other implemented
 routes reject missing/blank required values, repeated parameters, unknown markers and
 nonblank preamble. Optional notes may be empty. Markers matching the agreed
 start/whitespace-delimited `[A-Za-z][A-Za-z0-9_-]*/` grammar are reserved even inside free

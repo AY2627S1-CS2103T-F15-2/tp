@@ -118,7 +118,9 @@ public class HelpWindowTest {
                 help.getRoot().getScene().getRoot().applyCss();
                 String expected = "https://ay2627s1-cs2103t-f15-2.github.io/tp/UserGuide.html";
                 Label message = (Label) help.getRoot().getScene().lookup("#helpMessage");
-                assertEquals("Refer to the user guide: " + expected, message.getText());
+                assertTrue(message.getText().endsWith("Refer to the user guide: " + expected));
+                assertTrue(message.getText().contains("member/members and loan/loans are aliases"));
+                assertTrue(message.getText().contains("Tab suggestions use member, equipment and loans"));
                 Button copy = (Button) help.getRoot().getScene().lookup("#copyButton");
                 copy.fire();
                 assertEquals(expected, clipboard.getString());

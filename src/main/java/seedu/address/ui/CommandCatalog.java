@@ -1,7 +1,11 @@
 package seedu.address.ui;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import seedu.address.logic.parser.CommandWords;
 
 /**
  * Command examples shared by Help and explicit command completion.
@@ -21,6 +25,8 @@ final class CommandCatalog {
             "loans add uuid/UUID nus/NUS_ID assigned/YYYY-MM-DD expected/YYYY-MM-DD",
             "loans return uuid/UUID returned/YYYY-MM-DD condition/GOOD",
             "undo", "redo", "mode dark", "mode light", "help", "exit");
+    private static final Pattern WORD = Pattern.compile("(?U)\\S+");
+    private static final Pattern LAST_TOKEN = Pattern.compile("(?U)\\S*$");
     private static final Pattern PREFIX = Pattern.compile("\\b[a-z]+/");
 
     private CommandCatalog() {
@@ -30,22 +36,43 @@ final class CommandCatalog {
      * Returns replacements for the full input, completing command names or an unfinished prefix.
      */
     static List<String> complete(String input) {
+        String canonicalInput = canonicalInput(input);
         List<String> commands = EXAMPLES.stream().map(CommandCatalog::commandName).distinct().toList();
-        List<String> names = commands.stream().filter(name -> name.startsWith(input)).map(name -> name + " ").toList();
+        List<String> names = commands.stream().filter(name -> name.startsWith(canonicalInput))
+                .map(name -> name + " ").toList();
         if (!names.isEmpty()) {
             return names;
         }
-        int boundary = input.lastIndexOf(' ') + 1;
-        String partial = input.substring(boundary);
+        Matcher lastToken = LAST_TOKEN.matcher(input);
+        lastToken.find();
+        int boundary = lastToken.start();
+        String partial = lastToken.group();
         if (partial.contains("/")) {
             return List.of();
         }
-        return EXAMPLES.stream().filter(example -> input.startsWith(commandName(example) + " "))
+        return EXAMPLES.stream().filter(example -> canonicalInput.startsWith(commandName(example) + " "))
                 .flatMap(example -> PREFIX.matcher(example).results().map(match -> match.group()))
                 .filter(prefix -> prefix.startsWith(partial))
-                .filter(prefix -> !Pattern.compile("(?:^|\\s)" + Pattern.quote(prefix))
+                .filter(prefix -> !Pattern.compile("(?U)(?:^|\\s)" + Pattern.quote(prefix))
                         .matcher(input.substring(0, boundary)).find())
                 .distinct().map(prefix -> input.substring(0, boundary) + prefix).toList();
+    }
+
+    /**
+     * Canonicalizes only the command header for matching; candidates retain the original argument text.
+     */
+    private static String canonicalInput(String input) {
+        Matcher words = WORD.matcher(input);
+        if (!words.find()) {
+            return input;
+        }
+        String family = CommandWords.canonicalFamily(words.group());
+        int familyEnd = words.end();
+        if (!words.find()) {
+            return family + (familyEnd == input.length() ? "" : " ");
+        }
+        String action = words.group().toLowerCase(Locale.ROOT);
+        return family + " " + action + (words.end() == input.length() ? "" : " " + input.substring(words.end()));
     }
 
     private static String commandName(String example) {

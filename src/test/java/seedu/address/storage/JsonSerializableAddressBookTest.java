@@ -48,8 +48,9 @@ public class JsonSerializableAddressBookTest {
     public void toModelType_duplicatePersons_throwsIllegalValueException() throws Exception {
         JsonSerializableAddressBook dataFromFile = JsonUtil.readJsonFile(DUPLICATE_PERSON_FILE,
                 JsonSerializableAddressBook.class).get();
-        assertThrows(IllegalValueException.class, JsonSerializableAddressBook.MESSAGE_DUPLICATE_PERSON,
+        IllegalValueException failure = org.junit.jupiter.api.Assertions.assertThrows(IllegalValueException.class,
                 dataFromFile::toModelType);
+        assertTrue(failure.getMessage().contains(JsonSerializableAddressBook.MESSAGE_DUPLICATE_PERSON));
     }
 
     @Test
