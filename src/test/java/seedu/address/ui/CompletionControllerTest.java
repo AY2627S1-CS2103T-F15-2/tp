@@ -5,10 +5,16 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+import java.util.logging.StreamHandler;
 
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +27,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -33,6 +40,46 @@ import seedu.address.testutil.ViewTestData;
 
 /** Uses real JavaFX event dispatch and focus traversal rather than calling private handlers. */
 public class CompletionControllerTest {
+    @Test
+    public void recordChange_activeCycle_logsOneReasonWithoutPrivateValues() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = ViewTestData.model();
+            TextField field = new TextField();
+            new CompletionController(field, model::getAddressBook);
+            new Scene(new VBox(field));
+            Logger logger = LogsCenter.getLogger(CompletionController.class);
+            Level previousLevel = logger.getLevel();
+            boolean wasUsingParentHandlers = logger.getUseParentHandlers();
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            StreamHandler handler = new StreamHandler(output, new SimpleFormatter());
+            handler.setLevel(Level.FINE);
+            try {
+                logger.setLevel(Level.FINE);
+                logger.setUseParentHandlers(false);
+                logger.addHandler(handler);
+                type(field, "member edit nus/");
+                tab(field);
+                model.deleteEquipment(ViewTestData.SPEAKER);
+                model.restoreEquipment(ViewTestData.SPEAKER);
+                type(field, "member ");
+                tab(field);
+                model.deleteEquipment(ViewTestData.SPEAKER);
+                handler.flush();
+
+                String diagnostic = output.toString(StandardCharsets.UTF_8);
+                assertEquals(1, diagnostic.lines().filter(line -> line.contains("records changed")).count());
+                assertFalse(diagnostic.contains(ViewTestData.ALEX.getNusId().value));
+                assertFalse(diagnostic.contains(ViewTestData.ALEX.getName().fullName));
+                assertFalse(diagnostic.contains("member edit nus/"));
+            } finally {
+                logger.removeHandler(handler);
+                logger.setLevel(previousLevel);
+                logger.setUseParentHandlers(wasUsingParentHandlers);
+                handler.close();
+            }
+        });
+    }
+
     @Test
     public void tab_staticVocabularyAndCycles_neverReadRecords() {
         FxTestUtil.runAndWait(() -> {

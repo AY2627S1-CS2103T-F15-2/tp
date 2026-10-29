@@ -4,8 +4,10 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -14,7 +16,7 @@ import seedu.address.model.member.exceptions.MemberDeletedException;
 import seedu.address.model.member.exceptions.MemberNotFoundException;
 
 /**
- * Contract for the identity-unique collection of Laplace members.
+ * Stores active and deleted members with unique NUS IDs.
  */
 public class UniqueMemberList {
 
@@ -22,13 +24,17 @@ public class UniqueMemberList {
     private final ObservableList<Member> internalUnmodifiableList =
             FXCollections.unmodifiableObservableList(internalList);
 
-    /** Returns whether a member with {@code nusId} exists. */
+    /**
+     * Returns whether a member with {@code nusId} exists.
+     */
     public boolean contains(NusId nusId) {
         requireNonNull(nusId);
         return findByNusId(nusId).isPresent();
     }
 
-    /** Returns the member with {@code nusId}, if one exists. */
+    /**
+     * Returns the member with {@code nusId}, if one exists.
+     */
     public Optional<Member> findByNusId(NusId nusId) {
         requireNonNull(nusId);
         return internalList.stream()
@@ -36,7 +42,9 @@ public class UniqueMemberList {
                 .findFirst();
     }
 
-    /** Adds {@code member}. */
+    /**
+     * Adds a member whose NUS ID is not already reserved by this collection.
+     */
     public void add(Member member) {
         requireNonNull(member);
         if (contains(member.getNusId())) {
@@ -53,7 +61,7 @@ public class UniqueMemberList {
         Member stored = findByNusId(nusId).orElseThrow(MemberNotFoundException::new);
         Member replacement = new Member(stored.getNusId(), stored.getName(), stored.getPhone(),
                 stored.getEmail(), isDeleted);
-        internalList.set(internalList.indexOf(stored), replacement);
+        replaceStoredMember(stored, replacement);
     }
 
     /**
@@ -70,10 +78,12 @@ public class UniqueMemberList {
         }
         checkArgument(stored.isDeleted() == editedMember.isDeleted(),
                 "Editing a member cannot change their deletion state.");
-        internalList.set(internalList.indexOf(stored), editedMember);
+        replaceStoredMember(stored, editedMember);
     }
 
-    /** Removes the member with the same identity as {@code member}. */
+    /**
+     * Removes the member with the same identity as {@code member}.
+     */
     public void remove(Member member) {
         requireNonNull(member);
         Member memberToRemove = findByNusId(member.getNusId())
@@ -93,18 +103,30 @@ public class UniqueMemberList {
         internalList.setAll(replacement);
     }
 
-    /** Returns an unmodifiable observable view of this collection. */
+    /**
+     * Returns an unmodifiable observable view of this collection.
+     */
     public ObservableList<Member> asUnmodifiableObservableList() {
         return internalUnmodifiableList;
     }
 
+    /**
+     * Replaces a previously resolved stored record while preserving its collection position.
+     */
+    private void replaceStoredMember(Member stored, Member replacement) {
+        int index = internalList.indexOf(stored);
+        assert index >= 0 : "A resolved member must remain in the collection.";
+        internalList.set(index, replacement);
+    }
+
+    /**
+     * Returns whether every member reserves a distinct normalized NUS ID.
+     */
     private boolean membersAreUnique(List<Member> members) {
-        for (int i = 0; i < members.size() - 1; i++) {
-            NusId nusId = members.get(i).getNusId();
-            for (int j = i + 1; j < members.size(); j++) {
-                if (nusId.equals(members.get(j).getNusId())) {
-                    return false;
-                }
+        Set<NusId> identities = new HashSet<>();
+        for (Member member : members) {
+            if (!identities.add(member.getNusId())) {
+                return false;
             }
         }
         return true;

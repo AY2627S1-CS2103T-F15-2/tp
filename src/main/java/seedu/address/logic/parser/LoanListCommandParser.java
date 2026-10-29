@@ -5,7 +5,9 @@ import java.util.Set;
 import seedu.address.logic.commands.LoanListCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
-/** Parses the no-argument {@code loans list} navigation command. */
+/**
+ * Parses the no-argument {@code loans list} navigation command.
+ */
 public class LoanListCommandParser implements Parser<LoanListCommand> {
     @Override
     public LoanListCommand parse(String args) throws ParseException {

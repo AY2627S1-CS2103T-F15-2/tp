@@ -85,7 +85,9 @@ public class LogsCenter {
         addFileHandler(baseLogger, AppPaths.getLogFilePath());
     }
 
-    /** Installs file logging, reporting an I/O failure through the logger's existing handlers. */
+    /**
+     * Installs file logging, reporting an I/O failure through the logger's existing handlers.
+     */
     static void addFileHandler(Logger target, Path logFile) {
         try {
             // FileHandler treats percent signs as pattern tokens, even when they occur in folder names.

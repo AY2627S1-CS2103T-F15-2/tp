@@ -30,15 +30,9 @@ public class MemberEditCommandParser implements Parser<MemberEditCommand> {
                             PREFIX_MEMBER_PHONE, ParserUtil::parseMemberPhone,
                             PREFIX_MEMBER_EMAIL, ParserUtil::parseMemberEmail));
             NusId nusId = ParserUtil.parseNusId(arguments.getValue(PREFIX_NUS_ID).orElseThrow());
-            Optional<Name> name = arguments.getValue(PREFIX_MEMBER_NAME).isPresent()
-                    ? Optional.of(ParserUtil.parseMemberName(arguments.getValue(PREFIX_MEMBER_NAME).orElseThrow()))
-                    : Optional.empty();
-            Optional<Phone> phone = arguments.getValue(PREFIX_MEMBER_PHONE).isPresent()
-                    ? Optional.of(ParserUtil.parseMemberPhone(arguments.getValue(PREFIX_MEMBER_PHONE).orElseThrow()))
-                    : Optional.empty();
-            Optional<Email> email = arguments.getValue(PREFIX_MEMBER_EMAIL).isPresent()
-                    ? Optional.of(ParserUtil.parseMemberEmail(arguments.getValue(PREFIX_MEMBER_EMAIL).orElseThrow()))
-                    : Optional.empty();
+            Optional<Name> name = arguments.getValue(PREFIX_MEMBER_NAME).map(Name::forMember);
+            Optional<Phone> phone = arguments.getValue(PREFIX_MEMBER_PHONE).map(Phone::forMember);
+            Optional<Email> email = arguments.getValue(PREFIX_MEMBER_EMAIL).map(Email::forMember);
             if (name.isEmpty() && phone.isEmpty() && email.isEmpty()) {
                 throw new ParseException(MemberEditCommand.MESSAGE_NO_FIELDS);
             }

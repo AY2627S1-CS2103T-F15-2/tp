@@ -30,12 +30,27 @@ final class LoanRows {
             loans.forEach(loan -> section.getChildren().add(createRow.apply(loan)));
             return;
         }
+        section.getChildren().add(createVirtualList(loans, createRow));
+    }
+
+    /**
+     * Creates a bounded list that renders only the visible portion of a large loan section.
+     */
+    private static ListView<Loan> createVirtualList(List<Loan> loans, Function<Loan, Region> createRow) {
         ListView<Loan> list = new ListView<>(FXCollections.observableArrayList(loans));
         list.getStyleClass().add("loan-virtual-list");
         list.setMinHeight(LIST_HEIGHT);
         list.setPrefHeight(LIST_HEIGHT);
         list.setMaxHeight(LIST_HEIGHT);
-        list.setCellFactory(unused -> new ListCell<>() {
+        list.setCellFactory(unused -> createCell(createRow));
+        return list;
+    }
+
+    /**
+     * Creates a reusable cell that clears empty slots and fits its loan row to the available width.
+     */
+    private static ListCell<Loan> createCell(Function<Loan, Region> createRow) {
+        return new ListCell<>() {
             @Override
             protected void updateItem(Loan loan, boolean isEmpty) {
                 super.updateItem(loan, isEmpty);
@@ -50,7 +65,6 @@ final class LoanRows {
                         widthProperty(), insetsProperty()));
                 setGraphic(row);
             }
-        });
-        section.getChildren().add(list);
+        };
     }
 }
