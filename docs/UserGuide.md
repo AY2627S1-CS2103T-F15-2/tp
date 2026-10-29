@@ -201,10 +201,12 @@ Commands and prefixes are **lowercase and case-sensitive**. Use `member add`, no
 - `member list`, `equipment list` and `loans list` take no arguments. Additional text or prefixes are rejected.
 - An empty or whitespace-only submission does nothing.
 
-On success, the input clears and the requested list/details view appears. Newly added records are selected
-and open in details. On failure, the command stays in the input box, focus returns there, and the current
-view and selection remain unchanged. Correct it and press Enter again. Only the first detected error is
-shown; another error may appear after correction. Rejected commands do not change records.
+On success, the input clears and the requested list/details view appears. Adding a member or one equipment
+unit opens that record's details. Adding equipment with `count/2` or greater instead opens the full equipment
+directory and resets its search filters and sorting; use the UUIDs in **Last result** to open individual units.
+On failure, the command stays in the input box, focus returns there, and the current view and selection
+remain unchanged. Correct it and press Enter again. Only the first detected error is shown; another error
+may appear after correction. Rejected commands do not change records.
 
 In feedback examples, `N` is the current count and uppercase placeholders such as `UUID`, `NUS_ID`
 and `EQUIPMENT_NAME` stand for the actual record values. `TODAY` is the computer's local date.
@@ -868,6 +870,10 @@ authentication and concurrent multi-user operation are not provided.
 | Return equipment | `loans return uuid/UUID[,UUID...] returned/ACTUAL_RETURN_DATE [condition/CONDITION]` |
 | Undo the last record change | `undo` |
 | Redo the last undone change | `redo` |
+
+For `equipment add`, omitting `count/` or using `count/1` opens the new unit's details. A successful
+`count/2` or greater opens the full equipment directory and resets its filters and sorting, as described
+under [Add equipment](#add-equipment-equipment-add).
 
 See [search, filters and sorting](commands/search-and-planning.md) for accepted search parameter values.
 
