@@ -3,7 +3,8 @@
 Usage: `equipment list`
 
 Takes no parameters. Spaces and tabs after the subcommand are allowed; text or parameter
-markers are rejected. Families and subcommands are lowercase and case-sensitive.
+markers are rejected. Command words ignore case; `members` and `loan` alias `member` and `loans`.
+Field prefixes remain lowercase and case-sensitive.
 
 Reports the total count and requests the equipment directory through `DisplayRequest`.
 The command does not change entities, loans or stored collection order. Its read-only declaration

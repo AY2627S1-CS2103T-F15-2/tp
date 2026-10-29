@@ -20,6 +20,27 @@ import seedu.address.testutil.ViewTestData;
  */
 public class CommandCatalogTest {
     @Test
+    public void complete_commandAliasesAndCase_offersCanonicalNamesWithoutChangingValues() {
+        for (String[] inputs : List.of(new String[] {"MEM", "mem"}, new String[] {"members ", "member "},
+                new String[] {"LOAN ", "loans "}, new String[] {"Members Ed", "member ed"},
+                new String[] {"MODE DARK", "mode dark"}, new String[] {"UNDO", "undo"})) {
+            assertTrue(!CommandCatalog.complete(inputs[0]).isEmpty());
+            assertEquals(CommandCatalog.complete(inputs[1]), CommandCatalog.complete(inputs[0]));
+        }
+        assertEquals(List.of("member edit "), CommandCatalog.complete("MEMBERS EDIT"));
+        assertEquals(List.of("MEMBERS EDIT name/MiXeD Name phone/"),
+                CommandCatalog.complete("MEMBERS EDIT name/MiXeD Name ph"));
+        for (String separator : List.of(" ", "\t", "\u2003", "\u00a0")) {
+            String input = "Members" + separator + "Edit" + separator + "name/MiXeD Name" + separator;
+            assertTrue(CommandCatalog.complete(input + "ph").contains(input + "phone/"));
+            assertTrue(CommandCatalog.complete(input + "na").isEmpty());
+        }
+        assertTrue(CommandCatalog.complete("equipments ").isEmpty());
+        assertTrue(CommandCatalog.complete("LOAN RETURNS ").isEmpty());
+        assertTrue(CommandCatalog.complete("MEMBERS EDIT PH").isEmpty());
+    }
+
+    @Test
     public void complete_returnCondition_offersUnusedPrefixAndPreservesEarlierFields() {
         String uuid = ViewTestData.CAMERA.getUuid().toString();
         for (String input : List.of("loans return co", "loans return uuid/" + uuid + " co")) {
