@@ -341,8 +341,7 @@
         "members": "Members",
         "equipment": "Equipment",
         "input-refresh-and-navigation": "Input, refresh and navigation",
-        "inventory-groups-and-duplicates": "Inventory groups and duplicates",
-        "integration-contract": "Integration contract"
+        "inventory-groups-and-duplicates": "Inventory groups and duplicates"
       },
       "headingKeywords": {}
     },
