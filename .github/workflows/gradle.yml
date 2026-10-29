@@ -1,6 +1,14 @@
 name: Java CI
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Published release to verify with these tests (blank builds a new candidate)'
+        required: false
+        type: string
 
 jobs:
   package:
@@ -14,7 +22,18 @@ jobs:
           java-package: jdk
       - uses: gradle/actions/wrapper-validation@v6
       - name: Build one release candidate
+        if: ${{ !inputs.release_tag }}
         run: ./gradlew shadowJar verifyUniversalJar
+      - name: Download published release candidate
+        if: ${{ inputs.release_tag }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          mkdir -p build/libs
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern Laplace.jar --dir build/libs
       - uses: actions/upload-artifact@v4
         with:
           name: universal-release-candidate

@@ -76,8 +76,18 @@ To probe a downloaded candidate, run `./gradlew verifyUniversalJar verifyPackage
 -PpackagedJar=build/candidate/Laplace.jar` on each target architecture. CI downloads the same candidate
 for Windows, Linux and both macOS architectures; selecting a candidate does not emulate another processor.
 See the [distribution checklist](DeveloperGuide.md#single-jar-distribution) for release verification.
+After this workflow change reaches the default branch, a maintainer can run Java CI manually with
+`gh workflow run gradle.yml -f release_tag=v1.5` to check a published JAR using the selected branch's
+tests. Leaving `release_tag` blank builds a new candidate. Both paths send one unchanged JAR to all
+four platform jobs; inspect their recorded hashes and results before claiming release validation.
+The workflow must be enabled in GitHub Actions; its YAML alone cannot undo a manually disabled state.
 The [universal packaging verification record](gui/UniversalPackagingVerification.txt) lists the local
 candidate hash, tested environment and outstanding platform coverage.
+
+The multiline clipboard regression publishes clipboard content, pastes it, and verifies/submits it in
+separate FX event cycles. This allows Windows native clipboard ownership messages to be processed
+without a fixed delay. The test checks clipboard contents before pasting and retains its assertions
+for all nine separators, saved notes, dispatch/save counts, rejected input and clipboard restoration.
 
 Reviewable local evidence is recorded in [AutocompleteVerification.txt](gui/AutocompleteVerification.txt),
 [AutocompleteKeyboardSession.txt](gui/AutocompleteKeyboardSession.txt), and

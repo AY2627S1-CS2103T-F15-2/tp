@@ -864,25 +864,23 @@ public class MainWindowShellTest {
 
     @Test
     public void pastedMultilineNotes_realInput_preservesSeparatorsPersistsAndRetainsRejectedCorrection() {
+        var previous = new HashMap<DataFormat, Object>();
         FxTestUtil.runAndWait(() -> {
             Clipboard clipboard = Clipboard.getSystemClipboard();
-            var previous = new HashMap<DataFormat, Object>();
             for (DataFormat format : clipboard.getContentTypes()) {
                 Object value = clipboard.getContent(format);
                 if (value != null) {
                     previous.put(format, value);
                 }
             }
-            try {
-                for (String separator : List.of("\n", "\r\n", "\r", "\t", "\u000b", "\f",
-                        "\u0085", "\u2028", "\u2029")) {
-                    ClipboardContent content = new ClipboardContent();
-                    String command = "equipment add name/Camera category/Test condition/GOOD notes/First line"
-                            + separator + "Second line";
-                    content.putString(command);
-                    assertTrue(clipboard.setContent(content));
-                    field().selectAll();
-                    field().paste();
+        });
+        try {
+            for (String separator : List.of("\n", "\r\n", "\r", "\t", "\u000b", "\f",
+                    "\u0085", "\u2028", "\u2029")) {
+                String command = "equipment add name/Camera category/Test condition/GOOD notes/First line"
+                        + separator + "Second line";
+                pasteCommand(command);
+                FxTestUtil.runAndWait(() -> {
                     assertTrue(field().getText().contains("First line Second line")
                             || field().getText().contains("First line  Second line"));
                     int saves = storage.saves;
@@ -894,18 +892,34 @@ public class MainWindowShellTest {
                     assertEquals(dispatches + 1, logic.commands.size());
                     assertEquals(model.getAddressBook(), assertDoesNotThrow(() -> storage.readAddressBook())
                             .orElseThrow());
-                }
-                ClipboardContent invalid = new ClipboardContent();
-                invalid.putString("equipment add name/Camera category/Test condition/GOOD notes/First\nunknown/value");
-                clipboard.setContent(invalid);
-                field().paste();
+                });
+            }
+            pasteCommand("equipment add name/Camera category/Test condition/GOOD notes/First\nunknown/value");
+            FxTestUtil.runAndWait(() -> {
                 String correction = field().getText();
                 reject(correction);
                 assertTrue(feedback().startsWith("Unknown parameter: unknown/"));
                 assertEquals(field(), window.getPrimaryStage().getScene().getFocusOwner());
-            } finally {
-                clipboard.setContent(previous);
-            }
+            });
+        } finally {
+            FxTestUtil.runAndWait(() -> Clipboard.getSystemClipboard().setContent(previous));
+        }
+    }
+
+    /**
+     * Publishes clipboard content and pastes it in a separate FX event cycle, allowing native clipboard
+     * ownership messages to be processed between operations on Windows.
+     */
+    private void pasteCommand(String command) {
+        FxTestUtil.runAndWait(() -> {
+            ClipboardContent content = new ClipboardContent();
+            content.putString(command);
+            assertTrue(Clipboard.getSystemClipboard().setContent(content));
+        });
+        FxTestUtil.runAndWait(() -> {
+            assertEquals(command, Clipboard.getSystemClipboard().getString(), "Clipboard must contain the command");
+            field().selectAll();
+            field().paste();
         });
     }
 
