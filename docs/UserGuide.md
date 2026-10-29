@@ -294,6 +294,21 @@ Two members are duplicates **only when their normalized NUS IDs are equal**. Dif
 a name, phone or email. A duplicate is rejected with a message such as:
 `A member with NUS ID A0123456X already exists.`
 
+A different NUS ID sharing a normalized name, phone or email with another **active** member is
+accepted, with a `Possible duplicate(s)` advisory after the success message. Deleted members are
+excluded from this advisory, but their retained NUS IDs still cannot be reused.
+For example, in a fresh sample dataset, the second command above adds Siti under `E0123456` and reports:
+
+```text
+New member added: Siti Nur (E0123456)
+Possible duplicate(s): A0456789B. Distinct identities are retained; review these records.
+```
+
+The addition has succeeded and been saved; do not resubmit it. Both NUS IDs remain separate records
+with their own loan references. Use `member view nus/E0123456` and `member view nus/A0456789B` to review
+the possible match before issuing equipment. A shared name or contact field can be legitimate; the
+warning does not merge records. Expand **Last result → Details** to read the complete advisory.
+
 Missing, blank, malformed, repeated or unknown parameters are rejected. Failure creates no member and
 preserves the current view/selection. If saving fails, correct file access and retry the retained command.
 
@@ -583,6 +598,8 @@ loans add uuid/UUID[,UUID...] nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPEC
 All four parameters are required. Use the actual UUID from `equipment list` and the NUS ID from
 `member list`. Both identities must exist. Assignment must be on or before the computer's local date;
 expected return must be on or after assignment. Expected return may be in the future.
+In `UUID[,UUID...]`, the brackets and ellipsis describe optional additional UUIDs; do not type them.
+Enter full UUIDs separated by commas, with one `uuid/` prefix for the entire list.
 
 Example, assuming these identities exist and the assignment date is not in the future:
 
@@ -617,6 +634,35 @@ historical availability. This check applies to new assignments and does not rewr
 
 On failure, no loan is created. Availability, holder, holdings, view and selection stay unchanged.
 
+#### Worked example: assign two units together
+
+Use a disposable copy of the JAR in a separate empty writable folder, with no saved data beside it.
+Launch that copy to obtain the [fresh sample records](#sample-records-on-first-launch).
+These commands assume first launch on **29 October 2026**. On another day, replace `2026-10-29`
+throughout this example and the return example below with today's local date, and replace `2026-11-05`
+with an expected date on or after assignment. The sample speaker already has completed history relative
+to launch day; using today's assignment date avoids overlapping it.
+
+Run `equipment list` and `member view nus/A0123456X`. The camera ending in `0000` must be active,
+GOOD and AVAILABLE; the speaker ending in `0004` must be active, FAIR and AVAILABLE. Alex Tan must be
+active. Copy each **full UUID** from its equipment details, rather than the shortened table label.
+With your own data, replace both UUIDs and the member ID below with existing eligible records.
+
+Submit this as one command:
+
+```text
+loans add uuid/550e8400-e29b-41d4-a716-446655440000,550e8400-e29b-41d4-a716-446655440004 nus/A0123456X assigned/2026-10-29 expected/2026-11-05
+```
+
+The result opens Loans and reports `Assigned 2 units to Alex Tan (A0123456X) on 2026-10-29; expected
+return: 2026-11-05.`, followed by the Camera and Portable Speaker names and full UUIDs. Expand
+**Last result → Details** or use **Copy** for the full per-unit feedback. Both units become ASSIGNED;
+Alex's holdings gain both units, and each new loan records its own issue condition (GOOD and FAIR).
+Use **Reset filters** in Loans if either new row is hidden by a filter.
+
+If either unit is already assigned, deleted, unavailable or otherwise rejected, **neither assignment
+is saved**. Check both units before correcting and retrying the batch.
+
 ### Return equipment: `loans return`
 
 ```text
@@ -627,7 +673,8 @@ UUID and date are required. Equipment must exist and have open loans. Referenced
 must also exist. The return date must be **from the assignment date through the computer's local date**,
 inclusive. Same-day, early and late returns are valid; the expected return date does not limit returns.
 
-Example, for the assignment above and a computer date on or after 20 September 2026:
+Example, for the single-unit assignment dated 14 September above and a computer date on or after
+20 September 2026:
 
 ```text
 loans return uuid/550e8400-e29b-41d4-a716-446655440000 returned/2026-09-20
@@ -664,6 +711,31 @@ never attributed to a single borrower in a batch return.
 
 A rejected return leaves the loan, return date, holder and availability unchanged. Completed loans
 appear in the Loans tab and in member and equipment details.
+
+#### Worked example: return both units with one observed condition
+
+Continue immediately after the two-unit assignment above in the same disposable dataset. Both units
+must still have those open loans. Suppose you inspect **both** and observe DAMAGED condition.
+For this same-day demonstration, submit:
+
+```text
+loans return uuid/550e8400-e29b-41d4-a716-446655440000,550e8400-e29b-41d4-a716-446655440004 returned/2026-10-29 condition/DAMAGED
+```
+
+Use the same full UUIDs and date substitutions as in the assignment example. On a later actual return,
+use that actual date, which must be no earlier than assignment and no later than today.
+The single `condition/DAMAGED` applies to **both units**. Use separate return commands if their
+observed conditions differ; the brackets/ellipsis in the syntax are not literal input.
+
+Feedback begins `Returned 2 units on 2026-10-29.`. **Last result → Details** and **Copy** include each
+unit's name, full UUID and borrower. Both loans move from current to completed loans, Alex no longer
+holds these two units, and both units become DAMAGED and UNAVAILABLE. Alex's other loans remain open.
+In Loans, use **Reset filters** to reveal all rows, then inspect completed loans or open each unit's
+details and loan history. The new completed records retain GOOD/FAIR issue conditions and show the
+recorded DAMAGED return condition and actual return date; earlier completed history is retained.
+
+If either unit has no open loan or any return validation fails, **neither loan closes and neither
+condition changes**. A rejected unit prevents the whole batch from succeeding.
 
 ### Undo a record change: `undo`
 
