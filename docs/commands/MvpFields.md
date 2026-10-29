@@ -36,7 +36,8 @@ An absent required field has no position in the input. Missing fields are report
 have been validated, using lexicographic prefix order as the deterministic tie-breaker. List commands accept
 whitespace only. Model/business checks run after parsing and before any records can be committed.
 
-Prefixes and command words remain lowercase and case-sensitive, and parameter order is free. The reserved
+Command words ignore case; `members` and `loan` alias `member` and `loans`.
+Prefixes remain lowercase and case-sensitive, and parameter order is free. The reserved
 start/whitespace-delimited `[A-Za-z][A-Za-z0-9_-]*/` marker grammar is unchanged. Unknown markers are rejected
 even inside text values. No quoting or escaping is introduced; embedded slashes and ordinary URLs remain text.
 

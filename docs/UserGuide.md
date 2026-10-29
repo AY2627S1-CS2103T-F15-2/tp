@@ -92,7 +92,11 @@ The [shared field rules](#shared-field-rules) explain accepted values when you n
 
 ## Command format and feedback
 
-Commands and prefixes are **lowercase and case-sensitive**. Use `member add`, not `Member Add`.
+Command words are **case-insensitive**: `Member Add` and `member add` are equivalent.
+`member`/`members` and `loan`/`loans` are explicit family aliases. `equipment` is uncountable;
+`equipments`, `lists` and `returns` are not aliases. Field prefixes remain lowercase and case-sensitive.
+Parameter values retain their existing validation and case rules; names and notes preserve their case.
+Help, usage messages, Tab and Ctrl+Space suggestions use the canonical `member`, `equipment` and `loans` spellings.
 
 - Replace uppercase placeholders with your values: replace `NUS_ID` with `A0123456X`, for example.
 - Square brackets mean an optional parameter; do not type them. Optional parameters are marked in each command's syntax.
@@ -498,6 +502,10 @@ member and dates, and the request succeeds or fails as a whole. The condition of
 recorded in its loan history. Assigning an already assigned item is rejected, even if the new loan names
 the same member. Reaching the expected return date does not automatically return an item.
 
+Historical issue conditions are retained observations, including DAMAGED or UNDER_REPAIR if an older
+record contains them. They do not change the item's current condition or authorize a new assignment.
+Missing/null historical conditions remain "Not recorded"; Laplace never guesses an observation.
+
 A new assignment must be on or after that unit's latest recorded actual return date. Same-day handoffs
 are allowed. A conflicting UUID rejects the entire batch; expected-return dates do not determine
 historical availability. This check applies to new assignments and does not rewrite retained history.
@@ -775,7 +783,7 @@ Value matching treats repeated spaces and Unicode whitespace within a value as o
 For example, `member edit name/Alex  T` can complete the stored name `Alex Tan`. The replacement keeps
 the stored spelling, and all text and separators outside that value remain unchanged.
 
-Command words and field prefixes are case-sensitive. Field suggestions depend on the command and omit
+Command words ignore case; field prefixes remain case-sensitive. Field suggestions depend on the command and omit
 non-repeatable prefixes already present. All seventeen member, equipment and loan commands plus `help`,
 `exit`, `mode dark` and `mode light` have command completion. Search supports `q/`, the applicable filters, sorting and ordering;
 finite options such as `status/de` complete to `status/DELETED`. Query text can reuse searchable stored
@@ -984,6 +992,10 @@ case-insensitive spellings and surrounding whitespace; saves use GOOD, FAIR, DAM
 Blank/unknown values are rejected, while missing/null historical loan conditions remain unknown. Do not open lifecycle-aware data in an older release
 that may discard deletion state.
 
+JSON property names must be unique within each object. Repeated collection or record fields are
+rejected rather than choosing one value and losing the other. If loading reports a duplicate field,
+close Laplace without entering commands, preserve the original file and repair a separate copy.
+
 The saved root still requires a `persons` array for legacy compatibility. For a dataset with no legacy
 contacts, keep `"persons": []`; omitting it or writing null is rejected with `Persons list is missing.`
 Populated legacy arrays are retained and saved even though their old commands are unavailable. Do not
@@ -991,7 +1003,9 @@ remove an existing array during recovery. Current saves always include it.
 
 Back up the data file while Laplace is closed. Do not edit it while the app is running or run multiple
 instances against the same file. Manual data editing is not an MVP operation. If startup or a view
-reports invalid/inconsistent data, preserve the original file and report the message; do not overwrite
+reports invalid/inconsistent data, the loading diagnostic identifies the collection, zero-based record
+position and available NUS ID/UUID for conversion/reference errors. Preserve the original file and report
+the message; do not overwrite
 it with an empty file or assume that an incomplete view is safe to use.
 
 If an existing data file cannot be loaded, Laplace shows recovery guidance and its path, then stops
