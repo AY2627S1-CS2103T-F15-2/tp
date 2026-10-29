@@ -4,7 +4,7 @@
 undo
 ```
 
-This lowercase, no-argument command restores the state before the most recent successful record mutation.
+This case-insensitive, no-argument command restores the state before the most recent successful record mutation.
 Whitespace is accepted; extra text, prefixes, counts and wrong-case command words are rejected.
 
 Success reports `Undid: ACTION.`, such as `Undid: equipment add.`. No available step reports

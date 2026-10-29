@@ -1,8 +1,13 @@
 package seedu.address.storage;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
 import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
@@ -17,6 +22,14 @@ import seedu.address.testutil.TypicalPersons;
 /** Real domain data shared by the root persistence tests. */
 final class RootPersistenceTestData {
     private RootPersistenceTestData() {}
+
+    /**
+     * Returns a fresh mutable JSON snapshot containing every collection and both loan lifecycle states.
+     */
+    static ObjectNode jsonSnapshot() throws IOException {
+        return (ObjectNode) new ObjectMapper().readTree(JsonUtil.toJsonString(
+                new JsonSerializableAddressBook(fullAddressBook())));
+    }
 
     static AddressBook fullAddressBook() {
         AddressBook book = new AddressBook();
