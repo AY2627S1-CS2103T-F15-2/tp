@@ -13,7 +13,7 @@ or rewritten merely by loading the file.
 | Notes | Optional, including explicit empty `notes/`; at most 300 printable Unicode characters. Line breaks become spaces through both full-command parsing and pasted command input. |
 | Equipment count | Optional `count/`, default 1. ASCII digits representing an integer from 1 to 100; leading zeros accepted. Blank, signed, fractional, out-of-range and repeated values are rejected. |
 | NUS ID | One ASCII letter, seven digits and an optional final ASCII letter. Stored uppercase; exact normalized lookup. |
-| Equipment UUID | Exactly 8-4-4-4-12 hexadecimal characters with hyphens. Case-insensitive input; lowercase output. Abbreviated Java UUID forms are rejected. |
+| Equipment UUID | Exactly 8-4-4-4-12 hexadecimal characters with hyphens. Case-insensitive input; lowercase output. Abbreviated Java UUID forms are rejected for `uuid/`. Tab completion supplies full UUIDs; compact table labels are not command references. |
 | Condition | Exactly `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`, ignoring case. Space/hyphen aliases are rejected. |
 | Date | Exactly `YYYY-MM-DD`, a real Gregorian date with year 0001-9999. Assignment/return cannot be after the local date; expected return is at least assignment and may be in the future. |
 

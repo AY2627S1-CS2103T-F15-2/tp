@@ -550,6 +550,26 @@ summaries preserve individual equipment identities and do not introduce a stored
 
 <!-- Nguyen Anh Duy used OpenAI Codex to assist with this section and its two PlantUML diagrams. -->
 
+### Command navigation to equipment groups
+
+`EquipmentViewCommandParser` accepts either `uuid/UUID` or the pair `category/CATEGORY name/NAME`.
+The shared argument parser rejects duplicate/unknown markers and validates supplied values in input
+order. Incomplete group forms and mixed UUID/group forms are rejected. Full UUID syntax stays unchanged.
+Tab completion supplies full unit UUIDs; compact table labels have no command syntax.
+
+`EquipmentBrowseCommand` resolves an exact normalized `InventoryGroups.Key` against all retained units
+at execution time, including deleted records. It returns `DisplayRequest.equipmentGroup(key)` without
+choosing a physical unit, even when several units share the same category and name. Missing groups
+throw `CommandException` before navigation. Exact unit viewing remains in `EquipmentViewCommand(UUID)`.
+Both commands are read-only, preserving data, UUIDs, loan references, persistence and undo/redo history.
+
+<puml src="diagrams/EquipmentBrowseSequence.puml" alt="Read-only equipment group lookup followed by typed group navigation" />
+
+`MainWindow` consumes the existing group/unit requests. Plain requests retain directory criteria.
+Group entry starts with matching units and no selected unit, and resets clicked table sort to query
+order. Unit entry preserves table sort and reveals a target outside the filter using Show all units.
+A renamed group can disappear, while full UUID references remain stable.
+
 ### Identity-based deletion
 
 The #86 leaf parsers require one normalized NUS ID or UUID and construct commands that resolve the
@@ -926,7 +946,7 @@ Priority expresses product importance, not implementation status. **MVP** denote
 | US14 | `* * *` | MVP | CCA EXCO member | add one equipment item with an automatically generated unique UUID | track each newly acquired physical unit separately. |
 | US15 | `*` | Implemented | CCA EXCO member receiving a batch | add several units of the same equipment type in one operation | record a delivery without repeating the same entry process. |
 | US16 | `* * *` | MVP | CCA EXCO member | list all active equipment and its availability | review the current inventory at a glance. |
-| US17 | `* * *` | MVP | CCA EXCO member | view one equipment item's full details | verify its identity, condition, and recorded information. |
+| US17 | `* * *` | Implemented | CCA EXCO member | open an equipment group by category/name and view a unit by full UUID using Tab completion | verify its identity, condition, and recorded information. |
 | US18 | `* *` | Implemented | CCA EXCO member | edit an equipment record while retaining its UUID | keep item information accurate without breaking loan references. |
 | US19 | `* * *` | MVP | CCA EXCO member | delete an equipment record created in error when it is not on loan | remove unwanted entries without losing track of an issued item. |
 | US20 | `* *` | Implemented | CCA EXCO member | restore a retained deleted equipment record without a time limit | recover from an accidental deletion. |
@@ -1017,6 +1037,8 @@ Matching descriptions are permitted: each physical unit receives its own UUID. A
 
 1. The EXCO member requests the intended member's details by NUS ID and the equipment inventory.
 2. Laplace shows the member's details and current holdings, and the equipment with its availability and UUIDs.
+   The EXCO member can search, open a category/name group by command, and open an individual unit using
+   its full UUID using Tab completion before preparing the assignment.
 3. The EXCO member requests assignment of one item to that member, supplying the assignment and expected return dates.
 4. Laplace validates the references, availability, and dates, then saves an open loan and shows the updated holder and holdings.
 
@@ -1640,6 +1662,23 @@ Use temporary data. Do not test against a real inventory.
    suggestions. Press Enter separately to invoke history. Both no-argument utilities must have
    command-name highlighting in previews.
 
+### Command-only equipment browsing
+
+Use disposable records or the fresh bundled samples.
+
+1. Search for an available equipment group. Run `equipment view category/CATEGORY name/NAME` with its
+   displayed fields. Expect the matching unit table without an implicit unit selection, including when
+   several units share both category and name.
+2. Type `equipment view uuid/` followed by the beginning of a displayed unit's UUID. Press Tab to cycle
+   through full UUIDs, then Enter separately. Expect the intended unit's details and full UUID.
+3. Assign that UUID with `loans add`, view it again, return it with `loans return`, and view it again.
+   Expect the same UUID, correct holder/dates, then AVAILABLE (for GOOD/FAIR), and retained history.
+   Filters and sorting remain active. Full UUIDs can be completed with Tab in loan commands too.
+4. Filter out this unit and repeat its full UUID view command. Expect its exact details with Show all
+   units enabled and unchanged search criteria. Missing groups and incomplete/mixed forms preserve the
+   previous view, selection, data and history. The removed `short/` parameter must be rejected as unknown.
+5. Edit the last unit's group name/category and retry the old group pair. Expect no matching group;
+   its full UUID still resolves. Help, Tab and Ctrl+Space offer category/, name/ and uuid/.
 
 ### Command-word aliases and casing
 

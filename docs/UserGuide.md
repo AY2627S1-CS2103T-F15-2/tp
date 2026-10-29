@@ -158,8 +158,8 @@ member/equipment links open the exact record.
 ### Browse equipment groups and units
 
 The left equipment directory groups units with the same normalized category and name, including units
-registered in different batches. Open a group with a click, **Enter** or **Space**, then select a row in
-its physical-unit table. Each unit still has its own UUID, condition, notes, holder and lifecycle state.
+registered in different batches. Open a group with `equipment view category/CATEGORY name/NAME`,
+a click, **Enter** or **Space**, then select a row in its physical-unit table. Each unit still has its own UUID, condition, notes, holder and lifecycle state.
 
 Group counts distinguish **matching** units from **retained** units. Availability counts exclude deleted
 units. **Show all units** reveals group members outside the active search, including deleted records.
@@ -171,7 +171,8 @@ Unchecking it narrows the table again while retaining the selected unit's detail
 when that unit is outside the table filter.
 
 Short table identifiers show the first eight and last four UUID characters, such as
-`550e8400…0000`. They are display labels only: hover for the full UUID, or copy it from unit details.
+`550e8400…0000`. These are display labels only. Use Tab completion in `equipment view uuid/` to
+select a full UUID, or hover for the full UUID and copy it from unit details.
 
 ### Prepare commands from details
 
@@ -302,7 +303,7 @@ Use the member, equipment and loan commands documented below, or `undo`, `redo`,
 | Member name `name/` | 1–100 Unicode code points after whitespace and NFC normalization. Unicode letters with combining marks, spaces, straight (`'`) or curly (`’`) apostrophes, hyphens and periods; must contain at least one letter. Combining marks must follow a letter or its marks. Examples: `அருண்`, `Anne O’Connor`. |
 | Phone `phone/` | Optional leading `+`, then 8–15 digits. Spaces and hyphens are removed: `+65 9123-4567` becomes `+6591234567`. |
 | Email `email/` | 3–254 ASCII characters, one `@`, no spaces and at least one domain dot. Local-part characters: letters, digits, `.`, `_`, `%`, `+`, `-`. Domain labels contain letters/digits/hyphens and cannot begin/end with a hyphen. ASCII validation occurs before conversion to lowercase; non-ASCII lookalikes such as `K` are rejected. Stored lowercase. |
-| Equipment UUID `uuid/` | Full `8-4-4-4-12` hexadecimal form, such as `550e8400-e29b-41d4-a716-446655440000`. Case-insensitive input; lowercase display. Shortened UUIDs are rejected. |
+| Equipment UUID `uuid/` | Full `8-4-4-4-12` hexadecimal form, such as `550e8400-e29b-41d4-a716-446655440000`. Case-insensitive input; lowercase display. Shortened UUID values and compact display labels are rejected. Use Tab to complete a full UUID. |
 | Equipment name `name/` | 1–100 printable Unicode characters after whitespace normalization. Punctuation and model numbers are allowed; control characters are rejected. |
 | Category `category/` | 1–50 printable Unicode characters after normalization. Free text; control characters are rejected. |
 | Condition `condition/` | Exactly `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`, ignoring case. Stored uppercase. Use the underscore in `UNDER_REPAIR`. |
@@ -575,8 +576,30 @@ equipment view uuid/UUID
 ```
 
 Example: `equipment view uuid/550e8400-e29b-41d4-a716-446655440000`.
-Uppercase hexadecimal letters identify the same UUID. You must use the complete UUID; shortened forms
-and partial matching are not supported.
+Uppercase hexadecimal letters identify the same UUID. The `uuid/` form requires the complete UUID.
+To open a group from search results, use:
+
+```text
+equipment view category/CATEGORY name/NAME
+```
+
+For example, after `equipment search q/camera`, use
+`equipment view category/Photography name/Camera` to open that exact category/name group.
+Use the full displayed category and name, without adding quotation marks. Matching ignores case and
+normalizes whitespace, just like grouping; it is not a substring search. Both fields are required.
+The group table initially shows matching units without selecting one. A group outside the active
+filter can still open; **Show all units** reveals its retained units. No group is selected arbitrarily.
+
+To open a physical unit, type `equipment view uuid/` and the beginning of its UUID, then press Tab.
+Cycle through matching full UUIDs and press Enter separately to open the intended unit. The short labels
+in unit tables are for display only. Missing groups, malformed UUIDs, duplicate parameters and mixed
+UUID/group forms are errors; failure preserves the previous view and selection.
+
+Group references resolve against current data each time. Filters, sorting and row positions do not
+change their meaning. Renaming the last unit out of a group makes the old pair invalid, while each
+physical unit retains its UUID. Group navigation keeps search criteria and opens its table in query
+order without selecting an arbitrary unit. Neither view form saves data or changes undo/redo history.
+Use full UUIDs consistently for viewing, loan, edit, delete and restore commands.
 
 Details show the full UUID, name, category, condition, notes, lifecycle status and derived availability. An open loan also
 shows the holder's NUS ID, name, phone and email, plus assignment and expected return dates. The matching
@@ -1127,6 +1150,7 @@ authentication and concurrent multi-user operation are not provided.
 | [List equipment](#list-equipment-equipment-list) | `equipment list` |
 | [Search, filter and sort equipment](commands/search-and-planning.md#equipment) | `equipment search [q/TEXT] [category/TEXT] [condition/CONDITION] [availability/AVAILABILITY] [status/STATUS] [sort/FIELD] [order/ORDER]` |
 | [View equipment and current holder](#view-equipment-and-its-holder-equipment-view) | `equipment view uuid/UUID` |
+| [Open an equipment group](#view-equipment-and-its-holder-equipment-view) | `equipment view category/CATEGORY name/NAME` |
 | [Edit equipment](#edit-equipment-equipment-edit) | `equipment edit uuid/UUID [name/NAME] [category/CATEGORY] [condition/CONDITION] [notes/NOTES]` |
 | [Restore equipment](#restore-equipment-equipment-restore) | `equipment restore uuid/UUID` |
 | [Delete equipment](#delete-equipment-equipment-delete) | `equipment delete uuid/UUID` |
