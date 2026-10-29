@@ -135,7 +135,11 @@ preserved together; equipment/member/loan schemas are unchanged.
 
 Tests exercise actual FXML/CSS on the shared JavaFX thread, command/storage routing, identity preservation,
 filter scope, date boundaries, clipboard text, theme changes and preference compatibility. UI snapshots
-are written under `build/reports/laplace` for visual review. Command text and identifiers use bundled
+are written under `build/reports/laplace` for visual review. Shell tests also render the logical scene a
+maximized window keeps at 1920×1080 (100%/125% scaling) and 1280×720 (150%), after the taskbar and title
+bar. Controls outside scrolling content must stay whole and inside the scene; each scrolling region must
+keep a readable viewport. Both windows are limited to their screen's visual bounds, so the end of a
+scrolling region never lies below the screen. Command text and identifiers use bundled
 IBM Plex Mono. `LaplaceFonts` registers those faces once and applies interface fonts by full face name:
 Helvetica/Helvetica Bold, then Arial/Arial Bold or Segoe UI/Segoe UI Bold when unavailable, with a system
 fallback. This bypasses JavaFX family/weight substitution that can clip bold interface glyphs.
@@ -1337,6 +1341,8 @@ for both detail timelines and loan-directory sections, including panels refreshe
    in each appearance. Exit normally and relaunch; the selected mode persists. `mode sepia` is rejected.
 8. Review at 1920×1080 with 100%/125% scaling and 1280×720 with 150% scaling on supported systems.
    Check wrapping, scrolling, visible focus and contrast. Logical-size snapshots alone do not verify OS scaling.
+   At 1280×720 with 150% scaling, open Help and scroll to the end; the last example's Use command button
+   must be visible without moving the window.
 
 ### Retained inventory totals during filtering
 
