@@ -201,6 +201,12 @@
         "redo-an-undone-change-redo": "Redo an undone change: redo",
         "a-complete-issue-and-return-workflow": "A complete issue-and-return workflow",
         "saving-file-access-and-recovery": "Saving, file access and recovery",
+        "locate-your-saved-data": "Locate your saved data",
+        "make-a-backup": "Make a backup",
+        "restore-a-known-good-backup": "Restore a known-good backup",
+        "move-to-another-computer": "Move to another computer",
+        "handle-a-startup-failure": "Handle a startup failure",
+        "advanced-manual-editing-and-compatibility": "Advanced: manual editing and compatibility",
         "faq": "FAQ",
         "mvp-limits": "MVP limits",
         "command-summary": "Command summary"
