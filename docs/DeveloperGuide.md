@@ -14,6 +14,7 @@
 ## **Acknowledgements**
 
 * Laplace evolves the course-provided [AddressBook-Level3 starter](https://github.com/NUS-CS2103-AY2627-S1/tp).
+* Universal macOS packaging follows Apple's [Mach-O fat binary format](https://github.com/apple-oss-distributions/cctools/blob/main/include/mach-o/fat.h); the wrapper preserves the upstream JavaFX library slices.
 * Command text uses [IBM Plex Mono](https://github.com/IBM/plex) 2.004, copyright IBM Corp., under the SIL Open Font License. The faces and license are in `src/main/resources/fonts`.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -1257,15 +1258,34 @@ Samples are never appended to an existing dataset.
        Expected: Missing settings continue to use defaults. Valid saved geometry and dark mode
        still restore when present.
 
-**Architecture-specific packaging:** Download `Laplace.jar` for Windows, Linux or Intel macOS, or
-`Laplace-mac-arm64.jar` for Apple Silicon macOS. Substitute the selected filename in launch commands.
-Both are self-contained; macOS native libraries cannot be combined by ordinary JAR merging because
-their resource names are identical. Build with `./gradlew shadowJar -PjavafxMacPlatform=mac` or
-`./gradlew shadowJar -PjavafxMacPlatform=mac-aarch64`, respectively. The default follows the build
-machine's processor architecture. JavaFX versions and application behavior are identical in both builds.
-The packaged keyboard probe uses only the JAR's production classes and native libraries. CI uses a
-plain JDK, so neither matching test dependencies nor a JavaFX-enabled JDK can mask missing native libraries.
-Run the probe on the target architecture and smoke-test the selected JAR before publication.
+### Single-JAR distribution
+
+Build with `./gradlew shadowJar verifyUniversalJar`. Publish only `build/libs/Laplace.jar`;
+the same file is used on Windows (including a graphical WSL environment), Linux, Intel macOS and
+Apple Silicon macOS. Java 25 for the user's processor remains the only required installation.
+No architecture property or alternate JAR filename is needed.
+
+The existing JavaFX 17.0.7 Windows and Linux libraries remain bundled. The macOS libraries have
+identical resource names across architectures, so ordinary JAR merging would discard one copy.
+`gradle/universal-javafx.gradle` instead wraps the original Intel and ARM libraries in a Mach-O
+universal binary, with each original slice preserved byte-for-byte and aligned to 16 KiB.
+macOS chooses the matching slice. Header generation uses Java APIs available on every build OS;
+Apple's `lipo` tool is not a build dependency. No runtime extraction or launcher code was added.
+`verifyUniversalJar` checks both slices against the original dependencies, native resource uniqueness,
+Windows/Linux native presence and the 100 MB size limit. This packaging follows
+[Constraint-Single-File](https://nus-cs2103-ay2627-s1.github.io/website/admin/tp-constraints.html#constraint-single-file)
+without relying on an exception; no applicable exception was found in the issue discussion or repository.
+
+The CI packaging job builds and uploads one candidate JAR. All four OS/architecture jobs download that
+same artifact and use `-PpackagedJar=build/candidate/Laplace.jar` for structural verification and the
+packaged keyboard probe. The probe uses only that JAR's production classes and native libraries;
+plain JDKs and `--limit-modules` prevent installed JavaFX from masking a missing native library.
+A Linux graphical session is provided by Xvfb. CI logs identify the environment and the JAR SHA-256.
+
+Before publication, inspect the four jobs and repeat the initial-launch/normal-exit checks above with
+the same candidate in separate empty writable folders. Record Java version, OS, processor, SHA-256,
+launch result and persistence/restart result. WSL needs its own graphical smoke test. A configured
+CI matrix is not evidence of completed platform runs; outstanding environments must remain explicit.
 
 ### Unicode command separators
 
