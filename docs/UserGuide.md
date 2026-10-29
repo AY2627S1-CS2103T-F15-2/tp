@@ -219,6 +219,79 @@ This command takes no parameters. For example, `member list nus/A0123456X` is re
 `member view nus/A0123456X` for an exact lookup. A syntax failure leaves the current screen unchanged.
 Inconsistent stored data produces an error rather than a partial list.
 
+### Search, filter and sort members: `member search`
+
+```text
+member search [q/TEXT] [holding/HOLDING] [status/STATUS] [sort/FIELD] [order/ORDER]
+```
+
+Find members by part of their identity or contact details, by whether they hold equipment, or by
+lifecycle status. Every parameter is optional. Bare `member search` shows **active members** in the
+default name order. Each new search replaces the previous search; omitted parameters use the defaults below.
+
+| Parameter | Accepted values | Default when omitted |
+| --- | --- | --- |
+| `q/TEXT` | A substring of a member's name, NUS ID, phone or email. Partial IDs are allowed. | Match any text. |
+| `holding/HOLDING` | `any`: any holding count; `yes`: at least one current open loan; `no`: no current open loans. Completed loans do not count. | `any` |
+| `status/STATUS` | `active`: exclude deleted members; `deleted`: retained deleted members only; `all`: both states. | `active` |
+| `sort/FIELD` | `default` or `name`: name then NUS ID; `id`: NUS ID; `held`: number of currently held units. | `default` |
+| `order/ORDER` | `asc`: ascending; `desc`: descending. | `asc` |
+
+Matching ignores case, trims surrounding whitespace and treats runs of whitespace as one space.
+For example, `q/ALEX TAN` matches `Alex Tan`. The complete query text must occur within one searchable
+field; it does not search the names of equipment the member holds. Greek `Σ`, `σ` and `ς` are
+case-equivalent. Search does not change stored spelling, correct typos or interpret regular expressions.
+All supplied filters must match: `q/alex holding/yes` finds members whose name, NUS ID, phone or email
+contains `alex` **and** who currently hold equipment. Filter values such as `YES`, `Deleted` and `DESC`
+also ignore case; field prefixes such as `holding/` must remain lowercase.
+
+Name sorting ignores case and normalizes whitespace. For equal IDs or held counts, ties use name then
+NUS ID. `order/desc` reverses the complete order, including tie-breakers. Members with the same name
+and different NUS IDs remain separate records.
+
+Examples:
+
+```text
+member search holding/yes sort/held order/desc
+member search q/alex holding/yes
+member search q/example.com holding/no sort/id
+member search q/jamie status/deleted
+```
+
+The first example finds **members currently holding equipment, most units first**. In fresh sample
+data, Alex Tan holds two units and Priya Nair holds one, so Alex appears first. The second narrows
+holders to those matching `alex`; the third finds members with `example.com` in a searchable field
+who hold nothing. The last finds a retained deleted member matching `jamie`, if one exists.
+
+Success opens the filtered member directory and reports `Found N members.` **Displayed** counts the
+matches; **Active members** and **Deleted members** count the whole retained directory. A zero-result
+search is successful and leaves the records intact. Use `member list` or **Reset search** to show
+active and deleted members together and restore the default sort. This differs from bare
+`member search`, which excludes deleted members.
+
+#### Search rules, navigation and reset
+
+These rules apply to both `member search` and `equipment search`:
+
+- Parameters can appear in any order. Supplied values cannot be blank: omit `q/` to remove a text
+  restriction; bare `q/` is an error. Repeated or unknown parameters, extra text before the first
+  parameter, invalid choices and sort fields for the other directory are rejected with usage guidance.
+  For example, `member search sort/condition` and `equipment search holding/yes` are invalid.
+- Whitespace-delimited tokens such as `name/` are reserved parameter markers even inside query text.
+  There is no quoting or escaping mechanism. Ordinary URLs and embedded slashes remain text, as in
+  the [advanced input reference](#advanced-input-reference).
+- An empty result shows a reset hint when the directory contains retained records. It does not mean
+  those records were deleted. Errors retain the previous criteria, view, selection and input for correction.
+- Opening details, using **Back to results**, or switching tabs retains the search. Current filters and
+  sorting are shown with the results. Record and loan changes re-evaluate the results: a member may
+  leave `holding/yes` after returning their last item, for example.
+- **Reset search**, `member list` and `equipment list` clear the corresponding directory's criteria
+  and sorting, including the active-only status restriction. A successful `equipment add` with
+  `count/2` or greater also resets equipment criteria; adding one unit retains them. Deleting a result
+  retains the query even when the last match disappears.
+- Searches do not save records or create undo steps. Criteria last for the current session and are
+  cleared when the application restarts.
+
 ### View a member and their equipment: `member view`
 
 ```text
@@ -372,6 +445,84 @@ No parameters are accepted. Use `equipment view uuid/UUID` to look up one item. 
 the current view. Inconsistent loan references produce an error rather than a partial or misleading
 availability list.
 
+### Search, filter and sort equipment: `equipment search`
+
+```text
+equipment search [q/TEXT] [category/TEXT] [condition/CONDITION] [availability/AVAILABILITY] [status/STATUS] [sort/FIELD] [order/ORDER]
+```
+
+Find physical units by their details, condition, derived availability or lifecycle status. Every
+parameter is optional. Bare `equipment search` shows **active units**, sorted by category, name and
+full UUID. Each new search replaces the previous criteria; omitted parameters use the defaults below.
+
+| Parameter | Accepted values | Default when omitted |
+| --- | --- | --- |
+| `q/TEXT` | A substring of a unit's full UUID, name, category or notes. Partial UUIDs are allowed here. | Match any text. |
+| `category/TEXT` | A substring of the category, such as `photo` for `Photography`. | Any category. |
+| `condition/CONDITION` | Exactly `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`. Use the underscore, not a space or hyphen. | Any condition. |
+| `availability/AVAILABILITY` | Exactly `AVAILABLE`, `ASSIGNED` or `UNAVAILABLE`; see [Availability](#availability). | Any availability. |
+| `status/STATUS` | `active`: exclude deleted units; `deleted`: retained deleted units only; `all`: both states. | `active` |
+| `sort/FIELD` | `default` or `category`, `name`, `id` (full UUID), `condition` or `availability`. | `default` |
+| `order/ORDER` | `asc`: ascending; `desc`: descending. | `asc` |
+
+Both `q/` and `category/` ignore case and normalize whitespace as described for
+[member search](#search-filter-and-sort-members-member-search). The complete query text must occur
+within one searchable field. A text match does not search the current holder's name or contacts.
+Condition, availability, status, sort and order values ignore case but must be complete accepted values.
+All supplied filters must match; for example, a category match does not override an availability restriction.
+The [shared search rules](#search-rules-navigation-and-reset) also cover errors, navigation and reset.
+
+Default/category sorting ignores case and normalizes whitespace, then orders by category, name and
+full UUID. `sort/name`, `sort/id`, `sort/condition` and `sort/availability` use that field first, followed
+by category, name and full UUID to break ties. In ascending order, conditions are `DAMAGED`, `FAIR`,
+`GOOD`, `UNDER_REPAIR`; availability is `ASSIGNED`, `AVAILABLE`, `UNAVAILABLE`.
+`order/desc` reverses the entire order, including tie-breakers.
+
+Examples:
+
+```text
+equipment search category/photo availability/available sort/name
+equipment search q/camera category/photo availability/available
+equipment search condition/under_repair sort/name
+equipment search status/deleted
+equipment search status/all sort/id order/desc
+```
+
+The first example finds **available equipment in a category**, with names in ascending order. In
+fresh sample data it finds the available Camera in Photography; the assigned Camera and damaged
+Tripod do not match. The second additionally requires `camera` in the UUID, name, category or notes.
+The third finds active units under repair. The last two find retained deleted units, then all retained
+units in descending UUID order. Your results depend on the current records and loans.
+
+Deleted units have derived availability `UNAVAILABLE`. Consequently,
+`equipment search status/deleted availability/available` succeeds with zero results. Use
+`equipment list` or **Reset search** to clear filters and sorting and include both lifecycle states.
+A partial UUID in `q/` is only a search term: copy the **full UUID** before using an exact unit command
+such as `equipment view uuid/UUID`.
+
+#### Filtered results and inventory totals
+
+Success reports `Found N equipment items.`, where `N` counts matching **physical units**, not group
+rows. The left directory groups matching units by normalized category and name. Its heading shows
+groups, matching units and all retained units. Within a group, matching units follow the search sort;
+groups appear in the order of their first matching unit. Identical descriptions still represent
+different UUIDs. Open a group to inspect individual units; see [equipment groups and units](#browse-equipment-groups-and-units).
+
+Counts refer to different scopes:
+
+| Count or display | What it includes |
+| --- | --- |
+| **Displayed**, matching-unit counts and a group's **In results** counts | Units matching every current filter. Availability counts within these results count active units; deleted units are counted separately. |
+| **Total** and retained-unit counts | Every retained physical unit, including deleted units, regardless of the search. A group's retained count covers all its units. |
+| Overall **Available**, **Assigned** and **Unavailable** totals | Active units across the whole inventory, regardless of the search. Deleted units contribute to none of these three totals. |
+| **All retained groups** on the right | Every inventory group, including groups containing only deleted units, regardless of the search. A deleted-only group has zero active availability counts and a separate deleted count. |
+
+For example, `availability/available` can display one camera while the overall summary still includes
+an assigned camera and an unavailable tripod. Zero matching units does not empty the inventory totals.
+Use **Show all units** inside a group to inspect retained units outside the search, including deleted
+ones; this does not clear the directory's query. Loan and condition changes refresh availability and
+matching results automatically.
+
 ### View equipment and its holder: `equipment view`
 
 ```text
@@ -475,11 +626,9 @@ history. A restored DAMAGED or UNDER_REPAIR unit remains UNAVAILABLE; GOOD/FAIR 
 Success opens its details. Unknown UUIDs, already-active units, invalid syntax and save failures do not
 change records. Records permanently removed by older versions require an earlier backup to recover.
 
-Equipment search defaults to active units. Use `status/active`, `status/deleted` or `status/all` alongside
-other search filters; values are case-insensitive. Deleted units have derived UNAVAILABLE status, so
-`equipment search status/deleted availability/available` returns no matches. `equipment list` resets
-filters and includes both states. Total counts include retained units; availability counts and inventory
-availability summaries cover active units only; retained group counts include deleted units. Deleted equipment can still be opened with `equipment view uuid/UUID`.
+See [equipment search](#search-filter-and-sort-equipment-equipment-search) to combine lifecycle status
+with other filters, and [Filtered results and inventory totals](#filtered-results-and-inventory-totals)
+for how deleted units affect counts. Deleted equipment can still be opened with `equipment view uuid/UUID`.
 
 ### Open the Loans tab: `loans list`
 
@@ -1215,13 +1364,13 @@ authentication and concurrent multi-user operation are not provided.
 | [Add member](#add-a-member-member-add) | `member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL` |
 | [Edit member](#edit-a-member-member-edit) | `member edit nus/NUS_ID [name/NAME] [phone/PHONE] [email/EMAIL]` |
 | [List members](#list-members-member-list) | `member list` |
-| [Search, filter and sort members](commands/search-and-planning.md#members) | `member search [q/TEXT] [holding/HOLDING] [status/STATUS] [sort/FIELD] [order/ORDER]` |
+| [Search, filter and sort members](#search-filter-and-sort-members-member-search) | `member search [q/TEXT] [holding/HOLDING] [status/STATUS] [sort/FIELD] [order/ORDER]` |
 | [View member and current holdings](#view-a-member-and-their-equipment-member-view) | `member view nus/NUS_ID` |
 | [Soft-delete member](#delete-a-member-member-delete) | `member delete nus/NUS_ID` |
 | [Restore member](#restore-a-member-member-restore) | `member restore nus/NUS_ID` |
 | [Add equipment](#add-equipment-equipment-add) | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES] [count/COUNT]` |
 | [List equipment](#list-equipment-equipment-list) | `equipment list` |
-| [Search, filter and sort equipment](commands/search-and-planning.md#equipment) | `equipment search [q/TEXT] [category/TEXT] [condition/CONDITION] [availability/AVAILABILITY] [status/STATUS] [sort/FIELD] [order/ORDER]` |
+| [Search, filter and sort equipment](#search-filter-and-sort-equipment-equipment-search) | `equipment search [q/TEXT] [category/TEXT] [condition/CONDITION] [availability/AVAILABILITY] [status/STATUS] [sort/FIELD] [order/ORDER]` |
 | [View equipment and current holder](#view-equipment-and-its-holder-equipment-view) | `equipment view uuid/UUID` |
 | [Open an equipment group](#view-equipment-and-its-holder-equipment-view) | `equipment view category/CATEGORY name/NAME` |
 | [Edit equipment](#edit-equipment-equipment-edit) | `equipment edit uuid/UUID [name/NAME] [category/CATEGORY] [condition/CONDITION] [notes/NOTES]` |
@@ -1238,7 +1387,7 @@ For `equipment add`, omitting `count/` or using `count/1` opens the new unit's d
 `count/2` or greater opens the full equipment directory and resets its filters and sorting, as described
 under [Add equipment](#add-equipment-equipment-add).
 
-See the [search, filtering, sorting, inventory planning and duplicate warning reference](commands/search-and-planning.md)
-for accepted search parameter values and planning examples.
+See [member search](#search-filter-and-sort-members-member-search) and
+[equipment search](#search-filter-and-sort-equipment-equipment-search) for accepted parameter values and defaults.
 
 Application utilities: `undo` and `redo` navigate up to ten record changes per session; `mode dark` / `mode light` change appearance; `help` (or F1) opens Help; `exit` closes Laplace.

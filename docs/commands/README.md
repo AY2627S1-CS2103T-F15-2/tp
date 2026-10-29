@@ -19,14 +19,14 @@ Member soft-delete and unlimited restoration are supported. Archival remains out
 | member delete | `member delete nus/NUS_ID` | [Delete member](member-delete.md) |
 | member view | `member view nus/NUS_ID` | [View member](member-view.md) |
 | member list | `member list` | [List members](member-list.md) |
-| member search | `member search [q/TEXT] [holding/VALUE] [status/active\|deleted\|all] [sort/FIELD] [order/VALUE]` | [Search and planning](search-and-planning.md) |
+| member search | `member search [q/TEXT] [holding/VALUE] [status/active\|deleted\|all] [sort/FIELD] [order/VALUE]` | [Search members](../UserGuide.md#search-filter-and-sort-members-member-search) |
 | equipment add | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES] [count/COUNT]` | [Add equipment](equipment-add.md) |
 | equipment edit | `equipment edit uuid/UUID [name/NAME] [category/CATEGORY] [condition/CONDITION] [notes/NOTES]` | [Equipment maintenance](equipment-maintenance.md) |
 | equipment restore | `equipment restore uuid/UUID` | [Equipment maintenance](equipment-maintenance.md) |
 | equipment delete | `equipment delete uuid/UUID` | [Delete equipment](equipment-delete.md) |
 | equipment view | `equipment view uuid/UUID` | [View equipment](equipment-view.md) |
 | equipment list | `equipment list` | [List equipment](equipment-list.md) |
-| equipment search | `equipment search [q/TEXT] [category/TEXT] [condition/VALUE] [availability/VALUE] [status/active\|deleted\|all] [sort/FIELD] [order/VALUE]` | [Search and planning](search-and-planning.md) |
+| equipment search | `equipment search [q/TEXT] [category/TEXT] [condition/VALUE] [availability/VALUE] [status/active\|deleted\|all] [sort/FIELD] [order/VALUE]` | [Search equipment](../UserGuide.md#search-filter-and-sort-equipment-equipment-search) |
 | loans add | `loans add uuid/UUID nus/NUS_ID assigned/DATE expected/DATE` | [Assign equipment](loans-add.md) |
 | loans return | `loans return uuid/UUID returned/DATE` | [Return equipment](loans-return.md) |
 | loans list | `loans list [nus/TEXT] [uuid/TEXT]` | [Open Loans tab](loans-list.md) |
