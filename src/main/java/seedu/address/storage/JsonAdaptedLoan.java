@@ -21,6 +21,7 @@ class JsonAdaptedLoan {
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Loan's %s field is missing!";
     private static final Pattern STANDARD_IDENTIFIER_PATTERN = Pattern.compile(
             "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
+    private static final Pattern DATE_PATTERN = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}");
 
     private final String equipmentUuid;
     private final String memberNusId;
@@ -103,12 +104,23 @@ class JsonAdaptedLoan {
         }
     }
 
+    /**
+     * Parses a stored Gregorian date without accepting proleptic or extended ISO years.
+     */
     private static LocalDate parseDate(String value, String field) throws IllegalValueException {
+        String message = "Loan " + field + " '" + value
+                + "' must be a valid yyyy-MM-dd date with a year from 0001 through 9999.";
+        if (!DATE_PATTERN.matcher(value).matches()) {
+            throw new IllegalValueException(message);
+        }
         try {
-            return LocalDate.parse(value);
+            LocalDate date = LocalDate.parse(value);
+            if (date.getYear() == 0) {
+                throw new IllegalValueException(message);
+            }
+            return date;
         } catch (DateTimeParseException exception) {
-            throw new IllegalValueException("Loan " + field + " '" + value
-                    + "' must be a valid ISO calendar date.", exception);
+            throw new IllegalValueException(message, exception);
         }
     }
 
@@ -117,7 +129,7 @@ class JsonAdaptedLoan {
             return null;
         }
         try {
-            return Condition.valueOf(value);
+            return Condition.fromText(value);
         } catch (IllegalArgumentException exception) {
             throw new IllegalValueException("Loan condition is invalid: " + value, exception);
         }

@@ -81,11 +81,22 @@ public class JsonAdaptedLoanTest {
     public void toModelType_malformedDatesInEveryDateField_rejects() {
         for (int index = 2; index < FIELD_NAMES.length; index++) {
             for (String date : List.of("", "2026-02-29", "2026-04-31", "06/10/2026",
-                    "2026-1-06", "2026-10-06T00:00:00", " 2026-10-06")) {
+                    "2026-1-06", "2026-10-06T00:00:00", " 2026-10-06",
+                    "0000-01-01", "-0001-01-01", "+10000-01-01")) {
                 String[] fields = validFields();
                 fields[index] = date;
                 assertThrows(IllegalValueException.class, adapter(fields)::toModelType);
             }
+        }
+    }
+
+    @Test
+    public void jsonRoundTrip_gregorianBoundaryYears_preservesValidLegacyDates() throws Exception {
+        for (String date : List.of("0001-01-01", "9999-12-31", "2000-02-29")) {
+            Loan expected = new Loan(UUID.fromString(EQUIPMENT_UUID), new NusId(MEMBER_ID),
+                    LocalDate.parse(date), LocalDate.parse(date), LocalDate.parse(date));
+            String json = JsonUtil.toJsonString(new JsonAdaptedLoan(expected));
+            assertEquals(expected, JsonUtil.fromJsonString(json, JsonAdaptedLoan.class).toModelType());
         }
     }
 

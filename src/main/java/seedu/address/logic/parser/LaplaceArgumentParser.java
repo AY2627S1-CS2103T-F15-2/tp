@@ -9,6 +9,7 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import seedu.address.commons.util.LaplaceText;
 import seedu.address.logic.parser.exceptions.ParseException;
 
 /**
@@ -71,7 +72,8 @@ public final class LaplaceArgumentParser {
             if (current == null) {
                 rejectPreamble(args.substring(0, matcher.start()));
             } else {
-                addValue(result, current, args.substring(valueStart, matcher.start()).strip(), required, validators);
+                addValue(result, current, LaplaceText.stripWhitespace(args.substring(valueStart, matcher.start())),
+                        required, validators);
             }
             current = new Prefix(matcher.group());
             if (!allowed.contains(current)) {
@@ -85,7 +87,7 @@ public final class LaplaceArgumentParser {
         if (current == null) {
             rejectPreamble(args);
         } else {
-            addValue(result, current, args.substring(valueStart).strip(), required, validators);
+            addValue(result, current, LaplaceText.stripWhitespace(args.substring(valueStart)), required, validators);
         }
         for (String token : requiredTokens) {
             Prefix prefix = new Prefix(token);
@@ -126,7 +128,7 @@ public final class LaplaceArgumentParser {
     }
 
     private static void rejectPreamble(String preamble) throws ParseException {
-        if (!preamble.isBlank()) {
+        if (!LaplaceText.stripWhitespace(preamble).isEmpty()) {
             throw new ParseException("Unexpected text before parameters.");
         }
     }

@@ -65,10 +65,13 @@ public class Email {
                         + "(?:\\." + MEMBER_DOMAIN_LABEL + ")+");
     }
 
-    /** Normalizes and validates new Laplace member input without changing legacy AB3 parsing. */
+    /**
+     * Normalizes and validates new Laplace member input without changing legacy AB3 parsing.
+     */
     public static Email forMember(String value) {
-        String normalized = LaplaceText.normalize(value).toLowerCase(Locale.ROOT);
-        return new Email(normalized, Email::isValidMemberEmail, MEMBER_MESSAGE_CONSTRAINTS);
+        String normalized = LaplaceText.normalize(value);
+        checkArgument(isValidMemberEmail(normalized), MEMBER_MESSAGE_CONSTRAINTS);
+        return new Email(normalized.toLowerCase(Locale.ROOT), Email::isValidMemberEmail, MEMBER_MESSAGE_CONSTRAINTS);
     }
 
     /** Accepts either the former stored form or the MVP form, preserving the exact saved value. */

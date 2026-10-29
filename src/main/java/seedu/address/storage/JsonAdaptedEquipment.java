@@ -127,7 +127,7 @@ class JsonAdaptedEquipment {
 
     private static Condition parseCondition(String rawCondition) throws IllegalValueException {
         try {
-            return Condition.valueOf(rawCondition);
+            return Condition.fromText(rawCondition);
         } catch (IllegalArgumentException exception) {
             throw new IllegalValueException(INVALID_CONDITION_MESSAGE, exception);
         }

@@ -7,16 +7,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import seedu.address.commons.exceptions.DataLoadingException;
-import seedu.address.commons.util.JsonUtil;
 
 /**
  * Verifies failed conversions identify recoverable records without rewriting input.
@@ -27,7 +26,7 @@ public class DataLoadingContextTest {
 
     @Test
     public void read_malformedDate_identifiesLoanAndRejectedValue() throws Exception {
-        ObjectNode json = snapshot();
+        ObjectNode json = RootPersistenceTestData.jsonSnapshot();
         ObjectNode loan = (ObjectNode) json.get("loans").get(1);
         loan.put("returnedDate", "2026-99-01");
         assertContext(json, "loans[1]", loan.get("equipmentUuid").asText(),
@@ -35,8 +34,21 @@ public class DataLoadingContextTest {
     }
 
     @Test
+    public void read_invalidGregorianYears_identifiesLoanFieldAndRejectedValue() throws Exception {
+        for (String field : List.of("assignedDate", "expectedReturnDate", "returnedDate")) {
+            for (String value : List.of("0000-01-01", "-0001-01-01", "+10000-01-01")) {
+                ObjectNode json = RootPersistenceTestData.jsonSnapshot();
+                ObjectNode loan = (ObjectNode) json.get("loans").get(1);
+                loan.put(field, value);
+                assertContext(json, "loans[1]", loan.get("equipmentUuid").asText(),
+                        loan.get("memberNusId").asText(), field, value, "0001 through 9999");
+            }
+        }
+    }
+
+    @Test
     public void read_missingReference_identifiesLoanAndMissingMember() throws Exception {
-        ObjectNode json = snapshot();
+        ObjectNode json = RootPersistenceTestData.jsonSnapshot();
         ObjectNode loan = (ObjectNode) json.get("loans").get(0);
         loan.put("memberNusId", "A0000009X");
         assertContext(json, "loans[0]", loan.get("equipmentUuid").asText(), "A0000009X",
@@ -46,7 +58,7 @@ public class DataLoadingContextTest {
     @Test
     public void read_duplicateIdentities_identifiesSecondRecord() throws Exception {
         for (String collection : new String[] {"members", "equipment"}) {
-            ObjectNode json = snapshot();
+            ObjectNode json = RootPersistenceTestData.jsonSnapshot();
             ArrayNode records = (ArrayNode) json.get(collection);
             ObjectNode duplicate = (ObjectNode) records.get(0).deepCopy();
             records.add(duplicate);
@@ -57,22 +69,14 @@ public class DataLoadingContextTest {
 
     @Test
     public void read_invalidConditionOrNullEntry_identifiesRecordBeforeConversion() throws Exception {
-        ObjectNode json = snapshot();
+        ObjectNode json = RootPersistenceTestData.jsonSnapshot();
         ObjectNode equipment = (ObjectNode) json.get("equipment").get(0);
         equipment.put("condition", "BROKEN");
         assertContext(json, "equipment[0]", equipment.get("uuid").asText(), "BROKEN", "condition");
-        json = snapshot();
+        json = RootPersistenceTestData.jsonSnapshot();
         ArrayNode loans = (ArrayNode) json.get("loans");
         loans.addNull();
         assertContext(json, "loans[2]", "identity unavailable", "null");
-    }
-
-    /**
-     * Returns a valid all-collection fixture whose reference identities are known before conversion.
-     */
-    private ObjectNode snapshot() throws Exception {
-        return (ObjectNode) new ObjectMapper().readTree(JsonUtil.toJsonString(
-                new JsonSerializableAddressBook(RootPersistenceTestData.fullAddressBook())));
     }
 
     /**

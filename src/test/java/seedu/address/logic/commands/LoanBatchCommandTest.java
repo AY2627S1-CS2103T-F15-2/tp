@@ -36,6 +36,9 @@ public class LoanBatchCommandTest {
         CommandResult result = command.execute(model);
 
         assertEquals(DisplayRequest.loans(), result.getDisplayRequest());
+        assertTrue(result.getFeedbackToUser().startsWith("Assigned 2 units to Alex Tan"));
+        assertTrue(result.getFeedbackToUser().contains("Camera (" + FIRST_UUID + ")"));
+        assertTrue(result.getFeedbackToUser().contains("Camera (" + SECOND_UUID + ")"));
         assertEquals(Condition.GOOD, model.findOpenLoan(FIRST_UUID).orElseThrow().getIssueCondition().orElseThrow());
         assertEquals(Condition.FAIR, model.findOpenLoan(SECOND_UUID).orElseThrow().getIssueCondition().orElseThrow());
         assertEquals(Availability.ASSIGNED, model.getAvailability(FIRST_UUID));
@@ -91,6 +94,20 @@ public class LoanBatchCommandTest {
     }
 
     @Test
+    public void batchReturn_mixedAssignmentDates_identifiesOffendingUnitAndKeepsWholeModel() {
+        ModelManager model = LoanCommandTestData.model();
+        model.addLoan(LoanCommandTestData.openLoan());
+        model.addLoan(new Loan(SECOND_UUID, SECOND_MEMBER.getNusId(), TODAY.minusDays(1), TODAY, null));
+        AddressBook before = new AddressBook(model.getAddressBook());
+        CommandException error = assertThrows(CommandException.class, () ->
+                new LoanReturnCommand(List.of(FIRST_UUID, SECOND_UUID), TODAY.minusDays(2),
+                        Condition.DAMAGED, CLOCK).execute(model));
+        assertEquals(String.format(LoanReturnCommand.MESSAGE_RETURN_BEFORE_ASSIGNMENT, "Camera", SECOND_UUID,
+                TODAY.minusDays(2), TODAY.minusDays(1)), error.getMessage());
+        assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
     public void batchReturn_updatesBothConditionsAndPreservesLoanHistory() throws Exception {
         ModelManager model = LoanCommandTestData.model();
         new LoanAddCommand(List.of(FIRST_UUID, SECOND_UUID), FIRST_MEMBER.getNusId(),
@@ -118,8 +135,10 @@ public class LoanBatchCommandTest {
         CommandResult result = new LoanReturnCommand(List.of(FIRST_UUID, SECOND_UUID),
                 TODAY, null, CLOCK).execute(model);
 
-        assertEquals(String.format(LoanReturnCommand.MESSAGE_BATCH_SUCCESS, 2,
-                List.of(FIRST_UUID, SECOND_UUID), TODAY), result.getFeedbackToUser());
+        assertEquals(String.format(LoanReturnCommand.MESSAGE_BATCH_SUCCESS, 2, TODAY)
+                + "\nCamera (" + FIRST_UUID + ") from Alex Tan (" + FIRST_MEMBER.getNusId() + ")"
+                + "\nCamera (" + SECOND_UUID + ") from Alex Tan (" + SECOND_MEMBER.getNusId() + ")",
+                result.getFeedbackToUser());
         assertEquals(DisplayRequest.loans(), result.getDisplayRequest());
         assertTrue(model.findOpenLoan(FIRST_UUID).isEmpty());
         assertTrue(model.findOpenLoan(SECOND_UUID).isEmpty());
