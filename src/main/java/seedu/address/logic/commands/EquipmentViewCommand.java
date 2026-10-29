@@ -21,7 +21,7 @@ import seedu.address.model.member.exceptions.MemberNotFoundException;
 public class EquipmentViewCommand extends Command {
     public static final String COMMAND_WORD = "equipment view";
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Shows a group or unit. Parameters: uuid/UUID OR short/PREFIX[-SUFFIX]\n"
+            + ": Shows a group or unit. Parameters: uuid/UUID\n"
             + "OR category/CATEGORY name/NAME\n"
             + "Example: equipment view uuid/550e8400-e29b-41d4-a716-446655440000";
     public static final String MESSAGE_NOT_FOUND = "No equipment with UUID %s exists.";

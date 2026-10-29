@@ -18,7 +18,7 @@ final class CommandCatalog {
             "member search q/TEXT holding/any status/active sort/name order/asc",
             "equipment add name/NAME category/CATEGORY condition/GOOD notes/NOTES count/1",
             "equipment edit uuid/UUID name/NAME category/CATEGORY condition/GOOD notes/NOTES",
-            "equipment view category/CATEGORY name/NAME", "equipment view short/UUID_PREFIX-SUFFIX",
+            "equipment view category/CATEGORY name/NAME",
             "equipment list", "equipment view uuid/UUID", "equipment delete uuid/UUID", "equipment restore uuid/UUID",
             "equipment search q/TEXT category/CATEGORY condition/GOOD availability/AVAILABLE"
                     + " status/active sort/name order/asc",

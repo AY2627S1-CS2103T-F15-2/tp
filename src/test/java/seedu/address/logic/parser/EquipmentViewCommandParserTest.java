@@ -44,11 +44,9 @@ public class EquipmentViewCommandParserTest {
                 "uuid/00000000-0000-0000-0000-000000000001 name/Camera",
                 "uuid/00000000-0000-0000-0000-00000000000g",
                 "category/Photo", "name/Camera", "category/ name/Camera", "category/Photo name/",
-                "short/", "short/1234567", "short/123456789", "short/gggggggg", "short/1234-678",
-                "short/12345678-123", "short/12345678-12345",
-                "short/12345678-xyz1",
-                "short/12345678 short/12345678", "short/12345678 name/Camera",
-                "short/12345678 uuid/00000000-0000-0000-0000-000000000001",
+                "short/12345678", "short/12345678-0001",
+                "uuid/00000000-0000-0000-0000-000000000001 category/Photo",
+                "uuid/00000000-0000-0000-0000-000000000001 category/Photo name/Camera",
                 "category/Photo name/Camera category/Photo", "category/Photo name/Camera extra/x")) {
             ParseException error = assertThrows(ParseException.class, () -> parser.parse(input), input);
             assertTrue(error.getMessage().contains(EquipmentViewCommand.MESSAGE_USAGE), input);

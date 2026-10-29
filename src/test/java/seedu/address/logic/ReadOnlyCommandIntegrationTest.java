@@ -53,9 +53,6 @@ public class ReadOnlyCommandIntegrationTest {
             "equipment view uuid/" + CAMERA.getUuid(), new CommandResult("Viewing equipment: Camera ("
                     + CAMERA.getUuid() + "). Availability: ASSIGNED.",
                     DisplayRequest.equipmentDetails(CAMERA.getUuid())),
-            "equipment view short/00000000-0001", new CommandResult("Viewing equipment: Camera ("
-                    + CAMERA.getUuid() + "). Availability: ASSIGNED.",
-                    DisplayRequest.equipmentDetails(CAMERA.getUuid())),
             "equipment view category/Photography name/Camera",
             new CommandResult("Viewing equipment group: \"photography\" / \"camera\".",
                     DisplayRequest.equipmentGroup(new InventoryGroups.Key(

@@ -24,10 +24,9 @@ public class CommandCatalogTest {
         String input = "equipment view ";
         Set<String> fields = CommandCatalog.complete(input).stream()
                 .map(candidate -> candidate.substring(input.length())).collect(Collectors.toSet());
-        assertEquals(Set.of("uuid/", "short/", "category/", "name/"), fields);
+        assertEquals(Set.of("uuid/", "category/", "name/"), fields);
         assertEquals(fields, Set.copyOf(new CompletionService()
                 .complete(input, input.length(), ViewTestData.model().getAddressBook()).orElseThrow().candidates()));
-        assertDoesNotThrow(() -> new AddressBookParser().parseCommand("equipment view short/abcdef12"));
         assertDoesNotThrow(() -> new AddressBookParser().parseCommand("equipment view category/Photo name/Camera"));
     }
 
