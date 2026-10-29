@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import seedu.address.commons.exceptions.DataLoadingException;
-import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
 import seedu.address.model.equipment.Condition;
 
@@ -34,7 +33,7 @@ public class JsonLoanSchemaTest {
     public void readAddressBook_misspelledLifecycleFields_rejectsWithoutRewriting() throws Exception {
         for (List<String> names : List.of(List.of("returnedDate", "returnDate"),
                 List.of("returnCondition", "returnCondtion"), List.of("issueCondition", "issueCondtion"))) {
-            ObjectNode json = validJson();
+            ObjectNode json = RootPersistenceTestData.jsonSnapshot();
             ArrayNode loans = (ArrayNode) json.get("loans");
             loans.remove(0);
             ObjectNode loan = (ObjectNode) loans.get(0);
@@ -47,7 +46,7 @@ public class JsonLoanSchemaTest {
     @Test
     public void readAddressBook_futureLoanFields_rejectsObjectsAndNullValues() throws Exception {
         for (String value : List.of("{\"observed\":true}", "null")) {
-            ObjectNode json = validJson();
+            ObjectNode json = RootPersistenceTestData.jsonSnapshot();
             ObjectNode loan = (ObjectNode) json.get("loans").get(0);
             loan.set("futureLifecycle", new ObjectMapper().readTree(value));
 
@@ -60,18 +59,18 @@ public class JsonLoanSchemaTest {
         AddressBook expected = RootPersistenceTestData.fullAddressBook();
         Path file = testFolder.resolve("legacy.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
-        for (boolean omitFields : List.of(false, true)) {
-            ObjectNode json = validJson();
+        for (boolean shouldOmitFields : List.of(false, true)) {
+            ObjectNode json = RootPersistenceTestData.jsonSnapshot();
             for (JsonNode node : json.get("loans")) {
                 ObjectNode loan = (ObjectNode) node;
                 for (String field : List.of("issueCondition", "returnCondition")) {
-                    if (omitFields) {
+                    if (shouldOmitFields) {
                         loan.remove(field);
                     } else {
                         loan.putNull(field);
                     }
                 }
-                if (omitFields && loan.get("returnedDate").isNull()) {
+                if (shouldOmitFields && loan.get("returnedDate").isNull()) {
                     loan.remove("returnedDate");
                 }
             }
@@ -85,7 +84,7 @@ public class JsonLoanSchemaTest {
 
     @Test
     public void readAndSaveAddressBook_correctLifecycleFields_preservesRecordedConditions() throws Exception {
-        ObjectNode json = validJson();
+        ObjectNode json = RootPersistenceTestData.jsonSnapshot();
         ObjectNode loan = (ObjectNode) json.get("loans").get(1);
         loan.put("issueCondition", "GOOD");
         loan.put("returnCondition", "FAIR");
@@ -105,7 +104,7 @@ public class JsonLoanSchemaTest {
 
     @Test
     public void readAddressBook_unknownFieldsOutsideLoans_preservesExistingCompatibility() throws Exception {
-        ObjectNode json = validJson();
+        ObjectNode json = RootPersistenceTestData.jsonSnapshot();
         json.putObject("futureMetadata").put("version", 2);
         ObjectNode member = (ObjectNode) json.get("members").get(0);
         member.put("futureMemberField", "value");
@@ -116,14 +115,6 @@ public class JsonLoanSchemaTest {
 
         assertEquals(RootPersistenceTestData.fullAddressBook(),
                 new AddressBook(new JsonAddressBookStorage(file).readAddressBook().orElseThrow()));
-    }
-
-    /**
-     * Returns a current JSON snapshot with optional lifecycle fields and retained history.
-     */
-    private ObjectNode validJson() throws Exception {
-        return (ObjectNode) new ObjectMapper().readTree(JsonUtil.toJsonString(
-                new JsonSerializableAddressBook(RootPersistenceTestData.fullAddressBook())));
     }
 
     /**

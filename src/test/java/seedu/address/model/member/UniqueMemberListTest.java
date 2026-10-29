@@ -2,6 +2,7 @@ package seedu.address.model.member;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalMembers.ALEX;
@@ -124,6 +125,30 @@ public class UniqueMemberListTest {
         replacement.clear();
 
         assertEquals(List.of(ALEX, BEN), members.asUnmodifiableObservableList());
+    }
+
+    @Test
+    public void setMembers_ownView_preservesRecordsDeletionStateAndView() {
+        Member deletedAlex = new Member(ALEX.getNusId(), ALEX.getName(), ALEX.getPhone(), ALEX.getEmail(), true);
+        List<Member> expected = List.of(deletedAlex, BEN);
+        members.setMembers(expected);
+        ObservableList<Member> view = members.asUnmodifiableObservableList();
+
+        members.setMembers(view);
+
+        assertSame(view, members.asUnmodifiableObservableList());
+        assertEquals(expected, view);
+    }
+
+    @Test
+    public void setMembers_backedSubList_copiesBeforeReplacing() {
+        members.setMembers(List.of(ALEX, BEN));
+        ObservableList<Member> view = members.asUnmodifiableObservableList();
+
+        members.setMembers(view.subList(1, 2));
+
+        assertSame(view, members.asUnmodifiableObservableList());
+        assertEquals(List.of(BEN), view);
     }
 
     @Test

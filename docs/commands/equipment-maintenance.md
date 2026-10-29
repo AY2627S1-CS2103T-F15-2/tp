@@ -20,4 +20,6 @@ the previous file unchanged. Older records without `deleted` load as active; exp
 
 `equipment list` shows all records, including labeled deleted units. Search defaults to active records;
 `status/deleted` and `status/all` make retained units discoverable. Deleted units cannot be loaned and do
-not contribute to active inventory totals. Grouped directory rows remain a separate planned UI feature.
+not contribute to active inventory totals. The directory groups units by normalized category and name;
+open a group to inspect its physical units. Adding several units with `count/` creates or extends one such
+group, with a separate UUID for each unit.

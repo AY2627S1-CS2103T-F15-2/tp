@@ -45,9 +45,10 @@ public class LogicManager implements Logic {
 
     @Override
     public CommandResult execute(String commandText) throws CommandException, ParseException {
-        logger.info("----------------[USER COMMAND][" + commandText + "]");
+        logger.info("Received command input.");
 
         Command command = addressBookParser.parseCommand(commandText);
+        logger.fine("Parsed command type: " + command.getClass().getSimpleName());
         Model executionModel = command.isTransactional() ? model.createTransactionSnapshot() : model;
         CommandResult commandResult = command.execute(executionModel);
 

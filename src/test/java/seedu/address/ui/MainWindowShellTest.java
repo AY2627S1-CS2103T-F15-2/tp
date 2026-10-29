@@ -25,14 +25,21 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.geometry.Bounds;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Control;
+import javafx.scene.control.IndexedCell;
 import javafx.scene.control.Label;
 import javafx.scene.control.Labeled;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuButton;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
@@ -110,6 +117,118 @@ public class MainWindowShellTest {
             window.dispose();
             window.getPrimaryStage().hide();
         });
+    }
+
+    @Test
+    public void equipmentLookup_revealsLastGroupAndRepeatedLookupAfterSilentRefresh() {
+        UUID target = new UUID(0, 40);
+        int[] dispatches = new int[1];
+        FxTestUtil.runAndWait(() -> {
+            model.setAddressBook(new AddressBook());
+            for (int index = 1; index <= 40; index++) {
+                model.addEquipment(new Equipment(new UUID(0, index), String.format("Camera %02d", index),
+                        "Photo", Condition.GOOD, ""));
+            }
+            submit("equipment search category/Photo");
+            rows().scrollTo(0);
+            layout();
+            assertEquals(0, verticalScroll(rows()).getValue(), 0.001);
+            showEquipmentDetails(target);
+            assertEquals(39, rows().getSelectionModel().getSelectedIndex());
+            assertSelectedRowVisible(rows(), ".list-cell");
+            assertTrue(label("queryContext").contains("photo"));
+            rows().scrollTo(0);
+            layout();
+            assertEquals(0, verticalScroll(rows()).getValue(), 0.001);
+            dispatches[0] = logic.commands.size();
+            // A member change refreshes equipment without changing its selection or contents.
+            model.addMember(new Member(id(9), new Name("Refresh Member"),
+                    new Phone("91234567"), new Email("refresh@example.com")));
+        });
+        FxTestUtil.runAndWait(() -> {
+            layout();
+            assertEquals(0, verticalScroll(rows()).getValue(), 0.001);
+            assertEquals(39, rows().getSelectionModel().getSelectedIndex());
+            assertEquals(dispatches[0], logic.commands.size());
+            showEquipmentDetails(target);
+            assertSelectedRowVisible(rows(), ".list-cell");
+            assertEquals(dispatches[0] + 1, logic.commands.size());
+        });
+    }
+
+    @Test
+    public void equipmentLookup_revealsSortedUnitAndFilteredTargetWithoutExtraCallbacks() {
+        UUID target = new UUID(0, 1);
+        int[] dispatches = new int[1];
+        FxTestUtil.runAndWait(() -> {
+            model.setAddressBook(new AddressBook());
+            for (int index = 1; index <= 30; index++) {
+                model.addEquipment(new Equipment(new UUID(0, index), "Camera", "Photo",
+                        index == 1 ? Condition.DAMAGED : Condition.GOOD, ""));
+            }
+            submit("equipment search availability/available");
+            showEquipmentDetails(target);
+            TableView<?> table = (TableView<?>) node("physicalUnits");
+            assertTrue(((javafx.scene.control.CheckBox) node("showAllUnits")).isSelected());
+            assertEquals(30, table.getItems().size());
+            sortUnitsDescending(table);
+            table.scrollTo(0);
+            layout();
+            assertEquals(0, verticalScroll(table).getValue(), 0.001);
+            showEquipmentDetails(target);
+            assertEquals(29, table.getSelectionModel().getSelectedIndex());
+            assertEquals(target, ((Equipment) table.getSelectionModel().getSelectedItem()).getUuid());
+            assertSelectedRowVisible(table, ".table-row-cell");
+            assertTrue(label("queryContext").contains("Availability: AVAILABLE"));
+            table.scrollTo(0);
+            layout();
+            dispatches[0] = logic.commands.size();
+            model.addMember(new Member(id(9), new Name("Refresh Member"),
+                    new Phone("91234567"), new Email("refresh@example.com")));
+        });
+        FxTestUtil.runAndWait(() -> {
+            TableView<?> table = (TableView<?>) node("physicalUnits");
+            assertEquals(0, verticalScroll(table).getValue(), 0.001);
+            assertEquals(29, table.getSelectionModel().getSelectedIndex());
+            assertEquals(TableColumn.SortType.DESCENDING, table.getSortOrder().getFirst().getSortType());
+            assertEquals(dispatches[0], logic.commands.size());
+            showEquipmentDetails(target);
+            assertSelectedRowVisible(table, ".table-row-cell");
+            assertEquals(dispatches[0] + 1, logic.commands.size());
+        });
+    }
+
+    /**
+     * Sorts full test UUIDs through the production Unit column, whose displayed suffixes are distinct.
+     */
+    private static <T> void sortUnitsDescending(TableView<T> table) {
+        TableColumn<T, ?> unit = table.getColumns().getFirst();
+        unit.setSortType(TableColumn.SortType.DESCENDING);
+        table.getSortOrder().setAll(List.of(unit));
+        table.sort();
+    }
+
+    /**
+     * Returns the vertical scrollbar owned by the control's virtualized rows.
+     */
+    private static ScrollBar verticalScroll(Control control) {
+        return control.lookupAll(".scroll-bar").stream().map(ScrollBar.class::cast)
+                .filter(scroll -> scroll.getOrientation() == Orientation.VERTICAL).findFirst().orElseThrow();
+    }
+
+    /**
+     * Checks the realized selected row is inside its viewport rather than merely selected in the model.
+     */
+    private void assertSelectedRowVisible(Control control, String rowSelector) {
+        layout();
+        Node viewport = control.lookup(".clipped-container");
+        Bounds visible = viewport.localToScene(viewport.getBoundsInLocal());
+        assertTrue(control.lookupAll(rowSelector).stream().map(IndexedCell.class::cast)
+                .filter(cell -> !cell.isEmpty() && cell.isSelected())
+                .map(cell -> cell.localToScene(cell.getBoundsInLocal()))
+                .anyMatch(bounds -> bounds.getMinY() >= visible.getMinY() - 1
+                        && bounds.getMaxY() <= visible.getMaxY() + 1),
+                "Selected row must be realized and visible within the viewport");
     }
 
     @Test
@@ -271,7 +390,7 @@ public class MainWindowShellTest {
                 field().fireEvent(key(KeyCode.ENTER));
                 assertEquals(List.of("member view nus/A0000001X"), logic.commands);
                 assertEquals("", field().getText());
-                assertEquals(1, storage.saves);
+                assertEquals(0, storage.saves);
                 recordOutcome("member view nus/A0000001X [Enter]");
                 reject("member view nus/invalid");
                 succeed("member list");
@@ -494,7 +613,7 @@ public class MainWindowShellTest {
             assertEquals(new UUID(0, 2), ((InventoryGroups.Group) rows().getItems().getFirst())
                     .matching().getFirst().getUuid());
             assertEquals("1", detailLabel("displayedCount"));
-            assertTrue(detailLabel("inventoryGroups").contains("Photography · Camera 1"));
+            assertTrue(detailLabel("inventoryGroups").contains("\"Photography\" / \"Camera 1\""));
             render("search-equipment", 1100, 700);
             render("search-equipment", 760, 500);
             int dispatches = logic.commands.size();
@@ -532,7 +651,7 @@ public class MainWindowShellTest {
             assertEquals(new UUID(0, 1).toString(), detailLabel("equipmentUuid"));
             submit("equipment search availability/available");
             assertEquals("2", detailLabel("displayedCount"));
-            assertTrue(detailLabel("inventoryGroups").contains("Camera 1: 1 available"));
+            assertTrue(detailLabel("inventoryGroups").contains("\"Camera 1\": 1 available"));
         });
     }
 
@@ -877,7 +996,7 @@ public class MainWindowShellTest {
             assertTrue(logic.commands.contains("equipment view uuid/" + new UUID(0, 1)));
             assertEquals("Success", feedbackStatus());
             assertTrue(node("detailsTitle") != null);
-            assertEquals(4, storage.saves);
+            assertEquals(0, storage.saves);
         });
     }
 
@@ -913,11 +1032,11 @@ public class MainWindowShellTest {
     }
 
     @Test
-    public void activation_spaceSaveFailure_returnsCorrectionFocusAfterKeyReleaseWithoutLeakingSpace() {
+    public void activation_spaceMissingMember_returnsCorrectionFocusAfterKeyReleaseWithoutLeakingSpace() {
         FxTestUtil.runAndWait(() -> {
+            model.setAddressBook(new AddressBook());
             AddressBook before = new AddressBook(model.getAddressBook());
             rows().requestFocus();
-            storage.fail = true;
             rows().fireEvent(key(KeyCode.SPACE));
             assertEquals("Error", feedbackStatus());
             assertEquals(rows(), window.getPrimaryStage().getScene().getFocusOwner());
@@ -943,7 +1062,7 @@ public class MainWindowShellTest {
             assertEquals(rows(), window.getPrimaryStage().getScene().getFocusOwner());
             assertEquals("", field().getText());
             assertEquals(List.of("member view nus/A0000001X"), logic.commands);
-            assertEquals(1, storage.saves);
+            assertEquals(0, storage.saves);
         });
     }
 
@@ -951,7 +1070,7 @@ public class MainWindowShellTest {
     public void activation_disposedBeforeSpaceRelease_detachesPendingCorrectionFocus() {
         FxTestUtil.runAndWait(() -> {
             rows().requestFocus();
-            storage.fail = true;
+            model.setAddressBook(new AddressBook());
             rows().fireEvent(key(KeyCode.SPACE));
             Node focusBeforeDisposal = window.getPrimaryStage().getScene().getFocusOwner();
             assertEquals(rows(), focusBeforeDisposal);
@@ -1019,6 +1138,31 @@ public class MainWindowShellTest {
             assertFalse(window.getPrimaryStage().isShowing());
             assertEquals(0, Stage.getWindows().stream().filter(javafx.stage.Window::isShowing).count());
             assertEquals((int) window.getPrimaryStage().getX(), model.getGuiSettings().getWindowCoordinates().x);
+        });
+    }
+
+    @Test
+    public void readOnlyCommands_storageUnavailable_keepsNavigationHelpAndExitAvailable() {
+        FxTestUtil.runAndWait(() -> {
+            AddressBook before = new AddressBook(model.getAddressBook());
+            storage.fail = true;
+            for (String command : List.of("member list", "loans list", "member view nus/A0000001X",
+                    "equipment view uuid/" + new UUID(0, 1))) {
+                submit(command);
+                assertEquals("Success", feedbackStatus(), command + ": " + feedback());
+                assertEquals("", field().getText(), command);
+            }
+            assertEquals(new UUID(0, 1).toString(), detailLabel("equipmentUuid"));
+            assertEquals("Assigned", detailLabel("availability"));
+            submit("help");
+            assertEquals("Success", feedbackStatus());
+            assertEquals(2, Stage.getWindows().stream().filter(javafx.stage.Window::isShowing).count());
+            submit("exit");
+            assertFalse(window.getPrimaryStage().isShowing());
+            assertEquals(0, Stage.getWindows().stream().filter(javafx.stage.Window::isShowing).count());
+            assertEquals(0, storage.saves);
+            assertEquals(before, model.getAddressBook());
+            assertFalse(Files.exists(storage.getAddressBookFilePath()));
         });
     }
 
@@ -1141,7 +1285,7 @@ public class MainWindowShellTest {
             showEquipmentDetails(new UUID(0, 1));
             assertEquals(new UUID(0, 1).toString(), detailLabel("equipmentUuid"));
             assertEquals("2026-01-02", detailLabel("expectedReturnDate"));
-            assertEquals(4, storage.saves);
+            assertEquals(0, storage.saves);
         });
     }
 
@@ -1250,6 +1394,7 @@ public class MainWindowShellTest {
 
     @Test
     public void storageFailure_laplaceDelete_preservesDetailsSelectionInputAndLaterSavedRecords() throws Exception {
+        storage.saveAddressBook(model.getAddressBook());
         FxTestUtil.runAndWait(() -> {
             succeed("member view nus/A0000002X");
             AddressBook before = new AddressBook(model.getAddressBook());
@@ -1270,7 +1415,7 @@ public class MainWindowShellTest {
             assertEquals(saved, model.getAddressBook());
             succeed("member delete nus/A0000002X");
             assertTrue(model.findMember(id(2)).orElseThrow().isDeleted());
-            assertEquals(3, storage.saves);
+            assertEquals(2, storage.saves);
         });
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
     }
@@ -1296,7 +1441,7 @@ public class MainWindowShellTest {
             storage.fail = false;
             succeed("member list");
             assertEquals(before, model.getAddressBook());
-            assertTrue(Files.exists(temporaryDirectory.resolve("laplace.json")));
+            assertFalse(Files.exists(temporaryDirectory.resolve("laplace.json")));
         });
     }
 
@@ -1379,6 +1524,7 @@ public class MainWindowShellTest {
 
     @Test
     public void reload_savedData_rebuildsInitialSelectionFromRealJson() throws Exception {
+        storage.saveAddressBook(model.getAddressBook());
         FxTestUtil.runAndWait(() -> submit("member list"));
         ReadOnlyAddressBook restored = storage.readAddressBook().orElseThrow();
         assertEquals(model.getAddressBook(), restored);
@@ -1420,7 +1566,7 @@ public class MainWindowShellTest {
             session.add("Commands executed: " + logic.commands);
             session.add("Successful saves: " + storage.saves);
             assertEquals(6, logic.commands.size());
-            assertEquals(3, storage.saves);
+            assertEquals(0, storage.saves);
         });
         Path path = Path.of("build", "reports", "laplace", "shell-session.txt");
         Files.createDirectories(path.getParent());
@@ -1677,14 +1823,18 @@ public class MainWindowShellTest {
         });
     }
 
-    /** Checks one real successful dispatch and one successful JSON save. */
+    /**
+     * Checks one successful dispatch and whether that command should save records.
+     */
     private void succeed(String command) {
         int saves = storage.saves;
         int dispatched = logic.commands.size();
         submit(command);
         assertEquals("Success", feedbackStatus(), command + ": " + feedback());
         assertEquals("", field().getText(), command);
-        assertEquals(saves + (command.equals("equipment list") ? 0 : 1), storage.saves, command);
+        boolean isQuery = command.endsWith(" list") || command.startsWith("member view ")
+                || command.startsWith("equipment view ");
+        assertEquals(saves + (isQuery ? 0 : 1), storage.saves, command);
         assertEquals(dispatched + 1, logic.commands.size(), command);
         recordOutcome(command);
     }
@@ -1746,7 +1896,9 @@ public class MainWindowShellTest {
         return "loans add uuid/" + item + " nus/" + member + " assigned/" + assigned + " expected/" + expected;
     }
 
-    /** Uses the same real family route and autosave as command input. */
+    /**
+     * Uses the same read-only member-view route as command input.
+     */
     private void showMemberDetails(NusId identity) {
         submit("member view nus/" + identity.value);
         assertEquals("Success", feedbackStatus());

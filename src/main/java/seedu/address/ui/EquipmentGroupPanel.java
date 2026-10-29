@@ -43,6 +43,7 @@ public class EquipmentGroupPanel extends VBox {
     private final CheckBox showAll = new CheckBox("Show all units in this group, including deleted");
     private final TableView<Equipment> units = new TableView<>();
     private final StackPane detailArea = new StackPane();
+    private final ScrollPane scroll = new ScrollPane();
     private final Label prompt = new Label("Select a physical unit to view details and prepare commands.");
     private InventoryGroups.Key key;
     private DirectoryQuery query = DirectoryQuery.all();
@@ -81,7 +82,7 @@ public class EquipmentGroupPanel extends VBox {
         units.setMinHeight(0);
         units.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         units.setPlaceholder(new Label("No units match these filters. Try Show all units or reset search."));
-        addColumn("Unit", unit -> "…" + unit.getUuid().toString().substring(28));
+        addColumn("Unit", unit -> EquipmentPresentation.shortUuid(unit.getUuid()));
         addColumn("Condition", unit -> EquipmentPresentation.label(unit.getCondition()));
         addColumn("Availability", this::availability);
         addColumn("Holder", this::holder);
@@ -96,7 +97,7 @@ public class EquipmentGroupPanel extends VBox {
         detailArea.getChildren().setAll(prompt);
         VBox body = new VBox(8, title, counts, availabilityCounts, showAll, units, detailArea);
         body.setMinWidth(0);
-        ScrollPane scroll = new ScrollPane(body);
+        scroll.setContent(body);
         scroll.setFitToWidth(true);
         scroll.setMinHeight(0);
         VBox.setVgrow(scroll, Priority.ALWAYS);
@@ -111,6 +112,8 @@ public class EquipmentGroupPanel extends VBox {
         this.query = requireNonNull(query);
         selectedUuid = null;
         showAll.setSelected(false);
+        // A fresh directory navigation restores the query order instead of reusing a clicked column sort.
+        units.getSortOrder().clear();
         refresh();
     }
 
@@ -118,12 +121,20 @@ public class EquipmentGroupPanel extends VBox {
      * Resolves an exact UUID, showing all group units if that target lies outside the active filter.
      */
     public void showUnit(UUID uuid, DirectoryQuery query) {
+        boolean hasIdentityChanged = !requireNonNull(uuid).equals(selectedUuid);
         selectedUuid = requireNonNull(uuid);
         this.query = requireNonNull(query);
         if (query.equipment(data, lookup).stream().noneMatch(unit -> unit.getUuid().equals(uuid))) {
             showAll.setSelected(true);
         }
         refresh();
+        int index = units.getSelectionModel().getSelectedIndex();
+        if (index >= 0) {
+            units.scrollTo(index);
+        }
+        if (hasIdentityChanged) {
+            scroll.setVvalue(0);
+        }
     }
 
     /**
@@ -151,8 +162,14 @@ public class EquipmentGroupPanel extends VBox {
             List<Equipment> shown = showAll.isSelected() ? all : matching;
             availabilityCounts.setText((showAll.isSelected() ? "All units: " : "Matching units: ")
                     + EquipmentPresentation.counts(shown, lookup));
-            units.getItems().setAll(shown);
-            units.sort();
+            List<Equipment> ordered = units.getComparator() == null ? shown
+                    : shown.stream().sorted(units.getComparator()).toList();
+            // Replacing unchanged items resets the virtualized table's browsing position.
+            if (!units.getItems().equals(ordered)) {
+                units.getItems().setAll(ordered);
+                units.sort();
+            }
+            units.refresh();
             units.setPrefHeight(Math.min(230, Math.max(90, units.getItems().size() * 30 + 34)));
             units.setMinHeight(USE_PREF_SIZE);
             units.setMaxHeight(USE_PREF_SIZE);
@@ -190,8 +207,8 @@ public class EquipmentGroupPanel extends VBox {
                         : new Tooltip(caption + ": " + item + "\nUUID: " + unit.getUuid()));
             }
         });
-        column.setMinWidth(60);
-        column.setPrefWidth(110);
+        column.setMinWidth(caption.equals("Unit") ? 120 : 60);
+        column.setPrefWidth(caption.equals("Unit") ? 130 : 110);
         units.getColumns().add(column);
     }
 
