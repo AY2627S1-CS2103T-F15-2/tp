@@ -16,9 +16,16 @@ browse -> model : getAddressBook()
 model --> browse : data
 browse -> data : getEquipmentList()
 data --> browse : retained units
-alt exact normalized category/name exists
-  browse --> logic : CommandResult with equipmentGroup(key)
-else unique compact UUID reference
+alt group form and exact normalized category/name exists
+  note right of browse
+    Prepare CommandResult with equipmentGroup(key).
+  end note
+else compact UUID form and exactly one retained unit matches
+  create exact
+  browse -> exact : EquipmentViewCommand(uuid)
+  activate exact
+  exact --> browse : new command
+  deactivate exact
   browse -> exact : execute(model)
   activate exact
   ref over exact, model
@@ -26,10 +33,12 @@ else unique compact UUID reference
   end ref
   exact --> browse : CommandResult with equipmentDetails(uuid)
   deactivate exact
-  browse --> logic : result
-else missing group / missing or ambiguous prefix
-  browse --> logic : throws CommandException
+else missing group / missing or ambiguous compact reference
+  note right of browse
+    Reject the target with CommandException.
+  end note
 end
+browse --> logic : result, or throws CommandException
 deactivate browse
 opt command succeeds
   logic --> window : result
