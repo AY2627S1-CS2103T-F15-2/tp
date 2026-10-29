@@ -132,6 +132,18 @@ public class EquipmentListPanel extends UiPart<Region> {
     }
 
     /**
+     * Selects an explicitly requested UUID and reveals its group when the directory includes it.
+     * Ordinary refresh selection uses {@link #select(Optional)} to preserve browsing position.
+     */
+    public void reveal(UUID uuid) {
+        select(Optional.of(requireNonNull(uuid)));
+        int index = rows.getSelectionModel().getSelectedIndex();
+        if (index >= 0) {
+            rows.scrollTo(index);
+        }
+    }
+
+    /**
      * Describes the group and availability within the matching result scope.
      */
     private Region createCard(InventoryGroups.Group group) {

@@ -81,13 +81,16 @@ public class UniqueMemberList {
         internalList.remove(memberToRemove);
     }
 
-    /** Replaces this collection with a validated copy of {@code members}. */
+    /**
+     * Replaces this collection with a validated snapshot, including when the input is a view of this collection.
+     * Null elements and duplicate identities are rejected before the current contents change.
+     */
     public void setMembers(List<Member> members) {
-        requireAllNonNull(members);
-        if (!membersAreUnique(members)) {
+        List<Member> replacement = List.copyOf(requireNonNull(members));
+        if (!membersAreUnique(replacement)) {
             throw new DuplicateMemberException();
         }
-        internalList.setAll(members);
+        internalList.setAll(replacement);
     }
 
     /** Returns an unmodifiable observable view of this collection. */

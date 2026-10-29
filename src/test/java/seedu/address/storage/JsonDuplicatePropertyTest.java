@@ -14,11 +14,9 @@ import org.junit.jupiter.api.io.TempDir;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import seedu.address.commons.exceptions.DataLoadingException;
-import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
 
 /**
@@ -30,10 +28,12 @@ public class JsonDuplicatePropertyTest {
 
     @Test
     public void readAddressBook_duplicateRootCollections_rejectsWithoutRewriting() throws Exception {
-        String original = validJson().toString();
+        String original = RootPersistenceTestData.jsonSnapshot().toString();
         for (String field : List.of("persons", "members", "equipment", "loans")) {
             String duplicate = original.substring(0, original.length() - 1) + ",\"" + field + "\":[]}";
-            assertDuplicateRejected(duplicate, field);
+            for (String marker : List.of("", "\ufeff")) {
+                assertDuplicateRejected(marker + duplicate, field);
+            }
         }
     }
 
@@ -49,7 +49,7 @@ public class JsonDuplicatePropertyTest {
                 List.of("loans", "equipmentUuid"), List.of("loans", "memberNusId"),
                 List.of("loans", "returnedDate"), List.of("loans", "issueCondition"),
                 List.of("loans", "returnCondition"))) {
-            ObjectNode json = validJson();
+            ObjectNode json = RootPersistenceTestData.jsonSnapshot();
             JsonNode record = json.get(target.get(0)).get(0);
             String field = target.get(1);
             String original = record.toString();
@@ -70,14 +70,6 @@ public class JsonDuplicatePropertyTest {
         assertEquals(original, loaded);
         storage.saveAddressBook(loaded);
         assertEquals(original, new AddressBook(storage.readAddressBook().orElseThrow()));
-    }
-
-    /**
-     * Returns valid persisted data containing both open and completed loan records.
-     */
-    private ObjectNode validJson() throws Exception {
-        return (ObjectNode) new ObjectMapper().readTree(JsonUtil.toJsonString(
-                new JsonSerializableAddressBook(RootPersistenceTestData.fullAddressBook())));
     }
 
     /**

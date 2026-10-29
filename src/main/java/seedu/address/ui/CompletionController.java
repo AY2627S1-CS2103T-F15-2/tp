@@ -6,16 +6,19 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
+import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.completion.Completion;
 import seedu.address.logic.completion.CompletionService;
-import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 
-/** Owns one input field's Tab cycle; every key uses fresh read-only model data. */
+/**
+ * Owns one input field's Tab cycle, invalidating record candidates without copying the model.
+ */
 final class CompletionController {
     private static final Logger logger = LogsCenter.getLogger(CompletionController.class);
 
@@ -23,8 +26,10 @@ final class CompletionController {
     private final Supplier<ReadOnlyAddressBook> data;
     private final CompletionService service = new CompletionService();
     private Completion completion;
-    /** A detached copy detects model changes even though the live root keeps its object identity. */
-    private AddressBook snapshot;
+    private final InvalidationListener recordChanged = unused -> invalidateRecordCandidates();
+    private final WeakInvalidationListener weakRecordChanged = new WeakInvalidationListener(recordChanged);
+    private ReadOnlyAddressBook observedData;
+    private boolean usesRecordData;
     private String originalText;
     private int candidateIndex;
     /** Prevents our own text/caret notifications from canceling an active cycle. */
@@ -52,8 +57,7 @@ final class CompletionController {
             resetAfterEdit();
             return;
         }
-        AddressBook current = new AddressBook(data.get());
-        if (completion != null && !snapshot.equals(current)) {
+        if (completion != null && usesRecordData && observedData != data.get()) {
             logger.fine("Restarting completion cycle because the data changed.");
             completion = null;
         }
@@ -63,12 +67,12 @@ final class CompletionController {
             }
             originalText = field.getText();
             int caret = field.getCaretPosition();
-            Optional<Completion> suggestion = service.complete(originalText, caret, current);
+            usesRecordData = false;
+            Optional<Completion> suggestion = service.completeWithDataSource(originalText, caret, this::readData);
             if (suggestion.isEmpty()) {
                 return;
             }
             completion = suggestion.orElseThrow();
-            snapshot = current;
             candidateIndex = 0;
             logger.fine("Started completion cycle with " + completion.candidates().size()
                     + " candidate(s).");
@@ -88,6 +92,34 @@ final class CompletionController {
             isApplying = false;
         }
         event.consume();
+    }
+
+    /**
+     * Observes value-source collections only when a record-dependent completion needs them.
+     * Weak listeners avoid retaining discarded fields through the live model.
+     */
+    private ReadOnlyAddressBook readData() {
+        ReadOnlyAddressBook current = requireNonNull(data.get());
+        usesRecordData = true;
+        if (current != observedData) {
+            if (observedData != null) {
+                observedData.getMemberList().removeListener(weakRecordChanged);
+                observedData.getEquipmentList().removeListener(weakRecordChanged);
+            }
+            observedData = current;
+            observedData.getMemberList().addListener(weakRecordChanged);
+            observedData.getEquipmentList().addListener(weakRecordChanged);
+        }
+        return current;
+    }
+
+    /**
+     * Leaves static vocabulary cycles independent of unrelated record notifications.
+     */
+    private void invalidateRecordCandidates() {
+        if (usesRecordData) {
+            completion = null;
+        }
     }
 
     /** Text/caret changes caused by our own insertion belong to the same cycle. */

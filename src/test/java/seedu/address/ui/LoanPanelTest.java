@@ -1,5 +1,6 @@
 package seedu.address.ui;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -25,6 +26,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
@@ -35,6 +37,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -105,6 +108,45 @@ public class LoanPanelTest {
             assertEquals("Alex Tan\nNUS ID: " + SECOND_MEMBER.getNusId(),
                     memberButton(row(panel, "openLoans", 1)).getText());
             assertEquals("Camera\nUUID: " + SECOND_UUID, equipmentButton(row(panel, "openLoans", 1)).getText());
+        });
+    }
+
+    @Test
+    public void filters_hiddenBatchChanges_showTotalsAndResetBothSectionsWithoutMutation() {
+        FxTestUtil.runAndWait(() -> {
+            AddressBook data = mixedBook();
+            UUID third = UUID.fromString("30000000-0000-0000-0000-000000000000");
+            UUID fourth = UUID.fromString("40000000-0000-0000-0000-000000000000");
+            data.addEquipment(new Equipment(third, "Case", "Storage", Condition.GOOD, ""));
+            data.addEquipment(new Equipment(fourth, "Case", "Storage", Condition.GOOD, ""));
+            ModelManager model = new ModelManager(data, new UserPrefs());
+            LoanPanel panel = panel(model.getAddressBook());
+            TextField member = (TextField) panel.getRoot().lookup("#memberFilter");
+            TextField equipment = (TextField) panel.getRoot().lookup("#equipmentFilter");
+            member.setText(FIRST_MEMBER.getNusId().toString());
+            equipment.setText(FIRST_UUID.toString());
+            AddressBookParser parser = new AddressBookParser();
+            assertDoesNotThrow(() -> parser.parseCommand("loans add uuid/" + third + "," + fourth
+                    + " nus/" + SECOND_MEMBER.getNusId() + " assigned/" + ASSIGNED
+                    + " expected/" + ASSIGNED.plusDays(2)).execute(model));
+            panel.refresh();
+            Label summary = (Label) panel.getRoot().lookup("#filterSummary");
+            assertTrue(summary.getText().contains("1 of 4 open loans"));
+            assertEquals(FIRST_MEMBER.getNusId().toString(), member.getText());
+            assertDoesNotThrow(() -> parser.parseCommand("loans return uuid/" + third + "," + fourth
+                    + " returned/" + ASSIGNED).execute(model));
+            panel.refresh();
+            assertTrue(summary.getText().contains("of 5 completed loans"));
+            assertEquals(FIRST_UUID.toString(), equipment.getText());
+            AddressBook beforeReset = new AddressBook(model.getAddressBook());
+            Button reset = (Button) panel.getRoot().lookup("#resetFilters");
+            assertFalse(reset.isDisabled());
+            reset.fire();
+            assertEquals("", member.getText());
+            assertEquals("", equipment.getText());
+            assertTrue(summary.getText().contains("2 of 2 open loans; 5 of 5 completed loans"));
+            assertTrue(reset.isDisabled());
+            assertEquals(beforeReset, model.getAddressBook());
         });
     }
 
@@ -264,6 +306,35 @@ public class LoanPanelTest {
                     assertEquals(missingMember ? List.of() : List.of(FIRST_MEMBER.getNusId()), memberSelections);
                 }
             }
+        });
+    }
+
+    @Test
+    public void prepareReturn_explicitObservationAndIntentionalOmission_doNotExecute() {
+        FxTestUtil.runAndWait(() -> {
+            AddressBook data = mixedBook();
+            AddressBook before = new AddressBook(data);
+            List<String> commands = new ArrayList<>();
+            LoanPanel panel = new LoanPanel(data, unused -> { }, unused -> { }, commands::add,
+                    Clock.fixed(ASSIGNED.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC));
+            new Scene(panel.getRoot(), 760, 500);
+            panel.getRoot().applyCss();
+            VBox row = row(panel, "openLoans", 0);
+            ComboBox<?> observed = (ComboBox<?>) row.lookup(".loan-return-condition");
+            Button prepare = (Button) row.getChildren().getLast();
+            assertEquals("Not recorded", observed.getValue());
+            for (String condition : List.of("DAMAGED", "Not recorded", "FAIR")) {
+                observed.getSelectionModel().select(observed.getItems().indexOf(condition));
+                prepare.fire();
+                String suffix = condition.equals("Not recorded") ? "" : " condition/" + condition;
+                assertEquals("loans return uuid/" + FIRST_UUID + " returned/" + ASSIGNED + suffix, commands.getLast());
+                assertEquals(before, data);
+            }
+            assertEquals(3, commands.size());
+            observed.setValue(null);
+            prepare.fire();
+            assertEquals("loans return uuid/" + FIRST_UUID + " returned/" + ASSIGNED, commands.getLast());
+            assertEquals(before, data);
         });
     }
 
