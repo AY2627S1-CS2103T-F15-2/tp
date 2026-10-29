@@ -1277,7 +1277,7 @@ Samples are never appended to an existing dataset.
 ### Single-JAR distribution
 
 Build with `./gradlew shadowJar verifyUniversalJar`. Publish only `build/libs/Laplace.jar`;
-the same file is used on Windows (including a graphical WSL environment), Linux, Intel macOS and
+the same file is used on Windows, Linux (including graphical WSL), Intel macOS and
 Apple Silicon macOS. Java 25 for the user's processor remains the only required installation.
 No architecture property or alternate JAR filename is needed.
 
@@ -1286,11 +1286,11 @@ identical resource names across architectures, so ordinary JAR merging would dis
 `gradle/universal-javafx.gradle` instead wraps the original Intel and ARM libraries in a Mach-O
 universal binary, with each original slice preserved byte-for-byte and aligned to 16 KiB.
 macOS chooses the matching slice. Header generation uses Java APIs available on every build OS;
-Apple's `lipo` tool is not a build dependency. No runtime extraction or launcher code was added.
+Apple's `lipo` tool is not a build dependency.
 `verifyUniversalJar` checks both slices against the original dependencies, native resource uniqueness,
-Windows/Linux native presence and the 100 MB size limit. This packaging follows
+Windows/Linux native presence and the 100 MB size limit, matching
 [Constraint-Single-File](https://nus-cs2103-ay2627-s1.github.io/website/admin/tp-constraints.html#constraint-single-file)
-without relying on an exception; no applicable exception was found in the issue discussion or repository.
+requirements.
 
 The CI packaging job builds and uploads one candidate JAR. All four OS/architecture jobs download that
 same artifact and use `-PpackagedJar=build/candidate/Laplace.jar` for structural verification and the

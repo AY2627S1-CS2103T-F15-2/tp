@@ -178,7 +178,10 @@ check.dependsOn autocompleteCoverageVerification
 
 // Use only bundled production classes and natives so tests cannot hide distributable packaging failures.
 tasks.register('verifyPackagedAutocomplete', JavaExec) {
-    dependsOn shadowJar, testClasses
+    dependsOn testClasses
+    if (!providers.gradleProperty('packagedJar').isPresent()) {
+        dependsOn shadowJar
+    }
     classpath = files(packagedJar) + sourceSets.test.output
     mainClass = 'seedu.address.ui.PackagedAutocompleteProbe'
     jvmArgs '--limit-modules=java.se,jdk.unsupported', '--enable-native-access=ALL-UNNAMED'
