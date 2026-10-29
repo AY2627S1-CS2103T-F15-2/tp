@@ -698,6 +698,10 @@ member and dates, and the request succeeds or fails as a whole. The condition of
 recorded in its loan history. Assigning an already assigned item is rejected, even if the new loan names
 the same member. Reaching the expected return date does not automatically return an item.
 
+Historical issue conditions are retained observations, including DAMAGED or UNDER_REPAIR if an older
+record contains them. They do not change the item's current condition or authorize a new assignment.
+Missing/null historical conditions remain "Not recorded"; Laplace never guesses an observation.
+
 A new assignment must be on or after that unit's latest recorded actual return date. Same-day handoffs
 are allowed. A conflicting UUID rejects the entire batch; expected-return dates do not determine
 historical availability. This check applies to new assignments and does not rewrite retained history.

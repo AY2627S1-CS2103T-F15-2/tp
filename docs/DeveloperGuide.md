@@ -334,11 +334,18 @@ values can outlive or be shared by their containers.
 
 Availability, holders and inventory totals are derived, never persisted as independent fields.
 
+Historical `issueCondition` accepts all defined condition values, including DAMAGED/UNDER_REPAIR.
+This preserves observations of events outside current command rules; it is not a new-assignment
+eligibility check. Missing/null observations remain unknown. Loading and save/reload must preserve
+these values independently of current equipment condition. For a manual check, use disposable data
+and load one loan for each condition, then save/reload and compare its identity and observation.
+
 `Condition.fromText` defines the shared command/storage normalization: strip surrounding whitespace,
 match the four enum names without case, and reject unknown or blank text. Equipment still requires a
 condition; missing/null loan observations remain unknown. Adapters always serialize uppercase enum
 names. Manual check: load disposable equipment/loan fields with `good`, ` FaIr ` and `under_repair`,
 then save/reload; verify uppercase output, stable identities and rejection of `BROKEN`.
+
 `AvailabilityCalculator` only accepts condition and open-loan state; the deletion check belongs to
 `ModelManager`. `AddressBook` validates cross-record references, while `UniqueLoanList` enforces the
 one-open-loan-per-unit rule. `UniqueEquipmentList` checks UUID uniqueness and identity-preserving
