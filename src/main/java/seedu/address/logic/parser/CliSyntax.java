@@ -19,6 +19,7 @@ public class CliSyntax {
     public static final Prefix PREFIX_MEMBER_PHONE = new Prefix("phone/");
     public static final Prefix PREFIX_MEMBER_EMAIL = new Prefix("email/");
     public static final Prefix PREFIX_EQUIPMENT_UUID = new Prefix("uuid/");
+    public static final Prefix PREFIX_SHORT_UUID = new Prefix("short/");
     public static final Prefix PREFIX_CATEGORY = new Prefix("category/");
     public static final Prefix PREFIX_CONDITION = new Prefix("condition/");
     public static final Prefix PREFIX_COUNT = new Prefix("count/");

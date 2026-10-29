@@ -20,6 +20,18 @@ import seedu.address.testutil.ViewTestData;
  */
 public class CommandCatalogTest {
     @Test
+    public void complete_equipmentBrowseForms_matchesTabVocabularyAndParser() {
+        String input = "equipment view ";
+        Set<String> fields = CommandCatalog.complete(input).stream()
+                .map(candidate -> candidate.substring(input.length())).collect(Collectors.toSet());
+        assertEquals(Set.of("uuid/", "short/", "category/", "name/"), fields);
+        assertEquals(fields, Set.copyOf(new CompletionService()
+                .complete(input, input.length(), ViewTestData.model().getAddressBook()).orElseThrow().candidates()));
+        assertDoesNotThrow(() -> new AddressBookParser().parseCommand("equipment view short/abcdef12"));
+        assertDoesNotThrow(() -> new AddressBookParser().parseCommand("equipment view category/Photo name/Camera"));
+    }
+
+    @Test
     public void complete_returnCondition_offersUnusedPrefixAndPreservesEarlierFields() {
         String uuid = ViewTestData.CAMERA.getUuid().toString();
         for (String input : List.of("loans return co", "loans return uuid/" + uuid + " co")) {

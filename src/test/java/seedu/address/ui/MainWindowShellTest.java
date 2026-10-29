@@ -588,6 +588,48 @@ public class MainWindowShellTest {
     }
 
     @Test
+    public void equipmentBrowse_commandWorkflow_preservesFiltersAndExactLoanIdentity() {
+        FxTestUtil.runAndWait(() -> {
+            UUID uuid = UUID.fromString("abcdef12-0000-0000-0000-000000000001");
+            model.addEquipment(new Equipment(uuid, "Command Camera", "Photo", Condition.GOOD, ""));
+            submit("equipment search q/Command Camera availability/available sort/name order/desc");
+            String criteria = detailLabel("criteria");
+            int saves = storage.saves;
+            int dispatches = logic.commands.size();
+            submit("equipment view category/PHOTO name/command camera");
+            assertEquals("Success", feedbackStatus());
+            assertEquals("Command Camera", label("groupTitle"));
+            assertEquals(1, rows().getItems().size());
+            TableView<?> units = (TableView<?>) node("physicalUnits");
+            assertNull(units.getSelectionModel().getSelectedItem());
+            submit("equipment view short/ABCDEF12-0001");
+            assertEquals(uuid.toString(), detailLabel("equipmentUuid"));
+            assertEquals(saves, storage.saves);
+            assertEquals(dispatches + 2, logic.commands.size());
+            submit("equipment view short/ffffffff");
+            assertEquals("Error", feedbackStatus());
+            assertEquals(uuid.toString(), detailLabel("equipmentUuid"));
+            submit("loans add uuid/" + uuid
+                    + " nus/A0000001X assigned/2026-01-01 expected/2026-01-02");
+            assertEquals("Success", feedbackStatus());
+            submit("equipment view short/abcdef12");
+            assertEquals("A0000001X", detailLabel("holderNusId"));
+            assertTrue(rows().getItems().isEmpty());
+            submit("loans return uuid/" + uuid + " returned/2026-01-02");
+            assertEquals("Success", feedbackStatus());
+            submit("equipment view short/abcdef12");
+            assertEquals("Available", detailLabel("availability"));
+            assertEquals(uuid.toString(), detailLabel("equipmentUuid"));
+            assertEquals(1, rows().getItems().size());
+            assertTrue(((Label) node("queryContext")).getText().contains("Command Camera".toLowerCase()));
+            assertEquals(saves + 2, storage.saves);
+            assertTrue(model.getAddressBook().getLoanList().stream()
+                    .anyMatch(loan -> loan.getEquipmentUuid().equals(uuid) && !loan.isOpen()));
+            assertFalse(criteria.isEmpty());
+        });
+    }
+
+    @Test
     public void search_realCommandInput_filtersSortsRetainsCriteriaAndResetsWithList() {
         FxTestUtil.runAndWait(() -> {
             int saves = storage.saves;

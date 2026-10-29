@@ -13,6 +13,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_MEMBER_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTES;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NUS_ID;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RETURNED_DATE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_SHORT_UUID;
 import static seedu.address.logic.parser.DirectorySearchCommandParser.AVAILABILITY;
 import static seedu.address.logic.parser.DirectorySearchCommandParser.CATEGORY;
 import static seedu.address.logic.parser.DirectorySearchCommandParser.CONDITION;
@@ -87,7 +88,8 @@ public final class CompletionService {
                             PREFIX_CONDITION, PREFIX_NOTES)),
             Map.entry(EquipmentRestoreCommand.COMMAND_WORD, List.of(PREFIX_EQUIPMENT_UUID)),
             Map.entry("equipment search", List.of(QUERY, CATEGORY, CONDITION, AVAILABILITY, STATUS, SORT, ORDER)),
-            Map.entry(EquipmentViewCommand.COMMAND_WORD, List.of(PREFIX_EQUIPMENT_UUID)),
+            Map.entry(EquipmentViewCommand.COMMAND_WORD,
+                    List.of(PREFIX_EQUIPMENT_UUID, PREFIX_SHORT_UUID, PREFIX_CATEGORY, PREFIX_MEMBER_NAME)),
             Map.entry(EquipmentDeleteCommand.COMMAND_WORD, List.of(PREFIX_EQUIPMENT_UUID)),
             Map.entry(EquipmentListCommand.COMMAND_WORD, List.of()),
             Map.entry(LoanAddCommand.COMMAND_WORD,

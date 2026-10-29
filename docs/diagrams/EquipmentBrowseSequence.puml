@@ -1,0 +1,42 @@
+@startuml
+!include style.puml
+skinparam ParticipantBackgroundColor UI_COLOR_T1
+skinparam ParticipantFontColor #111111
+skinparam maxMessageSize 180
+title Read-only equipment browsing
+participant ":LogicManager" as logic
+participant ":EquipmentBrowseCommand" as browse
+participant "model:Model" as model
+participant "data:ReadOnlyAddressBook" as data
+participant ":EquipmentViewCommand" as exact
+participant ":MainWindow" as window
+logic -> browse : execute(model)
+activate browse
+browse -> model : getAddressBook()
+model --> browse : data
+browse -> data : getEquipmentList()
+data --> browse : retained units
+alt exact normalized category/name exists
+  browse --> logic : CommandResult with equipmentGroup(key)
+else unique compact UUID reference
+  browse -> exact : execute(model)
+  activate exact
+  ref over exact, model
+    Resolve UUID, availability and current holder
+  end ref
+  exact --> browse : CommandResult with equipmentDetails(uuid)
+  deactivate exact
+  browse --> logic : result
+else missing group / missing or ambiguous prefix
+  browse --> logic : throws CommandException
+end
+deactivate browse
+opt command succeeds
+  logic --> window : result
+  window -> window : display typed request and retain query
+end
+note over browse, data
+  No record mutation, saving or history entry.
+  Compact-reference collisions include deleted and filtered units.
+end note
+@enduml
