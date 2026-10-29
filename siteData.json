@@ -55,6 +55,7 @@
         "common-classes": "Common classes",
         "implementation": "Implementation",
         "directory-search-and-inventory-planning": "Directory search and inventory planning",
+        "command-navigation-to-equipment-groups": "Command navigation to equipment groups",
         "identity-based-deletion": "Identity-based deletion",
         "domain-mutation-transactions": "Domain mutation transactions",
         "adding-multiple-physical-equipment-units": "Adding multiple physical equipment units",
@@ -83,6 +84,7 @@
         "saving-data": "Saving data",
         "loan-filter-visibility": "Loan filter visibility",
         "undo-and-redo": "Undo and redo",
+        "command-only-equipment-browsing": "Command-only equipment browsing",
         "command-word-aliases-and-casing": "Command-word aliases and casing",
         "batch-loan-validation-diagnostics": "Batch loan validation diagnostics"
       },
