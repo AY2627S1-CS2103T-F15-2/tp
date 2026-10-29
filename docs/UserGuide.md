@@ -36,11 +36,27 @@ earlier builds may not support every behavior described here. Laplace is a local
    to open each directory and the current-loans tab.
 7. Use `help` or **F1** to open Help, and `exit` to close the application normally.
 
-![Laplace equipment groups in light mode](images/BetterUi.png)
+[![Equipment view with the Camera group selected, two compact UUID labels, and the available camera's full details](images/BetterUi.png)](images/BetterUi.png)
+
+*Equipment view in light mode, using the fictional first-launch samples. The available camera is selected.*
+Open the image to inspect it at full size. Locate these five areas:
+
+1. **Command input at the bottom:** type a command, review its values, then press **Enter** or the Enter button.
+2. **Last result above the input:** read the outcome of the previous command. **Details** expands it;
+   **Copy** includes the complete feedback and any generated UUIDs.
+3. **Equipment groups on the left:** Camera represents two physical units with the same category and name.
+   Its counts distinguish available and assigned units; selecting a group opens its table.
+4. **Physical-unit table at the upper right:** each row is a separate UUID. The labels `550e8400…0000`
+   and `550e8400…0001` distinguish the two cameras. Select a row to see that unit's condition and holder.
+5. **Unit details below the table:** copy the full UUID here. Expand **Commands for this unit** to find
+   command previews; **Use command** prepares the input for review and never executes it.
+
 
 Command text uses [IBM Plex Mono](https://github.com/IBM/plex), distributed under the SIL Open Font License.
 
-Your rows, counts and selected record depend on your data. Both light and dark appearance are supported.
+Screenshots use fictional records. The footer's `addressbook.json` is the default data filename, stored
+under `data/` beside the JAR. Your rows, counts, dates and selected record depend on your data.
+Both light and dark appearance are supported.
 If startup fails, check the JAR filename and Java version and keep the terminal error for the team.
 Do not delete your data file to troubleshoot startup.
 
@@ -170,6 +186,22 @@ To explore without changing the sample records:
   equipment condition, or supply one of the conditions documented in the loan-return section.
 - Drag the directory divider to resize its panels. Scroll long lists/details vertically; the data filename
   appears in the footer, with the full path available on hover.
+
+### Reading the Loans view
+
+[![Loans filtered to the Portable Speaker, showing one open assignment, one completed loan and a prepared return command](images/LoansGuide.png)](images/LoansGuide.png)
+
+*The sample Portable Speaker has been issued again to Priya Nair and the equipment UUID filter is active.
+This is a later sample state, rather than the initial three open loans. Dates are illustrative.*
+Open the image for full size.
+
+1. **Filters and result summary at the top:** both sections match the entered UUID. The summary shows
+   one of four open loans and one of two completed loans; **Reset filters** reveals the hidden records.
+2. **Open loans:** inspect the current borrower, dates and issue condition. Choose an observed return
+   condition if known, then use **Prepare return command**. The screenshot shows the prepared command
+   in the bottom input; it has not been submitted. Review it and press Enter to record the return.
+3. **Completed loans:** read the actual return date and recorded conditions. These entries show history
+   and do not offer a return action. Scroll the Loans panel to reach further records.
 
 ### Appearance: `mode dark` and `mode light`
 
