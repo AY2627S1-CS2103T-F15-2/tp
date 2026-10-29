@@ -28,7 +28,7 @@ public class LoanReturnCommand extends Command {
             + ": Parameters: uuid/UUID[,UUID...] returned/DATE [condition/CONDITION]\n"
             + "Dates must use yyyy-MM-dd.";
     public static final String MESSAGE_SUCCESS = "Returned %1$s (%2$s) from %3$s (%4$s) on %5$s.";
-    public static final String MESSAGE_BATCH_SUCCESS = "Returned %1$d units (%2$s) on %3$s.";
+    public static final String MESSAGE_BATCH_SUCCESS = "Returned %1$d units on %2$s.";
     public static final String MESSAGE_EQUIPMENT_NOT_FOUND = "No equipment with UUID %1$s exists.";
     public static final String MESSAGE_NO_OPEN_LOAN = "Equipment %1$s has no open loan to return.";
     public static final String MESSAGE_MEMBER_NOT_FOUND =
@@ -82,9 +82,10 @@ public class LoanReturnCommand extends Command {
             throw new CommandException(String.format(MESSAGE_FUTURE_RETURN, today));
         }
         List<CommandException> errors = new ArrayList<>();
+        List<String> details = new ArrayList<>();
         for (UUID uuid : equipmentUuids) {
             try {
-                validateReturn(model, uuid);
+                details.add(validateReturn(model, uuid));
             } catch (CommandException exception) {
                 errors.add(exception);
             }
@@ -115,14 +116,15 @@ public class LoanReturnCommand extends Command {
                 ? DisplayRequest.equipmentDetails(first) : DisplayRequest.loans();
         String feedback = equipmentUuids.size() == 1
                 ? String.format(MESSAGE_SUCCESS, firstName, identifiers, firstMemberName, firstMemberId, returnedDate)
-                : String.format(MESSAGE_BATCH_SUCCESS, equipmentUuids.size(), identifiers, returnedDate);
+                : String.format(MESSAGE_BATCH_SUCCESS, equipmentUuids.size(), returnedDate)
+                        + "\n" + String.join("\n", details);
         return new CommandResult(feedback, display);
     }
 
     /**
-     * Validates a unit and its references without closing loans or changing conditions.
+     * Returns a validated unit/borrower feedback line without changing loans or conditions.
      */
-    private void validateReturn(Model model, UUID uuid) throws CommandException {
+    private String validateReturn(Model model, UUID uuid) throws CommandException {
         Equipment item;
         Loan open;
         try {
@@ -135,13 +137,14 @@ public class LoanReturnCommand extends Command {
         } catch (OpenLoanNotFoundException exception) {
             throw new CommandException(String.format(MESSAGE_NO_OPEN_LOAN, uuid), exception);
         }
-        model.findMember(open.getMemberNusId()).orElseThrow(() ->
+        var member = model.findMember(open.getMemberNusId()).orElseThrow(() ->
                 new CommandException(String.format(MESSAGE_MEMBER_NOT_FOUND, uuid),
                         new MemberNotFoundException()));
         if (returnedDate.isBefore(open.getAssignedDate())) {
             throw new CommandException(String.format(MESSAGE_RETURN_BEFORE_ASSIGNMENT,
                     item.getName(), uuid, returnedDate, open.getAssignedDate()));
         }
+        return item.getName() + " (" + uuid + ") from " + member.getName() + " (" + member.getNusId() + ")";
     }
 
     @Override

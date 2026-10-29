@@ -6,8 +6,8 @@ Takes no parameters. Spaces and tabs after the subcommand are allowed; text or p
 markers are rejected. Families and subcommands are lowercase and case-sensitive.
 
 Reports active counts and any deleted count, and requests the full directory through `DisplayRequest`.
-The command does not change entities, loans or stored collection order. It uses the existing
-LogicManager save pipeline, which may report a save error even for a read-only command.
+The command does not change entities, loans or stored collection order. Its read-only declaration
+bypasses record saving, so a record-save failure cannot block the list.
 
 The directory uses the shared Laplace sort order: normalized name then NUS ID.
 Active and deleted records remain together. Deleted cards are grey with an italic, struck-through

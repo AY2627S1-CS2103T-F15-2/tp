@@ -1,12 +1,19 @@
 package seedu.address.commons.util;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.testutil.SerializableTestClass;
 import seedu.address.testutil.TestUtil;
 
@@ -16,6 +23,9 @@ import seedu.address.testutil.TestUtil;
 public class JsonUtilTest {
 
     private static final Path SERIALIZATION_FILE = TestUtil.getFilePathInSandboxFolder("serialize.json");
+
+    @TempDir
+    public Path directory;
 
     @Test
     public void serializeObjectToJsonFile_noExceptionThrown() throws IOException {
@@ -39,7 +49,27 @@ public class JsonUtilTest {
         assertEquals(serializableTestClass.getMapOfIntegerToString(), SerializableTestClass.getHashMapTestValues());
     }
 
-    //TODO: @Test jsonUtil_readJsonStringToObjectInstance_correctObject()
+    @Test
+    public void readJsonFile_nullRootAndTrailingContent_rejectsWithoutChangingBytes() throws Exception {
+        Path data = directory.resolve("data.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(data);
+        String valid = "{\"persons\":[],\"members\":[],\"equipment\":[],\"loans\":[]}";
+        for (String input : List.of("null", "{", valid + " THIS IS NOT JSON", valid + "]",
+                valid + " {}", valid + " null")) {
+            Files.writeString(data, input);
+            byte[] before = Files.readAllBytes(data);
+            assertThrows(DataLoadingException.class, storage::readAddressBook, input);
+            assertArrayEquals(before, Files.readAllBytes(data));
+        }
+        Files.writeString(data, valid + " \t\r\n");
+        assertEquals(0, storage.readAddressBook().orElseThrow().getMemberList().size());
+    }
+
+    @Test
+    public void fromJsonString_trailingRoot_rejectsButAllowsWhitespace() throws Exception {
+        assertThrows(IOException.class, () -> JsonUtil.fromJsonString("{} {}", SerializableTestClass.class));
+        JsonUtil.fromJsonString("{} \t\n", SerializableTestClass.class);
+    }
 
     //TODO: @Test jsonUtil_writeThenReadObjectToJson_correctObject()
 }

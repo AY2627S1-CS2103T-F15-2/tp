@@ -17,11 +17,14 @@ class CompletionController {
   -originalText: String
   -candidateIndex: int
   -isApplying: boolean
+  -usesRecordData: boolean
+  -readData(): ReadOnlyAddressBook
   -handleKey(event: KeyEvent): void
   -resetAfterEdit(): void
 }
 class CompletionService {
   +complete(text, caret, data): Optional<Completion>
+  +completeWithDataSource(text, caret, supplier): Optional<Completion>
 }
 class Completion <<record>> {
   -start: int
@@ -41,7 +44,7 @@ CompletionController "0..*" --> "1" Supplier : data
 Supplier ..> ReadOnlyAddressBook : returns live root
 CompletionController "1" *--> "1" CompletionService : service
 CompletionController "0..*" --> "0..1" Completion : completion
-CompletionController "0..*" --> "0..1" AddressBook : snapshot
+CompletionController "0..*" --> "0..1" ReadOnlyAddressBook : observedData; weak collection listeners
 AddressBook ..|> ReadOnlyAddressBook
 CompletionService ..> ReadOnlyAddressBook : reads candidate values
 CompletionService ..> Completion : creates replacement range and candidates
@@ -54,7 +57,8 @@ note bottom of CompletionService
 end note
 legend bottom
   No completion dependency calls Logic.execute or storage.
-  The controller's detached snapshot detects model changes despite
-  stable live-root identity. Ordinary Enter submission remains separate.
+  Static completion does not read records. Collection notifications
+  invalidate record candidates; unchanged cycles reuse prepared values.
+  No root snapshots are constructed. Ordinary Enter submission remains separate.
 endlegend
 @enduml

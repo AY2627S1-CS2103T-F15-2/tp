@@ -53,6 +53,29 @@ public class LoanBatchValidationTest {
     }
 
     @Test
+    public void assignment_historicalOverlapAndDamagedUnit_reportsBothAndAllowsReturnDayHandoff() throws Exception {
+        ModelManager model = LoanCommandTestData.model();
+        model.addLoan(new Loan(FIRST_UUID, FIRST_MEMBER.getNusId(), TODAY.minusDays(4), TODAY.minusDays(2),
+                TODAY.minusDays(2)));
+        Equipment second = model.findEquipment(SECOND_UUID).orElseThrow();
+        model.setEquipment(second, new Equipment(SECOND_UUID, second.getName(), second.getCategory(),
+                Condition.DAMAGED, second.getNotes()));
+        AddressBook before = new AddressBook(model.getAddressBook());
+
+        CommandException error = assertThrows(CommandException.class, () -> new LoanAddCommand(
+                List.of(FIRST_UUID, SECOND_UUID), FIRST_MEMBER.getNusId(), TODAY.minusDays(3), TODAY, CLOCK)
+                .execute(model));
+
+        assertEquals("Rejected batch: 2 of 2 units are invalid. No records changed. Open Details for all errors.\n"
+                + String.format(LoanAddCommand.MESSAGE_HISTORICAL_OVERLAP, FIRST_UUID, TODAY.minusDays(2)) + "\n"
+                + String.format(LoanAddCommand.MESSAGE_UNAVAILABLE, SECOND_UUID, Condition.DAMAGED),
+                error.getMessage());
+        assertEquals(before, model.getAddressBook());
+        new LoanAddCommand(FIRST_UUID, FIRST_MEMBER.getNusId(), TODAY.minusDays(2), TODAY, CLOCK).execute(model);
+        assertEquals(TODAY.minusDays(2), model.findOpenLoan(FIRST_UUID).orElseThrow().getAssignedDate());
+    }
+
+    @Test
     public void return_mixedInvalidUnits_reportsDatesMissingLoanAndUnknownUnitWithoutChangingConditions() {
         ModelManager model = LoanCommandTestData.model();
         model.addLoan(new Loan(FIRST_UUID, FIRST_MEMBER.getNusId(), TODAY, TODAY, null));

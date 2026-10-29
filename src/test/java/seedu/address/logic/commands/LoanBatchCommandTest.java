@@ -36,6 +36,9 @@ public class LoanBatchCommandTest {
         CommandResult result = command.execute(model);
 
         assertEquals(DisplayRequest.loans(), result.getDisplayRequest());
+        assertTrue(result.getFeedbackToUser().startsWith("Assigned 2 units to Alex Tan"));
+        assertTrue(result.getFeedbackToUser().contains("Camera (" + FIRST_UUID + ")"));
+        assertTrue(result.getFeedbackToUser().contains("Camera (" + SECOND_UUID + ")"));
         assertEquals(Condition.GOOD, model.findOpenLoan(FIRST_UUID).orElseThrow().getIssueCondition().orElseThrow());
         assertEquals(Condition.FAIR, model.findOpenLoan(SECOND_UUID).orElseThrow().getIssueCondition().orElseThrow());
         assertEquals(Availability.ASSIGNED, model.getAvailability(FIRST_UUID));
@@ -132,8 +135,10 @@ public class LoanBatchCommandTest {
         CommandResult result = new LoanReturnCommand(List.of(FIRST_UUID, SECOND_UUID),
                 TODAY, null, CLOCK).execute(model);
 
-        assertEquals(String.format(LoanReturnCommand.MESSAGE_BATCH_SUCCESS, 2,
-                List.of(FIRST_UUID, SECOND_UUID), TODAY), result.getFeedbackToUser());
+        assertEquals(String.format(LoanReturnCommand.MESSAGE_BATCH_SUCCESS, 2, TODAY)
+                + "\nCamera (" + FIRST_UUID + ") from Alex Tan (" + FIRST_MEMBER.getNusId() + ")"
+                + "\nCamera (" + SECOND_UUID + ") from Alex Tan (" + SECOND_MEMBER.getNusId() + ")",
+                result.getFeedbackToUser());
         assertEquals(DisplayRequest.loans(), result.getDisplayRequest());
         assertTrue(model.findOpenLoan(FIRST_UUID).isEmpty());
         assertTrue(model.findOpenLoan(SECOND_UUID).isEmpty());
