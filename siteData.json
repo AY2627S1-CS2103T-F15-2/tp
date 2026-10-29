@@ -85,6 +85,7 @@
         "loan-filter-visibility": "Loan filter visibility",
         "undo-and-redo": "Undo and redo",
         "command-only-equipment-browsing": "Command-only equipment browsing",
+        "atomic-save-access-policy": "Atomic-save access policy",
         "command-word-aliases-and-casing": "Command-word aliases and casing",
         "batch-loan-validation-diagnostics": "Batch loan validation diagnostics"
       },
