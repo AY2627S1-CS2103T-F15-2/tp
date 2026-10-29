@@ -51,9 +51,9 @@ public class AtomicFileWriterAclTest {
         Files.delete(control);
 
         byte[] content = "candidate data".getBytes(StandardCharsets.UTF_8);
-        for (boolean existing : List.of(true, false)) {
-            Path target = shared.resolve(existing ? "existing.json" : "new.json");
-            if (existing) {
+        for (boolean doesTargetExist : List.of(true, false)) {
+            Path target = shared.resolve(doesTargetExist ? "existing.json" : "new.json");
+            if (doesTargetExist) {
                 Files.createFile(target);
                 AclFileAttributeView policy = Files.getFileAttributeView(target, AclFileAttributeView.class);
                 policy.setAcl(List.of(AclEntry.newBuilder(ownerAccess).setFlags().build()));

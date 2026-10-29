@@ -84,7 +84,7 @@ public class AtomicAccessPolicyTest {
         AclView existing = new AclView(owner, List.of());
         AclView candidate = new AclView(owner, List.of());
         candidate.failure = new IOException("ACL cannot be applied");
-        candidate.failOnEmptyAcl = true;
+        candidate.shouldFailOnEmptyAcl = true;
         AtomicFileWriter writer = policyWriter(target, Map.of(AclFileAttributeView.class, existing),
                 Map.of(AclFileAttributeView.class, candidate));
         assertSame(candidate.failure, assertThrows(IOException.class, () -> writer.write(target, new byte[] {1})));
@@ -255,7 +255,7 @@ public class AtomicAccessPolicyTest {
         private UserPrincipal owner;
         private List<AclEntry> entries;
         private IOException failure;
-        private boolean failOnEmptyAcl;
+        private boolean shouldFailOnEmptyAcl;
         private final List<List<AclEntry>> applications = new ArrayList<>();
 
         AclView(UserPrincipal owner, List<AclEntry> entries) {
@@ -285,7 +285,7 @@ public class AtomicAccessPolicyTest {
 
         @Override
         public void setAcl(List<AclEntry> newEntries) throws IOException {
-            if (failure != null && (!failOnEmptyAcl || newEntries.isEmpty())) {
+            if (failure != null && (!shouldFailOnEmptyAcl || newEntries.isEmpty())) {
                 throw failure;
             }
             entries = List.copyOf(newEntries);
