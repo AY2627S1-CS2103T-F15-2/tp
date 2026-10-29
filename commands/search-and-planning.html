@@ -64,8 +64,12 @@ distinguish matching units from retained units. Criteria and order are visible i
 Zero results shows a reset hint. Opening details retains the filtered list. Refresh reevaluates queries against current
 data, including loan-only changes, without executing row callbacks. Errors retain criteria and input
 for correction. List commands clear filters.
-Deleting a result keeps the active filter and sort, including when no matches remain. Only an explicit
-list/reset command clears them; returning to a directory after a mutation does not reset the query.</p> <h2 id="inventory-groups-and-duplicates">Inventory groups and duplicates<a class="fa fa-anchor" href="#inventory-groups-and-duplicates" onclick="event.stopPropagation()"></a></h2> <p>Equipment summaries group all inventory by normalized <strong>category / equipment name</strong> (equipment type).
+Deleting a result keeps the active filter and sort, including when no matches remain. List commands and
+<strong>Reset search</strong> clear that directory&#39;s filters and sorting. A successful <code class="hljs inline no-lang">equipment add</code> with <code class="hljs inline no-lang">count/2</code>
+or greater also resets equipment criteria and opens the full equipment directory. Adding one unit
+(without <code class="hljs inline no-lang">count/</code> or with <code class="hljs inline no-lang">count/1</code>) opens its details while retaining the current search. Other record
+mutations retain the active query when returning to the directory. Rejected commands preserve the
+previous criteria, view and selection.</p> <h2 id="inventory-groups-and-duplicates">Inventory groups and duplicates<a class="fa fa-anchor" href="#inventory-groups-and-duplicates" onclick="event.stopPropagation()"></a></h2> <p>Equipment summaries group all inventory by normalized <strong>category / equipment name</strong> (equipment type).
 Category and type are separate keys; separator characters never merge distinct pairs. Labels quote
 each value and double embedded quotes so names containing <code class="hljs inline no-lang">/</code> or quotation marks remain distinguishable.
 Each group shows available, assigned and unavailable physical units. Open loans mean assigned;
@@ -74,7 +78,7 @@ current filter, so narrowing a directory does not silently reduce planning total
 Deleted members are excluded from similarity warnings; their retained NUS IDs still cannot be reused.
 Successful equipment additions warn about other UUIDs sharing normalized category and name.
 Warnings identify the existing records and are advisory: legitimate same-name members and multiple
-physical units can still be added. Existing identity-duplicate rejection is unchanged.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Thu, 29 Oct 2026, 13:14:38 GMT+8]</small></div></footer><!--]--></div>
+physical units can still be added. Existing identity-duplicate rejection is unchanged.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Thu, 29 Oct 2026, 14:05:31 GMT+8]</small></div></footer><!--]--></div>
 </body><script src="/tp/markbind/js/bootstrap-utility.min.js"></script>
 <script src="/tp/markbind/js/polyfill.min.js"></script>
 <script src="/tp/markbind/js/vue.global.prod.min.js"></script>
