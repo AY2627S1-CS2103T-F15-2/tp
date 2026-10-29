@@ -27,6 +27,7 @@ import seedu.address.model.equipment.Equipment;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
+import seedu.address.model.query.LoanQuery;
 
 /**
  * Read-only loan directory. The application shell calls {@link #refresh()} after data changes.
@@ -42,6 +43,7 @@ public class LoanPanel extends UiPart<Region> {
     private final Consumer<String> onUse;
     private final Consumer<UUID> onEquipmentSelected;
     private final Consumer<NusId> onMemberSelected;
+    private boolean isApplyingQuery;
 
     @FXML
     private Label openCount;
@@ -80,8 +82,8 @@ public class LoanPanel extends UiPart<Region> {
         this.data = data;
         this.onEquipmentSelected = onEquipmentSelected;
         this.onMemberSelected = onMemberSelected;
-        memberFilter.textProperty().addListener((observable, oldValue, newValue) -> refresh());
-        equipmentFilter.textProperty().addListener((observable, oldValue, newValue) -> refresh());
+        memberFilter.textProperty().addListener((observable, oldValue, newValue) -> refreshAfterFilterEdit());
+        equipmentFilter.textProperty().addListener((observable, oldValue, newValue) -> refreshAfterFilterEdit());
         refresh();
     }
 
@@ -89,15 +91,16 @@ public class LoanPanel extends UiPart<Region> {
      * Rebuilds current and completed loans without invoking callbacks or installing listeners.
      */
     public void refresh() {
-        List<Loan> open = data.getLoanList().stream().filter(Loan::isOpen).filter(this::matchesFilters)
+        LoanQuery query = getQuery();
+        List<Loan> open = data.getLoanList().stream().filter(Loan::isOpen).filter(query::matches)
                 .sorted(OPEN_ORDER).toList();
         List<Loan> closed = data.getLoanList().stream().filter(loan -> !loan.isOpen())
-                .filter(this::matchesFilters).sorted(Comparator
+                .filter(query::matches).sorted(Comparator
                         .comparing((Loan loan) -> loan.getReturnedDate().orElseThrow()).reversed()
                         .thenComparing(Loan::getAssignedDate).thenComparing(loan -> loan.getEquipmentUuid().toString()))
                 .toList();
         openCount.setText(Integer.toString(open.size()));
-        boolean hasFilter = !memberFilter.getText().isBlank() || !equipmentFilter.getText().isBlank();
+        boolean hasFilter = !query.equals(LoanQuery.all());
         long totalOpen = data.getLoanList().stream().filter(Loan::isOpen).count();
         long totalClosed = data.getLoanList().size() - totalOpen;
         filterSummary.setText("Showing " + open.size() + " of " + totalOpen + " open loans; "
@@ -116,19 +119,35 @@ public class LoanPanel extends UiPart<Region> {
      */
     @FXML
     private void handleResetFilters() {
-        memberFilter.clear();
-        equipmentFilter.clear();
+        setQuery(LoanQuery.all());
+    }
+
+    public LoanQuery getQuery() {
+        return new LoanQuery(memberFilter.getText(), equipmentFilter.getText());
+    }
+
+    /**
+     * Applies both command criteria together without triggering navigation or command callbacks.
+     */
+    public void setQuery(LoanQuery query) {
+        requireNonNull(query);
+        isApplyingQuery = true;
+        try {
+            memberFilter.setText(query.memberText());
+            equipmentFilter.setText(query.equipmentText());
+        } finally {
+            isApplyingQuery = false;
+        }
         refresh();
     }
 
     /**
-     * Matches both identity filters without depending on mutable display names.
+     * Refreshes direct GUI edits after any programmatic two-field update has completed.
      */
-    private boolean matchesFilters(Loan loan) {
-        return loan.getMemberNusId().toString().toLowerCase(java.util.Locale.ROOT)
-                .contains(memberFilter.getText().strip().toLowerCase(java.util.Locale.ROOT))
-                && loan.getEquipmentUuid().toString().toLowerCase(java.util.Locale.ROOT)
-                .contains(equipmentFilter.getText().strip().toLowerCase(java.util.Locale.ROOT));
+    private void refreshAfterFilterEdit() {
+        if (!isApplyingQuery) {
+            refresh();
+        }
     }
 
     /**

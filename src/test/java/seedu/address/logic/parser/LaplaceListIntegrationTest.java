@@ -94,12 +94,27 @@ public class LaplaceListIntegrationTest {
     }
 
     @Test
+    public void execute_loanFiltersAndReset_preserveSavedBytesAndHistoryWithoutSaves() throws Exception {
+        storage.saveAddressBook(model.getAddressBook());
+        String saved = Files.readString(storage.getAddressBookFilePath());
+        AddressBook before = new AddressBook(model.getAddressBook());
+        for (String input : List.of("loans list nus/a000 uuid/0000", "loans list uuid/0002", "loans reset",
+                "loans list nus/ uuid/", "loans list")) {
+            logic.execute(input);
+            assertEquals(1, storage.saves);
+            assertEquals(saved, Files.readString(storage.getAddressBookFilePath()));
+            assertEquals(before, model.getAddressBook());
+            assertTrue(!model.canUndoAddressBook());
+        }
+    }
+
+    @Test
     public void execute_rejectedListArguments_preservesStateAndNeverSaves() throws Exception {
         storage.saveAddressBook(model.getAddressBook());
         String persisted = Files.readString(storage.getAddressBookFilePath());
         AddressBook before = new AddressBook(model.getAddressBook());
         for (String route : new String[] {"member list", "equipment list", "loans list"}) {
-            for (String args : new String[] {"extra", "unknown/x", "notes/ notes/", "nus/A0000001X"}) {
+            for (String args : new String[] {"extra", "unknown/x", "notes/ notes/", "nus/A0000001X nus/A0000002X"}) {
                 assertThrows(ParseException.class, () -> logic.execute(route + "\t" + args));
                 assertEquals(before, model.getAddressBook());
                 assertEquals(persisted, Files.readString(storage.getAddressBookFilePath()));
@@ -121,7 +136,8 @@ public class LaplaceListIntegrationTest {
         };
         LogicManager failingLogic = new LogicManager(model, failingStorage);
         AddressBook before = new AddressBook(model.getAddressBook());
-        for (String route : new String[] {"member list", "equipment list", "loans list"}) {
+        for (String route : new String[] {"member list", "equipment list", "loans list",
+            "loans list nus/a000 uuid/0000", "loans reset"}) {
             failingLogic.execute(route);
             assertEquals(before, model.getAddressBook());
         }

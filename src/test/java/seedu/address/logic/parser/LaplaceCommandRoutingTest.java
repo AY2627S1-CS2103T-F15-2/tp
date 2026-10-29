@@ -98,7 +98,9 @@ public class LaplaceCommandRoutingTest {
         assertInstanceOf(MemberListCommand.class, new MemberCommandParser().parse("list \t"));
         assertInstanceOf(EquipmentListCommand.class, new EquipmentCommandParser().parse("\tlist"));
         for (String route : new String[] {"member list", "equipment list", "loans list"}) {
-            for (String args : new String[] {"extra", "nus/A0123456X", "notes/ notes/", "unknown/value"}) {
+            for (String args : new String[] {
+                "extra", "nus/A0123456X nus/A0234567R", "notes/ notes/", "unknown/value"
+            }) {
                 assertThrows(ParseException.class, () -> parser.parseCommand(route + "\t" + args));
             }
         }

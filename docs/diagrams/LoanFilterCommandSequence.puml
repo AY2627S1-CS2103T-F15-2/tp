@@ -1,0 +1,41 @@
+@startuml
+!include style.puml
+skinparam ParticipantFontColor #111111
+skinparam ParticipantBackgroundColor LOGIC_COLOR_T1
+title Read-only loan filter command
+actor User
+participant ":MainWindow" as UI
+participant ":LogicManager" as Logic
+participant ":AddressBookParser" as Parser
+participant ":LoanListCommand" as Command
+participant ":LoanPanel" as Panel
+
+User -> UI: enter loans list nus/TEXT uuid/TEXT
+activate UI
+UI -> Logic: execute(text)
+activate Logic
+Logic -> Parser: parseCommand(text)
+activate Parser
+Parser --> Logic: command with LoanQuery
+deactivate Parser
+Logic -> Command: execute(model)
+activate Command
+Command --> Logic: CommandResult with DisplayRequest.loans(query)
+deactivate Command
+note right of Logic: isReadOnly() bypasses persistence
+Logic --> UI: result
+deactivate Logic
+UI -> Panel: setQuery(query)
+activate Panel
+Panel -> Panel: refresh()
+note right of Panel: Both fields now use the command criteria
+Panel --> UI
+deactivate Panel
+UI --> User: filtered open and completed history
+deactivate UI
+note over UI, Panel
+  Bare list has no query: preserve GUI filters.
+  loans reset carries LoanQuery.all(): clear both fields.
+  Direct GUI edits use the same matching predicate.
+end note
+@enduml

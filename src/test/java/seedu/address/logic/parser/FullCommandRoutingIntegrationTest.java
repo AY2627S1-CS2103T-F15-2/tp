@@ -325,9 +325,10 @@ public class FullCommandRoutingIntegrationTest {
     private CommandResult execute(String input, DisplayRequest display) throws Exception {
         int saves = storage.saves;
         CommandResult result = logic.execute(input);
-        boolean isQuery = input.endsWith(" list") || input.startsWith("member view ")
+        boolean isReadOnly = input.endsWith(" list") || input.startsWith("loans list")
+                || input.equals("loans reset") || input.startsWith("member view ")
                 || input.startsWith("equipment view ");
-        assertEquals(saves + (isQuery ? 0 : 1), storage.saves, input);
+        assertEquals(saves + (isReadOnly ? 0 : 1), storage.saves, input);
         if (display != null) {
             assertEquals(display, result.getDisplayRequest(), input);
         }

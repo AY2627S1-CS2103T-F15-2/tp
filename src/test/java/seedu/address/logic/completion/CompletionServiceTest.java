@@ -82,14 +82,14 @@ public class CompletionServiceTest {
         assertCandidates("member ad", "add");
         assertCandidates("member ", "add", "delete", "edit", "list", "restore", "search", "view");
         assertCandidates("equipment ", "add", "delete", "edit", "list", "restore", "search", "view");
-        assertCandidates("loans ", "add", "list", "return");
+        assertCandidates("loans ", "add", "list", "reset", "return");
         for (String word : List.of("exit", "help", "undo", "redo",
                 "member", "equipment", "loans")) {
             assertCandidates(word, word);
         }
         for (String input : List.of("add", "edit", "delete", "clear", "find", "list", "xyz",
                 "member zz", "help ", "member unknown ", "member list ",
-                "equipment list ", "loans list ")) {
+                "equipment list ", "loans reset ")) {
             assertTrue(service.complete(input, input.length(), model.getAddressBook()).isEmpty(), input);
         }
         Completion middle = service.complete("  mex suffix", 4, model.getAddressBook()).orElseThrow();
@@ -100,6 +100,17 @@ public class CompletionServiceTest {
         assertEquals(7, gap.start());
         assertEquals(7, gap.end());
         assertEquals(List.of("add", "delete", "edit", "list", "restore", "search", "view"), gap.candidates());
+    }
+
+    @Test
+    public void complete_loanFilters_suggestsFieldsAndKnownIdentities() {
+        assertCandidates("loans list ", "nus/", "uuid/");
+        assertCandidates("loans list nus/a012", "A0123456X");
+        assertCandidates("loans list uuid/00000000-0000-0000-0000-000000000001",
+                "00000000-0000-0000-0000-000000000001");
+        assertCandidates("loans res", "reset");
+        assertCandidates("LOAN LIST ", "nus/", "uuid/");
+        assertCandidates("LoAn ReS", "reset");
     }
 
     @Test

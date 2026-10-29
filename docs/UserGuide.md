@@ -10,9 +10,9 @@ Laplace helps a CCA EXCO member manage **members, equipment and equipment loans*
 Type commands to register records, find an exact member or item, issue equipment, record returns and
 remove erroneous records. Lists and details show who holds each item and what each member holds.
 
-This guide describes **seventeen member, equipment and loan commands**, including member and equipment
+This guide describes **eighteen member, equipment and loan commands**, including member and equipment
 editing/restoration, batch equipment registration and search, with Tab autocomplete throughout:
-seven member commands, seven equipment commands and three loan commands.
+seven member commands, seven equipment commands and four loan commands.
 Use it with the matching release supplied by the team;
 earlier builds may not support every behavior described here. Laplace is a local, single-user application.
 
@@ -104,7 +104,8 @@ Help, usage messages, Tab and Ctrl+Space suggestions use the canonical `member`,
 - Spaces copied from other documents are accepted too. For unusual free-text input, see the
   [advanced input reference](#advanced-input-reference).
 - Use the full field names: `nus/`, `name/`, `phone/` and `email/`. Short alternatives are not accepted.
-- `member list`, `equipment list` and `loans list` take no arguments. Additional text or prefixes are rejected.
+- `member list` and `equipment list` take no arguments. `loans list` accepts optional identity filters;
+  `loans reset` takes no arguments. Extra text and unsupported prefixes are rejected.
 - An empty or whitespace-only submission does nothing.
 
 On success, the input clears and the requested list/details view appears. Adding a member or one equipment
@@ -483,16 +484,29 @@ availability summaries cover active units only; retained group counts include de
 ### Open the Loans tab: `loans list`
 
 ```text
-loans list
+loans list [nus/TEXT] [uuid/TEXT]
+loans reset
 ```
 
-Open the existing Loans tab, just as clicking **Loans** does. It shows current and completed loans,
-with links to the corresponding member and equipment details. Use the NUS ID and UUID fields to
-filter both sections. Each section has its own count and empty state.
+Open the existing Loans tab, just as clicking **Loans** does. It shows current and completed loans
+with links to member and equipment details. Feedback is `Showing current loans.` These commands are
+read-only: they do not save data, change records or create undo steps.
 
-Feedback is `Showing current loans.` This command does not create, return, delete or change any
-member, equipment or loan records. It does not save the data file.
-Extra text or parameters, such as `loans list uuid/UUID`, are rejected and leave the current view unchanged.
+Bare `loans list` retains both current filters. Supplying either parameter replaces **both** filters:
+any omitted or blank field becomes empty. For example, `loans list nus/a012` shows a member identity
+substring across all equipment; `loans list uuid/400004` searches a unit's entire loan history.
+Supply both fields to require both matches. Matching ignores case and surrounding whitespace and
+uses identity substrings, exactly like the panel fields. Partial identities are allowed; names are not
+searched. Filters include retained open and completed history, including records for deleted entities.
+
+`loans reset` clears both fields and shows all loans, just like **Reset filters**. You can also clear
+both with `loans list nus/ uuid/`. Commands update the visible filter fields and counts; direct edits
+to those fields take effect immediately and remain active through navigation and mutations.
+The summary shows displayed versus total counts in both sections so hidden records remain apparent.
+
+Unknown/repeated parameters and extra text are rejected with usage guidance, leaving the view and
+filters unchanged. Use `loans reset` without parameters. For example, `loans list nus/a nus/b` and
+`loans reset uuid/anything` are errors.
 
 ### Assign equipment: `loans add`
 
@@ -810,7 +824,7 @@ For example, `member edit name/Alex  T` can complete the stored name `Alex Tan`.
 the stored spelling, and all text and separators outside that value remain unchanged.
 
 Command words ignore case; field prefixes remain case-sensitive. Field suggestions depend on the command and omit
-non-repeatable prefixes already present. All seventeen member, equipment and loan commands plus `help`,
+non-repeatable prefixes already present. All eighteen member, equipment and loan commands plus `help`,
 `exit`, `mode dark` and `mode light` have command completion. Search supports `q/`, the applicable filters, sorting and ordering;
 finite options such as `status/de` complete to `status/DELETED`. Query text can reuse searchable stored
 values. Equipment editing and both restoration commands support their fields and existing references.
@@ -907,8 +921,9 @@ fills the input with the unit UUID and today's local date; review it before pres
 
 Filter both sections by NUS ID and equipment UUID. The filtered-result summary shows displayed versus
 total counts in both sections, including records hidden after a successful batch command.
-**Reset filters** explicitly reveals all records. Commands, tab navigation and `loans list` retain
-intentional filters; mutations never silently clear them.
+**Reset filters** explicitly reveals all records. Bare `loans list`, tab navigation and mutations
+retain intentional filters. Use `loans list nus/TEXT uuid/TEXT` to replace both filters, or
+`loans reset` to clear them.
 
 Urgency updates when you open Loans, execute a command or change records. Reopen Loans after midnight
 to refresh the labels. Completed loans show return dates and recorded issue/return conditions, without
@@ -973,7 +988,7 @@ Use these commands or the header button labeled **Dark mode** or **Light mode**.
 Light is the default for new and older preference files. The chosen mode is saved with window preferences
 on normal exit and restored on the next launch. Changing mode preserves the current search and records.
 Only `dark` and `light` are accepted; missing/extra arguments are errors. These are appearance utilities,
-in addition to the seventeen member, equipment and loan commands.
+in addition to the eighteen member, equipment and loan commands.
 
 ## Saving, file access and recovery
 
@@ -1174,7 +1189,7 @@ empty folder after copying the JAR there. Keep your existing data file and backu
 backing up the source, preserving any destination data and checking the copied records and open loans.
 
 **Where is Help?** Enter `help` or press F1. Use `exit` for normal shutdown; saved window preferences are
-reused within usable screen bounds. These utilities are separate from the seventeen member, equipment
+reused within usable screen bounds. These utilities are separate from the eighteen member, equipment
 and loan commands, including `loans list`.
 
 The **Menu** contains **Help** and **Exit**. Help displays the address of the
@@ -1212,7 +1227,8 @@ authentication and concurrent multi-user operation are not provided.
 | [Edit equipment](#edit-equipment-equipment-edit) | `equipment edit uuid/UUID [name/NAME] [category/CATEGORY] [condition/CONDITION] [notes/NOTES]` |
 | [Restore equipment](#restore-equipment-equipment-restore) | `equipment restore uuid/UUID` |
 | [Delete equipment](#delete-equipment-equipment-delete) | `equipment delete uuid/UUID` |
-| [Open the Loans tab](#open-the-loans-tab-loans-list) | `loans list` |
+| [Open/filter the Loans tab](#open-the-loans-tab-loans-list) | `loans list [nus/TEXT] [uuid/TEXT]` |
+| [Reset Loans filters](#open-the-loans-tab-loans-list) | `loans reset` |
 | [Assign equipment](#assign-equipment-loans-add) | `loans add uuid/UUID[,UUID...] nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |
 | [Return equipment](#return-equipment-loans-return) | `loans return uuid/UUID[,UUID...] returned/ACTUAL_RETURN_DATE [condition/CONDITION]` |
 | [Undo the last record change](#undo-a-record-change-undo) | `undo` |

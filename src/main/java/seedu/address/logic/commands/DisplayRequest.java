@@ -10,12 +10,14 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.member.NusId;
 import seedu.address.model.query.DirectoryQuery;
 import seedu.address.model.query.InventoryGroups;
+import seedu.address.model.query.LoanQuery;
 
 /**
  * Immutable navigation intent, independent of JavaFX and persisted application data.
  * Only detail targets carry an identity; factories prevent invalid combinations.
  * Directory requests with a query replace the active criteria; requests without one preserve them.
- * Explicit list commands supply {@code DirectoryQuery.all()} to reset filters and sorting.
+ * Member/equipment list commands supply {@code DirectoryQuery.all()} to reset filters and sorting.
+ * Loans requests optionally carry identity substrings; an absent query preserves its current filters.
  */
 public final class DisplayRequest {
     /**
@@ -30,6 +32,7 @@ public final class DisplayRequest {
     private final UUID equipmentUuid;
     private final DirectoryQuery query;
     private final InventoryGroups.Key equipmentGroup;
+    private final LoanQuery loanQuery;
 
     private DisplayRequest(Type type, NusId memberNusId, UUID equipmentUuid) {
         this(type, memberNusId, equipmentUuid, null);
@@ -41,6 +44,12 @@ public final class DisplayRequest {
 
     private DisplayRequest(Type type, NusId memberNusId, UUID equipmentUuid, DirectoryQuery query,
             InventoryGroups.Key equipmentGroup) {
+        this(type, memberNusId, equipmentUuid, query, equipmentGroup, null);
+    }
+
+    private DisplayRequest(Type type, NusId memberNusId, UUID equipmentUuid, DirectoryQuery query,
+            InventoryGroups.Key equipmentGroup, LoanQuery loanQuery) {
+        this.loanQuery = loanQuery;
         this.equipmentGroup = equipmentGroup;
         this.type = type;
         this.memberNusId = memberNusId;
@@ -99,6 +108,17 @@ public final class DisplayRequest {
         return new DisplayRequest(Type.LOANS, null, null);
     }
 
+    /**
+     * Opens Loans with explicit criteria; an empty query clears both filters.
+     */
+    public static DisplayRequest loans(LoanQuery query) {
+        return new DisplayRequest(Type.LOANS, null, null, null, null, requireNonNull(query));
+    }
+
+    public Optional<LoanQuery> getLoanQuery() {
+        return Optional.ofNullable(loanQuery);
+    }
+
     public Type getType() {
         return type;
     }
@@ -123,12 +143,13 @@ public final class DisplayRequest {
                 && Objects.equals(memberNusId, otherRequest.memberNusId)
                 && Objects.equals(equipmentUuid, otherRequest.equipmentUuid)
                 && Objects.equals(query, otherRequest.query)
-                && Objects.equals(equipmentGroup, otherRequest.equipmentGroup);
+                && Objects.equals(equipmentGroup, otherRequest.equipmentGroup)
+                && Objects.equals(loanQuery, otherRequest.loanQuery);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, memberNusId, equipmentUuid, query, equipmentGroup);
+        return Objects.hash(type, memberNusId, equipmentUuid, query, equipmentGroup, loanQuery);
     }
 
     @Override
@@ -139,6 +160,7 @@ public final class DisplayRequest {
                 .add("equipmentUuid", equipmentUuid)
                 .add("query", query)
                 .add("equipmentGroup", equipmentGroup)
+                .add("loanQuery", loanQuery)
                 .toString();
     }
 }
