@@ -18,10 +18,8 @@ import java.util.logging.Logger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
 
 /**
@@ -36,7 +34,7 @@ public class FutureLoanDateDiagnosticTest {
     @Test
     public void read_futureRecordedEvents_warnsWithIdentityAndPreservesHistory() throws Exception {
         for (String field : List.of("assignedDate", "returnedDate")) {
-            ObjectNode json = snapshot();
+            ObjectNode json = RootPersistenceTestData.jsonSnapshot();
             ObjectNode loan = (ObjectNode) json.get("loans").get(field.equals("assignedDate") ? 0 : 1);
             loan.put(field, "2099-01-01");
             if (field.equals("assignedDate")) {
@@ -70,7 +68,7 @@ public class FutureLoanDateDiagnosticTest {
 
     @Test
     public void read_futureExpectedDateAndToday_doesNotWarn() throws Exception {
-        ObjectNode json = snapshot();
+        ObjectNode json = RootPersistenceTestData.jsonSnapshot();
         ObjectNode loan = (ObjectNode) json.get("loans").get(0);
         loan.put("assignedDate", "2026-10-20");
         loan.put("expectedReturnDate", "2099-01-01");
@@ -87,11 +85,6 @@ public class FutureLoanDateDiagnosticTest {
         } finally {
             logger.removeHandler(handler);
         }
-    }
-
-    private ObjectNode snapshot() throws Exception {
-        return (ObjectNode) new ObjectMapper().readTree(JsonUtil.toJsonString(
-                new JsonSerializableAddressBook(RootPersistenceTestData.fullAddressBook())));
     }
 
     /**

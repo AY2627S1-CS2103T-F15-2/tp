@@ -2,6 +2,7 @@ package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.LoanCommandTestData.CLOCK;
@@ -21,6 +22,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.logic.LogicManager;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.LoanAddCommandParser;
 import seedu.address.logic.parser.LoanReturnCommandParser;
@@ -32,11 +34,45 @@ import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.Condition;
 import seedu.address.model.loan.Loan;
 import seedu.address.storage.JsonAddressBookStorage;
+import seedu.address.storage.JsonUserPrefsStorage;
+import seedu.address.storage.StorageManager;
 
 /** Direct command/parser/model/storage integration; Duy owns activation through LogicManager. */
 public class LoanCommandIntegrationTest {
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void routedAssignment_historicalOverlap_rejectsSingleAndBatchWithoutSavingOrClearingRedo() throws Exception {
+        ModelManager model = LoanCommandTestData.model();
+        LocalDate returned = TODAY.minusDays(5);
+        model.addLoan(new Loan(FIRST_UUID, FIRST_MEMBER.getNusId(), TODAY.minusDays(10), TODAY, returned));
+        JsonAddressBookStorage disk = new JsonAddressBookStorage(testFolder.resolve("overlap.json"));
+        LogicManager logic = new LogicManager(model, new StorageManager(disk,
+                new JsonUserPrefsStorage(testFolder.resolve("prefs.json"))));
+        logic.execute("equipment edit uuid/" + FIRST_UUID + " notes/Changed");
+        logic.execute("undo");
+        AddressBook before = new AddressBook(model.getAddressBook());
+        String bytes = Files.readString(disk.getAddressBookFilePath());
+        var history = model.getAddressBookHistory();
+        for (String identifiers : List.of(FIRST_UUID.toString(), SECOND_UUID + "," + FIRST_UUID)) {
+            String command = "loans add uuid/" + identifiers + " nus/" + SECOND_MEMBER.getNusId()
+                    + " assigned/" + TODAY.minusDays(7) + " expected/" + TODAY;
+            CommandException failure = assertThrows(CommandException.class, () -> logic.execute(command));
+            assertEquals(String.format(LoanAddCommand.MESSAGE_HISTORICAL_OVERLAP, FIRST_UUID, returned),
+                    failure.getMessage());
+            assertEquals(before, model.getAddressBook());
+            assertSame(history, model.getAddressBookHistory());
+            assertTrue(model.canRedoAddressBook());
+            assertEquals(bytes, Files.readString(disk.getAddressBookFilePath()));
+            assertEquals(before, disk.readAddressBook().orElseThrow());
+        }
+        logic.execute("loans add uuid/" + FIRST_UUID + " nus/" + SECOND_MEMBER.getNusId()
+                + " assigned/" + returned + " expected/" + TODAY);
+        assertEquals(SECOND_MEMBER.getNusId(), model.findOpenLoan(FIRST_UUID).orElseThrow().getMemberNusId());
+        assertFalse(model.canRedoAddressBook());
+        assertEquals(model.getAddressBook(), disk.readAddressBook().orElseThrow());
+    }
 
     @Test
     public void parserCommands_saveAndReload_openReturnedAndReassignedLoansPreserveAllCollections() throws Exception {

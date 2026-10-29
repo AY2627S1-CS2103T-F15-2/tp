@@ -8,9 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
 
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -21,12 +23,126 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.model.ModelManager;
+import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.equipment.Equipment;
+import seedu.address.model.loan.Loan;
+import seedu.address.model.member.Member;
+import seedu.address.model.person.Person;
 import seedu.address.testutil.FxTestUtil;
 import seedu.address.testutil.ViewTestData;
 
 /** Uses real JavaFX event dispatch and focus traversal rather than calling private handlers. */
 public class CompletionControllerTest {
+    @Test
+    public void tab_staticVocabularyAndCycles_neverReadRecords() {
+        FxTestUtil.runAndWait(() -> {
+            TextField field = new TextField();
+            new CompletionController(field, () -> {
+                throw new AssertionError("Static suggestions must not acquire model data");
+            });
+            new Scene(new VBox(field));
+            type(field, "member ");
+            tab(field);
+            assertEquals("member add", field.getText());
+            tab(field);
+            assertEquals("member delete", field.getText());
+            key(field, KeyCode.TAB, true, false, false, false);
+            assertEquals("member add", field.getText());
+            type(field, "equipment add co");
+            tab(field);
+            assertEquals("equipment add condition/", field.getText());
+            type(field, "equipment add condition/");
+            tab(field);
+            assertEquals("equipment add condition/DAMAGED", field.getText());
+            tab(field);
+            assertEquals("equipment add condition/FAIR", field.getText());
+        });
+    }
+
+    @Test
+    public void tab_recordCycles_reuseCandidatesWithoutCopyingOrScanningUnrelatedCollections() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = ViewTestData.model();
+            CountingData data = new CountingData(model.getAddressBook());
+            TextField field = new TextField();
+            new CompletionController(field, () -> data);
+            new Scene(new VBox(field));
+            type(field, "equipment add name/");
+            tab(field);
+            assertEquals("equipment add name/Camera", field.getText());
+            int reads = data.recordReads;
+            tab(field);
+            assertEquals("equipment add name/Speaker", field.getText());
+            key(field, KeyCode.TAB, true, false, false, false);
+            assertEquals("equipment add name/Camera", field.getText());
+            assertEquals(reads, data.recordReads);
+            type(field, "member ");
+            tab(field);
+            model.deleteEquipment(ViewTestData.SPEAKER);
+            tab(field);
+            assertEquals("member delete", field.getText());
+        });
+    }
+
+    @Test
+    public void tab_replacedRoot_detachesOldListenersAndObservesNewRecords() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager oldModel = ViewTestData.model();
+            ModelManager newModel = ViewTestData.model();
+            AtomicReference<ReadOnlyAddressBook> root = new AtomicReference<>(oldModel.getAddressBook());
+            TextField field = new TextField();
+            new CompletionController(field, root::get);
+            new Scene(new VBox(field));
+            type(field, "equipment add name/");
+            tab(field);
+            root.set(newModel.getAddressBook());
+            tab(field);
+            assertEquals("equipment add name/Camera", field.getText());
+            type(field, "equipment add name/");
+            tab(field);
+            oldModel.deleteEquipment(ViewTestData.SPEAKER);
+            tab(field);
+            assertEquals("equipment add name/Speaker", field.getText());
+            newModel.deleteEquipment(ViewTestData.SPEAKER);
+            tab(field);
+            assertEquals("equipment add name/Speaker", field.getText());
+        });
+    }
+
+    /**
+     * Counts value-source reads and rejects the unrelated collections a full root copy would touch.
+     */
+    private static class CountingData implements ReadOnlyAddressBook {
+        private final ReadOnlyAddressBook delegate;
+        private int recordReads;
+
+        CountingData(ReadOnlyAddressBook delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public ObservableList<Person> getPersonList() {
+            throw new AssertionError("Completion must not copy people");
+        }
+
+        @Override
+        public ObservableList<Member> getMemberList() {
+            recordReads++;
+            return delegate.getMemberList();
+        }
+
+        @Override
+        public ObservableList<Equipment> getEquipmentList() {
+            recordReads++;
+            return delegate.getEquipmentList();
+        }
+
+        @Override
+        public ObservableList<Loan> getLoanList() {
+            throw new AssertionError("Completion must not copy or validate loan history");
+        }
+    }
+
     @Test
     public void tab_fieldAfterLoanIdentities_preservesBatchAndFollowingFields() {
         FxTestUtil.runAndWait(() -> {

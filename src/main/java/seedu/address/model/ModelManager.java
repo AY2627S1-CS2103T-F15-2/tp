@@ -40,7 +40,7 @@ public class ModelManager implements Model {
      */
     public ModelManager(ReadOnlyAddressBook addressBook, ReadOnlyUserPrefs userPrefs) {
         this(userPrefs, new AddressBook(requireNonNull(addressBook)));
-        logger.fine("Initializing with address book: " + addressBook + " and user prefs " + userPrefs);
+        logger.fine("Initializing model from supplied records and preferences.");
     }
 
     /**

@@ -102,7 +102,8 @@ public class LoanReturnCommandTest {
         ModelManager model = modelWithLoan(Condition.GOOD);
         AddressBook before = new AddressBook(model.getAddressBook());
         CommandException early = assertThrows(CommandException.class, () -> command(TODAY.minusDays(4)).execute(model));
-        assertEquals(Loan.MESSAGE_RETURNED_DATE_CONSTRAINTS, early.getMessage());
+        assertEquals(String.format(LoanReturnCommand.MESSAGE_RETURN_BEFORE_ASSIGNMENT, "Camera", FIRST_UUID,
+                TODAY.minusDays(4), TODAY.minusDays(3)), early.getMessage());
         CommandException future = assertThrows(CommandException.class, () -> command(TODAY.plusDays(1)).execute(model));
         assertEquals(String.format(LoanReturnCommand.MESSAGE_FUTURE_RETURN, TODAY), future.getMessage());
         assertEquals(before, model.getAddressBook());
