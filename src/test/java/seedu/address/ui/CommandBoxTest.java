@@ -26,6 +26,39 @@ import seedu.address.testutil.FxTestUtil;
 
 public class CommandBoxTest {
     @Test
+    public void completion_aliasAndMixedCasePopup_preservesDraftValuesAndNeverExecutes() {
+        FxTestUtil.runAndWait(() -> {
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("Success");
+            });
+            TextField field = field(box);
+            Stage stage = new Stage();
+            try {
+                stage.setScene(field.getScene());
+                stage.show();
+                for (String[] example : List.of(new String[] {"MEM", "member add "},
+                        new String[] {"members ", "member edit "}, new String[] {"LOAN ", "loans add "},
+                        new String[] {"MEMBERS EDIT name/MiXeD Name ph", "MEMBERS EDIT name/MiXeD Name phone/"})) {
+                    box.prepare(example[0]);
+                    field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.SPACE,
+                            false, true, false, false));
+                    ContextMenu menu = Window.getWindows().stream().filter(window -> window instanceof ContextMenu)
+                            .map(window -> (ContextMenu) window).filter(Window::isShowing).findFirst().orElseThrow();
+                    assertEquals(example[0], field.getText());
+                    menu.getItems().stream().filter(item -> item.getText().equals(example[1]))
+                            .findFirst().orElseThrow().fire();
+                    assertEquals(example[1], field.getText());
+                    assertTrue(executed.isEmpty());
+                }
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    @Test
     public void completion_returnConditionPopup_preparesFieldWithoutExecuting() {
         FxTestUtil.runAndWait(() -> {
             List<String> executed = new ArrayList<>();
