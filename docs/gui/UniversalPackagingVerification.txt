@@ -67,3 +67,9 @@ CI remains unverified: the repository's Java CI workflow was inspected and
 reported state disabled_manually. A push alone cannot start that workflow;
 repository-owner approval to re-enable it is pending. The four-platform
 review request and standalone entry-point checks remain open.
+
+Hosted CI follow-up — 29 October 2026 (Singapore):
+The repository owner approved re-enabling Java CI after the review follow-up.
+The workflow now reports state active. This commit starts the requested
+packaging and four-platform checks; results remain pending until the run
+finishes. Earlier disabled-workflow entries describe the prior state.
