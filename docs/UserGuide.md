@@ -6,8 +6,6 @@
 
 # Laplace User Guide
 
-Week 10: [search, filters, selectable sorting, inventory planning and duplicate warnings](commands/search-and-planning.md).
-
 Laplace helps a CCA EXCO member manage **members, equipment and equipment loans** on one computer.
 Type commands to register records, find an exact member or item, issue equipment, record returns and
 remove erroneous records. Lists and details show who holds each item and what each member holds.
@@ -46,143 +44,30 @@ Do not delete your data file to troubleshoot startup.
 
 ### Completing commands and fields with Tab
 
-Type part of a command in the command box and press **Tab** to complete it. For example,
-`mem` becomes `member`, `member ad` becomes `member add`, and `member add na` becomes
-`member add name/`. Member editing is supported too: `member ed` becomes `member edit`, with
-`nus/`, `name/`, `phone/` and `email/` field and value suggestions. Member names always come from the
-member directory, including during edits. Press Space yourself to begin the next word or field.
+Type `mem` and press **Tab** to complete `member`. Type a space, then `ad`, and press Tab
+again to get `member add`. Field names complete too: `member add na` becomes `member add name/`.
+Press Space yourself to begin the next word or field.
 
-When several suggestions match, press Tab repeatedly to cycle through them in alphabetical order.
-During that cycle, **Shift+Tab** selects the previous suggestion. Editing the input, moving the caret,
-submitting a command, leaving the input, or changing the records starts a fresh cycle.
+Press Tab repeatedly to cycle through matching suggestions; **Shift+Tab** goes back during a cycle.
+Tab only fills text. Review the command and press **Enter** to run it. If nothing matches, Tab moves
+focus normally. See [advanced Tab completion](#advanced-tab-completion) for value suggestions and edge cases.
 
-Laplace also completes existing field values: member names, phone numbers and emails; member IDs in
-reference fields; equipment UUIDs, names and categories; and the four equipment conditions. For example,
-`equipment add condition/g` completes to `equipment add condition/GOOD`. Values match without regard
-to case and retain their stored spelling. Suggestions use the current records, including records added
-since startup. Identical values appear once.
+### Register your first member
 
-A matching stored value takes priority over an unfinished field prefix within that value. For example,
-with a stored equipment name `Camera Cover`, `equipment add name/Camera co` completes to
-`equipment add name/Camera Cover`. If no stored value matches, the final token can still complete
-to a new field prefix. A trailing space offers the unused fields for the command.
+1. Type the following command, replacing the example details with your member's details:
 
-Value matching treats repeated spaces and Unicode whitespace within a value as ordinary single spaces.
-For example, `member edit name/Alex  T` can complete the stored name `Alex Tan`. The replacement keeps
-the stored spelling, and all text and separators outside that value remain unchanged.
+   ```text
+   member add nus/A0678901D name/Jordan Lee phone/93456789 email/jordan.lee@u.nus.edu
+   ```
 
-Command words and field prefixes are case-sensitive. Field suggestions depend on the command and omit
-non-repeatable prefixes already present. All seventeen member, equipment and loan commands plus `help`,
-`exit`, `mode dark` and `mode light` have command completion. Search supports `q/`, the applicable filters, sorting and ordering;
-finite options such as `status/de` complete to `status/DELETED`. Query text can reuse searchable stored
-values. Equipment editing and both restoration commands support their fields and existing references.
-Batch equipment creation includes `count/`; batch loan UUID completion fills the active comma-separated
-entry, preserves the others and excludes UUIDs already listed. Return conditions are supported too.
-New member IDs, dates, numeric counts and free-form notes remain manual. Completion does not guarantee that a command
-can execute: ordinary validation still runs when you press Enter.
+2. Press **Enter**. The new member's details open and a success message appears.
+   If the ID already exists, use another unused NUS ID. If an error appears, correct the retained
+   command and press Enter again; rejected commands leave records unchanged.
+3. Run `member list` to see the directory. Changes save automatically.
 
-Tab changes only the active token or field value and preserves later fields and their separators,
-including Unicode spaces copied into the input. It never executes a command or saves records. Press **Enter** to submit the completed input. With blank input, selected text, an
-unsupported context, at the start of an existing field marker, or with no matching suggestion,
-normal Tab navigation remains available. An untouched following marker and its value are preserved. Shift+Tab also
-keeps its normal navigation behavior outside an active completion cycle.
-
-### Sample records on first launch
-
-When there is no saved data file, Laplace starts with five fictional members and seven equipment items.
-The samples include two cameras, a damaged tripod, a microphone, a speaker, a projector under repair
-and an event laptop. Three open loans illustrate current holders, one overdue item and a member holding
-multiple items. Two closed loans show a FAIR speaker return and a GOOD-to-DAMAGED tripod return.
-The assigned camera intentionally has no issue observation to demonstrate older unknown history.
-
-Dates are relative to the day of first launch. Try `member list`, `equipment list` and `loans list`,
-then copy displayed identities to view details or try a return. These are ordinary records:
-additions, returns and deletions are saved normally. Existing saved data always takes precedence;
-samples are not appended to it. To explore a fresh sample set, run the JAR from a separate empty folder
-instead of removing your existing data file.
-
-The equipment identities below are stable in a fresh sample set. The states and holders change as you
-issue, return or delete records.
-
-| Sample equipment | UUID | Initial availability | Current holder |
-| --- | --- | --- | --- |
-| Camera, case included | `550e8400-e29b-41d4-a716-446655440000` | AVAILABLE | None |
-| Camera, strap included | `550e8400-e29b-41d4-a716-446655440001` | ASSIGNED | Alex Tan (`A0123456X`) |
-| Tripod, damaged | `550e8400-e29b-41d4-a716-446655440002` | UNAVAILABLE | None |
-| Wireless Microphone | `550e8400-e29b-41d4-a716-446655440003` | ASSIGNED | Jamie Lim (`A0234567R`), overdue |
-| Portable Speaker | `550e8400-e29b-41d4-a716-446655440004` | AVAILABLE | None; previously returned |
-| Projector, under repair | `550e8400-e29b-41d4-a716-446655440005` | UNAVAILABLE | None |
-| Event Laptop | `550e8400-e29b-41d4-a716-446655440006` | ASSIGNED | Alex Tan (`A0123456X`) |
-
-To explore without changing the sample records:
-
-1. Run `loans list`. The Loans tab shows three open loans and the closed speaker/tripod loans in history.
-2. Run `member view nus/A0123456X`. Alex's details show the camera and laptop under Held Equipment.
-3. Run `equipment view uuid/550e8400-e29b-41d4-a716-446655440003`. The microphone's details identify
-   Jamie as the holder and show its assignment and expected return dates.
-4. Run `loans list` again to return to the Loans tab.
-
-## Using the window
-
-- **Members**, **Equipment** and **Loans** switch views. Member/equipment search criteria remain active
-  when switching tabs or opening details. **Back to results** returns to the current filtered summary;
-  **Reset search**, `member list` or `equipment list` clears that directory's criteria and sorting.
-- The left equipment directory groups units with the same normalized category and name, including units
-  registered in different batches. Open a group with a click, **Enter** or **Space**, then select a row in
-  its physical-unit table. Each unit still has its own UUID, condition, notes, holder and lifecycle state.
-- Group counts distinguish **matching** units from **retained** units. Availability counts exclude deleted
-  units. **Show all units** reveals group members outside the active search, including deleted records.
-  The right-hand **All retained groups** summary includes deleted-only groups regardless of the active
-  filter. Such a group shows zero active availability counts and its retained deleted count.
-  Direct `equipment view uuid/UUID` opens that exact unit, enabling Show all units if needed.
-  Unchecking it narrows the table again while retaining the selected unit's details; a message explains
-  when that unit is outside the table filter.
-  Short table identifiers show the first eight and last four UUID characters, such as
-  `550e8400…0000`. They are display labels only: hover for the full UUID, or copy it from unit details.
-- Member rows open member details. Copy buttons preserve full identifiers and contact fields. Related
-  member/equipment links open the exact record. **Commands for this unit/member** contains command previews:
-  **Copy** copies plain text; **Use command** prepares the input and never executes it. Replace the marked
-  uppercase placeholders and press Enter yourself. Availability and validation rules still apply.
-- The **Loans** tab shows current open assignments, exact-identity links, assigned/due dates and an
-  **Overdue** or **Due today** label when applicable. Rows reflow at narrower widths. **Prepare return command**
-  fills the input with the unit UUID and today's local date; review it before pressing Enter.
-  The filtered-result summary shows displayed versus total counts in both sections, including records
-  hidden after a successful batch command. **Reset filters** explicitly reveals all records. Commands,
-  tab navigation and `loans list` retain intentional filters; mutations never silently clear them.
-  Urgency updates when you open Loans, execute a command or change records. Reopen Loans after midnight
-  to refresh the labels. Completed loans show return dates and recorded issue/return conditions, without
-  urgency labels or return actions. Filter both sections by NUS ID and equipment UUID. `loans list` opens
-  this same tab; member and equipment details also show the selected record's loan history.
-  Sections with more than ten loans use their own scrollable list. Scroll inside that list, or focus
-  it and use the arrow, Page Up/Down, Home and End keys, to reach all entries without loading every row at once.
-- **Last result** sits above the command feedback and stays after switching tabs. A green box is a
-  successful command, a red box is an error, and the box is neutral before the first command.
-  The heading displays only **Last result**; assistive text includes the status and full message.
-  **Details** expands the complete feedback and **Copy** includes all UUIDs from batch creation.
-- The command input, identifiers and command examples use IBM Plex Mono. Unmodified **↑/↓** browse up to
-  100 recent submissions in this session, preserving an unfinished draft. Modified arrows retain normal
-  text selection and caret navigation. **Ctrl+Space** offers command-name or parameter-prefix completion at
-  the end of the input. Choose an entry to insert it; **Escape** dismisses suggestions. Tab completes the
-  active token or value as described above; with no applicable suggestion it retains normal focus navigation. History is cleared when the application closes.
-- **F1** or `help` opens a scrollable command reference with copyable templates and the user-guide link.
-  The loan-return template includes `condition/GOOD` as an example of the optional observed return
-  condition. Ctrl+Space after `loans return co` also offers `condition/`; omit it to retain the existing
-  equipment condition, or supply one of the conditions documented in the loan-return section.
-- Drag the directory divider to resize its panels. Scroll long lists/details vertically; the data filename
-  appears in the footer, with the full path available on hover.
-
-### Appearance: `mode dark` and `mode light`
-
-```text
-mode dark
-mode light
-```
-
-Use these commands or the header button labeled **Dark mode** or **Light mode**. The button names the appearance it will apply. **Menu** contains Help and Exit. The main window and Help switch together.
-Light is the default for new and older preference files. The chosen mode is saved with window preferences
-on normal exit and restored on the next launch. Changing mode preserves the current search and records.
-Only `dark` and `light` are accepted; missing/extra arguments are errors. These are appearance utilities,
-in addition to the seventeen member, equipment and loan commands.
+Continue with [adding equipment](#add-equipment-equipment-add) and
+[issuing a loan](#assign-equipment-loans-add), or browse the [command summary](#command-summary).
+The [shared field rules](#shared-field-rules) explain accepted values when you need them.
 
 ## Command format and feedback
 
@@ -192,11 +77,8 @@ Commands and prefixes are **lowercase and case-sensitive**. Use `member add`, no
 - Square brackets mean an optional parameter; do not type them. Optional parameters are marked in each command's syntax.
 - Put spaces between command words and parameters. Parameters may appear in any order; tabs also separate fields.
 - Each prefix may appear **at most once**, including `notes/`.
-- Unicode whitespace, including EM SPACE and nonbreaking space, separates command words and parameters.
-  Leading/trailing whitespace is ignored. Runs of whitespace in text values become one ordinary space.
-- A value continues to the next parameter marker. A start-of-value or whitespace-delimited token such as
-  `notes/` or `unknown/` is reserved as a marker. Unknown markers are errors, even inside free text.
-  There is no quoting or escaping. An ordinary URL such as `https://example.com` is not a marker.
+- Spaces copied from other documents are accepted too. For unusual free-text input, see the
+  [advanced input reference](#advanced-input-reference).
 - Use the full field names: `nus/`, `name/`, `phone/` and `email/`. Short alternatives are not accepted.
 - `member list`, `equipment list` and `loans list` take no arguments. Additional text or prefixes are rejected.
 - An empty or whitespace-only submission does nothing.
@@ -216,31 +98,6 @@ They return `Unknown command.` and do not change records or save the data file, 
 are supplied. For example, use `member list` instead of `list members`, `equipment list` to view
 inventory, and `member search q/Alex` to search members. There is no supported bulk-clear command.
 Use the member, equipment and loan commands documented below, or `undo`, `redo`, `mode`, `help` and `exit`.
-
-### Shared field rules
-
-| Field | Accepted input and stored form |
-| --- | --- |
-| NUS ID `nus/` | One ASCII letter, exactly seven digits, and an optional final ASCII letter. Case-insensitive; stored/displayed uppercase, such as `A0123456X` or `E0123456`. |
-| Member name `name/` | 1–100 Unicode code points after whitespace and NFC normalization. Unicode letters with combining marks, spaces, straight (`'`) or curly (`’`) apostrophes, hyphens and periods; must contain at least one letter. Combining marks must follow a letter or its marks. Examples: `அருண்`, `Anne O’Connor`. |
-| Phone `phone/` | Optional leading `+`, then 8–15 digits. Spaces and hyphens are removed: `+65 9123-4567` becomes `+6591234567`. |
-| Email `email/` | 3–254 ASCII characters, one `@`, no spaces and at least one domain dot. Local-part characters: letters, digits, `.`, `_`, `%`, `+`, `-`. Domain labels contain letters/digits/hyphens and cannot begin/end with a hyphen. ASCII validation occurs before conversion to lowercase; non-ASCII lookalikes such as `K` are rejected. Stored lowercase. |
-| Equipment UUID `uuid/` | Full `8-4-4-4-12` hexadecimal form, such as `550e8400-e29b-41d4-a716-446655440000`. Case-insensitive input; lowercase display. Shortened UUIDs are rejected. |
-| Equipment name `name/` | 1–100 printable Unicode characters after whitespace normalization. Punctuation and model numbers are allowed; control characters are rejected. |
-| Category `category/` | 1–50 printable Unicode characters after normalization. Free text; control characters are rejected. |
-| Condition `condition/` | Exactly `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`, ignoring case. Stored uppercase. Use the underscore in `UNDER_REPAIR`. |
-| Notes `notes/` | Optional, at most 300 printable Unicode characters after trimming. Line breaks become spaces. Omitted or empty notes mean no notes. |
-| Dates | Exactly `yyyy-MM-dd` with a Gregorian year from `0001` through `9999`, such as `2026-10-15`. Assignment/actual-return dates cannot be later than the computer's local date. Expected return may be in the future. |
-
-Saved loan dates must also use the four-digit Gregorian range `0001`–`9999`. Year zero, negative years,
-and five-digit years are invalid stored data. Loading does not compare historical dates with today's clock.
-
-Copy the actual UUID displayed by Laplace when issuing, viewing, returning or deleting equipment.
-The UUID in this guide is an example; it does not identify every newly added item.
-
-Newly added or edited member names use Unicode NFC normalization: `José Tan` and `José Tan`
-(with a separate combining acute accent) are stored as the same canonical spelling. Existing saved
-names retain their exact spelling when loaded; editing another field does not rewrite the name.
 
 ### Availability
 
@@ -262,7 +119,7 @@ A member can hold multiple different items; one physical item can have only one 
 | Missing or blank required field | Supply a nonempty value for every required prefix shown in the command's usage. |
 | Repeated prefix | Keep one occurrence of that prefix, including optional notes. |
 | Unknown parameter or unexpected text | Remove the unrecognized marker or text before the first parameter. Check the full prefix names. |
-| Invalid field | Follow the field rule above and the displayed field-specific explanation. |
+| Invalid field | Follow the [shared field rules](#shared-field-rules) and the displayed field-specific explanation. |
 | Unknown identity | Copy the full NUS ID or UUID from its list. Names and row numbers are not identifiers. |
 | Command rejected by a loan rule | Return an assigned item before deleting its member/item or assigning that item again. |
 | Data cannot be saved | Check that the application folder/data file are writable, correct the file-access problem, then retry. Failed MVP mutations leave records unchanged. |
@@ -277,7 +134,7 @@ Create one active member with a unique, immutable NUS ID.
 member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL
 ```
 
-All four parameters are required and follow the shared field rules. No address is required.
+All four parameters are required and follow the [shared field rules](#shared-field-rules). No address is required.
 
 Examples:
 
@@ -294,8 +151,7 @@ Two members are duplicates **only when their normalized NUS IDs are equal**. Dif
 a name, phone or email. A duplicate is rejected with a message such as:
 `A member with NUS ID A0123456X already exists.`
 
-Missing, blank, malformed, repeated or unknown parameters are rejected. Failure creates no member and
-preserves the current view/selection. If saving fails, correct file access and retry the retained command.
+For invalid input or a save error, follow [correcting common errors](#correcting-common-errors).
 
 ### List members: `member list`
 
@@ -352,7 +208,7 @@ member edit nus/NUS_ID [name/NAME] [phone/PHONE] [email/EMAIL]
 Example: `member edit nus/a0123456x name/Anne-Marie Lim phone/+65 9876-5432`.
 
 Supply the exact NUS ID and at least one detail to change. Names, phones and emails follow the
-same validation and normalization as `member add`. Omitted fields keep their stored values.
+[shared field rules](#shared-field-rules). Omitted fields keep their stored values.
 The NUS ID cannot be changed; open and completed loans remain attached to the same member.
 You can edit contact details while the member holds equipment. Matching another member's name
 or contacts does not merge records because NUS IDs identify members.
@@ -369,8 +225,7 @@ Changes survive restart.
 | Supplied values make no change | `The supplied details do not change this member.` No save occurs. |
 | Member is deleted | Run `member restore nus/NUS_ID` before editing. |
 | Member does not exist | `No member with NUS ID NUS_ID exists.` Check `member list`. |
-| Blank, invalid, repeated or unknown field | Correct the field using the `member add` rules. |
-| Saving fails | The previous details, loan history and saved file remain unchanged. |
+| Invalid input or save error | Follow [shared field rules](#shared-field-rules) and [error recovery](#correcting-common-errors). |
 
 ### Delete a member: `member delete`
 
@@ -393,11 +248,10 @@ Viewing deleted details shows restore guidance. Repeating deletion is rejected w
 | Member holds equipment | `Cannot delete NUS_ID because the member holds N item(s). Return the items first.` Use `member view` to identify them. |
 | Member is already deleted | Restore them first; repeated deletion is rejected without saving. |
 | Member does not exist | `No member with NUS ID NUS_ID exists.` Check `member list`. |
-| Malformed/missing/repeated/unknown parameter | Correct the identity or syntax and retry. |
-| Saving fails | No records change. Correct file access before retrying. |
+| Invalid input or save error | Follow [error recovery](#correcting-common-errors). |
 
 Deletion has no expiry and never clears a member record automatically. Return all outstanding items
-with `loans return` before retrying blocked deletion. A failed save changes neither records nor saved bytes.
+with `loans return` before retrying blocked deletion.
 
 ### Restore a member: `member restore`
 
@@ -411,7 +265,7 @@ Restore any deleted member at any time. There is no time limit, timestamp check,
 archive state. The same NUS ID, details and loan history are retained. Success reports
 `Restored member NUS_ID: NAME.`, opens their details and removes the deleted styling. New loans
 can then be assigned normally. An unknown identity, an already-active member or invalid arguments
-are rejected without saving. A failed save leaves the member deleted and permits a later retry.
+are rejected without saving. See [error recovery](#correcting-common-errors) for invalid input or save errors.
 
 ### Add equipment: `equipment add`
 
@@ -425,7 +279,7 @@ equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES] [cou
 no notes. `count/` is optional and defaults to **1**. Supply a whole number from **1 to 100**, using
 ASCII digits only; leading zeros are allowed. Blank counts, signs, fractions, repeated `count/` fields
 and values outside this range are rejected. Do not supply `uuid/`, a holder or availability.
-Follow the shared text limits and condition rules.
+Follow the [shared field rules](#shared-field-rules) for text limits and conditions.
 
 Examples:
 
@@ -507,7 +361,8 @@ equipment edit uuid/UUID [name/NAME] [category/CATEGORY] [condition/CONDITION] [
 
 Supply the exact UUID and at least one field to change. Unspecified fields keep their existing values;
 `notes/` with no value clears notes. Names, categories, conditions and notes follow the same validation
-as equipment add. Duplicate/unknown parameters and unchanged edits are rejected without saving.
+as [equipment add](#add-equipment-equipment-add). Unchanged edits are rejected; see
+[error recovery](#correcting-common-errors) for input and save errors.
 
 Example: `equipment edit uuid/550e8400-e29b-41d4-a716-446655440000 condition/DAMAGED notes/Lens needs repair`.
 
@@ -535,8 +390,7 @@ They cannot be assigned and are excluded from active availability totals. Group 
 | --- | --- |
 | Item is on loan | `Cannot delete UUID because it is assigned to NUS_ID. Return the item first.` View it to confirm the holder. |
 | UUID does not exist | `No equipment with UUID UUID exists.` Copy an existing UUID from `equipment list`. |
-| UUID or syntax is invalid | Correct the full UUID/required prefix and retry. |
-| Saving fails | The item and loan records remain unchanged. Correct file access and retry. |
+| Invalid input or save error | Follow [shared field rules](#shared-field-rules) and [error recovery](#correcting-common-errors). |
 
 Deleting one UUID never deletes other items with the same description. Repeated deletion is rejected.
 
@@ -740,6 +594,203 @@ on or after 20 September 2026; choose valid actual dates for your own operation.
 Unicode name search and value completion treat `Σ`, `σ` and `ς` as case-equivalent.
 For example, searching for `Σ` or `νικοσ` finds a stored member named `ΝΙΚΟΣ`;
 Tab completion of `member edit name/νικοσ` suggests the original spelling `ΝΙΚΟΣ`.
+
+## Input reference
+
+### Shared field rules
+
+| Field | Accepted input and stored form |
+| --- | --- |
+| NUS ID `nus/` | One English letter, exactly seven digits, and an optional final English letter, e.g. `A0123456X` or `E0123456`. Stored uppercase. |
+| Member name `name/` | 1–100 characters. Letters in any language, accents, spaces, apostrophes (`'` or `’`), hyphens and periods are allowed; include at least one letter. See [name counting and accents](#exact-text-and-character-rules) for the precise limit. |
+| Phone `phone/` | Optional `+`, then 8–15 digits. Spaces and hyphens are removed: `+65 9123-4567` becomes `+6591234567`. |
+| Email `email/` | 3–254 characters using English letters, digits and the punctuation described in the [exact email rules](#exact-text-and-character-rules). Include one `@`, a dotted domain and no spaces. Stored lowercase. |
+| Equipment UUID `uuid/` | Copy the full identifier from the item's details, e.g. `550e8400-e29b-41d4-a716-446655440000`. Shortened identifiers are rejected. |
+| Equipment name `name/` | 1–100 printable characters; punctuation and model numbers are allowed. |
+| Category `category/` | 1–50 printable characters; choose a useful description such as `Photography`. |
+| Condition `condition/` | `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`, in any letter case. Use the underscore in `UNDER_REPAIR`. |
+| Notes `notes/` | Optional, up to 300 printable characters after trimming outside spaces. Line breaks become spaces; omitted or empty notes mean no notes. |
+| Dates | A real date in `yyyy-MM-dd` form, e.g. `2026-10-15`. Assignment and actual-return dates cannot be in the future; expected return can. |
+
+Copy the actual UUID displayed by Laplace when issuing, viewing, returning or deleting equipment.
+The UUID in this guide is an example; it does not identify every newly added item.
+
+### Advanced input reference
+
+These details are optional reference material for copied text and unusual input. Ordinary examples
+in the commands above are enough to get started.
+
+- Unicode whitespace, including EM SPACE and nonbreaking space, separates command words and parameters.
+  Leading/trailing whitespace is ignored. Runs of whitespace in text values become one ordinary space.
+- A value continues to the next parameter marker. A start-of-value or whitespace-delimited token such as
+  `notes/` or `unknown/` is reserved as a marker. Unknown markers are errors, even inside free text.
+  There is no quoting or escaping. An ordinary URL such as `https://example.com` is not a marker.
+
+### Exact text and character rules
+
+A **Unicode code point** is one unit of text; a displayed accented letter may use more than one.
+**NFC normalization** combines equivalent letter-and-accent spellings where possible before counting
+new member names. The table below gives the exact restrictions behind the everyday field rules.
+
+| Field | Exact accepted input and stored form |
+| --- | --- |
+| NUS ID `nus/` | One ASCII letter, exactly seven digits, and an optional final ASCII letter. Case-insensitive; stored/displayed uppercase, such as `A0123456X` or `E0123456`. |
+| Member name `name/` | 1–100 Unicode code points after whitespace and NFC normalization. Unicode letters with combining marks, spaces, straight (`'`) or curly (`’`) apostrophes, hyphens and periods; must contain at least one letter. Combining marks must follow a letter or its marks. Examples: `அருண்`, `Anne O’Connor`. |
+| Phone `phone/` | Optional leading `+`, then 8–15 digits. Spaces and hyphens are removed: `+65 9123-4567` becomes `+6591234567`. |
+| Email `email/` | 3–254 ASCII characters, one `@`, no spaces and at least one domain dot. Local-part characters: letters, digits, `.`, `_`, `%`, `+`, `-`. Domain labels contain letters/digits/hyphens and cannot begin/end with a hyphen. ASCII validation occurs before conversion to lowercase; non-ASCII lookalikes such as `K` are rejected. Stored lowercase. |
+| Equipment UUID `uuid/` | Full `8-4-4-4-12` hexadecimal form, such as `550e8400-e29b-41d4-a716-446655440000`. Case-insensitive input; lowercase display. Shortened UUIDs are rejected. |
+| Equipment name `name/` | 1–100 printable Unicode characters after whitespace normalization. Punctuation and model numbers are allowed; control characters are rejected. |
+| Category `category/` | 1–50 printable Unicode characters after normalization. Free text; control characters are rejected. |
+| Condition `condition/` | Exactly `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`, ignoring case. Stored uppercase. Use the underscore in `UNDER_REPAIR`. |
+| Notes `notes/` | Optional, at most 300 printable Unicode characters after trimming. Line breaks become spaces. Omitted or empty notes mean no notes. |
+| Dates | Exactly `yyyy-MM-dd` with a Gregorian year from `0001` through `9999`, such as `2026-10-15`. Assignment/actual-return dates cannot be later than the computer's local date. Expected return may be in the future. |
+
+Saved loan dates must also use the four-digit Gregorian range `0001`–`9999`. Year zero, negative years,
+and five-digit years are invalid stored data. Loading does not compare historical dates with today's clock.
+
+Newly added or edited member names use Unicode NFC normalization: `José Tan` and `José Tan`
+(with a separate combining acute accent) are stored as the same canonical spelling. Existing saved
+names retain their exact spelling when loaded; editing another field does not rewrite the name.
+
+### Advanced Tab completion
+
+Type part of a command in the command box and press **Tab** to complete it. For example,
+`mem` becomes `member`, `member ad` becomes `member add`, and `member add na` becomes
+`member add name/`. Member editing is supported too: `member ed` becomes `member edit`, with
+`nus/`, `name/`, `phone/` and `email/` field and value suggestions. Member names always come from the
+member directory, including during edits. Press Space yourself to begin the next word or field.
+
+When several suggestions match, press Tab repeatedly to cycle through them in alphabetical order.
+During that cycle, **Shift+Tab** selects the previous suggestion. Editing the input, moving the caret,
+submitting a command, leaving the input, or changing the records starts a fresh cycle.
+
+Laplace also completes existing field values: member names, phone numbers and emails; member IDs in
+reference fields; equipment UUIDs, names and categories; and the four equipment conditions. For example,
+`equipment add condition/g` completes to `equipment add condition/GOOD`. Values match without regard
+to case and retain their stored spelling. Suggestions use the current records, including records added
+since startup. Identical values appear once.
+
+A matching stored value takes priority over an unfinished field prefix within that value. For example,
+with a stored equipment name `Camera Cover`, `equipment add name/Camera co` completes to
+`equipment add name/Camera Cover`. If no stored value matches, the final token can still complete
+to a new field prefix. A trailing space offers the unused fields for the command.
+
+Value matching treats repeated spaces and Unicode whitespace within a value as ordinary single spaces.
+For example, `member edit name/Alex  T` can complete the stored name `Alex Tan`. The replacement keeps
+the stored spelling, and all text and separators outside that value remain unchanged.
+
+Command words and field prefixes are case-sensitive. Field suggestions depend on the command and omit
+non-repeatable prefixes already present. All seventeen member, equipment and loan commands plus `help`,
+`exit`, `mode dark` and `mode light` have command completion. Search supports `q/`, the applicable filters, sorting and ordering;
+finite options such as `status/de` complete to `status/DELETED`. Query text can reuse searchable stored
+values. Equipment editing and both restoration commands support their fields and existing references.
+Batch equipment creation includes `count/`; batch loan UUID completion fills the active comma-separated
+entry, preserves the others and excludes UUIDs already listed. Return conditions are supported too.
+New member IDs, dates, numeric counts and free-form notes remain manual. Completion does not guarantee that a command
+can execute: ordinary validation still runs when you press Enter.
+
+Tab changes only the active token or field value and preserves later fields and their separators,
+including Unicode spaces copied into the input. It never executes a command or saves records. Press **Enter** to submit the completed input. With blank input, selected text, an
+unsupported context, at the start of an existing field marker, or with no matching suggestion,
+normal Tab navigation remains available. An untouched following marker and its value are preserved. Shift+Tab also
+keeps its normal navigation behavior outside an active completion cycle.
+
+## Sample records on first launch
+
+When there is no saved data file, Laplace starts with five fictional members and seven equipment items.
+The samples include two cameras, a damaged tripod, a microphone, a speaker, a projector under repair
+and an event laptop. Three open loans illustrate current holders, one overdue item and a member holding
+multiple items. Two closed loans show a FAIR speaker return and a GOOD-to-DAMAGED tripod return.
+The assigned camera intentionally has no issue observation to demonstrate older unknown history.
+
+Dates are relative to the day of first launch. Try `member list`, `equipment list` and `loans list`,
+then copy displayed identities to view details or try a return. These are ordinary records:
+additions, returns and deletions are saved normally. Existing saved data always takes precedence;
+samples are not appended to it. To explore a fresh sample set, run the JAR from a separate empty folder
+instead of removing your existing data file.
+
+The equipment identities below are stable in a fresh sample set. The states and holders change as you
+issue, return or delete records.
+
+| Sample equipment | UUID | Initial availability | Current holder |
+| --- | --- | --- | --- |
+| Camera, case included | `550e8400-e29b-41d4-a716-446655440000` | AVAILABLE | None |
+| Camera, strap included | `550e8400-e29b-41d4-a716-446655440001` | ASSIGNED | Alex Tan (`A0123456X`) |
+| Tripod, damaged | `550e8400-e29b-41d4-a716-446655440002` | UNAVAILABLE | None |
+| Wireless Microphone | `550e8400-e29b-41d4-a716-446655440003` | ASSIGNED | Jamie Lim (`A0234567R`), overdue |
+| Portable Speaker | `550e8400-e29b-41d4-a716-446655440004` | AVAILABLE | None; previously returned |
+| Projector, under repair | `550e8400-e29b-41d4-a716-446655440005` | UNAVAILABLE | None |
+| Event Laptop | `550e8400-e29b-41d4-a716-446655440006` | ASSIGNED | Alex Tan (`A0123456X`) |
+
+To explore without changing the sample records:
+
+1. Run `loans list`. The Loans tab shows three open loans and the closed speaker/tripod loans in history.
+2. Run `member view nus/A0123456X`. Alex's details show the camera and laptop under Held Equipment.
+3. Run `equipment view uuid/550e8400-e29b-41d4-a716-446655440003`. The microphone's details identify
+   Jamie as the holder and show its assignment and expected return dates.
+4. Run `loans list` again to return to the Loans tab.
+
+## Using the window
+
+- **Members**, **Equipment** and **Loans** switch views. Member/equipment search criteria remain active
+  when switching tabs or opening details. **Back to results** returns to the current filtered summary;
+  **Reset search**, `member list` or `equipment list` clears that directory's criteria and sorting.
+- The left equipment directory groups units with the same normalized category and name, including units
+  registered in different batches. Open a group with a click, **Enter** or **Space**, then select a row in
+  its physical-unit table. Each unit still has its own UUID, condition, notes, holder and lifecycle state.
+- Group counts distinguish **matching** units from **retained** units. Availability counts exclude deleted
+  units. **Show all units** reveals group members outside the active search, including deleted records.
+  The right-hand **All retained groups** summary includes deleted-only groups regardless of the active
+  filter. Such a group shows zero active availability counts and its retained deleted count.
+  Direct `equipment view uuid/UUID` opens that exact unit, enabling Show all units if needed.
+  Unchecking it narrows the table again while retaining the selected unit's details; a message explains
+  when that unit is outside the table filter.
+  Short table identifiers show the first eight and last four UUID characters, such as
+  `550e8400…0000`. They are display labels only: hover for the full UUID, or copy it from unit details.
+- Member rows open member details. Copy buttons preserve full identifiers and contact fields. Related
+  member/equipment links open the exact record. **Commands for this unit/member** contains command previews:
+  **Copy** copies plain text; **Use command** prepares the input and never executes it. Replace the marked
+  uppercase placeholders and press Enter yourself. Availability and validation rules still apply.
+- The **Loans** tab shows current open assignments, exact-identity links, assigned/due dates and an
+  **Overdue** or **Due today** label when applicable. Rows reflow at narrower widths. **Prepare return command**
+  fills the input with the unit UUID and today's local date; review it before pressing Enter.
+  The filtered-result summary shows displayed versus total counts in both sections, including records
+  hidden after a successful batch command. **Reset filters** explicitly reveals all records. Commands,
+  tab navigation and `loans list` retain intentional filters; mutations never silently clear them.
+  Urgency updates when you open Loans, execute a command or change records. Reopen Loans after midnight
+  to refresh the labels. Completed loans show return dates and recorded issue/return conditions, without
+  urgency labels or return actions. Filter both sections by NUS ID and equipment UUID. `loans list` opens
+  this same tab; member and equipment details also show the selected record's loan history.
+  Sections with more than ten loans use their own scrollable list. Scroll inside that list, or focus
+  it and use the arrow, Page Up/Down, Home and End keys, to reach all entries without loading every row at once.
+- **Last result** sits above the command feedback and stays after switching tabs. A green box is a
+  successful command, a red box is an error, and the box is neutral before the first command.
+  The heading displays only **Last result**; assistive text includes the status and full message.
+  **Details** expands the complete feedback and **Copy** includes all UUIDs from batch creation.
+- The command input, identifiers and command examples use IBM Plex Mono. Unmodified **↑/↓** browse up to
+  100 recent submissions in this session, preserving an unfinished draft. Modified arrows retain normal
+  text selection and caret navigation. **Ctrl+Space** offers command-name or parameter-prefix completion at
+  the end of the input. Choose an entry to insert it; **Escape** dismisses suggestions. Tab completes the
+  active token or value as described above; with no applicable suggestion it retains normal focus navigation. History is cleared when the application closes.
+- **F1** or `help` opens a scrollable command reference with copyable templates and the user-guide link.
+  The loan-return template includes `condition/GOOD` as an example of the optional observed return
+  condition. Ctrl+Space after `loans return co` also offers `condition/`; omit it to retain the existing
+  equipment condition, or supply one of the conditions documented in the loan-return section.
+- Drag the directory divider to resize its panels. Scroll long lists/details vertically; the data filename
+  appears in the footer, with the full path available on hover.
+
+### Appearance: `mode dark` and `mode light`
+
+```text
+mode dark
+mode light
+```
+
+Use these commands or the header button labeled **Dark mode** or **Light mode**. The button names the appearance it will apply. **Menu** contains Help and Exit. The main window and Help switch together.
+Light is the default for new and older preference files. The chosen mode is saved with window preferences
+on normal exit and restored on the next launch. Changing mode preserves the current search and records.
+Only `dark` and `light` are accepted; missing/extra arguments are errors. These are appearance utilities,
+in addition to the seventeen member, equipment and loan commands.
 
 ## Saving, file access and recovery
 
