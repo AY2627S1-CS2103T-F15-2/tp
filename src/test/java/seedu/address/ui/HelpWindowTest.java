@@ -10,8 +10,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import javafx.geometry.Bounds;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
@@ -96,6 +99,36 @@ public class HelpWindowTest {
                 assertEquals(1, prepared.size());
                 assertTrue(prepared.getFirst().startsWith("member add nus/NUS_ID"));
                 assertFalse(help.isShowing());
+            } finally {
+                help.hide();
+            }
+        });
+    }
+
+    @Test
+    public void fitWithin_shortScaledScreen_keepsLastExampleReachableByScrolling() {
+        FxTestUtil.runAndWait(() -> {
+            HelpWindow help = new HelpWindow(new Stage());
+            try {
+                help.fitWithin(new Rectangle2D(0, 0, 1920, 1000));
+                assertEquals(720, help.getRoot().getWidth(), 1);
+                assertEquals(600, help.getRoot().getHeight(), 1);
+                // 1280x720 at 150% scaling leaves 853x432 logical pixels above a 48-pixel taskbar.
+                help.fitWithin(new Rectangle2D(0, 0, 853, 432));
+                help.show();
+                assertEquals(720, help.getRoot().getWidth(), 1);
+                assertEquals(432, help.getRoot().getHeight(), 1);
+                ScrollPane scroll = (ScrollPane) help.getRoot().getScene().getRoot();
+                scroll.applyCss();
+                scroll.layout();
+                scroll.setVvalue(scroll.getVmax());
+                scroll.layout();
+                Button last = scroll.lookupAll(".button").stream().map(node -> (Button) node)
+                        .filter(button -> button.getText().equals("Use command")).reduce((first, next) -> next)
+                        .orElseThrow();
+                Bounds bounds = last.localToScene(last.getBoundsInLocal());
+                assertTrue(bounds.getMaxY() <= help.getRoot().getScene().getHeight(),
+                        "The last example must scroll into the fitted window");
             } finally {
                 help.hide();
             }
