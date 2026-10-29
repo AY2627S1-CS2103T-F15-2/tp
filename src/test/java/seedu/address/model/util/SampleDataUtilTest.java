@@ -93,7 +93,7 @@ public class SampleDataUtilTest {
         ModelManager model = new ModelManager(SampleDataUtil.getSampleAddressBook(CLOCK), new UserPrefs());
         LocalDate today = LocalDate.now(CLOCK);
         assertEquals(3, model.getLoanList().stream().filter(Loan::isOpen).count());
-        assertEquals(1, model.getLoanList().stream().filter(loan -> !loan.isOpen()).count());
+        assertEquals(2, model.getLoanList().stream().filter(loan -> !loan.isOpen()).count());
         assertEquals(2, model.findOpenLoansForMember(new NusId("A0123456X")).size());
         assertTrue(model.getLoanList().stream()
                 .anyMatch(loan -> loan.isOpen() && loan.getExpectedReturnDate().isBefore(today)));
@@ -105,9 +105,25 @@ public class SampleDataUtilTest {
             assertTrue(model.hasEquipment(loan.getEquipmentUuid()));
             assertFalse(loan.getAssignedDate().isAfter(today));
             assertFalse(loan.getExpectedReturnDate().isBefore(loan.getAssignedDate()));
-            assertEquals(loan.isOpen() ? Availability.ASSIGNED : Availability.AVAILABLE,
-                    model.getAvailability(loan.getEquipmentUuid()));
+            Condition condition = model.findEquipment(loan.getEquipmentUuid()).orElseThrow().getCondition();
+            Availability expected = loan.isOpen() ? Availability.ASSIGNED
+                    : condition == Condition.GOOD || condition == Condition.FAIR
+                            ? Availability.AVAILABLE : Availability.UNAVAILABLE;
+            assertEquals(expected, model.getAvailability(loan.getEquipmentUuid()));
         }
+    }
+
+    @Test
+    public void getSampleAddressBook_handoverExamples_includeObservedDamageAndIntentionalUnknown() {
+        ModelManager model = new ModelManager(SampleDataUtil.getSampleAddressBook(CLOCK), new UserPrefs());
+        assertEquals(1, model.getLoanList().stream().filter(loan -> loan.getIssueCondition().isEmpty()).count());
+        Loan damaged = model.getLoanList().stream()
+                .filter(loan -> loan.getReturnCondition().orElse(null) == Condition.DAMAGED).findFirst().orElseThrow();
+        assertFalse(damaged.isOpen());
+        assertEquals(Condition.GOOD, damaged.getIssueCondition().orElseThrow());
+        assertEquals(Availability.UNAVAILABLE, model.getAvailability(damaged.getEquipmentUuid()));
+        assertTrue(model.getLoanList().stream()
+                .anyMatch(loan -> loan.getReturnCondition().orElse(null) == Condition.FAIR));
     }
 
     @Test

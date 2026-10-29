@@ -110,7 +110,7 @@ public class EquipmentDirectorySummary extends UiPart<Region> {
         criteria.setText(query.description());
         inventoryGroups.setText(unknown == 0 ? String.join("\n",
                 InventoryGroups.group(data, DirectoryQuery.all().equipment(data, availabilityLookup)).stream()
-                        .map(group -> group.category() + " · " + group.name() + ": "
+                        .map(group -> group.label() + ": "
                                 + EquipmentPresentation.counts(group.units(), availabilityLookup)).toList())
                 : "Inventory groups unavailable: inconsistent equipment data.");
         availableCount.setText(Integer.toString(counts.get(Availability.AVAILABLE)));

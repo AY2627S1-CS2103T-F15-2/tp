@@ -45,9 +45,15 @@ marker and value unchanged. Unicode field-separator regressions cover em spaces,
 narrow nonbreaking spaces, next-line characters, ideographic spaces and tabs. They preserve later fields,
 partial prefixes and batch UUID neighbors, including duplicate suppression. Mounted and packaged keyboard
 sessions check Unicode separators and caret placement without executing or saving on Tab.
-`CompletionControllerTest` dispatches JavaFX key events and checks
-cycling, modifier keys, selections and focus traversal. Its focus-field test double also drives JavaFX's
-protected focus setter because macOS foreground activation is not deterministic in a test runner.
+`CompletionControllerTest` dispatches JavaFX key events and checks cycling, modifier keys, selections
+and focus traversal. Its focus-field test double also drives JavaFX's protected focus setter because
+macOS foreground activation is not deterministic in a test runner.
+
+Structural performance regressions assert zero static-vocabulary model reads, no person/loan access,
+and no value-source reads while cycling cached record candidates. Root-replacement tests check listener
+detachment. `CompletionRefreshIntegrationTest` covers committed changes, undo/redo, lifecycle, loans
+and reload, plus unchanged cycles and file bytes after queries/rejected operations. These tests check
+bounded work rather than asserting machine-dependent timing thresholds.
 
 The mounted-shell test `MainWindowShellTest.autocomplete_keyboardSession_preservesDataAndExecutesOnlyOnEnter`
 runs sequentially and stops at the first mismatch. It records expected and actual input text, then checks

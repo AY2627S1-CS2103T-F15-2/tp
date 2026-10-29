@@ -134,7 +134,7 @@ public class JsonAdaptedEquipmentTest {
     @Test
     public void toModelType_invalidCondition_throwsIllegalValueException() {
         JsonAdaptedEquipment adaptedEquipment = new JsonAdaptedEquipment(
-                VALID_UUID, VALID_NAME, VALID_CATEGORY, "good", VALID_NOTES);
+                VALID_UUID, VALID_NAME, VALID_CATEGORY, "BROKEN", VALID_NOTES);
         assertThrows(IllegalValueException.class, "Equipment condition is invalid.",
                 adaptedEquipment::toModelType);
     }

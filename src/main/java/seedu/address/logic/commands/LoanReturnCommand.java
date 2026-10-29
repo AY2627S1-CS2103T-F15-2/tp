@@ -5,6 +5,7 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -27,7 +28,7 @@ public class LoanReturnCommand extends Command {
             + ": Parameters: uuid/UUID[,UUID...] returned/DATE [condition/CONDITION]\n"
             + "Dates must use yyyy-MM-dd.";
     public static final String MESSAGE_SUCCESS = "Returned %1$s (%2$s) from %3$s (%4$s) on %5$s.";
-    public static final String MESSAGE_BATCH_SUCCESS = "Returned %1$d units (%2$s) on %3$s.";
+    public static final String MESSAGE_BATCH_SUCCESS = "Returned %1$d units on %2$s.";
     public static final String MESSAGE_EQUIPMENT_NOT_FOUND = "No equipment with UUID %1$s exists.";
     public static final String MESSAGE_NO_OPEN_LOAN = "Equipment %1$s has no open loan to return.";
     public static final String MESSAGE_MEMBER_NOT_FOUND =
@@ -78,6 +79,7 @@ public class LoanReturnCommand extends Command {
         if (returnedDate.isAfter(today)) {
             throw new CommandException(String.format(MESSAGE_FUTURE_RETURN, today));
         }
+        List<String> details = new ArrayList<>();
         String firstName = null;
         String firstMemberName = null;
         String firstMemberId = null;
@@ -100,6 +102,8 @@ public class LoanReturnCommand extends Command {
             if (returnedDate.isBefore(open.getAssignedDate())) {
                 throw new CommandException(Loan.MESSAGE_RETURNED_DATE_CONSTRAINTS);
             }
+            details.add(item.getName() + " (" + uuid + ") from " + member.getName()
+                    + " (" + member.getNusId() + ")");
             if (firstName == null) {
                 firstName = item.getName();
                 firstMemberName = member.getName().toString();
@@ -125,7 +129,8 @@ public class LoanReturnCommand extends Command {
                 ? DisplayRequest.equipmentDetails(first) : DisplayRequest.loans();
         String feedback = equipmentUuids.size() == 1
                 ? String.format(MESSAGE_SUCCESS, firstName, identifiers, firstMemberName, firstMemberId, returnedDate)
-                : String.format(MESSAGE_BATCH_SUCCESS, equipmentUuids.size(), identifiers, returnedDate);
+                : String.format(MESSAGE_BATCH_SUCCESS, equipmentUuids.size(), returnedDate)
+                        + "\n" + String.join("\n", details);
         return new CommandResult(feedback, display);
     }
 
