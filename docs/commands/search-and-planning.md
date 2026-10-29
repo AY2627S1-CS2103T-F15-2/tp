@@ -116,10 +116,11 @@ MainWindow integration sets query criteria on lists
 and summaries, recovers selection using displayed order, and retains criteria during details mode.
 Keith remains the shell integrator; no shared theme/main FXML changes are needed.
 
-Command.isReadOnly() defaults to false for compatibility and is true for searches. LogicManager
-bypasses saving for these commands. Isaac's history pipeline must likewise exclude queries.
-Existing list/legacy save behavior remains unchanged. Transfer PR #107 was closed without merging;
-team master has the integrated member lifecycle contracts. When later transfer/history changes touch
+Command.isReadOnly() defaults to false for compatibility. Searches, directory lists, detail views, Help
+and Exit declare themselves read-only. LogicManager bypasses record saving and history recording for
+these commands; legacy internal commands retain their own persistence behavior.
+Transfer PR #107 was closed without merging; team master has the integrated member lifecycle contracts.
+When later transfer/history changes touch
 Command/LogicManager/MainWindow, retain query dispatch and the no-save/no-history query boundary.
 The member parser and diagnostic retain `search`, `edit` and `restore`. No unmerged teammate
 implementation is copied into this branch. Other owners' feature acceptance remains separate from

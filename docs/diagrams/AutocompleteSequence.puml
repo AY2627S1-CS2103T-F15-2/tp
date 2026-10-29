@@ -10,7 +10,7 @@ actor User as user
 participant "field:TextField" as field
 participant "controller:CompletionController" as controller
 participant "data:Supplier" as data
-participant "current:AddressBook" as current
+participant "records:ReadOnlyAddressBook" as records
 participant "service:CompletionService" as service
 participant "<<class>>\nMath" as math
 
@@ -21,17 +21,11 @@ alt Ctrl/Alt/Meta held or text selected
   controller -> controller : resetAfterEdit()
   note right of controller : Leave event unconsumed for normal handling.
 else eligible Tab event
-  controller -> data : get()
-  activate data
-  data --> controller : live ReadOnlyAddressBook
-  deactivate data
-  create current
-  controller -> current : new AddressBook(live root)
-  note right of controller
-    Detached snapshot of the live root.
-    An active cycle whose stored snapshot
-    differs from current is discarded.
-  end note
+  opt active record-value cycle
+    controller -> data : get()
+    data --> controller : live root identity
+    note right of controller : Discard cycle only if root identity changed.
+  end
   alt no active cycle
     alt Shift+Tab
       note right of controller : Leave event unconsumed; do not start a reverse cycle.
@@ -40,15 +34,24 @@ else eligible Tab event
       activate field
       field --> controller : originalText, caret
       deactivate field
-      controller -> service : complete(originalText, caret, current)
+      controller -> service : completeWithDataSource(originalText, caret, readData)
       activate service
+      opt record-value completion
+        service -> controller : readData()
+        controller -> data : get()
+        data --> controller : live records
+        controller -> records : observe member/equipment lists if root changed
+        controller --> service : live records
+        service -> records : read relevant values
+        records --> service : current values
+      end
       service --> controller : Optional<Completion>
       deactivate service
       alt no suggestion
         note right of controller : Leave event unconsumed for ordinary traversal.
       else suggestion exists
         note right of controller
-          Retain completion; snapshot = current;
+          Retain immutable completion candidates;
           candidateIndex = 0.
         end note
       end
@@ -82,6 +85,8 @@ controller --> field
 deactivate controller
 note over field, controller
   External text, caret, anchor or focus changes clear the cycle.
+  Weak collection listeners invalidate record candidates after changes.
+  Static vocabulary does not read records or construct snapshots.
   Enter clears it and follows ordinary command submission.
   Replacement uses the original start/end range, preserving later fields
   and Unicode separators. Completing one batch UUID preserves its neighbors.

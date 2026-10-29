@@ -8,6 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.commons.util.LaplaceText;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.HelpCommand;
@@ -25,7 +26,7 @@ public class AddressBookParser {
      * Used for initial separation of command word and args.
      */
     private static final Pattern BASIC_COMMAND_FORMAT =
-            Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)", Pattern.DOTALL);
+            Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)", Pattern.DOTALL | Pattern.UNICODE_CHARACTER_CLASS);
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
 
     /**
@@ -36,7 +37,7 @@ public class AddressBookParser {
      * @throws ParseException if the user input does not conform to the expected format
      */
     public Command parseCommand(String userInput) throws ParseException {
-        final Matcher matcher = BASIC_COMMAND_FORMAT.matcher(userInput.trim());
+        final Matcher matcher = BASIC_COMMAND_FORMAT.matcher(LaplaceText.stripWhitespace(userInput));
         if (!matcher.matches()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
         }
@@ -44,10 +45,7 @@ public class AddressBookParser {
         final String commandWord = CommandWords.canonicalFamily(matcher.group("commandWord"));
         final String arguments = matcher.group("arguments");
 
-        // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
-        // log messages such as the one below.
-        // Lower level log messages are used sparingly to minimize noise in the code.
-        logger.fine("Command word: " + commandWord + "; Arguments: " + arguments);
+        logger.fine("Parsing command input.");
 
         return switch (commandWord) {
             case UndoCommand.COMMAND_WORD -> new UndoCommandParser().parse(arguments);
@@ -59,7 +57,7 @@ public class AddressBookParser {
             case ExitCommand.COMMAND_WORD -> new ExitCommand();
             case HelpCommand.COMMAND_WORD -> new HelpCommand();
             default -> {
-                logger.finer("This user input caused a ParseException: " + userInput);
+                logger.finer("Rejected an unknown command.");
                 throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
             }
         };

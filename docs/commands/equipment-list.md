@@ -7,8 +7,8 @@ markers are rejected. Command words ignore case; `members` and `loan` alias `mem
 Field prefixes remain lowercase and case-sensitive.
 
 Reports the total count and requests the equipment directory through `DisplayRequest`.
-The command does not change entities, loans or stored collection order. It uses the existing
-LogicManager save pipeline, which may report a save error even for a read-only command.
+The command does not change entities, loans or stored collection order. Its read-only declaration
+bypasses record saving, so a record-save failure cannot block the list.
 
 The directory uses the shared Laplace sort order: normalized category, name, then UUID text.
 Each physical UUID remains a separate item.

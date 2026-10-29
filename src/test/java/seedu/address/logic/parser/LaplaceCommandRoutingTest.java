@@ -1,5 +1,6 @@
 package seedu.address.logic.parser;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static seedu.address.testutil.Assert.assertThrows;
 
@@ -26,6 +27,36 @@ import seedu.address.logic.commands.MemberViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
 public class LaplaceCommandRoutingTest {
+
+    @Test
+    public void parseCommand_unicodeSeparators_matchesAsciiRoutesAndDiagnostics() throws Exception {
+        AddressBookParser parser = new AddressBookParser();
+        for (String separator : List.of("\u2003", "\u00a0", "\u202f", "\u3000", "\t", " ")) {
+            for (String command : List.of("member view nus/A0123456X", "member list", "equipment list",
+                    "loans list", "Member LIST", "MEMBERS list", "LOAN LIST",
+                    "member edit nus/A0123456X name/Alex Tan")) {
+                String[] words = command.split(" ", 3);
+                String unicode = separator + words[0] + separator + words[1];
+                if (words.length == 3) {
+                    unicode += separator + words[2];
+                }
+                assertEquals(parser.parseCommand(command).getClass(),
+                        parser.parseCommand(unicode + separator).getClass());
+            }
+            assertEquals(parser.parseCommand("member view nus/A0123456X"),
+                    parser.parseCommand("member view nus/" + separator + "A0123456X"));
+            for (String command : List.of("member", "equipment", "loans", "member lists", "loans returns",
+                    "member view nus/A0123456X nus/A0123456X", "member view unknown/value")) {
+                ParseException expected = org.junit.jupiter.api.Assertions.assertThrows(
+                        ParseException.class, () -> parser.parseCommand(command));
+                ParseException actual = org.junit.jupiter.api.Assertions.assertThrows(
+                        ParseException.class, () -> parser.parseCommand(
+                                separator + command.replace(" ", separator) + separator));
+                assertEquals(expected.getMessage(), actual.getMessage());
+            }
+            assertThrows(ParseException.class, () -> parser.parseCommand(separator));
+        }
+    }
 
     @Test
     public void parseCommand_missingOrUnknown_throwsParseException() {

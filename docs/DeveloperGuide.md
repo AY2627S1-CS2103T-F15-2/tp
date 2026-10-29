@@ -95,6 +95,12 @@ omitted infrastructure and current behavior from the original PR's historical be
 
 ### UI component
 
+Open-loan rows expose an optional observed-condition selector. The default is Not recorded; only an
+explicit choice adds `condition/` to the prepared return. This is the current return shortcut shared
+by navigation from member/equipment details through Loans. For manual verification, choose DAMAGED,
+prepare and inspect the input without submitting; reset to Not recorded and verify omission. Submit
+separate disposable examples and check recorded condition versus intentional unknown history.
+
 The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/ui/Ui.java)
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
@@ -201,8 +207,8 @@ their windows and must not shut down the shared toolkit.
 
 `MainWindow` supplies the live read-only address book to `CommandBox`. `CompletionService` computes
 replacement ranges and ordered candidates without calling logic, history or storage. Command constants
-and shared search prefix constants define the completion vocabulary. The newly merged `undo`/`redo`
-parser routes are not currently registered in `CompletionService`. Search enum options follow
+and shared search prefix constants define the completion vocabulary, including the `undo`/`redo`
+utilities. Help and explicit Ctrl+Space completion use `CommandCatalog`. Search enum options follow
 `DirectoryQuery`; dates, numeric counts, new member IDs and free-form notes are entered manually.
 Batch loan completion replaces only the active UUID entry and excludes neighboring identities.
 `CompletionController` owns cycling and resets after input, caret, focus or model changes. Enter retains
@@ -211,8 +217,12 @@ exercise real JavaFX events, and load production classes from the packaged JAR. 
 instruction, line and branch coverage for the feature, including its UI wiring. See [Testing](Testing.md).
 
 The controller is created by `CommandBox` and retained through the field's registered callbacks, rather
-than a `CommandBox` member field. It uses a detached root snapshot to detect model changes before each
-eligible Tab event, since the live root deliberately keeps its object identity.
+than a `CommandBox` member field. Static vocabulary uses no model reads. Record-value suggestions
+read the live root synchronously on the FX thread and observe member/equipment collection changes
+with weak listeners. These notifications invalidate record candidates after mutations, undo/redo
+and reload; rejected mutations and pure queries leave those collections unchanged. Cached record
+cycles check root identity cheaply, while unchanged candidates cycle without copying or rescanning
+records. Loan history and transaction validation are outside suggestion reads.
 
 <puml src="diagrams/AutocompleteClass.puml" alt="Tab completion service, controller and read-only data dependencies" />
 
@@ -323,12 +333,24 @@ values can outlive or be shared by their containers.
 | Availability | `ModelManager` returns UNAVAILABLE for deleted units; otherwise the calculator returns ASSIGNED for an open loan, AVAILABLE for GOOD/FAIR, and UNAVAILABLE for DAMAGED/UNDER_REPAIR. |
 
 Availability, holders and inventory totals are derived, never persisted as independent fields.
+
+`Condition.fromText` defines the shared command/storage normalization: strip surrounding whitespace,
+match the four enum names without case, and reject unknown or blank text. Equipment still requires a
+condition; missing/null loan observations remain unknown. Adapters always serialize uppercase enum
+names. Manual check: load disposable equipment/loan fields with `good`, ` FaIr ` and `under_repair`,
+then save/reload; verify uppercase output, stable identities and rejection of `BROKEN`.
 `AvailabilityCalculator` only accepts condition and open-loan state; the deletion check belongs to
 `ModelManager`. `AddressBook` validates cross-record references, while `UniqueLoanList` enforces the
 one-open-loan-per-unit rule. `UniqueEquipmentList` checks UUID uniqueness and identity-preserving
 replacement. These responsibilities keep editing and restoration from breaking loan references.
 
 #### Loan workflow and history
+
+Successful batch feedback carries a compact count/date summary followed by per-unit identity lines.
+Return lines capture each borrower before mutation, avoiding attribution to only the first borrower.
+The existing ResultDisplay Details/Copy controls expose long results without expanding the compact
+feedback area by default. Manual check: return two disposable units from different borrowers, expand
+and copy feedback, and verify every name/full UUID/NUS ID against the retained loans.
 
 The following class diagram traces batch assignment and return from their parsers to the
 model, JSON adapter and history views. It lists the loan-facing methods relevant to this
@@ -394,6 +416,13 @@ and shows selected structure; lifecycle behavior is explained in the text above.
 
 ### Storage component
 
+The supported unversioned schema treats omitted/null `members`, `equipment` and `loans` as empty.
+Retain both forms for legacy compatibility; saves canonicalize them to `[]` without touching populated
+collections. No migration or warning distinguishes null from absence in this schema. Missing member/
+equipment `deleted` flags still mean active; explicit null flags remain invalid. For manual verification,
+load a legacy persons-only file with each collection omitted, null and empty, save/reload, and compare
+the retained persons. Use only disposable data.
+
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
 <puml src="diagrams/StorageClassDiagram.puml" width="850" alt="Current storage adapters and relationships" />
@@ -407,6 +436,14 @@ The `Storage` component,
 the retained legacy person adapters. Loan adapters store the member NUS ID and equipment UUID,
 preserving references without duplicating either record. The diagram shows storage types and
 adapter collections; value fields and conversion methods are omitted.
+
+The legacy `persons` collection remains required: absent and explicit null are rejected; empty and
+populated arrays are accepted and round-trip. Keep this existing contract until a versioned migration
+can distinguish omission safely. Removing legacy command routes does not authorize dropping stored
+persons. `JsonSerializableAddressBookTest` covers missing/null rejection and older files;
+`JsonAddressBookStorageTest` covers current all-collection and legacy persons save/reload. To verify
+manually, use separate disposable copies with absent/null/empty/populated arrays and preserve originals
+after a load rejection; never replace a populated array with an empty one merely to make loading pass.
 
 ### Common classes
 
@@ -581,8 +618,9 @@ from the successful execution path shown. A failure after candidate insertion st
 candidate, so a later successful command cannot accidentally save a failed batch.
 
 Editing, soft deletion and restoration use the same snapshot/save/publish boundary with different
-command bodies. Equipment list/search do not change records or create history entries, so they do not
-follow this mutation sequence. Existing navigation-save behavior is described under undo/redo below.
+command bodies. Member/equipment list, search and view commands, `loans list`, `help` and `exit` declare
+`isReadOnly()`. They return without saving records or creating history entries, so they do not follow
+this mutation sequence. Normal shutdown still saves user preferences separately.
 These diagrams describe a single-user command transaction, including history recording. They do not
 provide concurrent-writer coordination. [Undo/redo](#undo-redo-feature) uses the same save/publication
 boundary but navigates existing history instead of recording a new change.
@@ -694,7 +732,8 @@ history into `Nothing to undo.` or `Nothing to redo.`. Successful feedback ident
 with `IllegalStateException` and returns defensive copies of stored record states.
 
 Read-only queries, navigation, help, exit and appearance changes do not add history entries or invalidate
-redo. Existing list-command save behavior is preserved, but those saves do not record an action.
+redo. Their `isReadOnly()` declarations also bypass domain-record saving. A failed record save does not
+prevent navigation, Help or normal exit; shutdown preference saving remains separate.
 A new successful record mutation after undo discards the undone branch. Explicit whole-model replacement
 with `setAddressBook()` starts fresh history; transaction publication uses its separate API to retain it.
 
@@ -757,9 +796,10 @@ applies to the history retained by each model. A failed save cannot evict entrie
 
 <puml src="diagrams/UndoRedoLimit.puml" alt="Eleven retained snapshots permit at most ten undo or redo steps" />
 
-The activity diagram summarizes `LogicManager.execute()`. It preserves the existing distinction between
-`isReadOnly()` commands, which skip saving, and nontransactional navigation commands, which can still save
-without adding history. Only successful transactional saves publish candidate records and history.
+The activity diagram summarizes `LogicManager.execute()`. Public directory, details and utility commands
+take the `isReadOnly()` path without saving records or changing history. Only successful transactional
+saves publish candidate records and history. The nontransactional saving path remains for legacy
+internal commands that do not declare themselves read-only.
 
 <puml src="diagrams/CommitActivityDiagram.puml" alt="Parsing, staged execution, bounded history recording, atomic save and publication" />
 
@@ -844,9 +884,9 @@ Priority expresses product importance, not implementation status. **MVP** denote
 | US18 | `* *` | Implemented | CCA EXCO member | edit an equipment record while retaining its UUID | keep item information accurate without breaking loan references. |
 | US19 | `* * *` | MVP | CCA EXCO member | delete an equipment record created in error when it is not on loan | remove unwanted entries without losing track of an issued item. |
 | US20 | `* *` | Implemented | CCA EXCO member | restore a retained deleted equipment record without a time limit | recover from an accidental deletion. |
-| US21 | `* *` | Future | CCA EXCO member | filter and sort equipment by category, condition, or availability | identify suitable items for my current task. |
-| US22 | `* *` | Future | busy CCA EXCO member | find equipment using incomplete queries or approximate names | locate an item even when I do not know its UUID. |
-| US23 | `* *` | Future | CCA EXCO member planning an activity | see counts of available, assigned, and unavailable units of an equipment type | decide whether there is enough equipment without counting manually. |
+| US21 | `* *` | Implemented | CCA EXCO member | filter and sort equipment by category, condition, or availability | identify suitable items for my current task. |
+| US22 | `* *` | Implemented (substring search); Future (approximate names) | busy CCA EXCO member | find equipment using incomplete queries or approximate names | locate an item even when I do not know its UUID. |
+| US23 | `* *` | Implemented | CCA EXCO member planning an activity | see counts of available, assigned, and unavailable units of an equipment type | decide whether there is enough equipment without counting manually. |
 | US24 | `* * *` | MVP | CCA EXCO member issuing equipment | assign an available item to a member and record its assignment date | track who is responsible for the item and when it was issued. |
 | US25 | `* * *` | MVP | CCA EXCO member issuing equipment | record an expected return date on or after the assignment date | know when the item should come back. |
 | US26 | `* * *` | MVP | CCA EXCO member receiving equipment | record an assigned item as returned with its actual return date | keep the holder and availability information accurate. |
@@ -857,7 +897,7 @@ Priority expresses product importance, not implementation status. **MVP** denote
 | US31 | `*` | Future | CCA EXCO member receiving a kit | record several items from one member as returned in one operation | process a bundled return quickly. |
 | US32 | `* *` | Future | CCA EXCO member issuing equipment | record an item's condition at issue | establish its starting condition for later comparison. |
 | US33 | `* *` | Future | CCA EXCO member receiving equipment | record an item's condition at return | identify changes while the handover is still fresh. |
-| US34 | `* *` | Future | CCA EXCO member investigating an item | view its past equipment loans | trace who held it and when. |
+| US34 | `* *` | Implemented | CCA EXCO member investigating an item | view its past equipment loans | trace who held it and when. |
 | US35 | `* *` | Future | CCA EXCO member reviewing a member | view that member's past equipment loans | resolve questions about previous loans without searching separate records. |
 | US36 | `* *` | Future | CCA EXCO member archiving a member | be warned and prevented from archiving a member with outstanding equipment | resolve responsibility before removing the member from active records. |
 | US37 | `* *` | Implemented | CCA EXCO member who made a mistake | undo my most recent successful data-changing action | recover without reconstructing the previous state manually. |
@@ -1160,7 +1200,19 @@ Given below are instructions to test the app manually.
 testers are expected to do more *exploratory* testing.
 </box>
 
+### Member email validation
+
+In a disposable dataset, try `member add nus/A8000099X name/Kelvin Probe phone/91234567 email/K@example.com`
+and `member edit nus/A0123456X email/K.updated@example.com` for an existing member. Both must reject
+the non-ASCII email without changing records or the data file. An uppercase ASCII email must save
+lowercase and retain the member identity and loan references after restart.
+
 ### Launch and shutdown
+
+On a fresh disposable first run, verify the sample speaker history records FAIR at issue/return, the
+tripod records GOOD at issue and DAMAGED on return with UNAVAILABLE availability, and the assigned camera
+intentionally shows an unknown issue condition. Save/reload must preserve these observations and UUIDs.
+Samples are never appended to an existing dataset.
 
 1. Initial launch
 
@@ -1168,6 +1220,21 @@ testers are expected to do more *exploratory* testing.
 
     1. In that folder, run `java -jar Laplace.jar` with Java 25.<br>
        Expected: The GUI opens in light mode with sample members, grouped equipment and open loans.
+
+1. Invalid saved data
+
+    1. In a disposable JAR folder, save a synthetic dataset containing members and closed loans.
+       Close Laplace and keep a byte-for-byte backup.
+
+    1. Test a malformed file, a JSON `null` root, an invalid member email, and a valid object followed
+       by another object or garbage. Relaunch for each case.<br>
+       Expected: A recovery error names the data file and explains preservation, backup and repair.
+       After acknowledgment, startup terminates unsuccessfully without an editable main window.
+       The original data bytes remain unchanged, including after shutdown.
+
+    1. Restore the valid backup and restart.<br>
+       Expected: All members and retained loan history load. Ordinary trailing whitespace is accepted.
+       A genuinely missing data file still starts the existing sample dataset.
 
 1. Saving window preferences
 
@@ -1200,9 +1267,31 @@ The packaged keyboard probe uses only the JAR's production classes and native li
 plain JDK, so neither matching test dependencies nor a JavaFX-enabled JDK can mask missing native libraries.
 Run the probe on the target architecture and smoke-test the selected JAR before publication.
 
+### Unicode command separators
+
+With disposable data, replace each space in `member view nus/A0123456X` with an EM SPACE (U+2003)
+or nonbreaking space (U+00A0), including surrounding whitespace. The same existing member must open.
+Repeat with `member list`, `equipment list` and `loans list`. Unknown actions, uppercase command words,
+duplicate parameters and unknown parameters must retain their normal diagnostics.
+
 ### Grouped equipment, command assistance and appearance
 
+Historical assignment regression: assign an available UUID on `2026-01-10`, return it on
+`2026-01-20`, then try assigning it to a second member on `2026-01-15`. Expect rejection with the
+last actual return date and unchanged records, file and undo/redo history. Repeat with a batch whose
+last UUID conflicts; no earlier UUID may be assigned. A new assignment on `2026-01-20` is allowed.
+`LoanAddCommand` validates each new open interval against retained actual returns before applying any
+batch. Existing stored history remains readable; this change adds no storage migration or repair.
+
 Use a separate empty writable JAR folder. Keep any real dataset untouched.
+
+Large-history regression: use 1,000 members, 5,000 equipment units and 10,000 completed loans,
+including a member/unit with a long history. Open both details views and Loans, scroll within the
+history list to its oldest entry, then filter Loans to no matches and clear the filter. Expect full
+counts and accessible records without creating every row's controls. `LoanHistoryCapacityTest`
+checks this capacity structurally; it does not replace the 100-trial NFR07 timing benchmark.
+`LoanRows` renders up to ten rows inline and uses bounded JavaFX `ListView` cells above that size
+for both detail timelines and loan-directory sections, including panels refreshed in the background.
 
 1. Run `equipment add name/UI Camera category/Photo condition/GOOD count/4`. Expect one group containing
    four distinct UUIDs. Expand/copy Last result to capture all four. Open the group and select one unit;
@@ -1219,6 +1308,8 @@ Use a separate empty writable JAR folder. Keep any real dataset untouched.
    must preserve browsing position and must not execute another command.
 3. Rename the damaged unit, delete it, then restore it with the documented equipment commands. Expect
    regrouping without UUID changes. Check deleted records never inflate available counts.
+   Open a unit with long notes/history and scroll to the bottom. View a different UUID; expect the group
+   heading and unit identity at the top. Refresh or reopen the same UUID; expect its scroll position retained.
 4. Open a member's details, copy contact fields, and use a related equipment link. Switch tabs and use
    Back to results. The previous filter persists until Reset search or a list command.
 5. Use a command preview. Expect only input preparation; review and press Enter. Test unmodified
@@ -1245,6 +1336,17 @@ availability stays one available, zero assigned and zero unavailable. Filters ch
 not retained totals. Check the UG and linked search guide describe this same distinction.
 
 ### Tab completion across current commands
+
+Capacity regression: with 10,000 valid retained loans, complete `member ` with Tab and cycle forward
+and backward. Expect no history-dependent pause. Repeat a record-name completion, edit or restore a
+record, undo/redo, and reload; expect current values. Structural controller tests reject person/loan
+collection reads, assert zero static-model reads and reuse of prepared record candidates. Measure
+responsiveness separately; structural checks do not claim a cross-platform timing benchmark.
+
+Add `member add nus/A8400001X name/ΝΙΚΟΣ phone/91234567 email/nikos@example.com` in a disposable folder.
+Search with `member search q/Σ` and `member search q/νικοσ`: both must find the member before and after
+restart. Type `member edit name/νικοσ` and press Tab: it must suggest `ΝΙΚΟΣ` without changing or saving
+the record. Existing forward/reverse Tab cycling must continue to work.
 
 1. In a disposable dataset, type `mem` and press Tab. Expected: `member`, with the caret at its end.
    Add a space and cycle with Tab, then Shift+Tab. Expected: alphabetical subcommands and reverse cycling.
@@ -1316,8 +1418,11 @@ not retained totals. Check the UG and linked search guide describe this same dis
 
 1. In a separate temporary dataset, run
    `equipment add name/Batch Test Camera category/Photography condition/GOOD count/3 notes/Shared kit`.
-   Expected: three new rows with distinct UUIDs, AVAILABLE status and identical supplied details;
-   feedback lists all three UUIDs and the full equipment directory opens.
+   Expected: one new group for Batch Test Camera (or an extension of an existing matching group);
+   feedback lists all three UUIDs and the full equipment directory opens. Open the group and verify
+   that it now contains N + 3 physical-unit rows, where N is the number of units already in a matching
+   group (zero for a new group). Confirm every row has a distinct UUID, the three new units are
+   AVAILABLE with identical supplied details, and the three feedback UUIDs are present.
 2. Repeat without `count/`, then with `count/1`. Each command adds one unit and opens its details.
 3. Try `count/0`, `count/-1`, `count/101`, `count/1.5`, a blank `count/`, and `count/2 count/3`.
    Expected: an error, no new records, and no save. Correct the input and retry.
@@ -1346,13 +1451,104 @@ not retained totals. Check the UG and linked search guide describe this same dis
    Automated transaction tests separately inject partial writes/failed atomic moves; do not simulate
    filesystem failures against a real user dataset.
 
+### Stored loan date validation
+
+In a disposable saved file, change each loan date field in turn to `0000-01-01`, `-0001-01-01`,
+or `+10000-01-01`. Expect loading to report invalid data without rewriting that file. Valid years
+`0001` and `9999` and valid legacy condition omissions remain supported; storage does not impose a
+new restriction relative to today's date.
+
 ### Saving data
 
-1. Dealing with missing/corrupted data files
+1. Command-log privacy: in a disposable folder, add/edit a synthetic member, search for their name,
+   and submit a malformed command containing a synthetic phone/email. Inspect `addressbook.log.*`;
+   expect input-received diagnostics without raw commands or contact values. `CommandLogPrivacyTest`
+   also verifies persisted output with the application logger hierarchy enabled at all levels,
+   including transaction snapshots and model initialization from reloaded records. Initialization logs
+   report the event without printing record or preference contents.
 
-    1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+1. Read-only navigation and utilities
 
-1. _{ more test cases … }_
+    1. Use a separate writable JAR folder. Add one equipment unit and record its UUID so the sample
+       dataset is saved. Close Laplace and record the data file's bytes and modification time.
+    2. Relaunch. Run `member list`, `equipment list`, `loans list`,
+       `member view nus/A0123456X`, and `equipment view uuid/UUID`, using the recorded UUID.
+       Expected: each directory/details view opens and the assigned sample units retain their holders.
+    3. Run `help`, close Help, and run `exit`. Expected: Help opens and normal exit closes the application.
+       The data file's bytes and modification time remain unchanged. Window preferences may be saved.
+    4. Repeat list/view/Help/Exit in another empty JAR folder without performing a mutation.
+       Expected: sample records are browsable, but no `data/addressbook.json` is created.
+    5. Automated `ReadOnlyCommandIntegrationTest` and `MainWindowShellTest` inject record-save failures
+       to check navigation, Help and Exit remain available. They also check unchanged records and redo
+       history, and that real mutations still save. Do not change permissions on a real dataset.
+
+2. Invalid saved data
+
+Use a disposable folder containing the matching release JAR. Confirm Java 25 with `java -version`,
+then launch with `java -jar "Laplace.jar"` (substitute the actual downloaded filename). Check the
+status area's data path. Close Laplace before editing files; keep a separate untouched backup of
+`data/addressbook.json`. Never use your real inventory for these tests.
+
+1. **Missing file and first save:** Start with no `data/addressbook.json`. Expect sample members,
+   equipment and four loans (three open and one completed). Add a uniquely identified test member
+   using the User Guide syntax, close and restart. Expect that member and the sample records to remain.
+   A valid empty file `{"persons":[],"members":[],"equipment":[],"loans":[]}` must instead load an
+   empty dataset without injecting samples.
+
+2. **Repeated loan cycles and reload:** Create a fresh available unit U with no loan history, then
+   with active test members A and B assign U to A using today's date for assignment and expected
+   return. Return U today with `condition/FAIR`; assign U to B today. Restart. Expect A's completed
+   history to remain, B to be the current holder, U to be ASSIGNED, and U to appear only in B's current
+   holdings. Return U with `condition/DAMAGED` and restart again: expect exactly two completed loans,
+   recorded issue/return conditions, no holder or current holdings, and UNAVAILABLE equipment. Do not
+   infer missing historical conditions.
+
+3. **Rejected batches:** Use two available units and a valid member. Try an assignment containing a
+   duplicate UUID, then a valid UUID followed by a nonexistent UUID. Expect rejection of the whole
+   command, no new loans and no file changes. Assign both units successfully, then attempt a return
+   containing one assigned unit and one unit with no open loan. Expect both original loans to remain
+   open. A valid batch return must close both; repeating it must fail. Restart and compare counts,
+   holders and conditions with the state before shutdown.
+
+4. **Earlier valid data:** On a copy, remove `deleted` from member/equipment records and remove
+   `issueCondition`/`returnCondition` from loans. Restart: expect records to load as active and missing
+   conditions to display `Not recorded`, with UUIDs, dates, references and history preserved. Also test
+   `{"persons":[]}`: expect an empty dataset. Restore the backup before the next scenario.
+
+5. **Malformed or inconsistent data:** In separate copies, test invalid JSON (`{broken`), a JSON
+   `null` root, a loan with a nonexistent member/UUID, two open loans for one UUID, and an explicit
+   `"deleted": null` flag.
+   Storage must reject the complete load and leave the input bytes untouched. Expected: a recovery
+   error names the data file and explains preservation, backup and repair. After acknowledgment,
+   startup terminates unsuccessfully without an editable main window. The original data bytes remain
+   unchanged, including after shutdown.
+
+6. **Restore after invalid data:** Restore the untouched valid backup while the app is closed and
+   restart. Expect its records and relationships to return. A genuinely missing data file still starts
+   the sample dataset.
+
+7. **Save failure and retry:** Deterministically verify this with
+   `./gradlew test --tests 'seedu.address.storage.LaplaceTransactionTest'` under Java 25.
+   The test injects a partial temporary-file write and a failed atomic replacement for actual mutation
+   commands, including assignment and return. Expect a reported failure, unchanged live collections,
+   byte-for-byte preservation of the previous data file, and a successful retry after removing the
+   injected failure. Do not rely on making only the JSON file read-only: replacement permissions are
+   controlled by the containing directory. These are automated failure-injection checks, not a claim
+   that an arbitrary manual filesystem failure has been reproduced.
+
+Verification basis (27 October 2026): loan command/parser/panel, sample-data, storage and root JSON
+suites passed against commit `5dd5a2963e211777b4cefbab26e6f6c75d81df66`; transaction and undo/redo
+failure tests were run separately. The steps above are manual counterparts to those checks. Startup
+fail-closed behavior is covered by `MainAppTest` against the startup recovery path in
+[#200](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/200); a full manual GUI walkthrough of these
+scenarios remains a release smoke-test task.
+
+### Loan filter visibility
+
+Filter Loans to one borrower/UUID, then assign and return a batch for another borrower. Check that
+refresh retains both filters, the displayed/total summary explains hidden records in both sections,
+and Reset filters clears both fields and reveals all history without changing any records. A plain
+`loans list` retains the same filters. This reset policy also governs command-supplied criteria.
 
 ### Undo and redo
 
@@ -1371,6 +1567,11 @@ Use temporary data. Do not test against a real inventory.
    edits must leave redo available. `undo 2` and `redo count/2` must be rejected without changing data.
 6. Restart after an undo. The restored records must still load, but undo and redo must both be unavailable.
    Automated tests inject failed saves and verify records, history and prior file bytes survive for retry.
+7. Open Help and locate the `undo` and `redo` examples. Use each example; expect the exact command
+   prepared without execution. Type `und`/`red` and test both Tab and Ctrl+Space; expect `undo`/`redo`
+   suggestions. Press Enter separately to invoke history. Both no-argument utilities must have
+   command-name highlighting in previews.
+
 
 ### Command-word aliases and casing
 
