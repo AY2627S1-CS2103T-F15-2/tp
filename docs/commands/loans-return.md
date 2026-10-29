@@ -53,3 +53,8 @@ equipment/member links request their detail views. It has no loan-editing or del
 LogicManager stages the return, atomically saves and then publishes the committed snapshot.
 A save failure preserves the open loan, holder, availability and prior saved bytes. See
 [MVP fields and failure behavior](MvpFields.md).
+
+When several units fail validation, the result summarizes how many are invalid and lists each UUID's
+first blocking reason in input order. Open **Details** to expand the complete list or **Copy** to copy
+it. One invalid unit keeps its specific diagnostic. Shared member/date and syntax errors are reported
+before unit checks when they prevent meaningful validation. No loans or conditions change on rejection.

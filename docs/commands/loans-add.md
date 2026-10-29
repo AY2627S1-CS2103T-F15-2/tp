@@ -51,3 +51,11 @@ conditions/dates and supplied-field error ordering. Loans presents open assignme
 
 Assignment refusal for an existing open loan names its current holder NUS ID, including when
 the requested new holder differs. The current loan is read before attempting any mutation.
+
+When several units fail validation, the result summarizes how many are invalid and lists each UUID's
+first blocking reason in input order. Open **Details** to expand the complete list or **Copy** to copy
+it. One invalid unit keeps its specific diagnostic. Shared member/date and syntax errors are reported
+before unit checks when they prevent meaningful validation. No loans or conditions change on rejection.
+
+Historical-availability failures are included in the same per-unit diagnostic list: a new assignment
+cannot precede that unit's last recorded return. Assignment on the return date remains valid.
