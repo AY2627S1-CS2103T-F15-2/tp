@@ -473,6 +473,11 @@ containing `DisplayRequest.members(query)` or `DisplayRequest.equipment(query)`.
 is read-only, `LogicManager` returns without creating a transaction snapshot or saving data.
 Equipment queries additionally use `Model.getAvailability` to derive availability from current state.
 
+`DirectoryQuery.members(data, eligible)` combines caller eligibility with the member status filter.
+`DirectoryQuery.equipment(data, lookup, eligible)` applies eligibility and equipment status before
+resolving availability. Active totals exclude deleted records, while retained identities and loan
+history remain available for details and restoration. These query helpers do not change the stored schema.
+
 `MainWindow` passes the same query to the directory list and its summary before refreshing them.
 Both evaluate the query against current data, keeping displayed rows and matching counts consistent.
 Sorting affects returned snapshots rather than stored records. Navigation requests without a query

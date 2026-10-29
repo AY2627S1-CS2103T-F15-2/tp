@@ -6,7 +6,7 @@
 
 # Laplace User Guide
 
-Week 10: [search, filters, selectable sorting, inventory planning and duplicate warnings](commands/search-and-planning.md).
+See the [search, filtering, sorting, inventory planning and duplicate warning reference](commands/search-and-planning.md).
 
 Laplace helps a CCA EXCO member manage **members, equipment and equipment loans** on one computer.
 Type commands to register records, find an exact member or item, issue equipment, record returns and
