@@ -54,6 +54,13 @@ class JsonAdaptedMember {
         deleted = value.booleanValue();
     }
 
+    /**
+     * Returns stored identities for diagnostics even when value conversion fails.
+     */
+    String describeIdentity() {
+        return "NUS ID " + nusId;
+    }
+
     /** Converts this adapter to its domain type. */
     public Member toModelType() throws IllegalValueException {
         if (nusId == null) {

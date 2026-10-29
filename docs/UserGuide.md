@@ -949,7 +949,9 @@ remove an existing array during recovery. Current saves always include it.
 
 Back up the data file while Laplace is closed. Do not edit it while the app is running or run multiple
 instances against the same file. Manual data editing is not an MVP operation. If startup or a view
-reports invalid/inconsistent data, preserve the original file and report the message; do not overwrite
+reports invalid/inconsistent data, the loading diagnostic identifies the collection, zero-based record
+position and available NUS ID/UUID for conversion/reference errors. Preserve the original file and report
+the message; do not overwrite
 it with an empty file or assume that an incomplete view is safe to use.
 
 If an existing data file cannot be loaded, Laplace shows recovery guidance and its path, then stops

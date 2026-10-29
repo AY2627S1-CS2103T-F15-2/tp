@@ -420,6 +420,12 @@ and shows selected structure; lifecycle behavior is explained in the text above.
 
 ### Storage component
 
+Record conversion and root-reference failures include a zero-based collection index plus stored NUS ID/
+UUID, even if that identity is invalid. Original checked/domain causes remain attached. Null records
+report their position with identity unavailable; date errors include the rejected text. Diagnostics
+avoid echoing contact details. For manual checks, use disposable copies with an invalid loan date,
+missing reference, duplicate identity and invalid condition; verify context and unchanged source bytes.
+
 The supported unversioned schema treats omitted/null `members`, `equipment` and `loans` as empty.
 Retain both forms for legacy compatibility; saves canonicalize them to `[]` without touching populated
 collections. No migration or warning distinguishes null from absence in this schema. Missing member/
