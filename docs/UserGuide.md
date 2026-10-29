@@ -946,6 +946,10 @@ case-insensitive spellings and surrounding whitespace; saves use GOOD, FAIR, DAM
 Blank/unknown values are rejected, while missing/null historical loan conditions remain unknown. Do not open lifecycle-aware data in an older release
 that may discard deletion state.
 
+JSON property names must be unique within each object. Repeated collection or record fields are
+rejected rather than choosing one value and losing the other. If loading reports a duplicate field,
+close Laplace without entering commands, preserve the original file and repair a separate copy.
+
 The saved root still requires a `persons` array for legacy compatibility. For a dataset with no legacy
 contacts, keep `"persons": []`; omitting it or writing null is rejected with `Persons list is missing.`
 Populated legacy arrays are retained and saved even though their old commands are unavailable. Do not

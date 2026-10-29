@@ -466,6 +466,11 @@ after a load rejection; never replace a populated array with an empty one merely
 
 Classes used by multiple components are in the `seedu.address.commons` package.
 
+`JsonUtil` enables Jackson's strict duplicate-property detection for JSON reads, including data and
+preferences. Repeated names in one object fail parsing before model conversion, even when their values
+are identical; the same field names in separate records remain valid. The checked loading exception
+retains the parser's duplicate-field name and location. Reading a rejected file does not rewrite it.
+
 `JsonUtil.fromJsonString` accepts one leading U+FEFF editor marker before Jackson parsing. It does
 not trim or remove markers elsewhere. Manual check: save synthetic data, prepend UTF-8 bytes EF BB BF,
 load it, then save/reload and compare all records. The saved file should have no leading marker. A
@@ -1493,6 +1498,13 @@ or `+10000-01-01`. Expect loading to report invalid data without rewriting that 
 new restriction relative to today's date.
 
 ### Saving data
+
+To check duplicate-property validation, use a disposable JAR folder and a backup of synthetic data.
+With Laplace closed, add a second `"loans": []` property to a valid saved root object. Launch the JAR
+and check the log for `Duplicate field 'loans'`. Do not enter commands after a loading error; close
+Laplace and verify the rejected file's bytes are unchanged. Restore the backup, then repeat with a
+second `returnedDate` property inside one loan. Removing the duplicate must allow the original
+members, equipment and open/completed loans to load and survive a save/reload.
 
 1. Command-log privacy: in a disposable folder, add/edit a synthetic member, search for their name,
    and submit a malformed command containing a synthetic phone/email. Inspect `addressbook.log.*`;
