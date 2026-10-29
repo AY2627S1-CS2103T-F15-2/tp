@@ -74,8 +74,12 @@ distinguish matching units from retained units. Criteria and order are visible i
 Zero results shows a reset hint. Opening details retains the filtered list. Refresh reevaluates queries against current
 data, including loan-only changes, without executing row callbacks. Errors retain criteria and input
 for correction. List commands clear filters.
-Deleting a result keeps the active filter and sort, including when no matches remain. Only an explicit
-list/reset command clears them; returning to a directory after a mutation does not reset the query.
+Deleting a result keeps the active filter and sort, including when no matches remain. List commands and
+**Reset search** clear that directory's filters and sorting. A successful `equipment add` with `count/2`
+or greater also resets equipment criteria and opens the full equipment directory. Adding one unit
+(without `count/` or with `count/1`) opens its details while retaining the current search. Other record
+mutations retain the active query when returning to the directory. Rejected commands preserve the
+previous criteria, view and selection.
 
 ## Inventory groups and duplicates
 
