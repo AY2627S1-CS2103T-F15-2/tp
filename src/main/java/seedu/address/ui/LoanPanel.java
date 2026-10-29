@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.ColumnConstraints;
@@ -21,6 +22,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.member.Member;
@@ -53,6 +55,10 @@ public class LoanPanel extends UiPart<Region> {
     private TextField memberFilter;
     @FXML
     private TextField equipmentFilter;
+    @FXML
+    private Label filterSummary;
+    @FXML
+    private Button resetFilters;
 
     /**
      * Creates a panel using current records and callbacks supplied by the application shell.
@@ -92,11 +98,27 @@ public class LoanPanel extends UiPart<Region> {
                 .toList();
         openCount.setText(Integer.toString(open.size()));
         boolean hasFilter = !memberFilter.getText().isBlank() || !equipmentFilter.getText().isBlank();
+        long totalOpen = data.getLoanList().stream().filter(Loan::isOpen).count();
+        long totalClosed = data.getLoanList().size() - totalOpen;
+        filterSummary.setText("Showing " + open.size() + " of " + totalOpen + " open loans; "
+                + closed.size() + " of " + totalClosed + " completed loans. "
+                + (hasFilter ? "Filters are active; reset to reveal hidden records." : "No filters active."));
+        resetFilters.setDisable(!hasFilter);
         String openEmptyMessage = hasFilter ? "No open loans match these filters."
                 : "No open loans. Available equipment is ready to assign.";
         refreshSection(openLoans, open, openEmptyMessage);
         closedCount.setText(Integer.toString(closed.size()));
         refreshSection(closedLoans, closed, "No completed loans match these filters.");
+    }
+
+    /**
+     * Reveals all current and completed records only when the user explicitly resets the filters.
+     */
+    @FXML
+    private void handleResetFilters() {
+        memberFilter.clear();
+        equipmentFilter.clear();
+        refresh();
     }
 
     /**
@@ -117,7 +139,7 @@ public class LoanPanel extends UiPart<Region> {
         if (loans.isEmpty()) {
             section.getChildren().add(label(emptyMessage, "loan-empty"));
         } else {
-            loans.forEach(loan -> section.getChildren().add(createLoanRow(loan)));
+            LoanRows.show(section, loans, this::createLoanRow);
         }
     }
 
@@ -167,9 +189,23 @@ public class LoanPanel extends UiPart<Region> {
         });
         VBox row = new VBox(6, status, identities);
         if (loan.isOpen()) {
+            ComboBox<String> observedCondition = new ComboBox<>();
+            observedCondition.getItems().add("Not recorded");
+            for (Condition condition : Condition.values()) {
+                observedCondition.getItems().add(condition.name());
+            }
+            observedCondition.setValue("Not recorded");
+            observedCondition.getStyleClass().add("loan-return-condition");
+            observedCondition.setAccessibleText("Observed return condition; Not recorded leaves it unknown");
+            row.getChildren().addAll(label("Observed return condition (optional)", "laplace-muted"), observedCondition);
             Button prepareReturn = new Button("Prepare return command");
-            prepareReturn.setOnAction(event -> onUse.accept("loans return uuid/" + loan.getEquipmentUuid()
-                    + " returned/" + LocalDate.now(clock)));
+            prepareReturn.setOnAction(event -> {
+                String observation = observedCondition.getValue();
+                String parameter = observation == null || observation.equals("Not recorded")
+                        ? "" : " condition/" + observation;
+                onUse.accept("loans return uuid/" + loan.getEquipmentUuid()
+                        + " returned/" + LocalDate.now(clock) + parameter);
+            });
             row.getChildren().add(prepareReturn);
         } else {
             memberColumn.getChildren().addAll(

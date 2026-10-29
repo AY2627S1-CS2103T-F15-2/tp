@@ -59,6 +59,15 @@ public final class InventoryGroups {
         public String category() {
             return units.getFirst().getCategory();
         }
+
+        /**
+         * Returns a display label that quotes both fields, so a separator inside either field
+         * cannot make two distinct groups look identical.
+         */
+        public String label() {
+            return "\"" + category().replace("\"", "\"\"") + "\" / \""
+                    + name().replace("\"", "\"\"") + "\"";
+        }
     }
 
     /**

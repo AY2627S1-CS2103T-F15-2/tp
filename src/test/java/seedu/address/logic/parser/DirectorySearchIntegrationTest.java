@@ -34,6 +34,23 @@ public class DirectorySearchIntegrationTest {
     public Path directory;
 
     @Test
+    public void search_greekSigmaAfterSaveReload_preservesSpellingAndNeverSaves() throws Exception {
+        ModelManager model = new ModelManager();
+        CountingStorage storage = new CountingStorage(directory);
+        LogicManager logic = new LogicManager(model, storage);
+        logic.execute("member add nus/A8400001X name/ΝΙΚΟΣ phone/91234567 email/nikos@example.com");
+        ModelManager reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        LogicManager reopened = new LogicManager(reloaded, storage);
+        byte[] saved = Files.readAllBytes(storage.getAddressBookFilePath());
+        for (String query : List.of("Σ", "σ", "ς", "νικοσ", "νικος")) {
+            assertEquals("Found 1 members.", reopened.execute("member search q/" + query).getFeedbackToUser());
+        }
+        assertEquals(1, storage.saves);
+        assertTrue(java.util.Arrays.equals(saved, Files.readAllBytes(storage.getAddressBookFilePath())));
+        assertEquals("ΝΙΚΟΣ", reloaded.getMemberList().getFirst().getName().fullName);
+    }
+
+    @Test
     public void search_realRoutes_neverSavesEvenWhenStorageIsUnwritable() throws Exception {
         ModelManager model = SearchData.sample();
         AddressBook before = new AddressBook(model.getAddressBook());

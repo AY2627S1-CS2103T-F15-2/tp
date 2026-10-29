@@ -18,7 +18,8 @@ final class CommandCatalog {
             "equipment search q/TEXT category/CATEGORY condition/GOOD availability/AVAILABLE"
                     + " status/active sort/name order/asc",
             "loans list", "loans add uuid/UUID nus/NUS_ID assigned/YYYY-MM-DD expected/YYYY-MM-DD",
-            "loans return uuid/UUID returned/YYYY-MM-DD condition/GOOD", "mode dark", "mode light", "help", "exit");
+            "loans return uuid/UUID returned/YYYY-MM-DD condition/GOOD",
+            "undo", "redo", "mode dark", "mode light", "help", "exit");
     private static final Pattern PREFIX = Pattern.compile("\\b[a-z]+/");
 
     private CommandCatalog() {

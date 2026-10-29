@@ -150,6 +150,27 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
+    public void readAddressBook_unsupportedLoanYears_reportsErrorWithoutRewritingFile() throws Exception {
+        Path file = testFolder.resolve("invalid-year.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+        storage.saveAddressBook(RootPersistenceTestData.fullAddressBook());
+        String original = Files.readString(file);
+        for (String field : List.of("assignedDate", "expectedReturnDate", "returnedDate")) {
+            for (String date : List.of("0000-01-01", "-0001-01-01", "+10000-01-01")) {
+                ObjectNode json = (ObjectNode) new ObjectMapper().readTree(original);
+                ObjectNode loan = (ObjectNode) json.get("loans").get(1);
+                loan.put(field, date);
+                String invalid = json.toString();
+                Files.writeString(file, invalid);
+                assertThrows(DataLoadingException.class, storage::readAddressBook);
+                assertEquals(invalid, Files.readString(file));
+            }
+        }
+        Files.writeString(file, original);
+        assertEquals(RootPersistenceTestData.fullAddressBook(), storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
     public void readAddressBook_invalidRootFixtures_reportsLoadingErrorWithoutRewritingFile() throws Exception {
         Path fixtures = Paths.get("src", "test", "data", "JsonSerializableAddressBookTest");
         for (String name : List.of("duplicateMembers.json", "duplicateEquipment.json", "duplicateOpenLoans.json",
