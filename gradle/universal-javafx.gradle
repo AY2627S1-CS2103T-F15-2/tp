@@ -1,0 +1,138 @@
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.util.zip.ZipFile
+
+final int CPU_TYPE_X86_64 = 0x01000007
+final int CPU_TYPE_ARM64 = 0x0100000c
+final int MH_MAGIC_64 = (int) 0xfeedfacf
+final int FAT_MAGIC = (int) 0xcafebabe
+final int NATIVE_ALIGNMENT_POWER = 14
+final int NATIVE_ALIGNMENT = 1 << NATIVE_ALIGNMENT_POWER
+final int UNIVERSAL_HEADER_SIZE = 8 + 2 * 20
+
+// Mach-O universal headers follow Apple's documented fat_header/fat_arch format:
+// https://github.com/apple-oss-distributions/cctools/blob/main/include/mach-o/fat.h
+// Each original library is retained byte-for-byte in a 16 KiB-aligned slice.
+def readNatives = { configuration ->
+    def natives = [:]
+    configuration.files.each { archive ->
+        new ZipFile(archive).withCloseable { zip ->
+            zip.entries().each { entry ->
+                if (entry.name.endsWith('.dylib')) {
+                    if (natives.containsKey(entry.name)) {
+                        throw new GradleException('Duplicate native library: ' + entry.name)
+                    }
+                    natives[entry.name] = zip.getInputStream(entry).withCloseable { it.readAllBytes() }
+                }
+            }
+        }
+    }
+    natives
+}
+
+def nativeDirectory = layout.buildDirectory.dir('universal-javafx')
+tasks.register('universalJavafx') {
+    inputs.files(configurations.javafxMacIntel, configurations.javafxMacArm)
+    outputs.dir(nativeDirectory)
+    doLast {
+        def intel = readNatives(configurations.javafxMacIntel)
+        def arm = readNatives(configurations.javafxMacArm)
+        if (intel.isEmpty() || intel.keySet() != arm.keySet()) {
+            throw new GradleException('macOS JavaFX native library sets must match')
+        }
+        delete(nativeDirectory)
+        intel.each { name, intelBytes ->
+            def slices = [intelBytes, arm[name]]
+            def headers = slices.collect { ByteBuffer.wrap(it).order(ByteOrder.LITTLE_ENDIAN) }
+            headers.eachWithIndex { header, index ->
+                int expectedCpu = index == 0 ? CPU_TYPE_X86_64 : CPU_TYPE_ARM64
+                if (header.getInt(0) != MH_MAGIC_64 || header.getInt(4) != expectedCpu) {
+                    throw new GradleException('Unexpected Mach-O architecture: ' + name)
+                }
+            }
+            int armOffset = ((NATIVE_ALIGNMENT + intelBytes.length + NATIVE_ALIGNMENT - 1)
+                    .intdiv(NATIVE_ALIGNMENT)) * NATIVE_ALIGNMENT
+            def output = ByteBuffer.allocate(armOffset + arm[name].length).order(ByteOrder.BIG_ENDIAN)
+            output.putInt(FAT_MAGIC).putInt(2)
+            [NATIVE_ALIGNMENT, armOffset].eachWithIndex { offset, index ->
+                output.putInt(headers[index].getInt(4)).putInt(headers[index].getInt(8))
+                        .putInt(offset).putInt(slices[index].length).putInt(NATIVE_ALIGNMENT_POWER)
+            }
+            output.position(NATIVE_ALIGNMENT)
+            output.put(intelBytes)
+            output.position(armOffset)
+            output.put(arm[name])
+            File target = nativeDirectory.get().file(name).asFile
+            target.parentFile.mkdirs()
+            target.bytes = output.array()
+        }
+    }
+}
+
+shadowJar {
+    dependsOn universalJavafx
+    // Replace only dependency dylibs; do not discard the generated universal libraries.
+    eachFile { details ->
+        if (details.name.endsWith('.dylib')
+                && !details.file.toPath().startsWith(nativeDirectory.get().asFile.toPath())) {
+            details.exclude()
+        }
+    }
+    from(nativeDirectory)
+}
+
+def suppliedPackagedJar = providers.gradleProperty('packagedJar')
+ext.packagedJar = suppliedPackagedJar.isPresent()
+        ? suppliedPackagedJar.map { layout.projectDirectory.file(it) } : shadowJar.archiveFile
+
+tasks.register('verifyUniversalJar') {
+    if (!suppliedPackagedJar.isPresent()) {
+        dependsOn shadowJar
+    }
+    inputs.file(packagedJar)
+    inputs.files(configurations.javafxMacIntel, configurations.javafxMacArm)
+    doLast {
+        File archive = packagedJar.get().asFile
+        if (archive.length() > 100_000_000) {
+            throw new GradleException('Distribution exceeds 100 MB')
+        }
+        def intel = readNatives(configurations.javafxMacIntel)
+        def arm = readNatives(configurations.javafxMacArm)
+        new ZipFile(archive).withCloseable { zip ->
+            intel.each { name, intelBytes ->
+                def entries = zip.entries().findAll { it.name == name }
+                if (entries.size() != 1) {
+                    throw new GradleException('Expected exactly one universal library: ' + name)
+                }
+                byte[] bytes = zip.getInputStream(entries[0]).withCloseable { it.readAllBytes() }
+                def header = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN)
+                if (header.getInt() != FAT_MAGIC || header.getInt() != 2) {
+                    throw new GradleException('Missing universal header: ' + name)
+                }
+                [intelBytes, arm[name]].eachWithIndex { original, index ->
+                    int expectedCpu = index == 0 ? CPU_TYPE_X86_64 : CPU_TYPE_ARM64
+                    int cpu = header.getInt()
+                    int subtype = header.getInt()
+                    int offset = header.getInt()
+                    int size = header.getInt()
+                    int alignment = header.getInt()
+                    def sourceHeader = ByteBuffer.wrap(original).order(ByteOrder.LITTLE_ENDIAN)
+                    if (cpu != expectedCpu || subtype != sourceHeader.getInt(8) || alignment != NATIVE_ALIGNMENT_POWER
+                            || offset % NATIVE_ALIGNMENT != 0 || size != original.length
+                            || offset < UNIVERSAL_HEADER_SIZE || (long) offset + size > bytes.length
+                            || !Arrays.equals(original, Arrays.copyOfRange(bytes, offset, offset + size))) {
+                        throw new GradleException('Native slice was changed or lost: ' + name)
+                    }
+                }
+            }
+            ['glass.dll', 'libglass.so', 'prism_sw.dll', 'libprism_sw.so'].each { name ->
+                if (zip.getEntry(name) == null) {
+                    throw new GradleException('Missing Windows/Linux native library: ' + name)
+                }
+            }
+        }
+        logger.lifecycle('Verified universal macOS slices, Windows/Linux natives and size: ' + archive.length())
+    }
+}
+
+check.dependsOn verifyUniversalJar

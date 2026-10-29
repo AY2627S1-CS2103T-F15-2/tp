@@ -23,13 +23,12 @@ earlier builds may not support every behavior described here. Laplace is a local
 ## Quick start
 
 1. Install Java **25** for your operating system and processor architecture.
-2. Download the matching JAR from the
-   [team Releases page](https://github.com/AY2627S1-CS2103T-F15-2/tp/releases):
-   **Laplace.jar** for Windows, Linux or Intel macOS; **Laplace-mac-arm64.jar** for Apple Silicon macOS.
-   Each download is self-contained; you need only one JAR and Java 25.
+2. Download **Laplace.jar** from the
+   [team Releases page](https://github.com/AY2627S1-CS2103T-F15-2/tp/releases).
+   The same JAR supports Windows, Linux, Intel macOS and Apple Silicon macOS with Java 25.
 3. Put the JAR in a folder you can write to. Keep the application and its data in this folder.
-4. Open a terminal in that folder and run `java -jar Laplace.jar`. Substitute the actual filename
-   if your supplied JAR has a different name. Keep the terminal open while using the application.
+4. Open a terminal in that folder and run `java -jar Laplace.jar`.
+   Keep the terminal open while using the application.
 5. On the first launch without a saved data file, Laplace provides sample records. Existing saved data
    takes precedence; restarting does not add another set of samples.
 6. Type `member list` in the command box and press **Enter**. Try `equipment list`, then `loans list`
