@@ -150,7 +150,7 @@ A member can hold multiple different items; one physical item can have only one 
 ## Features
 
 Every command follows the [command format](#command-format-and-feedback),
-[shared field rules](#shared-field-rules) and [availability](#availability) rules above. If a command
+[shared field rules](#shared-field-rules) and [availability](#availability) rules. If a command
 is rejected, see [Correcting common errors](#correcting-common-errors). The
 [Command summary](#command-summary) lists every command and links back to its section here.
 
