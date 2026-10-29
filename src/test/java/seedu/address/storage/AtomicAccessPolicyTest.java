@@ -3,6 +3,7 @@ package seedu.address.storage;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.lang.reflect.Proxy;
@@ -23,6 +24,8 @@ import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.attribute.UserPrincipal;
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,6 +84,7 @@ public class AtomicAccessPolicyTest {
         AclView existing = new AclView(owner, List.of());
         AclView candidate = new AclView(owner, List.of());
         candidate.failure = new IOException("ACL cannot be applied");
+        candidate.failOnEmptyAcl = true;
         AtomicFileWriter writer = policyWriter(target, Map.of(AclFileAttributeView.class, existing),
                 Map.of(AclFileAttributeView.class, candidate));
         assertSame(candidate.failure, assertThrows(IOException.class, () -> writer.write(target, new byte[] {1})));
@@ -108,6 +112,55 @@ public class AtomicAccessPolicyTest {
                 writer.write(target, new byte[] {1});
                 assertEquals(1, Files.size(target));
             }
+        }
+    }
+
+    @Test
+    public void write_aclRestriction_precedesContentAndFinalPolicy() throws Exception {
+        Path target = directory.resolve("data.json");
+        Files.writeString(target, "original");
+        UserPrincipal owner = () -> "owner";
+        UserPrincipal everyone = () -> "everyone";
+        AclEntry inheritedRead = AclEntry.newBuilder().setType(AclEntryType.ALLOW).setPrincipal(everyone)
+                .setPermissions(AclEntryPermission.READ_DATA).build();
+        AclView existing = new AclView(owner, List.of(inheritedRead));
+        AclView candidate = new AclView(owner, List.of(inheritedRead));
+        AtomicFileWriter writer = new AtomicFileWriter() {
+            @Override
+            <V extends FileAttributeView> V attributeView(Path path, Class<V> type) {
+                if (type == AclFileAttributeView.class) {
+                    return type.cast(path.equals(target) ? existing : candidate);
+                }
+                return null;
+            }
+
+            @Override
+            void writeTemporaryFile(Path temporary, byte[] content) throws IOException {
+                assertEquals(1, candidate.entries.size());
+                assertEquals(owner, candidate.entries.getFirst().principal());
+                assertEquals(EnumSet.allOf(AclEntryPermission.class), candidate.entries.getFirst().permissions());
+                super.writeTemporaryFile(temporary, content);
+                assertEquals(owner, candidate.entries.getFirst().principal());
+            }
+        };
+        writer.write(target, new byte[] {1});
+        assertEquals(2, candidate.applications.size());
+        assertEquals(existing.entries, candidate.entries);
+    }
+
+    @Test
+    public void write_initialRestrictionFails_neverWritesContentAndKeepsDestination() throws Exception {
+        Path target = directory.resolve("data.json");
+        Files.writeString(target, "original");
+        UserPrincipal owner = () -> "owner";
+        AclView candidate = new AclView(owner, List.of());
+        candidate.failure = new IOException("Cannot restrict candidate");
+        AtomicFileWriter writer = policyWriter(target, Map.of(), Map.of(AclFileAttributeView.class, candidate));
+        assertSame(candidate.failure, assertThrows(IOException.class, () -> writer.write(target, new byte[] {1})));
+        assertTrue(candidate.applications.isEmpty());
+        assertEquals("original", Files.readString(target));
+        try (var files = Files.list(directory)) {
+            assertEquals(List.of(target), files.toList());
         }
     }
 
@@ -202,6 +255,8 @@ public class AtomicAccessPolicyTest {
         private UserPrincipal owner;
         private List<AclEntry> entries;
         private IOException failure;
+        private boolean failOnEmptyAcl;
+        private final List<List<AclEntry>> applications = new ArrayList<>();
 
         AclView(UserPrincipal owner, List<AclEntry> entries) {
             this.owner = owner;
@@ -230,10 +285,11 @@ public class AtomicAccessPolicyTest {
 
         @Override
         public void setAcl(List<AclEntry> newEntries) throws IOException {
-            if (failure != null) {
+            if (failure != null && (!failOnEmptyAcl || newEntries.isEmpty())) {
                 throw failure;
             }
             entries = List.copyOf(newEntries);
+            applications.add(entries);
         }
     }
 }

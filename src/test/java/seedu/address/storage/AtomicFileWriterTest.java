@@ -90,6 +90,30 @@ public class AtomicFileWriterTest {
     }
 
     @Test
+    public void write_restrictionFails_neverCallsContentWriterAndRemovesEmptyCandidate() throws Exception {
+        Path target = directory.resolve("data.json");
+        Files.writeString(target, "original");
+        IOException failure = new IOException("Cannot restrict candidate");
+        AtomicFileWriter writer = new AtomicFileWriter() {
+            @Override
+            void restrictTemporaryFile(Path temporary) throws IOException {
+                assertEquals(0, Files.size(temporary));
+                throw failure;
+            }
+
+            @Override
+            void writeTemporaryFile(Path temporary, byte[] content) {
+                throw new AssertionError("Content must not be written before restriction succeeds");
+            }
+        };
+        assertSame(failure, assertThrows(IOException.class, () -> writer.write(target, new byte[] {1})));
+        assertEquals("original", Files.readString(target));
+        try (var files = Files.list(directory)) {
+            assertEquals(List.of(target), files.toList());
+        }
+    }
+
+    @Test
     public void write_accessPolicyFails_preservesLiveFileAndCleansCandidate() throws Exception {
         Path target = directory.resolve("data.json");
         Files.writeString(target, "original");

@@ -769,9 +769,10 @@ successful command: duplicate members, already-assigned items and repeated retur
 Atomic saves preserve an existing file's POSIX owner, group and permission bits where supported,
 and its access-control list (ACL) and owner where the filesystem exposes an ACL view (such as Windows).
 A POSIX file with no write bits or a file with the Windows read-only attribute rejects saving even
-when its parent folder permits replacement. Restore write permissions before retrying. New files use
-secure platform temporary-file defaults (owner-only access on POSIX). Timestamps, DOS archive/hidden/system
-flags and extended attributes are not preserved. Keep the parent folder writable for atomic replacement.
+when its parent folder permits replacement. Restore write permissions before retrying. Candidates are
+restricted before any data is written: owner-only read/write on POSIX, and an owner-only ACL replacing
+inherited access grants on Windows. New files keep that restricted policy. Timestamps, DOS
+archive/hidden/system flags and extended attributes are not preserved. Keep the parent folder writable for atomic replacement.
 
 For compatibility with older files, absent or null `members`, `equipment` and `loans` collections
 mean empty collections, just like `[]`. Saving writes these forms as arrays. A null collection cannot
