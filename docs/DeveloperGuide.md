@@ -1578,11 +1578,13 @@ Use temporary data. Do not test against a real inventory.
 `CommandWords.canonicalFamily` maps only `members` to `member` and `loan` to `loans`, using
 `Locale.ROOT` casing. Family parsers normalize only their action token; leaf parsers still receive
 unchanged parameter text. Top-level command words and appearance actions also ignore case. The same
-family vocabulary drives `CompletionService`, which offers canonical words and preserves replacement
-boundaries and parameter text. Help describes the aliases; command examples remain canonical.
+family vocabulary drives `CompletionService` and the Ctrl+Space `CommandCatalog`. Both offer canonical
+command words while preserving parameter text, prefix casing and existing Unicode whitespace behavior. Help describes the aliases; command examples remain canonical.
 
 Manual check: enter `LOAN LIST`, `Members View nus/A0123456X`, then a mixed-case `MEMBERS EDIT`
 with a mixed-case name. Verify the same navigation and case-preserved name as canonical commands.
 Try `equipments list`, `loan returns` and `MEMBERS ADD NAME/Camera`; expect the existing validation
 and canonical guidance. Tab after `LOAN LI` should suggest `list`; Tab after `Members` suggests `member`.
+Ctrl+Space after `MEM`, `members ` or `LOAN ` must also offer canonical commands without executing.
+Completing a field in `MEMBERS EDIT name/MiXeD Name ph` must retain the name exactly.
 No model, persistence, transaction or UML relationships change.

@@ -190,7 +190,7 @@ Command words are **case-insensitive**: `Member Add` and `member add` are equiva
 `member`/`members` and `loan`/`loans` are explicit family aliases. `equipment` is uncountable;
 `equipments`, `lists` and `returns` are not aliases. Field prefixes remain lowercase and case-sensitive.
 Parameter values retain their existing validation and case rules; names and notes preserve their case.
-Help, usage messages and Tab suggestions use the canonical `member`, `equipment` and `loans` spellings.
+Help, usage messages, Tab and Ctrl+Space suggestions use the canonical `member`, `equipment` and `loans` spellings.
 
 - Replace uppercase placeholders with your values: replace `NUS_ID` with `A0123456X`, for example.
 - Square brackets mean an optional parameter; do not type them. Optional parameters are marked in each command's syntax.
