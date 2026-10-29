@@ -71,6 +71,46 @@ public class FullCommandRoutingIntegrationTest {
     }
 
     @Test
+    public void historicalBatchConflict_rejectsWithoutSavingAndAllowsSameDayHandoff() throws Exception {
+        LocalDate returned = LocalDate.now().minusDays(2);
+        execute(addLoan(firstItem, FIRST, returned.minusDays(2), returned), DisplayRequest.equipmentDetails(firstItem));
+        execute("loans return uuid/" + firstItem + " returned/" + returned,
+                DisplayRequest.equipmentDetails(firstItem));
+        execute("equipment edit uuid/" + secondItem + " condition/DAMAGED",
+                DisplayRequest.equipmentDetails(secondItem));
+        String batch = "loans add uuid/" + firstItem + "," + secondItem + " nus/" + FIRST
+                + " assigned/" + returned.minusDays(1) + " expected/" + returned;
+        AddressBook before = new AddressBook(model.getAddressBook());
+        byte[] saved = Files.readAllBytes(storage.getAddressBookFilePath());
+        int saves = storage.saves;
+        CommandException error = assertThrows(CommandException.class, () -> logic.execute(batch));
+        assertTrue(error.getMessage().contains(firstItem.toString()));
+        assertTrue(error.getMessage().contains(secondItem.toString()));
+        assertTrue(error.getMessage().contains("last recorded return date " + returned));
+        assertTrue(error.getMessage().contains("condition: DAMAGED"));
+        assertEquals(before, model.getAddressBook());
+        assertArrayEquals(saved, Files.readAllBytes(storage.getAddressBookFilePath()));
+        assertEquals(saves, storage.saves);
+        execute(addLoan(firstItem, FIRST, returned, returned), DisplayRequest.equipmentDetails(firstItem));
+        reload();
+        assertEquals(returned, model.findOpenLoan(firstItem).orElseThrow().getAssignedDate());
+    }
+
+    @Test
+    public void aggregateLoanErrors_rejectWithoutSavingOrChangingRecords() throws Exception {
+        LocalDate today = LocalDate.now();
+        String ids = firstItem + "," + UNKNOWN + "," + secondItem;
+        execute(addLoan(secondItem, FIRST, today, today), DisplayRequest.equipmentDetails(secondItem));
+        assertRejected(CommandException.class, "loans add uuid/" + ids + " nus/" + FIRST
+                + " assigned/" + today + " expected/" + today);
+        assertRejected(CommandException.class, "loans return uuid/" + ids + " returned/" + today
+                + " condition/DAMAGED");
+        reload();
+        assertTrue(model.findOpenLoan(secondItem).isPresent());
+        assertTrue(model.findOpenLoan(firstItem).isEmpty());
+    }
+
+    @Test
     public void allTenRoutes_memberAndEquipmentDeletionRetainsHistory() throws Exception {
         LocalDate assigned = LocalDate.now().minusDays(3);
         LocalDate expected = assigned.plusDays(10);

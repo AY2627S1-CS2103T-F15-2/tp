@@ -30,8 +30,9 @@ public class ResultDisplayTest {
             try {
                 ResultDisplay display = new ResultDisplay();
                 TextArea area = (TextArea) display.getRoot().lookup("#resultDisplay");
-                String batch = "Added 100 units\n" + "00000000-0000-0000-0000-000000000001\n".repeat(100);
-                display.setFeedbackToUser(batch);
+                String batch = "Rejected batch: 100 of 100 units are invalid. No records changed.\n"
+                        + "Equipment 00000000-0000-0000-0000-000000000001 has no open loan to return.\n".repeat(100);
+                display.setFeedbackToUser(batch, true);
                 Button details = display.getRoot().lookupAll(".button").stream().map(node -> (Button) node)
                         .filter(button -> button.getText().equals("Details")).findFirst().orElseThrow();
                 details.fire();

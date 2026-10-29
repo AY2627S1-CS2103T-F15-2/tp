@@ -614,6 +614,12 @@ historical availability. This check applies to new assignments and does not rewr
 | Field syntax/date is invalid | Correct the first reported parameter and retry; use a real `yyyy-MM-dd` date. |
 | Saving fails | No loan is recorded and no records change; correct file access before retrying. |
 
+
+When several units fail validation, the result summarizes how many are invalid and lists each UUID's
+first blocking reason in input order. Open **Details** to expand the complete list or **Copy** to copy
+it. One invalid unit keeps its specific diagnostic. Shared member/date and syntax errors are reported
+before unit checks when they prevent meaningful validation. No loans or conditions change on rejection.
+
 On failure, no loan is created. Availability, holder, holdings, view and selection stay unchanged.
 
 ### Return equipment: `loans return`
@@ -655,12 +661,13 @@ never attributed to a single borrower in a batch return.
 | --- | --- |
 | Equipment does not exist | `No equipment with UUID UUID exists.` Check the full UUID. |
 | No open loan, including an already returned item | `Equipment UUID has no open loan to return.` A repeated return is rejected. |
-| Return is before assignment | `Returned date cannot be before assigned date` |
+| Return is before assignment | `Cannot return NAME (UUID) on RETURN_DATE: it was assigned on ASSIGNED_DATE.` Correct the identified unit's date; the whole batch remains unchanged. |
 | Return is in the future | `Returned date cannot be after today (TODAY).` |
 | Missing/repeated/unknown field or invalid date | Correct the reported parameter and use the full command syntax. |
 | Open loan refers to a missing member | `Cannot return equipment UUID: its open loan refers to a missing member.` Preserve the data and report the error to the team. |
 | Saving fails | No return is recorded and no records change; correct file access and retry. |
 
+Batch return errors use the same combined result and Details/Copy actions as assignment errors.
 A rejected return leaves the loan, return date, holder and availability unchanged. Completed loans
 appear in the Loans tab and in member and equipment details.
 
@@ -759,6 +766,11 @@ If you previously launched from another folder, close Laplace and back up the ol
 before copying them into the matching locations beside the JAR. Data is not automatically read or moved
 from the old working folder. Moving only the JAR to a new empty folder starts a separate sample dataset.
 When running development classes with Gradle, runtime files remain relative to the project working folder.
+
+A single UTF-8 byte-order mark at the very start of a JSON file is accepted for editor compatibility.
+Saving writes ordinary UTF-8 without a BOM. Embedded text characters are preserved; repeated or
+misplaced markers and genuinely malformed JSON remain invalid. A marker does not permit a null
+root or content after the single JSON root; both are rejected without changing the saved bytes.
 
 For Laplace mutation commands, a failed save leaves the live records and previously saved data
 unchanged. An error is not a successful addition, deletion, assignment or return. The command remains
