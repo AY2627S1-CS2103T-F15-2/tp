@@ -82,7 +82,8 @@
         "stored-loan-date-validation": "Stored loan date validation",
         "saving-data": "Saving data",
         "loan-filter-visibility": "Loan filter visibility",
-        "undo-and-redo": "Undo and redo"
+        "undo-and-redo": "Undo and redo",
+        "batch-loan-validation-diagnostics": "Batch loan validation diagnostics"
       },
       "headingKeywords": {}
     },
