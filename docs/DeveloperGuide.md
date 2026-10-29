@@ -1621,8 +1621,8 @@ status area's data path. Close Laplace before editing files; keep a separate unt
    The test injects a partial temporary-file write and a failed atomic replacement for actual mutation
    commands, including assignment and return. Expect a reported failure, unchanged live collections,
    byte-for-byte preservation of the previous data file, and a successful retry after removing the
-   injected failure. Do not rely on making only the JSON file read-only: replacement permissions are
-   controlled by the containing directory. These are automated failure-injection checks, not a claim
+   injected failure. These failure injections are independent of filesystem permission toggles; the
+   explicit read-only policy is checked separately below. These are automated failure-injection checks, not a claim
    that an arbitrary manual filesystem failure has been reproduced.
 
 Verification basis (27 October 2026): loan command/parser/panel, sample-data, storage and root JSON
@@ -1686,6 +1686,27 @@ Use disposable records or the fresh bundled samples.
    previous view, selection, data and history. The removed `short/` parameter must be rejected as unknown.
 5. Edit the last unit's group name/category and retry the old group pair. Expect no matching group;
    its full UUID still resolves. Help, Tab and Ctrl+Space offer category/, name/ and uuid/.
+
+### Atomic-save access policy
+
+`AtomicFileWriter` creates an empty sibling candidate and restricts its POSIX mode or ACL before
+writing any serialized data. On ACL filesystems, inherited grants are replaced with an owner-only ACL.
+Only after writing/flushing succeeds does it copy the final destination policy before the atomic move.
+Existing POSIX owner/group/mode and ACL-view owner/ACL are retained; failure
+to read or apply that policy aborts without replacing the destination. POSIX files with no write bits
+and DOS read-only files explicitly reject saving. This policy is separate from effective access checks:
+no preliminary `isWritable()` check can guarantee a later replacement. New files retain the restricted
+owner-only policy where POSIX or ACL views are supported. Other metadata is not copied. No serialization
+schema changes are involved.
+
+Manual check in a disposable folder: save a valid file, set mode `0644` on POSIX, make a record change,
+and confirm `0644` survives. Set `0444`, retry a change, and confirm rejection, unchanged records and
+unchanged file bytes. On Windows, repeat with a custom ACL and the read-only attribute. Restore write
+access, retry, and reload. `AtomicFileWriterTest` checks the platform's available attribute views,
+new-file policy, read-only rejection and injected metadata failure cleanup. `AtomicFileWriterAclTest`
+runs on real Windows ACL filesystems: its parent grants inherited Everyone read access, and it checks
+that existing/new-file candidates allow only owner reads before and after content writing. This test
+is explicitly platform-gated; host-independent policy tests also verify ordering and failure cleanup.
 
 ### Command-word aliases and casing
 

@@ -3,10 +3,25 @@ package seedu.address.storage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.AclEntry;
+import java.nio.file.attribute.AclEntryPermission;
+import java.nio.file.attribute.AclEntryType;
+import java.nio.file.attribute.AclFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.DosFileAttributeView;
+import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
 /** Replaces a data file atomically; an unsupported atomic move fails without a non-atomic fallback. */
 class AtomicFileWriter {
@@ -16,7 +31,9 @@ class AtomicFileWriter {
         Files.createDirectories(target.getParent());
         Path temporary = Files.createTempFile(target.getParent(), ".laplace-", ".tmp");
         try {
+            restrictTemporaryFile(temporary);
             writeTemporaryFile(temporary, content);
+            preserveAccessPolicy(temporary, target);
             replaceFile(temporary, target);
         } catch (IOException | RuntimeException failure) {
             try {
@@ -37,6 +54,72 @@ class AtomicFileWriter {
             }
             channel.force(true);
         }
+    }
+
+    /**
+     * Restricts the empty candidate before any content is written, replacing inherited ACL grants.
+     * The final destination policy is applied separately only after writing and flushing succeed.
+     */
+    void restrictTemporaryFile(Path temporary) throws IOException {
+        PosixFileAttributeView posix = attributeView(temporary, PosixFileAttributeView.class);
+        if (posix != null) {
+            posix.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+        }
+        AclFileAttributeView acl = attributeView(temporary, AclFileAttributeView.class);
+        if (acl != null) {
+            AclEntry ownerAccess = AclEntry.newBuilder().setType(AclEntryType.ALLOW).setPrincipal(acl.getOwner())
+                    .setPermissions(EnumSet.allOf(AclEntryPermission.class)).build();
+            acl.setAcl(List.of(ownerAccess));
+        }
+    }
+
+    /**
+     * Copies the existing access policy before replacement, rejecting an explicitly read-only target.
+     * New files retain the candidate's restricted policy. Metadata failures abort the save.
+     */
+    void preserveAccessPolicy(Path temporary, Path target) throws IOException {
+        try {
+            Files.readAttributes(target, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+        } catch (NoSuchFileException exception) {
+            return;
+        }
+        PosixFileAttributeView posix = attributeView(target, PosixFileAttributeView.class);
+        if (posix != null) {
+            var attributes = posix.readAttributes();
+            Set<PosixFilePermission> permissions = attributes.permissions();
+            if (!permissions.contains(PosixFilePermission.OWNER_WRITE)
+                    && !permissions.contains(PosixFilePermission.GROUP_WRITE)
+                    && !permissions.contains(PosixFilePermission.OTHERS_WRITE)) {
+                throw new AccessDeniedException(target.toString(), null, "Data file is marked read-only");
+            }
+            var candidate = attributeView(temporary, PosixFileAttributeView.class);
+            if (!candidate.readAttributes().owner().equals(attributes.owner())) {
+                candidate.setOwner(attributes.owner());
+            }
+            if (!candidate.readAttributes().group().equals(attributes.group())) {
+                candidate.setGroup(attributes.group());
+            }
+            candidate.setPermissions(permissions);
+        }
+        AclFileAttributeView acl = attributeView(target, AclFileAttributeView.class);
+        if (acl != null) {
+            var candidate = attributeView(temporary, AclFileAttributeView.class);
+            if (!candidate.getOwner().equals(acl.getOwner())) {
+                candidate.setOwner(acl.getOwner());
+            }
+            candidate.setAcl(acl.getAcl());
+        }
+        DosFileAttributeView dos = attributeView(target, DosFileAttributeView.class);
+        if (dos != null && dos.readAttributes().isReadOnly()) {
+            throw new AccessDeniedException(target.toString(), null, "Data file is marked read-only");
+        }
+    }
+
+    /**
+     * Returns a platform attribute view, allowing policy tests to exercise other filesystem capabilities.
+     */
+    <V extends FileAttributeView> V attributeView(Path path, Class<V> type) {
+        return Files.getFileAttributeView(path, type);
     }
 
     /** A failed replacement must never fall back to truncating or copying over the live data file. */
