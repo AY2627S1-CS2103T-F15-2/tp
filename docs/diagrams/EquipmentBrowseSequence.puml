@@ -1,0 +1,37 @@
+@startuml
+!include style.puml
+skinparam ParticipantBackgroundColor UI_COLOR_T1
+skinparam ParticipantFontColor #111111
+skinparam maxMessageSize 180
+title Read-only equipment group navigation
+participant ":LogicManager" as logic
+participant ":EquipmentBrowseCommand" as browse
+participant "model:Model" as model
+participant "data:ReadOnlyAddressBook" as data
+participant ":MainWindow" as window
+logic -> browse : execute(model)
+activate browse
+browse -> model : getAddressBook()
+model --> browse : data
+browse -> data : getEquipmentList()
+data --> browse : retained units
+alt group form and exact normalized category/name exists
+  note right of browse
+    Prepare CommandResult with equipmentGroup(key).
+  end note
+else no retained unit belongs to the group
+  note right of browse
+    Reject the missing group with CommandException.
+  end note
+end
+browse --> logic : result, or throws CommandException
+deactivate browse
+opt command succeeds
+  logic --> window : result
+  window -> window : display typed request and retain query
+end
+note over browse, data
+  No record mutation, saving or history entry.
+  Group lookup includes deleted and filtered units.
+end note
+@enduml

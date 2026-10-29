@@ -21,13 +21,12 @@ earlier builds may not support every behavior described here. Laplace is a local
 ## Quick start
 
 1. Install Java **25** for your operating system and processor architecture.
-2. Download the matching JAR from the
-   [team Releases page](https://github.com/AY2627S1-CS2103T-F15-2/tp/releases):
-   **Laplace.jar** for Windows, Linux or Intel macOS; **Laplace-mac-arm64.jar** for Apple Silicon macOS.
-   Each download is self-contained; you need only one JAR and Java 25.
+2. Download **Laplace.jar** from the
+   [team Releases page](https://github.com/AY2627S1-CS2103T-F15-2/tp/releases).
+   The same JAR supports Windows, Linux, Intel macOS and Apple Silicon macOS with Java 25.
 3. Put the JAR in a folder you can write to. Keep the application and its data in this folder.
-4. Open a terminal in that folder and run `java -jar Laplace.jar`. Substitute the actual filename
-   if your supplied JAR has a different name. Keep the terminal open while using the application.
+4. Open a terminal in that folder and run `java -jar Laplace.jar`.
+   Keep the terminal open while using the application.
 5. On the first launch without a saved data file, Laplace provides sample records. Existing saved data
    takes precedence; restarting does not add another set of samples.
    Try the [sample-record walkthrough](#sample-records-on-first-launch) to explore without changing them.
@@ -379,8 +378,30 @@ equipment view uuid/UUID
 ```
 
 Example: `equipment view uuid/550e8400-e29b-41d4-a716-446655440000`.
-Uppercase hexadecimal letters identify the same UUID. You must use the complete UUID; shortened forms
-and partial matching are not supported.
+Uppercase hexadecimal letters identify the same UUID. The `uuid/` form requires the complete UUID.
+To open a group from search results, use:
+
+```text
+equipment view category/CATEGORY name/NAME
+```
+
+For example, after `equipment search q/camera`, use
+`equipment view category/Photography name/Camera` to open that exact category/name group.
+Use the full displayed category and name, without adding quotation marks. Matching ignores case and
+normalizes whitespace, just like grouping; it is not a substring search. Both fields are required.
+The group table initially shows matching units without selecting one. A group outside the active
+filter can still open; **Show all units** reveals its retained units. No group is selected arbitrarily.
+
+To open a physical unit, type `equipment view uuid/` and the beginning of its UUID, then press Tab.
+Cycle through matching full UUIDs and press Enter separately to open the intended unit. The short labels
+in unit tables are for display only. Missing groups, malformed UUIDs, duplicate parameters and mixed
+UUID/group forms are errors; failure preserves the previous view and selection.
+
+Group references resolve against current data each time. Filters, sorting and row positions do not
+change their meaning. Renaming the last unit out of a group makes the old pair invalid, while each
+physical unit retains its UUID. Group navigation keeps search criteria and opens its table in query
+order without selecting an arbitrary unit. Neither view form saves data or changes undo/redo history.
+Use full UUIDs consistently for viewing, loan, edit, delete and restore commands.
 
 Details show the full UUID, name, category, condition, notes, lifecycle status and derived availability. An open loan also
 shows the holder's NUS ID, name, phone and email, plus assignment and expected return dates. The matching
@@ -486,6 +507,11 @@ All four parameters are required. Use the actual UUID from `equipment list` and 
 expected return must be on or after assignment. Expected return may be in the future.
 In `UUID[,UUID...]`, the brackets and ellipsis describe optional additional UUIDs; do not type them.
 Enter full UUIDs separated by commas, with one `uuid/` prefix for the entire list.
+
+When saved history contains an assignment or actual return after the computer's date, loading retains
+the records and writes an identity-specific warning to `addressbook.log.*` beside the JAR. Verify the
+computer date first; if the saved dates are wrong, preserve the original and recover a backup. This
+warning accommodates clock rollback. It does not relax command date bounds or flag future expected returns.
 
 Example, assuming these identities exist and the assignment date is not in the future:
 
@@ -716,7 +742,7 @@ on or after 20 September 2026; choose valid actual dates for your own operation.
 | Member name `name/` | 1–100 characters. Letters in any language, accents, spaces, apostrophes (`'` or `’`), hyphens and periods are allowed; include at least one letter. See [name counting and accents](#exact-text-and-character-rules) for the precise limit. |
 | Phone `phone/` | Optional `+`, then 8–15 digits. Spaces and hyphens are removed: `+65 9123-4567` becomes `+6591234567`. |
 | Email `email/` | 3–254 characters using English letters, digits and the punctuation described in the [exact email rules](#exact-text-and-character-rules). Include one `@`, a dotted domain and no spaces. Stored lowercase. |
-| Equipment UUID `uuid/` | Copy the full identifier from the item's details, e.g. `550e8400-e29b-41d4-a716-446655440000`. Shortened identifiers are rejected. |
+| Equipment UUID `uuid/` | Copy the full identifier from the item's details, e.g. `550e8400-e29b-41d4-a716-446655440000`, or use Tab to complete it. Shortened identifiers and the short labels in unit tables are rejected. |
 | Equipment name `name/` | 1–100 printable characters; punctuation and model numbers are allowed. |
 | Category `category/` | 1–50 printable characters; choose a useful description such as `Photography`. |
 | Condition `condition/` | `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`, in any letter case. Use the underscore in `UNDER_REPAIR`. |
@@ -749,7 +775,7 @@ Use that shared table for phone numbers, equipment names, categories, conditions
 | NUS ID `nus/` | One ASCII letter, exactly seven digits, and an optional final ASCII letter. Case-insensitive; stored/displayed uppercase, such as `A0123456X` or `E0123456`. |
 | Member name `name/` | 1–100 Unicode code points after whitespace and NFC normalization. Unicode letters with combining marks, spaces, straight (`'`) or curly (`’`) apostrophes, hyphens and periods; must contain at least one letter. Combining marks must follow a letter or its marks. Examples: `அருண்`, `Anne O’Connor`. |
 | Email `email/` | 3–254 ASCII characters, one `@`, no spaces and at least one domain dot. Local-part characters: letters, digits, `.`, `_`, `%`, `+`, `-`. Domain labels contain letters/digits/hyphens and cannot begin/end with a hyphen. ASCII validation occurs before conversion to lowercase; non-ASCII lookalikes such as `K` are rejected. Stored lowercase. |
-| Equipment UUID `uuid/` | Full `8-4-4-4-12` hexadecimal form, such as `550e8400-e29b-41d4-a716-446655440000`. Case-insensitive input; lowercase display. Shortened UUIDs are rejected. |
+| Equipment UUID `uuid/` | Full `8-4-4-4-12` hexadecimal form, such as `550e8400-e29b-41d4-a716-446655440000`. Case-insensitive input; lowercase display. Shortened UUID values and compact display labels are rejected. Use Tab to complete a full UUID. |
 | Dates | Exactly `yyyy-MM-dd` with a Gregorian year from `0001` through `9999`, such as `2026-10-15`. Assignment/actual-return dates cannot be later than the computer's local date. Expected return may be in the future. |
 
 Saved loan dates must also use the four-digit Gregorian range `0001`–`9999`. Year zero, negative years,
@@ -810,8 +836,8 @@ The assigned camera intentionally has no issue observation to demonstrate older 
 Dates are relative to the day of first launch. Try `member list`, `equipment list` and `loans list`,
 then copy displayed identities to view details or try a return. These are ordinary records:
 additions, returns and deletions are saved normally. Existing saved data always takes precedence;
-samples are not appended to it. To explore a fresh sample set, run the JAR from a separate empty folder
-instead of removing your existing data file.
+samples are not appended to it. To explore a fresh sample set, copy the JAR into a separate empty folder
+and run that copy instead of removing your existing data file.
 
 The equipment identities below are stable in a fresh sample set. The states and holders change as you
 issue, return or delete records.
@@ -851,8 +877,8 @@ member/equipment links open the exact record.
 ### Browse equipment groups and units
 
 The left equipment directory groups units with the same normalized category and name, including units
-registered in different batches. Open a group with a click, **Enter** or **Space**, then select a row in
-its physical-unit table. Each unit still has its own UUID, condition, notes, holder and lifecycle state.
+registered in different batches. Open a group with `equipment view category/CATEGORY name/NAME`,
+a click, **Enter** or **Space**, then select a row in its physical-unit table. Each unit still has its own UUID, condition, notes, holder and lifecycle state.
 
 Group counts distinguish **matching** units from **retained** units. Availability counts exclude deleted
 units. **Show all units** reveals group members outside the active search, including deleted records.
@@ -864,7 +890,8 @@ Unchecking it narrows the table again while retaining the selected unit's detail
 when that unit is outside the table filter.
 
 Short table identifiers show the first eight and last four UUID characters, such as
-`550e8400…0000`. They are display labels only: hover for the full UUID, or copy it from unit details.
+`550e8400…0000`. These are display labels only. Use Tab completion in `equipment view uuid/` to
+select a full UUID, or hover for the full UUID and copy it from unit details.
 
 ### Prepare commands from details
 
@@ -953,30 +980,139 @@ in addition to the seventeen member, equipment and loan commands.
 Successful changes save automatically; there is no manual-save command. For the packaged application,
 data is stored in `data/addressbook.json` inside the folder containing `Laplace.jar`, even if you launch
 the JAR from another terminal folder. `preferences.json` and rotating `addressbook.log.*` files also
-stay beside the JAR. The window's status area identifies the data-file path.
+stay beside the JAR. Substitute your actual JAR filename, such as `Laplace-mac-arm64.jar`, where needed.
+The following procedures use your operating system's file manager; Laplace has no in-app backup,
+restore, import or export command.
 
-Command diagnostics record that input was received and, at detailed log levels, the recognized command
-type. They omit raw input and contact values, including rejected input. Existing logs from older
-versions may still contain commands recorded before this change.
+### Locate your saved data
+
+Hover over **Data: addressbook.json** in the window footer to see the full path actually in use.
+If startup fails, use the **Data file:** path in the **Could not load saved data** dialog instead.
+Record this path before closing Laplace. Use it for every copy or replacement below; the terminal's
+current folder may be different from the JAR's folder.
+
+The data file contains members, equipment and open/completed loans, including retained deleted records.
+`preferences.json` contains window and appearance settings; it is not a records backup.
+Logs do not provide a complete dataset that Laplace can restore.
 
 List, search and view commands, `help`, and `exit` do not save member, equipment or loan records.
 They remain usable when the loaded data cannot be saved, and do not rewrite the data file or create
 one on first launch. Normal exit still saves window and appearance preferences separately.
 
-If you previously launched from another folder, close Laplace and back up the old data and preferences
-before copying them into the matching locations beside the JAR. Data is not automatically read or moved
-from the old working folder. Moving only the JAR to a new empty folder starts a separate sample dataset.
-When running development classes with Gradle, runtime files remain relative to the project working folder.
+For Laplace mutation commands, a failed save leaves the live records and previously saved data
+unchanged. An error is not a successful addition, deletion, assignment or return. The command remains
+available for correction. Fix the folder/file access problem, then retry. Do not repeatedly resubmit a
+successful command: duplicate members, already-assigned items and repeated returns are rejected.
+
+### Make a backup
+
+1. Locate the data file as described above. If possible, note a few member IDs, equipment UUIDs and
+   current holders to check after a restore.
+2. Type `exit` and wait for Laplace to close. Close any other instance using the same dataset.
+3. **Copy**, rather than move, the data file to a separate backup location. Give the copy a dated name,
+   for example `addressbook-2026-10-29.json`. Keep earlier known-good backups instead of overwriting them.
+4. Check that the backup exists and has the same size as the source. Keep it in a safe location;
+   a copy on another device also protects against losing the original computer.
+
+If no data file exists, first-launch samples may only be in memory: list/view commands and normal exit
+do not create the records file. There is no saved dataset to copy in that case. Do not substitute
+preferences or logs for a data backup. Never edit the data file while Laplace is running or run
+multiple instances against it.
+
+### Restore a known-good backup
+
+Restoring replaces the entire saved dataset; changes made since that backup will not be present.
+It does not merge records or restore the previous session's undo/redo history.
+
+1. Identify the actual data path and close every instance of Laplace. For a startup error, dismiss
+   the dialog and wait for the application to stop.
+2. If a current file exists, preserve it, even if it appears invalid, by copying it to a separate location
+   with a distinct name such as `addressbook-before-restore-2026-10-29.json`. Keep the known-good backup too.
+3. Copy the known-good backup into the actual data folder. Rename the installed copy to
+   `addressbook.json`, replacing the current file only after preserving it. Create the `data` folder
+   if needed. Check that the filename has not become `addressbook.json.json` or `addressbook.json.txt`.
+4. Launch a compatible release from that JAR folder. Use the same release that wrote the backup
+   where possible; do not downgrade lifecycle-aware data to a release that may discard deletion state.
+5. Run `member list`, `equipment list` and `loans list`. Reset any Loans filters, then compare member
+   IDs, equipment UUIDs, open loans and current holders with the backup's expected state. Check retained
+   deleted records and completed history where relevant. Counts alone do not establish that this is
+   the intended dataset.
+
+If loading fails again, keep both copies, record the error and follow the
+[startup-failure procedure](#handle-a-startup-failure).
+Do not issue new loans until you have verified the restored records.
+
+### Move to another computer
+
+1. On the original computer, locate the data file, close Laplace and make a backup using the steps above.
+2. Put a compatible JAR for the destination computer's operating system/processor in a writable folder.
+   Keep Laplace closed on that computer while installing the data. Preserve any destination dataset first.
+3. Copy the backup to `data/addressbook.json` inside the destination JAR's folder. Keep its member IDs,
+   equipment UUIDs and loan references intact; do not combine JSON files by pasting their arrays together.
+   Copying `preferences.json` is optional; leaving it out uses default window and appearance settings.
+4. Launch that JAR and perform the record checks in the restore procedure, including open loans and holders.
+   Keep the original dataset and backup until the destination has been verified. Continue working on one
+   copy to avoid two datasets diverging.
+
+If migrating files from a release that stored them relative to the launch folder, preserve the old
+data and preferences before copying them to the locations beside the current JAR. Laplace does not
+automatically discover or move those older files.
+
+### Handle a startup failure
+
+1. If **Could not load saved data** appears, record its **Data file:** path. Laplace preserves the
+   original data file and opens no editable directory or command box. Dismiss the dialog and wait
+   for startup to stop. For other launch failures, check Java 25 and the JAR filename, and retain the
+   terminal error; do not replace the dataset just because Java could not start.
+2. With Laplace closed, copy the problematic file to a safe location before changing it. Check that
+   the indicated file and its folder can be read. For permission problems, correct file access and retry.
+3. If a known-good backup exists, [restore it](#restore-a-known-good-backup), then verify the restored records.
+4. If no backup exists, retain the original and work on a copy. A correct manual repair may recover
+   records still present in the file; see [manual editing and compatibility](#advanced-manual-editing-and-compatibility).
+   Ask the team for help with the error if unsure. Missing or overwritten records cannot be reconstructed
+   automatically from preferences, logs or a new sample dataset.
+
+To explore samples while resolving the problem, copy **only the JAR** into a separate empty writable
+folder and launch that copy. Its own missing data file causes a fresh fictional sample set to load.
+This does not restore your records. Launching the original JAR from another terminal folder still uses
+the original JAR's data path. Do not overwrite the preserved file with empty JSON or sample records.
+
+### Advanced: manual editing and compatibility
+
+Correct manual edits to the local JSON file are supported: Laplace loads data that meets its JSON,
+field, identity and cross-record validation rules. Prefer normal commands for routine changes.
+Close Laplace, back up the file and edit a disposable copy first, keeping valid JSON and every required
+reference. Check the edited copy with a compatible JAR in its own folder before installing it in the
+original location. Changing a member NUS ID or equipment UUID without updating all loan references
+invalidates the dataset; preserving identities is safer.
 
 A single UTF-8 byte-order mark at the very start of a JSON file is accepted for editor compatibility.
 Saving writes ordinary UTF-8 without a BOM. Embedded text characters are preserved; repeated or
 misplaced markers and genuinely malformed JSON remain invalid. A marker does not permit a null
 root or content after the single JSON root; both are rejected without changing the saved bytes.
 
-For Laplace mutation commands, a failed save leaves the live records and previously saved data
-unchanged. An error is not a successful addition, deletion, assignment or return. The command remains
-available for correction. Fix the folder/file access problem, then retry. Do not repeatedly resubmit a
-successful command: duplicate members, already-assigned items and repeated returns are rejected.
+Invalid data is rejected as a complete load, without replacing the file with samples or an empty book.
+Examples include a JSON `null` root, non-whitespace content after the root object, duplicate identities,
+missing loan references and invalid field values. For conversion/reference errors, loading diagnostics
+identify the collection, zero-based record position and available NUS ID/UUID. Keep the diagnostic
+when asking the team for help. If a view reports inconsistent data after loading, stop making changes,
+close the app and preserve the file for investigation; an incomplete view is not evidence that the
+remaining data is safe to overwrite.
+
+Saved loan fields are `equipmentUuid`, `memberNusId`, `assignedDate`, `expectedReturnDate`,
+`returnedDate`, `issueCondition` and `returnCondition`. Unknown loan fields are rejected so misspelled
+return details cannot silently become an open loan. Older records may omit the optional return date
+and condition fields. Files with additional loan fields require a release that understands them.
+If loading reports an unknown field, close Laplace without entering commands and preserve the original
+file before repairing a separate copy; do not simply delete unfamiliar historical information.
+
+Atomic saves preserve an existing file's POSIX owner, group and permission bits where supported,
+and its access-control list (ACL) and owner where the filesystem exposes an ACL view (such as Windows).
+A POSIX file with no write bits or a file with the Windows read-only attribute rejects saving even
+when its parent folder permits replacement. Restore write permissions before retrying. Candidates are
+restricted before any data is written: owner-only read/write on POSIX, and an owner-only ACL replacing
+inherited access grants on Windows. New files keep that restricted policy. Timestamps, DOS
+archive/hidden/system flags and extended attributes are not preserved. Keep the parent folder writable for atomic replacement.
 
 For compatibility with older files, absent or null `members`, `equipment` and `loans` collections
 mean empty collections, just like `[]`. Saving writes these forms as arrays. A null collection cannot
@@ -1001,18 +1137,13 @@ contacts, keep `"persons": []`; omitting it or writing null is rejected with `Pe
 Populated legacy arrays are retained and saved even though their old commands are unavailable. Do not
 remove an existing array during recovery. Current saves always include it.
 
-Back up the data file while Laplace is closed. Do not edit it while the app is running or run multiple
-instances against the same file. Manual data editing is not an MVP operation. If startup or a view
-reports invalid/inconsistent data, the loading diagnostic identifies the collection, zero-based record
-position and available NUS ID/UUID for conversion/reference errors. Preserve the original file and report
-the message; do not overwrite
-it with an empty file or assume that an incomplete view is safe to use.
+When running development classes with Gradle, runtime files are relative to the project working folder.
+Packaged JARs use their own folder instead. Keep development and operational datasets separate.
 
-If an existing data file cannot be loaded, Laplace shows recovery guidance and its path, then stops
-startup after you dismiss the error. No editable directory or command box opens. Invalid files include
-a JSON `null` root and any non-whitespace content after the root object. The data file remains unchanged.
-While Laplace is closed, back it up and repair it before restarting. Moving the file to a safe location
-allows a separate sample dataset to start; it does not recover the original records.
+Command diagnostics record that input was received and, at detailed log levels, the recognized command
+type. They omit raw input and contact values, including rejected input. Existing logs from older
+versions may still contain commands recorded before this change. Logs are diagnostic evidence, not a
+replacement for a known-good data backup.
 
 ## FAQ
 
@@ -1037,11 +1168,10 @@ than expected is valid if it is no earlier than assignment and no later than the
 
 **Why do I not see the sample records?** Laplace loads your existing saved file instead of adding samples
 to it, even if that file contains no records. To try the bundled examples, launch the JAR from a separate
-empty folder. Keep your existing data file and backup intact.
+empty folder after copying the JAR there. Keep your existing data file and backup intact.
 
-**How do I move my data?** Close Laplace, back up the data file, copy it to the other computer's chosen
-Laplace folder at the configured data path, and launch the matching release there. Keep the original
-backup until you have checked members, equipment and current loans on the other computer.
+**How do I move my data?** Follow [Move to another computer](#move-to-another-computer), which includes
+backing up the source, preserving any destination data and checking the copied records and open loans.
 
 **Where is Help?** Enter `help` or press F1. Use `exit` for normal shutdown; saved window preferences are
 reused within usable screen bounds. These utilities are separate from the seventeen member, equipment
@@ -1078,6 +1208,7 @@ authentication and concurrent multi-user operation are not provided.
 | [List equipment](#list-equipment-equipment-list) | `equipment list` |
 | [Search, filter and sort equipment](commands/search-and-planning.md#equipment) | `equipment search [q/TEXT] [category/TEXT] [condition/CONDITION] [availability/AVAILABILITY] [status/STATUS] [sort/FIELD] [order/ORDER]` |
 | [View equipment and current holder](#view-equipment-and-its-holder-equipment-view) | `equipment view uuid/UUID` |
+| [Open an equipment group](#view-equipment-and-its-holder-equipment-view) | `equipment view category/CATEGORY name/NAME` |
 | [Edit equipment](#edit-equipment-equipment-edit) | `equipment edit uuid/UUID [name/NAME] [category/CATEGORY] [condition/CONDITION] [notes/NOTES]` |
 | [Restore equipment](#restore-equipment-equipment-restore) | `equipment restore uuid/UUID` |
 | [Delete equipment](#delete-equipment-equipment-delete) | `equipment delete uuid/UUID` |
@@ -1091,6 +1222,7 @@ For `equipment add`, omitting `count/` or using `count/1` opens the new unit's d
 `count/2` or greater opens the full equipment directory and resets its filters and sorting, as described
 under [Add equipment](#add-equipment-equipment-add).
 
-See [search, filters and sorting](commands/search-and-planning.md) for accepted search parameter values.
+See the [search, filtering, sorting, inventory planning and duplicate warning reference](commands/search-and-planning.md)
+for accepted search parameter values and planning examples.
 
 Application utilities: `undo` and `redo` navigate up to ten record changes per session; `mode dark` / `mode light` change appearance; `help` (or F1) opens Help; `exit` closes Laplace.

@@ -35,6 +35,7 @@ import seedu.address.model.AddressBookHistory;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.query.DirectoryQuery;
+import seedu.address.model.query.InventoryGroups;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -52,6 +53,10 @@ public class ReadOnlyCommandIntegrationTest {
             "equipment view uuid/" + CAMERA.getUuid(), new CommandResult("Viewing equipment: Camera ("
                     + CAMERA.getUuid() + "). Availability: ASSIGNED.",
                     DisplayRequest.equipmentDetails(CAMERA.getUuid())),
+            "equipment view category/Photography name/Camera",
+            new CommandResult("Viewing equipment group: \"photography\" / \"camera\".",
+                    DisplayRequest.equipmentGroup(new InventoryGroups.Key(
+                            "Photography", "Camera"))),
             "help", new CommandResult(HelpCommand.SHOWING_HELP_MESSAGE, true, false),
             "exit", new CommandResult(ExitCommand.MESSAGE_EXIT_ACKNOWLEDGEMENT, false, true));
 

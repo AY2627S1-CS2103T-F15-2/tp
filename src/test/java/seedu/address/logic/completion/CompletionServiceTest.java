@@ -131,6 +131,12 @@ public class CompletionServiceTest {
         assertCandidates("member view n", "nus/");
         assertCandidates("member delete n", "nus/");
         assertCandidates("equipment view u", "uuid/");
+        String removedPrefix = "equipment view sh";
+        assertTrue(service.complete(removedPrefix, removedPrefix.length(), model.getAddressBook()).isEmpty());
+        assertCandidates("equipment view ca", "category/");
+        assertCandidates("equipment view na", "name/");
+        assertCandidates("equipment view category/pho", "Photography");
+        assertCandidates("equipment view name/ca", "Camera");
         assertCandidates("equipment delete u", "uuid/");
         String text = "member add name/Alex phone/91234567";
         Completion prefix = service.complete(text, "member add na".length(), model.getAddressBook()).orElseThrow();
