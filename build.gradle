@@ -31,6 +31,8 @@ checkstyle {
 
 configurations {
     javafxTestRuntime
+    javafxMacIntel
+    javafxMacArm
 }
 
 // Unit tests use one matching native platform; packaged tests must use the selected JAR's libraries.
@@ -38,12 +40,8 @@ String javaFxVersion = '17.0.7'
 String operatingSystem = System.getProperty('os.name').toLowerCase(Locale.ROOT)
 String architecture = System.getProperty('os.arch').toLowerCase(Locale.ROOT)
 boolean isArm = architecture in ['aarch64', 'arm64']
-// macOS native libraries share resource names, so each JAR must contain exactly one architecture.
-String javaFxMacPlatform = providers.gradleProperty('javafxMacPlatform')
-        .orElse(isArm ? 'mac-aarch64' : 'mac').get()
-if (!(javaFxMacPlatform in ['mac', 'mac-aarch64'])) {
-    throw new GradleException('javafxMacPlatform must be mac or mac-aarch64')
-}
+// Development runs use matching macOS natives; the release wraps both architectures.
+String javaFxMacPlatform = isArm ? 'mac-aarch64' : 'mac'
 String javaFxTestPlatform = operatingSystem.contains('mac') ? (isArm ? 'mac-aarch64' : 'mac')
         : operatingSystem.contains('win') ? 'win' : (isArm ? 'linux-aarch64' : 'linux')
 
@@ -83,6 +81,11 @@ dependencies {
         }
     }
 
+    ['base', 'graphics'].each { module ->
+        javafxMacIntel("org.openjfx:javafx-${module}:${javaFxVersion}:mac") { transitive = false }
+        javafxMacArm("org.openjfx:javafx-${module}:${javaFxVersion}:mac-aarch64") { transitive = false }
+    }
+
     implementation "org.openjfx:javafx-base:${javaFxVersion}:win"
     implementation "org.openjfx:javafx-base:${javaFxVersion}:${javaFxMacPlatform}"
     implementation "org.openjfx:javafx-base:${javaFxVersion}:linux"
@@ -106,8 +109,10 @@ dependencies {
 }
 
 shadowJar {
-    archiveFileName = javaFxMacPlatform == 'mac-aarch64' ? 'Laplace-mac-arm64.jar' : 'Laplace.jar'
+    archiveFileName = 'Laplace.jar'
 }
+
+apply from: 'gradle/universal-javafx.gradle'
 
 defaultTasks 'clean', 'test'
 
@@ -173,15 +178,21 @@ check.dependsOn autocompleteCoverageVerification
 
 // Use only bundled production classes and natives so tests cannot hide distributable packaging failures.
 tasks.register('verifyPackagedAutocomplete', JavaExec) {
-    dependsOn shadowJar, testClasses
-    classpath = files(shadowJar.archiveFile) + sourceSets.test.output
+    dependsOn testClasses
+    if (!providers.gradleProperty('packagedJar').isPresent()) {
+        dependsOn shadowJar
+    }
+    classpath = files(packagedJar) + sourceSets.test.output
     mainClass = 'seedu.address.ui.PackagedAutocompleteProbe'
     jvmArgs '--limit-modules=java.se,jdk.unsupported', '--enable-native-access=ALL-UNNAMED'
     workingDir layout.buildDirectory.dir('packaged-autocomplete-sandbox')
     doFirst {
         workingDir.mkdirs()
+        File nativeCache = new File(workingDir, 'native-cache')
+        delete(nativeCache)
+        systemProperty 'javafx.cachedir', nativeCache.absolutePath
         args layout.buildDirectory.file('reports/laplace/packaged-autocomplete-session.txt').get().asFile.absolutePath,
-                shadowJar.archiveFile.get().asFile.absolutePath
+                packagedJar.get().asFile.absolutePath
     }
 }
 

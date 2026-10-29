@@ -1,0 +1,75 @@
+Universal packaging verification — 29 October 2026 (Singapore)
+
+Initial combined-workspace candidate: build/libs/Laplace.jar
+Size: 13,254,680 bytes
+SHA-256: ccf3090ee71abddfce7ccaede3c483dec8c1f656e4edc026419f053843021b34
+Base: team master 298343d7; local changes for issues #257 and #262.
+
+Environment: macOS 26.6.1 (25G76), Apple Silicon arm64.
+Java: Zulu OpenJDK 25.0.3, 25.0.3+9-LTS.
+
+PASS: ./gradlew check coverage shadowJar (979 tests, no failures/errors/skips).
+PASS: verifyUniversalJar checks the original Intel and ARM slices byte-for-byte,
+      one resource per macOS library, Windows/Linux natives and the size limit.
+PASS: Apple's lipo -verify_arch x86_64 arm64 on all seven universal dylibs.
+PASS: verifyPackagedAutocomplete with a freshly emptied native cache and
+      --limit-modules=java.se,jdk.unsupported. The three extracted libraries
+      are byte-for-byte equal to the universal resources in the candidate.
+PASS: candidate override via -PpackagedJar=build/libs/Laplace.jar.
+PASS: separate packaged keyboard/save/reload session using a jlink runtime
+      containing java.se and jdk.unsupported, with no JavaFX modules.
+      Transcript: build/reports/laplace/plain-java25-session.txt.
+PASS: a deliberately damaged candidate missing libglass.dylib is rejected.
+
+Initial combined-workspace documentation: lockfile installation and MarkBind build pass. Existing DG
+diagram-link warnings remain; generated diagrams are present. Introductory
+task and shared field table reviewed in-browser at 1280x720 and 800x900.
+No broken internal UG anchors or horizontal page overflow at 800px.
+
+NOT RUN: Windows, Linux, Intel macOS and WSL candidate launch sessions.
+NOT RUN: hosted CI; the local workflow now builds one candidate and shares it
+         across Windows, Linux, Intel macOS and Apple Silicon jobs.
+NOT VERIFIED: normal Main entry-point exit/restart with a standalone plain
+              Java 25 installation on each target; the local plain runtime
+              verification uses the packaged mounted-shell probe.
+
+Before release, complete the Developer Guide's Single-JAR distribution
+checklist on the same candidate. These local checks do not establish full
+cross-platform acceptance or course approval.
+
+PR #269 (issue #262) branch verification after merging team master cfcc395d:
+Candidate: build/libs/Laplace.jar
+Size: 13,256,875 bytes
+SHA-256: 3142fd981d27c4926959a635b62984116b6fff8ede12a502a4db65b45902aa41
+Same macOS arm64 and Java 25.0.3 environment as above.
+PASS: ./gradlew check coverage shadowJar (990 tests, no failures/errors/skips).
+PASS: packaged probe with a fresh native cache and limited standard modules.
+PASS: separate packaged keyboard/save/reload session on the jlink Java 25
+      runtime containing no JavaFX modules.
+      Transcript: build/reports/laplace/plain-java25-pr262-session.txt.
+PASS: MarkBind documentation build; existing diagram-link warnings remain.
+The onboarding edits belong to the separate issue #257 branch. Outstanding
+platform and standalone entry-point coverage listed above still applies.
+
+PR #269 review follow-up after merging team master 8ee12378:
+Candidate: build/libs/Laplace.jar
+Size: 13,256,925 bytes
+SHA-256: aec03f52cde16072804f510a85be3cee692b4d4126168a329d2e85c77d2d4f11
+Same macOS arm64 and Java 25.0.3 environment as above.
+PASS: ./gradlew check coverage shadowJar (992 tests, no failures/errors/skips).
+PASS: default task graph still builds the candidate before verification.
+PASS: supplied-candidate dry run omits shadowJar and universalJavafx.
+PASS: verifyUniversalJar and verifyPackagedAutocomplete against a copied
+      build/review-candidate/Laplace.jar without either generation task.
+PASS: all seven universal dylibs pass Apple's lipo architecture verification.
+PASS: MarkBind build; existing DG diagram-link warnings remain.
+CI remains unverified: the repository's Java CI workflow was inspected and
+reported state disabled_manually. A push alone cannot start that workflow;
+repository-owner approval to re-enable it is pending. The four-platform
+review request and standalone entry-point checks remain open.
+
+Hosted CI follow-up — 29 October 2026 (Singapore):
+The repository owner approved re-enabling Java CI after the review follow-up.
+The workflow now reports state active. This commit starts the requested
+packaging and four-platform checks; results remain pending until the run
+finishes. Earlier disabled-workflow entries describe the prior state.

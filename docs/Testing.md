@@ -63,15 +63,21 @@ The transcript is `build/reports/laplace/autocomplete-keyboard-session.txt`; the
 `build/reports/jacoco/coverage/html/index.html`.
 
 `check` also runs `verifyPackagedAutocomplete` in a separate JVM and a disposable directory. The probe
-verifies the production code source is the selected JAR under `build/libs`, then drives its mounted shell
+verifies the production code source is the selected candidate JAR, then drives its mounted shell
 with JavaFX keyboard events. The smoke test uses the JAR's bundled native libraries without prepending
 matching test dependencies. CI uses a plain Java 25 JDK. Test output contains helpers only, with no
 unpackaged production classes. Results are
 recorded in `build/reports/laplace/packaged-autocomplete-session.txt`.
 
-Build the Intel macOS/Windows/Linux artifact with `./gradlew check coverage shadowJar -PjavafxMacPlatform=mac`.
-Build the Apple Silicon variant with `./gradlew check coverage shadowJar -PjavafxMacPlatform=mac-aarch64`.
-Run checks on the matching target architecture; selecting an ARM64 artifact does not emulate ARM64.
+Build one distribution with `./gradlew check coverage shadowJar`. `verifyUniversalJar`, included in
+`check`, verifies both macOS slices byte-for-byte against JavaFX's original libraries, Windows/Linux
+native presence, resource uniqueness and the 100 MB limit. All platforms use `build/libs/Laplace.jar`.
+To probe a downloaded candidate, run `./gradlew verifyUniversalJar verifyPackagedAutocomplete
+-PpackagedJar=build/candidate/Laplace.jar` on each target architecture. CI downloads the same candidate
+for Windows, Linux and both macOS architectures; selecting a candidate does not emulate another processor.
+See the [distribution checklist](DeveloperGuide.md#single-jar-distribution) for release verification.
+The [universal packaging verification record](gui/UniversalPackagingVerification.txt) lists the local
+candidate hash, tested environment and outstanding platform coverage.
 
 Reviewable local evidence is recorded in [AutocompleteVerification.txt](gui/AutocompleteVerification.txt),
 [AutocompleteKeyboardSession.txt](gui/AutocompleteKeyboardSession.txt), and

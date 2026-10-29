@@ -25,10 +25,13 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Control;
 import javafx.scene.control.IndexedCell;
 import javafx.scene.control.Label;
@@ -37,11 +40,13 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputControl;
 import javafx.scene.control.TitledPane;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
@@ -88,6 +93,12 @@ import seedu.address.testutil.PersonBuilder;
 
 /** Real routed shell/storage tests; controlled results separately exercise the typed display contract. */
 public class MainWindowShellTest {
+    // Logical heights of the Windows 11 taskbar and a maximized window's title bar; both scale with the display.
+    private static final int TASKBAR_HEIGHT = 48;
+    private static final int TITLE_BAR_HEIGHT = 32;
+    // About two text lines, so each scrolling region shows readable content rather than a sliver.
+    private static final double MIN_VIEWPORT_HEIGHT = 36;
+
     @TempDir
     public Path temporaryDirectory;
 
@@ -584,6 +595,51 @@ public class MainWindowShellTest {
             render("grouped-unit", 1280, 720);
             render("grouped-unit", 760, 500);
             render("grouped-unit", 853, 440);
+        });
+    }
+
+    @Test
+    public void equipmentBrowse_commandWorkflow_preservesFiltersAndExactLoanIdentity() {
+        FxTestUtil.runAndWait(() -> {
+            UUID uuid = UUID.fromString("abcdef12-0000-0000-0000-000000000001");
+            model.addEquipment(new Equipment(uuid, "Command Camera", "Photo", Condition.GOOD, ""));
+            submit("equipment search q/Command Camera availability/available sort/name order/desc");
+            String criteria = detailLabel("criteria");
+            int saves = storage.saves;
+            int dispatches = logic.commands.size();
+            submit("equipment view category/PHOTO name/command camera");
+            assertEquals("Success", feedbackStatus());
+            assertEquals("Command Camera", label("groupTitle"));
+            assertEquals(1, rows().getItems().size());
+            TableView<?> units = (TableView<?>) node("physicalUnits");
+            assertNull(units.getSelectionModel().getSelectedItem());
+            field().setText("equipment view uuid/abcdef12");
+            field().positionCaret(field().getLength());
+            completeKey(false, "equipment view uuid/" + uuid);
+            submit(field().getText());
+            assertEquals(uuid.toString(), detailLabel("equipmentUuid"));
+            assertEquals(saves, storage.saves);
+            assertEquals(dispatches + 2, logic.commands.size());
+            submit("equipment view short/abcdef12");
+            assertEquals("Error", feedbackStatus());
+            assertEquals(uuid.toString(), detailLabel("equipmentUuid"));
+            submit("loans add uuid/" + uuid
+                    + " nus/A0000001X assigned/2026-01-01 expected/2026-01-02");
+            assertEquals("Success", feedbackStatus());
+            submit("equipment view uuid/" + uuid);
+            assertEquals("A0000001X", detailLabel("holderNusId"));
+            assertTrue(rows().getItems().isEmpty());
+            submit("loans return uuid/" + uuid + " returned/2026-01-02");
+            assertEquals("Success", feedbackStatus());
+            submit("equipment view uuid/" + uuid);
+            assertEquals("Available", detailLabel("availability"));
+            assertEquals(uuid.toString(), detailLabel("equipmentUuid"));
+            assertEquals(1, rows().getItems().size());
+            assertTrue(((Label) node("queryContext")).getText().contains("Command Camera".toLowerCase()));
+            assertEquals(saves + 2, storage.saves);
+            assertTrue(model.getAddressBook().getLoanList().stream()
+                    .anyMatch(loan -> loan.getEquipmentUuid().equals(uuid) && !loan.isOpen()));
+            assertFalse(criteria.isEmpty());
         });
     }
 
@@ -1543,6 +1599,57 @@ public class MainWindowShellTest {
     }
 
     @Test
+    public void layout_requiredDisplayScaling_keepsControlsWholeAndContentScrollable() {
+        FxTestUtil.runAndWait(() -> {
+            model.addPerson(new PersonBuilder().withName("Legacy Person").build());
+            String memberName = "Long Member Name ".repeat(5).strip();
+            String equipmentName = "Long Equipment Name ".repeat(5).strip();
+            model.addMember(new Member(id(9), new Name(memberName), new Phone("91234567"),
+                    new Email("member9@example.com")));
+            model.addEquipment(new Equipment(new UUID(0, 9), equipmentName, "Photography", Condition.GOOD, ""));
+            for (int[] size : List.of(usableScene(1920, 1080, 1.0), usableScene(1920, 1080, 1.25),
+                    usableScene(1280, 720, 1.5))) {
+                assertUsable("members", size);
+                button("equipmentNavigation").fire();
+                assertUsable("equipment", size);
+                showEquipmentDetails(new UUID(0, 1));
+                assertUsable("equipment-details", size);
+                showMemberDetails(id(1));
+                assertUsable("member-details", size);
+                button("loansNavigation").fire();
+                assertUsable("loans", size);
+                submit("list");
+                assertUsable("legacy", size);
+                submit("invalid ".repeat(100));
+                assertUsable("error", size);
+                // Long active filters lengthen the context row beside Back to results and Reset search.
+                submit("member search q/" + memberName);
+                assertUsable("long-member-search", size);
+                submit("equipment search q/" + equipmentName);
+                assertUsable("long-equipment-search", size);
+                showEquipmentDetails(new UUID(0, 9));
+                assertUsable("long-equipment-details", size);
+                submit("equipment list");
+                submit("member list");
+            }
+        });
+    }
+
+    @Test
+    public void layout_narrowDirectoriesAtRequiredScaling_keepsViewportsReadable() {
+        FxTestUtil.runAndWait(() -> {
+            int[] size = usableScene(1280, 720, 1.5);
+            SplitPane directory = (SplitPane) node("directory");
+            for (String command : List.of("member list", "equipment list")) {
+                submit(command);
+                render("narrow-" + command, size[0], size[1]);
+                directory.setDividerPositions(0);
+                assertUsable("narrow-" + command, size);
+            }
+        });
+    }
+
+    @Test
     public void settings_savedDimensionsAndOffscreenLocation_clampsToUsableScreen() {
         FxTestUtil.runAndWait(() -> {
             window.dispose();
@@ -2013,6 +2120,54 @@ public class MainWindowShellTest {
             assertTrue(action.getWidth() >= action.prefWidth(-1) - 1, "Feedback controls must not truncate");
         }
         writeSnapshot(root, name, width, height);
+    }
+
+    /**
+     * Returns the logical scene size of a maximized window, after the taskbar and title bar. Rendering this
+     * size checks the layout the scaling leaves, not the operating system's own scaling.
+     */
+    private static int[] usableScene(int width, int height, double scale) {
+        return new int[] {(int) (width / scale), (int) (height / scale) - TASKBAR_HEIGHT - TITLE_BAR_HEIGHT};
+    }
+
+    /**
+     * Renders the shell and checks every shown control outside scrolling content is whole and inside the
+     * scene, while each scrolling region keeps a viewport through which its content can be reached.
+     */
+    private void assertUsable(String name, int[] size) {
+        render(name, size[0], size[1]);
+        assertReachable(window.getPrimaryStage().getScene().getRoot(),
+                new BoundingBox(0, 0, size[0], size[1]), name + " at " + size[0] + "x" + size[1]);
+    }
+
+    /**
+     * Checks shown descendants; content inside a scrolling region is reachable through its viewport, so the
+     * region is checked instead of descendants that may lie outside the scene until scrolled into view.
+     */
+    private static void assertReachable(Parent parent, Bounds scene, String context) {
+        for (Node child : parent.getChildrenUnmodifiable()) {
+            if (!child.isVisible()) {
+                continue;
+            }
+            Bounds bounds = child.localToScene(child.getBoundsInLocal());
+            if (child instanceof ScrollPane || child instanceof ListView || child instanceof TableView) {
+                assertTrue(scene.contains(bounds), context + ": scrolling region outside scene " + child);
+                Node viewport = child.lookup(child instanceof ScrollPane ? ".viewport" : ".clipped-container");
+                assertTrue(viewport.getBoundsInLocal().getHeight() >= MIN_VIEWPORT_HEIGHT,
+                        context + ": viewport height " + viewport.getBoundsInLocal().getHeight()
+                                + " is below " + MIN_VIEWPORT_HEIGHT + " for " + child);
+                continue;
+            }
+            if (child instanceof Control && !(child instanceof Label)) {
+                assertTrue(scene.contains(bounds), context + ": control outside scene " + child);
+            }
+            if (child instanceof ButtonBase button) {
+                assertTrue(button.getWidth() >= button.prefWidth(-1) - 1, context + ": truncated " + button);
+            }
+            if (child instanceof Parent nested && !(child instanceof TextInputControl)) {
+                assertReachable(nested, scene, context);
+            }
+        }
     }
 
     private static void writeSnapshot(Region root, String name, int width, int height) {

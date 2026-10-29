@@ -14,6 +14,7 @@
 ## **Acknowledgements**
 
 * Laplace evolves the course-provided [AddressBook-Level3 starter](https://github.com/NUS-CS2103-AY2627-S1/tp).
+* Universal macOS packaging follows Apple's [Mach-O fat binary format](https://github.com/apple-oss-distributions/cctools/blob/main/include/mach-o/fat.h); the wrapper preserves the upstream JavaFX library slices.
 * Command text uses [IBM Plex Mono](https://github.com/IBM/plex) 2.004, copyright IBM Corp., under the SIL Open Font License. The faces and license are in `src/main/resources/fonts`.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -135,7 +136,13 @@ preserved together; equipment/member/loan schemas are unchanged.
 
 Tests exercise actual FXML/CSS on the shared JavaFX thread, command/storage routing, identity preservation,
 filter scope, date boundaries, clipboard text, theme changes and preference compatibility. UI snapshots
-are written under `build/reports/laplace` for visual review. Command text and identifiers use bundled
+are written under `build/reports/laplace` for visual review. Shell tests also render the logical scene a
+maximized window keeps at 1920×1080 (100%/125% scaling) and 1280×720 (150%), after the taskbar and title
+bar. Controls outside scrolling content must stay whole and inside the scene; each scrolling region must
+keep a readable viewport. A narrow-directory regression also checks both lists at 853×400 logical
+pixels with the divider at its minimum position. Compact header and keyboard-hint padding preserves
+space for rows when the hint wraps. Both windows are limited to their screen's visual bounds, so the end of a
+scrolling region never lies below the screen. Command text and identifiers use bundled
 IBM Plex Mono. `LaplaceFonts` registers those faces once and applies interface fonts by full face name:
 Helvetica/Helvetica Bold, then Arial/Arial Bold or Segoe UI/Segoe UI Bold when unavailable, with a system
 fallback. This bypasses JavaFX family/weight substitution that can clip bold interface glyphs.
@@ -427,6 +434,13 @@ and shows selected structure; lifecycle behavior is explained in the text above.
 
 ### Storage component
 
+After successful conversion, storage compares recorded assignment/actual-return dates with its local
+clock and logs an actionable warning containing equipment UUID, member ID and recorded dates. It does
+not reject or rewrite records on this basis: a clock rollback can make previously valid history appear
+future-dated. Expected dates remain unrestricted relative to today. Manual check with disposable data:
+load a 2099 assignment/actual return, inspect the warning and unchanged file, then load a future expected
+return only and confirm no warning. The command date restrictions remain enforced.
+
 Record conversion and root-reference failures include a zero-based collection index plus stored NUS ID/
 UUID, even if that identity is invalid. Original checked/domain causes remain attached. Null records
 report their position with identity unavailable; date errors include the rejected text. Diagnostics
@@ -448,6 +462,14 @@ The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
+
+`JsonAdaptedLoan` rejects every unrecognized loan property using a Jackson `JsonAnySetter`, even when
+its value is null. The diagnostic names the field and lists supported spellings; Jackson retains the
+underlying cause through the checked loading failure. This prevents unknown lifecycle keys from being
+discarded before an intended completed loan is interpreted as open. Missing/null `returnedDate` still
+denotes an open loan; missing/null issue/return conditions remain unknown historical observations.
+Loan schema extensions require an updated reader, rather than silent forward-field loss. Other
+adapters retain their existing unknown-property policy; global unknown-property handling is unchanged.
 
 `JsonSerializableAddressBook` stores collections of member, equipment and loan adapters alongside
 the retained legacy person adapters. Loan adapters store the member NUS ID and equipment UUID,
@@ -537,6 +559,26 @@ key. If its initial scan cannot resolve an active unit's availability, the summa
 summaries preserve individual equipment identities and do not introduce a stored quantity field.
 
 <!-- Nguyen Anh Duy used OpenAI Codex to assist with this section and its two PlantUML diagrams. -->
+
+### Command navigation to equipment groups
+
+`EquipmentViewCommandParser` accepts either `uuid/UUID` or the pair `category/CATEGORY name/NAME`.
+The shared argument parser rejects duplicate/unknown markers and validates supplied values in input
+order. Incomplete group forms and mixed UUID/group forms are rejected. Full UUID syntax stays unchanged.
+Tab completion supplies full unit UUIDs; compact table labels have no command syntax.
+
+`EquipmentBrowseCommand` resolves an exact normalized `InventoryGroups.Key` against all retained units
+at execution time, including deleted records. It returns `DisplayRequest.equipmentGroup(key)` without
+choosing a physical unit, even when several units share the same category and name. Missing groups
+throw `CommandException` before navigation. Exact unit viewing remains in `EquipmentViewCommand(UUID)`.
+Both commands are read-only, preserving data, UUIDs, loan references, persistence and undo/redo history.
+
+<puml src="diagrams/EquipmentBrowseSequence.puml" alt="Read-only equipment group lookup followed by typed group navigation" />
+
+`MainWindow` consumes the existing group/unit requests. Plain requests retain directory criteria.
+Group entry starts with matching units and no selected unit, and resets clicked table sort to query
+order. Unit entry preserves table sort and reveals a target outside the filter using Show all units.
+A renamed group can disappear, while full UUID references remain stable.
 
 ### Identity-based deletion
 
@@ -914,7 +956,7 @@ Priority expresses product importance, not implementation status. **MVP** denote
 | US14 | `* * *` | MVP | CCA EXCO member | add one equipment item with an automatically generated unique UUID | track each newly acquired physical unit separately. |
 | US15 | `*` | Implemented | CCA EXCO member receiving a batch | add several units of the same equipment type in one operation | record a delivery without repeating the same entry process. |
 | US16 | `* * *` | MVP | CCA EXCO member | list all active equipment and its availability | review the current inventory at a glance. |
-| US17 | `* * *` | MVP | CCA EXCO member | view one equipment item's full details | verify its identity, condition, and recorded information. |
+| US17 | `* * *` | Implemented | CCA EXCO member | open an equipment group by category/name and view a unit by full UUID using Tab completion | verify its identity, condition, and recorded information. |
 | US18 | `* *` | Implemented | CCA EXCO member | edit an equipment record while retaining its UUID | keep item information accurate without breaking loan references. |
 | US19 | `* * *` | MVP | CCA EXCO member | delete an equipment record created in error when it is not on loan | remove unwanted entries without losing track of an issued item. |
 | US20 | `* *` | Implemented | CCA EXCO member | restore a retained deleted equipment record without a time limit | recover from an accidental deletion. |
@@ -1005,6 +1047,8 @@ Matching descriptions are permitted: each physical unit receives its own UUID. A
 
 1. The EXCO member requests the intended member's details by NUS ID and the equipment inventory.
 2. Laplace shows the member's details and current holdings, and the equipment with its availability and UUIDs.
+   The EXCO member can search, open a category/name group by command, and open an individual unit using
+   its full UUID using Tab completion before preparing the assignment.
 3. The EXCO member requests assignment of one item to that member, supplying the assignment and expected return dates.
 4. Laplace validates the references, availability, and dates, then saves an open loan and shows the updated holder and holdings.
 
@@ -1291,15 +1335,34 @@ Samples are never appended to an existing dataset.
        Expected: Missing settings continue to use defaults. Valid saved geometry and dark mode
        still restore when present.
 
-**Architecture-specific packaging:** Download `Laplace.jar` for Windows, Linux or Intel macOS, or
-`Laplace-mac-arm64.jar` for Apple Silicon macOS. Substitute the selected filename in launch commands.
-Both are self-contained; macOS native libraries cannot be combined by ordinary JAR merging because
-their resource names are identical. Build with `./gradlew shadowJar -PjavafxMacPlatform=mac` or
-`./gradlew shadowJar -PjavafxMacPlatform=mac-aarch64`, respectively. The default follows the build
-machine's processor architecture. JavaFX versions and application behavior are identical in both builds.
-The packaged keyboard probe uses only the JAR's production classes and native libraries. CI uses a
-plain JDK, so neither matching test dependencies nor a JavaFX-enabled JDK can mask missing native libraries.
-Run the probe on the target architecture and smoke-test the selected JAR before publication.
+### Single-JAR distribution
+
+Build with `./gradlew shadowJar verifyUniversalJar`. Publish only `build/libs/Laplace.jar`;
+the same file is used on Windows, Linux (including graphical WSL), Intel macOS and
+Apple Silicon macOS. Java 25 for the user's processor remains the only required installation.
+No architecture property or alternate JAR filename is needed.
+
+The existing JavaFX 17.0.7 Windows and Linux libraries remain bundled. The macOS libraries have
+identical resource names across architectures, so ordinary JAR merging would discard one copy.
+`gradle/universal-javafx.gradle` instead wraps the original Intel and ARM libraries in a Mach-O
+universal binary, with each original slice preserved byte-for-byte and aligned to 16 KiB.
+macOS chooses the matching slice. Header generation uses Java APIs available on every build OS;
+Apple's `lipo` tool is not a build dependency.
+`verifyUniversalJar` checks both slices against the original dependencies, native resource uniqueness,
+Windows/Linux native presence and the 100 MB size limit, matching
+[Constraint-Single-File](https://nus-cs2103-ay2627-s1.github.io/website/admin/tp-constraints.html#constraint-single-file)
+requirements.
+
+The CI packaging job builds and uploads one candidate JAR. All four OS/architecture jobs download that
+same artifact and use `-PpackagedJar=build/candidate/Laplace.jar` for structural verification and the
+packaged keyboard probe. The probe uses only that JAR's production classes and native libraries;
+plain JDKs and `--limit-modules` prevent installed JavaFX from masking a missing native library.
+A Linux graphical session is provided by Xvfb. CI logs identify the environment and the JAR SHA-256.
+
+Before publication, inspect the four jobs and repeat the initial-launch/normal-exit checks above with
+the same candidate in separate empty writable folders. Record Java version, OS, processor, SHA-256,
+launch result and persistence/restart result. WSL needs its own graphical smoke test. A configured
+CI matrix is not evidence of completed platform runs; outstanding environments must remain explicit.
 
 ### Unicode command separators
 
@@ -1355,6 +1418,8 @@ for both detail timelines and loan-directory sections, including panels refreshe
    in each appearance. Exit normally and relaunch; the selected mode persists. `mode sepia` is rejected.
 8. Review at 1920×1080 with 100%/125% scaling and 1280×720 with 150% scaling on supported systems.
    Check wrapping, scrolling, visible focus and contrast. Logical-size snapshots alone do not verify OS scaling.
+   At 1280×720 with 150% scaling, open Help and scroll to the end; the last example's Use command button
+   must be visible without moving the window.
 
 ### Retained inventory totals during filtering
 
@@ -1578,8 +1643,8 @@ status area's data path. Close Laplace before editing files; keep a separate unt
    The test injects a partial temporary-file write and a failed atomic replacement for actual mutation
    commands, including assignment and return. Expect a reported failure, unchanged live collections,
    byte-for-byte preservation of the previous data file, and a successful retry after removing the
-   injected failure. Do not rely on making only the JSON file read-only: replacement permissions are
-   controlled by the containing directory. These are automated failure-injection checks, not a claim
+   injected failure. These failure injections are independent of filesystem permission toggles; the
+   explicit read-only policy is checked separately below. These are automated failure-injection checks, not a claim
    that an arbitrary manual filesystem failure has been reproduced.
 
 Verification basis (27 October 2026): loan command/parser/panel, sample-data, storage and root JSON
@@ -1588,6 +1653,14 @@ failure tests were run separately. The steps above are manual counterparts to th
 fail-closed behavior is covered by `MainAppTest` against the startup recovery path in
 [#200](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/200); a full manual GUI walkthrough of these
 scenarios remains a release smoke-test task.
+
+To check loan-field validation, use synthetic data in a disposable JAR folder. With Laplace closed,
+rename a completed loan's `returnedDate` to `returnDate` and `returnCondition` to `returnCondtion`.
+Launch the JAR and check the log for `Unknown loan field` and the rejected name. Do not enter commands
+after a loading error; close Laplace and verify the rejected file is unchanged. Correct both spellings
+in a separate copy, then verify the completed loan's date/condition and the other records survive
+loading and save/reload. Older loans without condition fields and open loans without `returnedDate`
+must still load. An unknown loan field from a future format must produce the same diagnostic.
 
 ### Loan filter visibility
 
@@ -1618,6 +1691,44 @@ Use temporary data. Do not test against a real inventory.
    suggestions. Press Enter separately to invoke history. Both no-argument utilities must have
    command-name highlighting in previews.
 
+### Command-only equipment browsing
+
+Use disposable records or the fresh bundled samples.
+
+1. Search for an available equipment group. Run `equipment view category/CATEGORY name/NAME` with its
+   displayed fields. Expect the matching unit table without an implicit unit selection, including when
+   several units share both category and name.
+2. Type `equipment view uuid/` followed by the beginning of a displayed unit's UUID. Press Tab to cycle
+   through full UUIDs, then Enter separately. Expect the intended unit's details and full UUID.
+3. Assign that UUID with `loans add`, view it again, return it with `loans return`, and view it again.
+   Expect the same UUID, correct holder/dates, then AVAILABLE (for GOOD/FAIR), and retained history.
+   Filters and sorting remain active. Full UUIDs can be completed with Tab in loan commands too.
+4. Filter out this unit and repeat its full UUID view command. Expect its exact details with Show all
+   units enabled and unchanged search criteria. Missing groups and incomplete/mixed forms preserve the
+   previous view, selection, data and history. The removed `short/` parameter must be rejected as unknown.
+5. Edit the last unit's group name/category and retry the old group pair. Expect no matching group;
+   its full UUID still resolves. Help, Tab and Ctrl+Space offer category/, name/ and uuid/.
+
+### Atomic-save access policy
+
+`AtomicFileWriter` creates an empty sibling candidate and restricts its POSIX mode or ACL before
+writing any serialized data. On ACL filesystems, inherited grants are replaced with an owner-only ACL.
+Only after writing/flushing succeeds does it copy the final destination policy before the atomic move.
+Existing POSIX owner/group/mode and ACL-view owner/ACL are retained; failure
+to read or apply that policy aborts without replacing the destination. POSIX files with no write bits
+and DOS read-only files explicitly reject saving. This policy is separate from effective access checks:
+no preliminary `isWritable()` check can guarantee a later replacement. New files retain the restricted
+owner-only policy where POSIX or ACL views are supported. Other metadata is not copied. No serialization
+schema changes are involved.
+
+Manual check in a disposable folder: save a valid file, set mode `0644` on POSIX, make a record change,
+and confirm `0644` survives. Set `0444`, retry a change, and confirm rejection, unchanged records and
+unchanged file bytes. On Windows, repeat with a custom ACL and the read-only attribute. Restore write
+access, retry, and reload. `AtomicFileWriterTest` checks the platform's available attribute views,
+new-file policy, read-only rejection and injected metadata failure cleanup. `AtomicFileWriterAclTest`
+runs on real Windows ACL filesystems: its parent grants inherited Everyone read access, and it checks
+that existing/new-file candidates allow only owner reads before and after content writing. This test
+is explicitly platform-gated; host-independent policy tests also verify ordering and failure cleanup.
 
 ### Command-word aliases and casing
 

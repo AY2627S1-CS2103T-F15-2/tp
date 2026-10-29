@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.layout.VBox?>
@@ -14,7 +13,5 @@
     <ListView fx:id="rows" minWidth="0" minHeight="0" VBox.vgrow="ALWAYS" />
     <Label text="Enter or Space opens the selected row."
            styleClass="laplace-muted,directory-selection-hint" wrapText="true" minWidth="0"
-           minHeight="-Infinity" maxWidth="Infinity">
-        <padding><Insets top="6" right="8" bottom="8" left="8" /></padding>
-    </Label>
+           minHeight="-Infinity" maxWidth="Infinity" />
 </VBox>

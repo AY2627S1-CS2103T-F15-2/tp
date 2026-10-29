@@ -7,6 +7,7 @@ import java.time.format.DateTimeParseException;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -65,6 +66,17 @@ class JsonAdaptedLoan {
         returnedDate = source.getReturnedDate().map(Object::toString).orElse(null);
         issueCondition = source.getIssueCondition().map(Enum::name).orElse(null);
         returnCondition = source.getReturnCondition().map(Enum::name).orElse(null);
+    }
+
+    /**
+     * Rejects unrecognized loan fields instead of silently losing lifecycle information on save.
+     * Older records may omit optional fields, but extensions require a reader that understands them.
+     */
+    @JsonAnySetter
+    private void rejectUnknownField(String fieldName, Object value) {
+        throw new IllegalArgumentException("Unknown loan field '" + fieldName + "'. Supported fields: "
+                + "equipmentUuid, memberNusId, assignedDate, expectedReturnDate, returnedDate, "
+                + "issueCondition, returnCondition.");
     }
 
     /**
