@@ -1595,10 +1595,10 @@ members, equipment and open/completed loans to load and survive a save/reload.
 
 2. Invalid saved data
 
-Use a disposable folder containing the matching release JAR. Confirm Java 25 with `java -version`,
-then launch with `java -jar "Laplace.jar"` (substitute the actual downloaded filename). Check the
-status area's data path. Close Laplace before editing files; keep a separate untouched backup of
-`data/addressbook.json`. Never use your real inventory for these tests.
+Use a disposable folder containing the release `Laplace.jar`. Confirm Java 25 with `java -version`,
+then launch with `java -jar "Laplace.jar"`. Check the status area's data path. Close Laplace before
+editing files; keep a separate untouched backup of `data/addressbook.json`. Never use your real
+inventory for these tests.
 
 1. **Missing file and first save:** Start with no `data/addressbook.json`. Expect sample members,
    equipment and four loans (three open and one completed). Add a uniquely identified test member

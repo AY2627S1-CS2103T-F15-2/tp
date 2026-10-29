@@ -980,7 +980,7 @@ in addition to the seventeen member, equipment and loan commands.
 Successful changes save automatically; there is no manual-save command. For the packaged application,
 data is stored in `data/addressbook.json` inside the folder containing `Laplace.jar`, even if you launch
 the JAR from another terminal folder. `preferences.json` and rotating `addressbook.log.*` files also
-stay beside the JAR. Substitute your actual JAR filename, such as `Laplace-mac-arm64.jar`, where needed.
+stay beside the JAR.
 The following procedures use your operating system's file manager; Laplace has no in-app backup,
 restore, import or export command.
 
@@ -1045,7 +1045,7 @@ Do not issue new loans until you have verified the restored records.
 ### Move to another computer
 
 1. On the original computer, locate the data file, close Laplace and make a backup using the steps above.
-2. Put a compatible JAR for the destination computer's operating system/processor in a writable folder.
+2. Put the same `Laplace.jar` release in a writable folder on the destination computer.
    Keep Laplace closed on that computer while installing the data. Preserve any destination dataset first.
 3. Copy the backup to `data/addressbook.json` inside the destination JAR's folder. Keep its member IDs,
    equipment UUIDs and loan references intact; do not combine JSON files by pasting their arrays together.
