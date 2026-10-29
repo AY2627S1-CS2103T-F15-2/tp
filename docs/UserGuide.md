@@ -30,9 +30,12 @@ earlier builds may not support every behavior described here. Laplace is a local
    if your supplied JAR has a different name. Keep the terminal open while using the application.
 5. On the first launch without a saved data file, Laplace provides sample records. Existing saved data
    takes precedence; restarting does not add another set of samples.
+   Try the [sample-record walkthrough](#sample-records-on-first-launch) to explore without changing them.
 6. Type `member list` in the command box and press **Enter**. Try `equipment list`, then `loans list`
    to open each directory and the current-loans tab.
 7. Use `help` or **F1** to open Help, and `exit` to close the application normally.
+
+See [Using the window](#using-the-window) for tabs, record details and command previews.
 
 ![Laplace equipment groups in light mode](images/BetterUi.png)
 
@@ -608,7 +611,7 @@ Tab completion of `member edit name/νικοσ` suggests the original spelling `
 
 | Field | Accepted input and stored form |
 | --- | --- |
-| NUS ID `nus/` | One English letter, exactly seven digits, and an optional final English letter, e.g. `A0123456X` or `E0123456`. Stored uppercase. |
+| NUS ID `nus/` | One English letter, exactly seven digits, and an optional final English letter, e.g. `A0123456X` or `E0123456`, in any letter case. Stored uppercase. |
 | Member name `name/` | 1–100 characters. Letters in any language, accents, spaces, apostrophes (`'` or `’`), hyphens and periods are allowed; include at least one letter. See [name counting and accents](#exact-text-and-character-rules) for the precise limit. |
 | Phone `phone/` | Optional `+`, then 8–15 digits. Spaces and hyphens are removed: `+65 9123-4567` becomes `+6591234567`. |
 | Email `email/` | 3–254 characters using English letters, digits and the punctuation described in the [exact email rules](#exact-text-and-character-rules). Include one `@`, a dotted domain and no spaces. Stored lowercase. |
@@ -637,19 +640,15 @@ in the commands above are enough to get started.
 
 A **Unicode code point** is one unit of text; a displayed accented letter may use more than one.
 **NFC normalization** combines equivalent letter-and-accent spellings where possible before counting
-new member names. The table below gives the exact restrictions behind the everyday field rules.
+new member names. The table below adds details to the [shared field rules](#shared-field-rules).
+Use that shared table for phone numbers, equipment names, categories, conditions and notes.
 
 | Field | Exact accepted input and stored form |
 | --- | --- |
 | NUS ID `nus/` | One ASCII letter, exactly seven digits, and an optional final ASCII letter. Case-insensitive; stored/displayed uppercase, such as `A0123456X` or `E0123456`. |
 | Member name `name/` | 1–100 Unicode code points after whitespace and NFC normalization. Unicode letters with combining marks, spaces, straight (`'`) or curly (`’`) apostrophes, hyphens and periods; must contain at least one letter. Combining marks must follow a letter or its marks. Examples: `அருண்`, `Anne O’Connor`. |
-| Phone `phone/` | Optional leading `+`, then 8–15 digits. Spaces and hyphens are removed: `+65 9123-4567` becomes `+6591234567`. |
 | Email `email/` | 3–254 ASCII characters, one `@`, no spaces and at least one domain dot. Local-part characters: letters, digits, `.`, `_`, `%`, `+`, `-`. Domain labels contain letters/digits/hyphens and cannot begin/end with a hyphen. ASCII validation occurs before conversion to lowercase; non-ASCII lookalikes such as `K` are rejected. Stored lowercase. |
 | Equipment UUID `uuid/` | Full `8-4-4-4-12` hexadecimal form, such as `550e8400-e29b-41d4-a716-446655440000`. Case-insensitive input; lowercase display. Shortened UUIDs are rejected. |
-| Equipment name `name/` | 1–100 printable Unicode characters after whitespace normalization. Punctuation and model numbers are allowed; control characters are rejected. |
-| Category `category/` | 1–50 printable Unicode characters after normalization. Free text; control characters are rejected. |
-| Condition `condition/` | Exactly `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`, ignoring case. Stored uppercase. Use the underscore in `UNDER_REPAIR`. |
-| Notes `notes/` | Optional, at most 300 printable Unicode characters after trimming. Line breaks become spaces. Omitted or empty notes mean no notes. |
 | Dates | Exactly `yyyy-MM-dd` with a Gregorian year from `0001` through `9999`, such as `2026-10-15`. Assignment/actual-return dates cannot be later than the computer's local date. Expected return may be in the future. |
 
 Saved loan dates must also use the four-digit Gregorian range `0001`–`9999`. Year zero, negative years,
@@ -661,11 +660,8 @@ names retain their exact spelling when loaded; editing another field does not re
 
 ### Advanced Tab completion
 
-Type part of a command in the command box and press **Tab** to complete it. For example,
-`mem` becomes `member`, `member ad` becomes `member add`, and `member add na` becomes
-`member add name/`. Member editing is supported too: `member ed` becomes `member edit`, with
-`nus/`, `name/`, `phone/` and `email/` field and value suggestions. Member names always come from the
-member directory, including during edits. Press Space yourself to begin the next word or field.
+Member editing supports `nus/`, `name/`, `phone/` and `email/` field and value suggestions.
+Member names always come from the member directory, including during edits.
 
 When several suggestions match, press Tab repeatedly to cycle through them in alphabetical order.
 During that cycle, **Shift+Tab** selects the previous suggestion. Editing the input, moving the caret,
