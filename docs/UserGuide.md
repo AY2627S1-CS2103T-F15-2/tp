@@ -98,8 +98,8 @@ The assigned camera intentionally has no issue observation to demonstrate older 
 Dates are relative to the day of first launch. Try `member list`, `equipment list` and `loans list`,
 then copy displayed identities to view details or try a return. These are ordinary records:
 additions, returns and deletions are saved normally. Existing saved data always takes precedence;
-samples are not appended to it. To explore a fresh sample set, run the JAR from a separate empty folder
-instead of removing your existing data file.
+samples are not appended to it. To explore a fresh sample set, copy the JAR into a separate empty folder
+and run that copy instead of removing your existing data file.
 
 The equipment identities below are stable in a fresh sample set. The states and holders change as you
 issue, return or delete records.
@@ -746,25 +746,117 @@ Tab completion of `member edit name/νικοσ` suggests the original spelling `
 Successful changes save automatically; there is no manual-save command. For the packaged application,
 data is stored in `data/addressbook.json` inside the folder containing `Laplace.jar`, even if you launch
 the JAR from another terminal folder. `preferences.json` and rotating `addressbook.log.*` files also
-stay beside the JAR. The window's status area identifies the data-file path.
+stay beside the JAR. Substitute your actual JAR filename, such as `Laplace-mac-arm64.jar`, where needed.
+The following procedures use your operating system's file manager; Laplace has no in-app backup,
+restore, import or export command.
 
-Command diagnostics record that input was received and, at detailed log levels, the recognized command
-type. They omit raw input and contact values, including rejected input. Existing logs from older
-versions may still contain commands recorded before this change.
+### Locate your saved data
+
+Hover over **Data: addressbook.json** in the window footer to see the full path actually in use.
+If startup fails, use the **Data file:** path in the **Could not load saved data** dialog instead.
+Record this path before closing Laplace. Use it for every copy or replacement below; the terminal's
+current folder may be different from the JAR's folder.
+
+The data file contains members, equipment and open/completed loans, including retained deleted records.
+`preferences.json` contains window and appearance settings; it is not a records backup.
+Logs do not provide a complete dataset that Laplace can restore.
 
 List, search and view commands, `help`, and `exit` do not save member, equipment or loan records.
 They remain usable when the loaded data cannot be saved, and do not rewrite the data file or create
 one on first launch. Normal exit still saves window and appearance preferences separately.
 
-If you previously launched from another folder, close Laplace and back up the old data and preferences
-before copying them into the matching locations beside the JAR. Data is not automatically read or moved
-from the old working folder. Moving only the JAR to a new empty folder starts a separate sample dataset.
-When running development classes with Gradle, runtime files remain relative to the project working folder.
-
 For Laplace mutation commands, a failed save leaves the live records and previously saved data
 unchanged. An error is not a successful addition, deletion, assignment or return. The command remains
 available for correction. Fix the folder/file access problem, then retry. Do not repeatedly resubmit a
 successful command: duplicate members, already-assigned items and repeated returns are rejected.
+
+### Make a backup
+
+1. Locate the data file as described above. If possible, note a few member IDs, equipment UUIDs and
+   current holders to check after a restore.
+2. Type `exit` and wait for Laplace to close. Close any other instance using the same dataset.
+3. **Copy**, rather than move, the data file to a separate backup location. Give the copy a dated name,
+   for example `addressbook-2026-10-29.json`. Keep earlier known-good backups instead of overwriting them.
+4. Check that the backup exists and has the same size as the source. Keep it in a safe location;
+   a copy on another device also protects against losing the original computer.
+
+If no data file exists, first-launch samples may only be in memory: list/view commands and normal exit
+do not create the records file. There is no saved dataset to copy in that case. Do not substitute
+preferences or logs for a data backup. Never edit the data file while Laplace is running or run
+multiple instances against it.
+
+### Restore a known-good backup
+
+Restoring replaces the entire saved dataset; changes made since that backup will not be present.
+It does not merge records or restore the previous session's undo/redo history.
+
+1. Identify the actual data path and close every instance of Laplace. For a startup error, dismiss
+   the dialog and wait for the application to stop.
+2. If a current file exists, preserve it, even if it appears invalid, by copying it to a separate location
+   with a distinct name such as `addressbook-before-restore-2026-10-29.json`. Keep the known-good backup too.
+3. Copy the known-good backup into the actual data folder. Rename the installed copy to
+   `addressbook.json`, replacing the current file only after preserving it. Create the `data` folder
+   if needed. Check that the filename has not become `addressbook.json.json` or `addressbook.json.txt`.
+4. Launch a compatible release from that JAR folder. Use the same release that wrote the backup
+   where possible; do not downgrade lifecycle-aware data to a release that may discard deletion state.
+5. Run `member list`, `equipment list` and `loans list`. Reset any Loans filters, then compare member
+   IDs, equipment UUIDs, open loans and current holders with the backup's expected state. Check retained
+   deleted records and completed history where relevant. Counts alone do not establish that this is
+   the intended dataset.
+
+If loading fails again, keep both copies, record the error and follow the
+[startup-failure procedure](#handle-a-startup-failure).
+Do not issue new loans until you have verified the restored records.
+
+### Move to another computer
+
+1. On the original computer, locate the data file, close Laplace and make a backup using the steps above.
+2. Put a compatible JAR for the destination computer's operating system/processor in a writable folder.
+   Keep Laplace closed on that computer while installing the data. Preserve any destination dataset first.
+3. Copy the backup to `data/addressbook.json` inside the destination JAR's folder. Keep its member IDs,
+   equipment UUIDs and loan references intact; do not combine JSON files by pasting their arrays together.
+   Copying `preferences.json` is optional; leaving it out uses default window and appearance settings.
+4. Launch that JAR and perform the record checks in the restore procedure, including open loans and holders.
+   Keep the original dataset and backup until the destination has been verified. Continue working on one
+   copy to avoid two datasets diverging.
+
+If migrating files from a release that stored them relative to the launch folder, preserve the old
+data and preferences before copying them to the locations beside the current JAR. Laplace does not
+automatically discover or move those older files.
+
+### Handle a startup failure
+
+1. If **Could not load saved data** appears, record its **Data file:** path. Laplace preserves the
+   original data file and opens no editable directory or command box. Dismiss the dialog and wait
+   for startup to stop. For other launch failures, check Java 25 and the JAR filename, and retain the
+   terminal error; do not replace the dataset just because Java could not start.
+2. With Laplace closed, copy the problematic file to a safe location before changing it. Check that
+   the indicated file and its folder can be read. For permission problems, correct file access and retry.
+3. If a known-good backup exists, [restore it](#restore-a-known-good-backup), then verify the restored records.
+4. If no backup exists, retain the original and work on a copy. A correct manual repair may recover
+   records still present in the file; see [manual editing and compatibility](#advanced-manual-editing-and-compatibility).
+   Ask the team for help with the error if unsure. Missing or overwritten records cannot be reconstructed
+   automatically from preferences, logs or a new sample dataset.
+
+To explore samples while resolving the problem, copy **only the JAR** into a separate empty writable
+folder and launch that copy. Its own missing data file causes a fresh fictional sample set to load.
+This does not restore your records. Launching the original JAR from another terminal folder still uses
+the original JAR's data path. Do not overwrite the preserved file with empty JSON or sample records.
+
+### Advanced: manual editing and compatibility
+
+Correct manual edits to the local JSON file are supported: Laplace loads data that meets its JSON,
+field, identity and cross-record validation rules. Prefer normal commands for routine changes.
+Close Laplace, back up the file and edit a disposable copy first, keeping valid JSON and every required
+reference. Check the edited copy with a compatible JAR in its own folder before installing it in the
+original location. Changing a member NUS ID or equipment UUID without updating all loan references
+invalidates the dataset; preserving identities is safer.
+
+Invalid data is rejected as a complete load, without replacing the file with samples or an empty book.
+Examples include a JSON `null` root, non-whitespace content after the root object, duplicate identities,
+missing loan references and invalid field values. If a view reports inconsistent data after loading,
+stop making changes, close the app and preserve the file for investigation; an incomplete view is
+not evidence that the remaining data is safe to overwrite.
 
 For compatibility with older files, absent or null `members`, `equipment` and `loans` collections
 mean empty collections, just like `[]`. Saving writes these forms as arrays. A null collection cannot
@@ -785,16 +877,13 @@ contacts, keep `"persons": []`; omitting it or writing null is rejected with `Pe
 Populated legacy arrays are retained and saved even though their old commands are unavailable. Do not
 remove an existing array during recovery. Current saves always include it.
 
-Back up the data file while Laplace is closed. Do not edit it while the app is running or run multiple
-instances against the same file. Manual data editing is not an MVP operation. If startup or a view
-reports invalid/inconsistent data, preserve the original file and report the message; do not overwrite
-it with an empty file or assume that an incomplete view is safe to use.
+When running development classes with Gradle, runtime files are relative to the project working folder.
+Packaged JARs use their own folder instead. Keep development and operational datasets separate.
 
-If an existing data file cannot be loaded, Laplace shows recovery guidance and its path, then stops
-startup after you dismiss the error. No editable directory or command box opens. Invalid files include
-a JSON `null` root and any non-whitespace content after the root object. The data file remains unchanged.
-While Laplace is closed, back it up and repair it before restarting. Moving the file to a safe location
-allows a separate sample dataset to start; it does not recover the original records.
+Command diagnostics record that input was received and, at detailed log levels, the recognized command
+type. They omit raw input and contact values, including rejected input. Existing logs from older
+versions may still contain commands recorded before this change. Logs are diagnostic evidence, not a
+replacement for a known-good data backup.
 
 ## FAQ
 
@@ -819,11 +908,10 @@ than expected is valid if it is no earlier than assignment and no later than the
 
 **Why do I not see the sample records?** Laplace loads your existing saved file instead of adding samples
 to it, even if that file contains no records. To try the bundled examples, launch the JAR from a separate
-empty folder. Keep your existing data file and backup intact.
+empty folder after copying the JAR there. Keep your existing data file and backup intact.
 
-**How do I move my data?** Close Laplace, back up the data file, copy it to the other computer's chosen
-Laplace folder at the configured data path, and launch the matching release there. Keep the original
-backup until you have checked members, equipment and current loans on the other computer.
+**How do I move my data?** Follow [Move to another computer](#move-to-another-computer), which includes
+backing up the source, preserving any destination data and checking the copied records and open loans.
 
 **Where is Help?** Enter `help` or press F1. Use `exit` for normal shutdown; saved window preferences are
 reused within usable screen bounds. These utilities are separate from the seventeen member, equipment
