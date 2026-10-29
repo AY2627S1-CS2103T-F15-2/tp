@@ -67,6 +67,10 @@ selects the default comparator. Parameter order is free. Existing reserved-prefi
 whitespace-delimited `name/`-style tokens are parameters even inside free text, with no quoting or
 escaping. Ordinary URLs/embedded slashes remain text.
 
+Unicode name search and value completion treat `Σ`, `σ` and `ς` as case-equivalent.
+For example, searching for `Σ` or `νικοσ` finds a stored member named `ΝΙΚΟΣ`;
+Tab completion of `member edit name/νικοσ` suggests the original spelling `ΝΙΚΟΣ`.
+
 The left list and Displayed count reflect the query. Equipment Total includes all retained units.
 Overall availability counts cover active equipment only; the right-hand inventory summary covers
 all retained groups, including deleted-only groups, regardless of the current filter. Group details
