@@ -33,7 +33,8 @@ public class LaplaceCommandRoutingTest {
         AddressBookParser parser = new AddressBookParser();
         for (String separator : List.of("\u2003", "\u00a0", "\u202f", "\u3000", "\t", " ")) {
             for (String command : List.of("member view nus/A0123456X", "member list", "equipment list",
-                    "loans list", "member edit nus/A0123456X name/Alex Tan")) {
+                    "loans list", "Member LIST", "MEMBERS list", "LOAN LIST",
+                    "member edit nus/A0123456X name/Alex Tan")) {
                 String[] words = command.split(" ", 3);
                 String unicode = separator + words[0] + separator + words[1];
                 if (words.length == 3) {
@@ -44,7 +45,7 @@ public class LaplaceCommandRoutingTest {
             }
             assertEquals(parser.parseCommand("member view nus/A0123456X"),
                     parser.parseCommand("member view nus/" + separator + "A0123456X"));
-            for (String command : List.of("member", "equipment", "loans", "Member list", "member LIST",
+            for (String command : List.of("member", "equipment", "loans", "member lists", "loans returns",
                     "member view nus/A0123456X nus/A0123456X", "member view unknown/value")) {
                 ParseException expected = org.junit.jupiter.api.Assertions.assertThrows(
                         ParseException.class, () -> parser.parseCommand(command));
@@ -58,11 +59,11 @@ public class LaplaceCommandRoutingTest {
     }
 
     @Test
-    public void parseCommand_missingUnknownOrWrongCase_throwsParseException() {
+    public void parseCommand_missingOrUnknown_throwsParseException() {
         AddressBookParser parser = new AddressBookParser();
-        for (String input : new String[] {"", " \t", "member", "equipment \t", "loans", "members list",
+        for (String input : new String[] {"", " \t", "member", "equipment \t", "loans", "equipments list",
             "equipmentx list", "loan add", "member unknown", "equipment return", "loans unknown",
-            "Member list", "member LIST", "equipment ADD", "loans Return", "loans LIST", "member addExtra"}) {
+            "member lists", "equipment ADD", "loans Return", "loans LIST extra", "member addExtra"}) {
             assertThrows(ParseException.class, () -> parser.parseCommand(input));
         }
     }

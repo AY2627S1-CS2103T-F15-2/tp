@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -70,43 +71,76 @@ class JsonSerializableAddressBook {
             throw new IllegalValueException("Persons list is missing.");
         }
         AddressBook addressBook = new AddressBook();
-        for (JsonAdaptedPerson adapted : persons) {
-            requireEntry(adapted, "persons");
+        restoreEntries("persons", persons, ignored -> "legacy person", adapted -> {
             Person person = adapted.toModelType();
             if (addressBook.hasPerson(person)) {
                 throw new IllegalValueException(MESSAGE_DUPLICATE_PERSON);
             }
             addressBook.addPerson(person);
-        }
-        try {
-            for (JsonAdaptedMember adapted : members) {
-                requireEntry(adapted, "members");
-                addressBook.addMember(adapted.toModelType());
-            }
-            for (JsonAdaptedEquipment adapted : equipment) {
-                requireEntry(adapted, "equipment");
-                addressBook.addEquipment(adapted.toModelType());
-            }
-            for (JsonAdaptedLoan adapted : loans) {
-                requireEntry(adapted, "loans");
-                addressBook.addLoan(adapted.toModelType());
-            }
-        } catch (DuplicateMemberException exception) {
-            throw new IllegalValueException(MESSAGE_DUPLICATE_MEMBER, exception);
-        } catch (DuplicateEquipmentException exception) {
-            throw new IllegalValueException(MESSAGE_DUPLICATE_EQUIPMENT, exception);
-        } catch (DuplicateOpenLoanException exception) {
-            throw new IllegalValueException(MESSAGE_DUPLICATE_OPEN_LOAN, exception);
-        } catch (MemberNotFoundException exception) {
-            throw new IllegalValueException(MESSAGE_MISSING_MEMBER, exception);
-        } catch (EquipmentNotFoundException exception) {
-            throw new IllegalValueException(MESSAGE_MISSING_EQUIPMENT, exception);
-        } catch (EquipmentDeletedException exception) {
-            throw new IllegalValueException("Open loan references deleted equipment.", exception);
-        } catch (MemberDeletedException exception) {
-            throw new IllegalValueException("Open loan references a deleted member.", exception);
-        }
+        });
+        restoreEntries("members", members, JsonAdaptedMember::describeIdentity,
+                adapted -> addressBook.addMember(adapted.toModelType()));
+        restoreEntries("equipment", equipment, JsonAdaptedEquipment::describeIdentity,
+                adapted -> addressBook.addEquipment(adapted.toModelType()));
+        restoreEntries("loans", loans, JsonAdaptedLoan::describeIdentity,
+                adapted -> addressBook.addLoan(adapted.toModelType()));
         return addressBook;
+    }
+
+    /**
+     * Adds record context to conversion and root-validation failures without losing their causes.
+     */
+    private static <T> void restoreEntries(String collection, List<T> records, Function<T, String> identity,
+            RecordRestorer<T> restorer) throws IllegalValueException {
+        for (int index = 0; index < records.size(); index++) {
+            T record = records.get(index);
+            String context = collection + "[" + index + "] ("
+                    + (record == null ? "identity unavailable" : identity.apply(record)) + "): ";
+            try {
+                requireEntry(record, collection);
+                restorer.restore(record);
+            } catch (IllegalValueException | DuplicateMemberException | DuplicateEquipmentException
+                    | DuplicateOpenLoanException | MemberNotFoundException | EquipmentNotFoundException
+                    | EquipmentDeletedException | MemberDeletedException exception) {
+                throw new IllegalValueException(context + failureReason(exception), exception);
+            }
+        }
+    }
+
+    /**
+     * Retains actionable root-validation wording while exposing the original exception as the cause.
+     */
+    private static String failureReason(Exception exception) {
+        if (exception instanceof DuplicateMemberException) {
+            return MESSAGE_DUPLICATE_MEMBER;
+        }
+        if (exception instanceof DuplicateEquipmentException) {
+            return MESSAGE_DUPLICATE_EQUIPMENT;
+        }
+        if (exception instanceof DuplicateOpenLoanException) {
+            return MESSAGE_DUPLICATE_OPEN_LOAN;
+        }
+        if (exception instanceof MemberNotFoundException) {
+            return MESSAGE_MISSING_MEMBER;
+        }
+        if (exception instanceof EquipmentNotFoundException) {
+            return MESSAGE_MISSING_EQUIPMENT;
+        }
+        if (exception instanceof EquipmentDeletedException) {
+            return "Open loan references deleted equipment.";
+        }
+        if (exception instanceof MemberDeletedException) {
+            return "Open loan references a deleted member.";
+        }
+        return exception.getMessage();
+    }
+
+    /**
+     * Restores one serialized record, allowing checked value-validation failures.
+     */
+    @FunctionalInterface
+    private interface RecordRestorer<T> {
+        void restore(T record) throws IllegalValueException;
     }
 
     private static void requireEntry(Object entry, String collection) throws IllegalValueException {

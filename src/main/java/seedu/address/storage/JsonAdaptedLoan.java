@@ -79,6 +79,13 @@ class JsonAdaptedLoan {
                 + "issueCondition, returnCondition.");
     }
 
+    /**
+     * Returns stored identities for diagnostics even when value conversion fails.
+     */
+    String describeIdentity() {
+        return "equipment " + equipmentUuid + ", member " + memberNusId;
+    }
+
     /** Converts this adapter to its domain type. */
     public Loan toModelType() throws IllegalValueException {
         requireField(equipmentUuid, "equipmentUuid");
@@ -113,7 +120,8 @@ class JsonAdaptedLoan {
      * Parses a stored Gregorian date without accepting proleptic or extended ISO years.
      */
     private static LocalDate parseDate(String value, String field) throws IllegalValueException {
-        String message = "Loan " + field + " must be a valid yyyy-MM-dd date with a year from 0001 through 9999.";
+        String message = "Loan " + field + " '" + value
+                + "' must be a valid yyyy-MM-dd date with a year from 0001 through 9999.";
         if (!DATE_PATTERN.matcher(value).matches()) {
             throw new IllegalValueException(message);
         }

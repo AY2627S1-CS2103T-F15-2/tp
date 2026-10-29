@@ -71,6 +71,23 @@ public class FullCommandRoutingIntegrationTest {
     }
 
     @Test
+    public void commandAliases_assignAndReturnThroughSamePersistenceBoundary() throws Exception {
+        LocalDate today = LocalDate.now();
+        execute("MEMBERS EDIT nus/" + FIRST + " name/Mixed Case Name", DisplayRequest.memberDetails(FIRST));
+        execute("LOAN ADD uuid/" + firstItem + " nus/" + FIRST + " assigned/" + today + " expected/" + today,
+                DisplayRequest.equipmentDetails(firstItem));
+        reload();
+        assertEquals("Mixed Case Name", model.findMember(FIRST).orElseThrow().getName().fullName);
+        assertEquals(FIRST, model.findOpenLoan(firstItem).orElseThrow().getMemberNusId());
+        execute("LoAnS ReTuRn uuid/" + firstItem + " returned/" + today,
+                DisplayRequest.equipmentDetails(firstItem));
+        reload();
+        assertTrue(model.findOpenLoan(firstItem).isEmpty());
+        assertEquals(today, model.getLoanList().getFirst().getReturnedDate().orElseThrow());
+        assertRejected(ParseException.class, "MEMBERS EDIT nus/" + FIRST + " NAME/Changed");
+    }
+
+    @Test
     public void historicalBatchConflict_rejectsWithoutSavingAndAllowsSameDayHandoff() throws Exception {
         LocalDate returned = LocalDate.now().minusDays(2);
         execute(addLoan(firstItem, FIRST, returned.minusDays(2), returned), DisplayRequest.equipmentDetails(firstItem));
