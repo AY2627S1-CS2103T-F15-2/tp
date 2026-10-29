@@ -1026,6 +1026,13 @@ when asking the team for help. If a view reports inconsistent data after loading
 close the app and preserve the file for investigation; an incomplete view is not evidence that the
 remaining data is safe to overwrite.
 
+Saved loan fields are `equipmentUuid`, `memberNusId`, `assignedDate`, `expectedReturnDate`,
+`returnedDate`, `issueCondition` and `returnCondition`. Unknown loan fields are rejected so misspelled
+return details cannot silently become an open loan. Older records may omit the optional return date
+and condition fields. Files with additional loan fields require a release that understands them.
+If loading reports an unknown field, close Laplace without entering commands and preserve the original
+file before repairing a separate copy; do not simply delete unfamiliar historical information.
+
 For compatibility with older files, absent or null `members`, `equipment` and `loans` collections
 mean empty collections, just like `[]`. Saving writes these forms as arrays. A null collection cannot
 recover records already removed from the input; restore a backup if records should have been present.
