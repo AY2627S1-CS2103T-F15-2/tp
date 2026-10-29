@@ -6,7 +6,7 @@
 
 # Laplace User Guide
 
-Week 10: [search, filters, selectable sorting, inventory planning and duplicate warnings](commands/search-and-planning.md).
+See the [search, filtering, sorting, inventory planning and duplicate warning reference](commands/search-and-planning.md).
 
 Laplace helps a CCA EXCO member manage **members, equipment and equipment loans** on one computer.
 Type commands to register records, find an exact member or item, issue equipment, record returns and
@@ -34,12 +34,31 @@ earlier builds may not support every behavior described here. Laplace is a local
 6. Type `member list` in the command box and press **Enter**. Try `equipment list`, then `loans list`
    to open each directory and the current-loans tab.
 7. Use `help` or **F1** to open Help, and `exit` to close the application normally.
+8. Follow [A complete issue-and-return workflow](#a-complete-issue-and-return-workflow) to register a
+   member and an item, issue the item and record its return. Keep the
+   [Command summary](#command-summary) as a quick reference; each task links to its detailed section.
 
-![Laplace equipment groups in light mode](images/BetterUi.png)
+[![Equipment view with the Camera group selected, two compact UUID labels, and the available camera's full details](images/BetterUi.png)](images/BetterUi.png)
+
+*Equipment view in light mode, using the fictional first-launch samples. The available camera is selected.*
+Open the image to inspect it at full size. Locate these five areas:
+
+1. **Command input at the bottom:** type a command, review its values, then press **Enter** or the Enter button.
+2. **Last result above the input:** read the outcome of the previous command. **Details** expands it;
+   **Copy** includes the complete feedback and any generated UUIDs.
+3. **Equipment groups on the left:** Camera represents two physical units with the same category and name.
+   Its counts distinguish available and assigned units; selecting a group opens its table.
+4. **Physical-unit table at the upper right:** each row is a separate UUID. The labels `550e8400…0000`
+   and `550e8400…0001` distinguish the two cameras. Select a row to see that unit's condition and holder.
+5. **Unit details below the table:** copy the full UUID here. Expand **Commands for this unit** to find
+   command previews; **Use command** prepares the input for review and never executes it.
+
 
 Command text uses [IBM Plex Mono](https://github.com/IBM/plex), distributed under the SIL Open Font License.
 
-Your rows, counts and selected record depend on your data. Both light and dark appearance are supported.
+Screenshots use fictional records. The footer's `addressbook.json` is the default data filename, stored
+under `data/` beside the JAR. Your rows, counts, dates and selected record depend on your data.
+Both light and dark appearance are supported.
 If startup fails, check the JAR filename and Java version and keep the terminal error for the team.
 Do not delete your data file to troubleshoot startup.
 
@@ -123,52 +142,104 @@ To explore without changing the sample records:
 
 ## Using the window
 
-- **Members**, **Equipment** and **Loans** switch views. Member/equipment search criteria remain active
-  when switching tabs or opening details. **Back to results** returns to the current filtered summary;
-  **Reset search**, `member list` or `equipment list` clears that directory's criteria and sorting.
-- The left equipment directory groups units with the same normalized category and name, including units
-  registered in different batches. Open a group with a click, **Enter** or **Space**, then select a row in
-  its physical-unit table. Each unit still has its own UUID, condition, notes, holder and lifecycle state.
-- Group counts distinguish **matching** units from **retained** units. Availability counts exclude deleted
-  units. **Show all units** reveals group members outside the active search, including deleted records.
-  The right-hand **All retained groups** summary includes deleted-only groups regardless of the active
-  filter. Such a group shows zero active availability counts and its retained deleted count.
-  Direct `equipment view uuid/UUID` opens that exact unit, enabling Show all units if needed.
-  Unchecking it narrows the table again while retaining the selected unit's details; a message explains
-  when that unit is outside the table filter.
-  Short table identifiers show the first eight and last four UUID characters, such as
-  `550e8400…0000`. They are display labels only: hover for the full UUID, or copy it from unit details.
-- Member rows open member details. Copy buttons preserve full identifiers and contact fields. Related
-  member/equipment links open the exact record. **Commands for this unit/member** contains command previews:
-  **Copy** copies plain text; **Use command** prepares the input and never executes it. Replace the marked
-  uppercase placeholders and press Enter yourself. Availability and validation rules still apply.
-- The **Loans** tab shows current open assignments, exact-identity links, assigned/due dates and an
-  **Overdue** or **Due today** label when applicable. Rows reflow at narrower widths. **Prepare return command**
-  fills the input with the unit UUID and today's local date; review it before pressing Enter.
-  The filtered-result summary shows displayed versus total counts in both sections, including records
-  hidden after a successful batch command. **Reset filters** explicitly reveals all records. Commands,
-  tab navigation and `loans list` retain intentional filters; mutations never silently clear them.
-  Urgency updates when you open Loans, execute a command or change records. Reopen Loans after midnight
-  to refresh the labels. Completed loans show return dates and recorded issue/return conditions, without
-  urgency labels or return actions. Filter both sections by NUS ID and equipment UUID. `loans list` opens
-  this same tab; member and equipment details also show the selected record's loan history.
-  Sections with more than ten loans use their own scrollable list. Scroll inside that list, or focus
-  it and use the arrow, Page Up/Down, Home and End keys, to reach all entries without loading every row at once.
-- **Last result** sits above the command feedback and stays after switching tabs. A green box is a
-  successful command, a red box is an error, and the box is neutral before the first command.
-  The heading displays only **Last result**; assistive text includes the status and full message.
-  **Details** expands the complete feedback and **Copy** includes all UUIDs from batch creation.
-- The command input, identifiers and command examples use IBM Plex Mono. Unmodified **↑/↓** browse up to
-  100 recent submissions in this session, preserving an unfinished draft. Modified arrows retain normal
-  text selection and caret navigation. **Ctrl+Space** offers command-name or parameter-prefix completion at
-  the end of the input. Choose an entry to insert it; **Escape** dismisses suggestions. Tab completes the
-  active token or value as described above; with no applicable suggestion it retains normal focus navigation. History is cleared when the application closes.
-- **F1** or `help` opens a scrollable command reference with copyable templates and the user-guide link.
-  The loan-return template includes `condition/GOOD` as an example of the optional observed return
-  condition. Ctrl+Space after `loans return co` also offers `condition/`; omit it to retain the existing
-  equipment condition, or supply one of the conditions documented in the loan-return section.
-- Drag the directory divider to resize its panels. Scroll long lists/details vertically; the data filename
-  appears in the footer, with the full path available on hover.
+Each subsection below covers one task in the window. The commands themselves are described under
+[Features](#features).
+
+### Switch views and find records
+
+**Members**, **Equipment** and **Loans** switch views. Member/equipment search criteria remain active
+when switching tabs or opening details. **Back to results** returns to the current filtered summary;
+**Reset search**, `member list` or `equipment list` clears that directory's criteria and sorting.
+
+Member rows open member details. Copy buttons preserve full identifiers and contact fields. Related
+member/equipment links open the exact record.
+
+### Browse equipment groups and units
+
+The left equipment directory groups units with the same normalized category and name, including units
+registered in different batches. Open a group with a click, **Enter** or **Space**, then select a row in
+its physical-unit table. Each unit still has its own UUID, condition, notes, holder and lifecycle state.
+
+Group counts distinguish **matching** units from **retained** units. Availability counts exclude deleted
+units. **Show all units** reveals group members outside the active search, including deleted records.
+The right-hand **All retained groups** summary includes deleted-only groups regardless of the active
+filter. Such a group shows zero active availability counts and its retained deleted count.
+
+Direct `equipment view uuid/UUID` opens that exact unit, enabling Show all units if needed.
+Unchecking it narrows the table again while retaining the selected unit's details; a message explains
+when that unit is outside the table filter.
+
+Short table identifiers show the first eight and last four UUID characters, such as
+`550e8400…0000`. They are display labels only: hover for the full UUID, or copy it from unit details.
+
+### Prepare commands from details
+
+**Commands for this unit/member** in member and equipment details contains command previews:
+**Copy** copies plain text; **Use command** prepares the input and never executes it. Replace the marked
+uppercase placeholders and press Enter yourself. Availability and validation rules still apply.
+
+### Track loans
+
+The **Loans** tab shows current open assignments, exact-identity links, assigned/due dates and an
+**Overdue** or **Due today** label when applicable. Rows reflow at narrower widths. **Prepare return command**
+fills the input with the unit UUID and today's local date; review it before pressing Enter.
+
+Filter both sections by NUS ID and equipment UUID. The filtered-result summary shows displayed versus
+total counts in both sections, including records hidden after a successful batch command.
+**Reset filters** explicitly reveals all records. Commands, tab navigation and `loans list` retain
+intentional filters; mutations never silently clear them.
+
+Urgency updates when you open Loans, execute a command or change records. Reopen Loans after midnight
+to refresh the labels. Completed loans show return dates and recorded issue/return conditions, without
+urgency labels or return actions. `loans list` opens this same tab; member and equipment details also
+show the selected record's loan history.
+
+Sections with more than ten loans use their own scrollable list. Scroll inside that list, or focus
+it and use the arrow, Page Up/Down, Home and End keys, to reach all entries without loading every row at once.
+
+### Read command feedback
+
+**Last result** sits above the command feedback and stays after switching tabs. A green box is a
+successful command, a red box is an error, and the box is neutral before the first command.
+The heading displays only **Last result**; assistive text includes the status and full message.
+**Details** expands the complete feedback and **Copy** includes all UUIDs from batch creation.
+
+### Keyboard controls and Help
+
+The command input, identifiers and command examples use IBM Plex Mono. Unmodified **↑/↓** browse up to
+100 recent submissions in this session, preserving an unfinished draft. Modified arrows retain normal
+text selection and caret navigation. History is cleared when the application closes.
+
+**Ctrl+Space** offers command-name or parameter-prefix completion at the end of the input. Choose an
+entry to insert it; **Escape** dismisses suggestions. Tab completes the active token or value as
+described in [Completing commands and fields with Tab](#completing-commands-and-fields-with-tab); with no
+applicable suggestion it retains normal focus navigation.
+
+**F1** or `help` opens a scrollable command reference with copyable templates and the user-guide link.
+The loan-return template includes `condition/GOOD` as an example of the optional observed return
+condition. Ctrl+Space after `loans return co` also offers `condition/`; omit it to retain the existing
+equipment condition, or supply one of the conditions documented in the loan-return section.
+
+### Resize panels and scroll
+
+Drag the directory divider to resize its panels. Scroll long lists/details vertically; the data filename
+appears in the footer, with the full path available on hover.
+
+### Reading the Loans view
+
+[![Loans filtered to the Portable Speaker, showing one open assignment, one completed loan and a prepared return command](images/LoansGuide.png)](images/LoansGuide.png)
+
+*The sample Portable Speaker has been issued again to Priya Nair and the equipment UUID filter is active.
+This is a later sample state, rather than the initial three open loans. Dates are illustrative.*
+Open the image for full size.
+
+1. **Filters and result summary at the top:** both sections match the entered UUID. The summary shows
+   one of four open loans and one of two completed loans; **Reset filters** reveals the hidden records.
+2. **Open loans:** inspect the current borrower, dates and issue condition. Choose an observed return
+   condition if known, then use **Prepare return command**. The screenshot shows the prepared command
+   in the bottom input; it has not been submitted. Review it and press Enter to record the return.
+3. **Completed loans:** read the actual return date and recorded conditions. These entries show history
+   and do not offer a return action. Scroll the Loans panel to reach further records.
 
 ### Appearance: `mode dark` and `mode light`
 
@@ -200,10 +271,12 @@ Commands and prefixes are **lowercase and case-sensitive**. Use `member add`, no
 - `member list`, `equipment list` and `loans list` take no arguments. Additional text or prefixes are rejected.
 - An empty or whitespace-only submission does nothing.
 
-On success, the input clears and the requested list/details view appears. Newly added records are selected
-and open in details. On failure, the command stays in the input box, focus returns there, and the current
-view and selection remain unchanged. Correct it and press Enter again. Only the first detected error is
-shown; another error may appear after correction. Rejected commands do not change records.
+On success, the input clears and the requested list/details view appears. Adding a member or one equipment
+unit opens that record's details. Adding equipment with `count/2` or greater instead opens the full equipment
+directory and resets its search filters and sorting; use the UUIDs in **Last result** to open individual units.
+On failure, the command stays in the input box, focus returns there, and the current view and selection
+remain unchanged. Correct it and press Enter again. Only the first detected error is shown; another error
+may appear after correction. Rejected commands do not change records.
 
 In feedback examples, `N` is the current count and uppercase placeholders such as `UUID`, `NUS_ID`
 and `EQUIPMENT_NAME` stand for the actual record values. `TODAY` is the computer's local date.
@@ -268,6 +341,11 @@ A member can hold multiple different items; one physical item can have only one 
 
 ## Features
 
+Every command follows the [command format](#command-format-and-feedback),
+[shared field rules](#shared-field-rules) and [availability](#availability) rules above. If a command
+is rejected, see [Correcting common errors](#correcting-common-errors). The
+[Command summary](#command-summary) lists every command and links back to its section here.
+
 ### Add a member: `member add`
 
 Create one active member with a unique, immutable NUS ID.
@@ -292,6 +370,21 @@ This example uses an ID absent from the bundled samples. If you have already add
 Two members are duplicates **only when their normalized NUS IDs are equal**. Different IDs can share
 a name, phone or email. A duplicate is rejected with a message such as:
 `A member with NUS ID A0123456X already exists.`
+
+A different NUS ID sharing a normalized name, phone or email with another **active** member is
+accepted, with a `Possible duplicate(s)` advisory after the success message. Deleted members are
+excluded from this advisory, but their retained NUS IDs still cannot be reused.
+For example, in a fresh sample dataset, the second command above adds Siti under `E0123456` and reports:
+
+```text
+New member added: Siti Nur (E0123456)
+Possible duplicate(s): A0456789B. Distinct identities are retained; review these records.
+```
+
+The addition has succeeded and been saved; do not resubmit it. Both NUS IDs remain separate records
+with their own loan references. Use `member view nus/E0123456` and `member view nus/A0456789B` to review
+the possible match before issuing equipment. A shared name or contact field can be legitimate; the
+warning does not merge records. Expand **Last result → Details** to read the complete advisory.
 
 Missing, blank, malformed, repeated or unknown parameters are rejected. Failure creates no member and
 preserves the current view/selection. If saving fails, correct file access and retry the retained command.
@@ -582,6 +675,8 @@ loans add uuid/UUID[,UUID...] nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPEC
 All four parameters are required. Use the actual UUID from `equipment list` and the NUS ID from
 `member list`. Both identities must exist. Assignment must be on or before the computer's local date;
 expected return must be on or after assignment. Expected return may be in the future.
+In `UUID[,UUID...]`, the brackets and ellipsis describe optional additional UUIDs; do not type them.
+Enter full UUIDs separated by commas, with one `uuid/` prefix for the entire list.
 
 Example, assuming these identities exist and the assignment date is not in the future:
 
@@ -622,6 +717,35 @@ before unit checks when they prevent meaningful validation. No loans or conditio
 
 On failure, no loan is created. Availability, holder, holdings, view and selection stay unchanged.
 
+#### Worked example: assign two units together
+
+Use a disposable copy of the JAR in a separate empty writable folder, with no saved data beside it.
+Launch that copy to obtain the [fresh sample records](#sample-records-on-first-launch).
+These commands assume first launch on **29 October 2026**. On another day, replace `2026-10-29`
+throughout this example and the return example below with today's local date, and replace `2026-11-05`
+with an expected date on or after assignment. The sample speaker already has completed history relative
+to launch day; using today's assignment date avoids overlapping it.
+
+Run `equipment list` and `member view nus/A0123456X`. The camera ending in `0000` must be active,
+GOOD and AVAILABLE; the speaker ending in `0004` must be active, FAIR and AVAILABLE. Alex Tan must be
+active. Copy each **full UUID** from its equipment details, rather than the shortened table label.
+With your own data, replace both UUIDs and the member ID below with existing eligible records.
+
+Submit this as one command:
+
+```text
+loans add uuid/550e8400-e29b-41d4-a716-446655440000,550e8400-e29b-41d4-a716-446655440004 nus/A0123456X assigned/2026-10-29 expected/2026-11-05
+```
+
+The result opens Loans and reports `Assigned 2 units to Alex Tan (A0123456X) on 2026-10-29; expected
+return: 2026-11-05.`, followed by the Camera and Portable Speaker names and full UUIDs. Expand
+**Last result → Details** or use **Copy** for the full per-unit feedback. Both units become ASSIGNED;
+Alex's holdings gain both units, and each new loan records its own issue condition (GOOD and FAIR).
+Use **Reset filters** in Loans if either new row is hidden by a filter.
+
+If either unit is already assigned, deleted, unavailable or otherwise rejected, **neither assignment
+is saved**. Check both units before correcting and retrying the batch.
+
 ### Return equipment: `loans return`
 
 ```text
@@ -632,7 +756,8 @@ UUID and date are required. Equipment must exist and have open loans. Referenced
 must also exist. The return date must be **from the assignment date through the computer's local date**,
 inclusive. Same-day, early and late returns are valid; the expected return date does not limit returns.
 
-Example, for the assignment above and a computer date on or after 20 September 2026:
+Example, for the single-unit assignment dated 14 September above and a computer date on or after
+20 September 2026:
 
 ```text
 loans return uuid/550e8400-e29b-41d4-a716-446655440000 returned/2026-09-20
@@ -670,6 +795,31 @@ never attributed to a single borrower in a batch return.
 Batch return errors use the same combined result and Details/Copy actions as assignment errors.
 A rejected return leaves the loan, return date, holder and availability unchanged. Completed loans
 appear in the Loans tab and in member and equipment details.
+
+#### Worked example: return both units with one observed condition
+
+Continue immediately after the two-unit assignment above in the same disposable dataset. Both units
+must still have those open loans. Suppose you inspect **both** and observe DAMAGED condition.
+For this same-day demonstration, submit:
+
+```text
+loans return uuid/550e8400-e29b-41d4-a716-446655440000,550e8400-e29b-41d4-a716-446655440004 returned/2026-10-29 condition/DAMAGED
+```
+
+Use the same full UUIDs and date substitutions as in the assignment example. On a later actual return,
+use that actual date, which must be no earlier than assignment and no later than today.
+The single `condition/DAMAGED` applies to **both units**. Use separate return commands if their
+observed conditions differ; the brackets/ellipsis in the syntax are not literal input.
+
+Feedback begins `Returned 2 units on 2026-10-29.`. **Last result → Details** and **Copy** include each
+unit's name, full UUID and borrower. Both loans move from current to completed loans, Alex no longer
+holds these two units, and both units become DAMAGED and UNAVAILABLE. Alex's other loans remain open.
+In Loans, use **Reset filters** to reveal all rows, then inspect completed loans or open each unit's
+details and loan history. The new completed records retain GOOD/FAIR issue conditions and show the
+recorded DAMAGED return condition and actual return date; earlier completed history is retained.
+
+If either unit has no open loan or any return validation fails, **neither loan closes and neither
+condition changes**. A rejected unit prevents the whole batch from succeeding.
 
 ### Undo a record change: `undo`
 
@@ -742,10 +892,6 @@ on or after 20 September 2026; choose valid actual dates for your own operation.
 7. View both records again. The member has no current holding for this item; the GOOD item is AVAILABLE.
 8. If these were erroneous/test records, remove them with `equipment delete uuid/UUID` and
    `member delete nus/E0678901C`. Both deletions retain records; use `equipment restore` or `member restore` to recover them.
-
-Unicode name search and value completion treat `Σ`, `σ` and `ς` as case-equivalent.
-For example, searching for `Σ` or `νικοσ` finds a stored member named `ΝΙΚΟΣ`;
-Tab completion of `member edit name/νικοσ` suggests the original spelling `ΝΙΚΟΣ`.
 
 ## Saving, file access and recovery
 
@@ -860,25 +1006,29 @@ authentication and concurrent multi-user operation are not provided.
 
 | Task | Format |
 | --- | --- |
-| Add member | `member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL` |
-| Edit member | `member edit nus/NUS_ID [name/NAME] [phone/PHONE] [email/EMAIL]` |
-| List members | `member list` |
-| Search, filter and sort members | `member search [q/TEXT] [holding/HOLDING] [status/STATUS] [sort/FIELD] [order/ORDER]` |
-| View member and current holdings | `member view nus/NUS_ID` |
-| Soft-delete member | `member delete nus/NUS_ID` |
-| Restore member | `member restore nus/NUS_ID` |
-| Add equipment | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES] [count/COUNT]` |
-| List equipment | `equipment list` |
-| Search, filter and sort equipment | `equipment search [q/TEXT] [category/TEXT] [condition/CONDITION] [availability/AVAILABILITY] [status/STATUS] [sort/FIELD] [order/ORDER]` |
-| View equipment and current holder | `equipment view uuid/UUID` |
-| Edit equipment | `equipment edit uuid/UUID [name/NAME] [category/CATEGORY] [condition/CONDITION] [notes/NOTES]` |
-| Restore equipment | `equipment restore uuid/UUID` |
-| Delete equipment | `equipment delete uuid/UUID` |
-| Open the Loans tab | `loans list` |
-| Assign equipment | `loans add uuid/UUID[,UUID...] nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |
-| Return equipment | `loans return uuid/UUID[,UUID...] returned/ACTUAL_RETURN_DATE [condition/CONDITION]` |
-| Undo the last record change | `undo` |
-| Redo the last undone change | `redo` |
+| [Add member](#add-a-member-member-add) | `member add nus/NUS_ID name/NAME phone/PHONE email/EMAIL` |
+| [Edit member](#edit-a-member-member-edit) | `member edit nus/NUS_ID [name/NAME] [phone/PHONE] [email/EMAIL]` |
+| [List members](#list-members-member-list) | `member list` |
+| [Search, filter and sort members](commands/search-and-planning.md#members) | `member search [q/TEXT] [holding/HOLDING] [status/STATUS] [sort/FIELD] [order/ORDER]` |
+| [View member and current holdings](#view-a-member-and-their-equipment-member-view) | `member view nus/NUS_ID` |
+| [Soft-delete member](#delete-a-member-member-delete) | `member delete nus/NUS_ID` |
+| [Restore member](#restore-a-member-member-restore) | `member restore nus/NUS_ID` |
+| [Add equipment](#add-equipment-equipment-add) | `equipment add name/NAME category/CATEGORY condition/CONDITION [notes/NOTES] [count/COUNT]` |
+| [List equipment](#list-equipment-equipment-list) | `equipment list` |
+| [Search, filter and sort equipment](commands/search-and-planning.md#equipment) | `equipment search [q/TEXT] [category/TEXT] [condition/CONDITION] [availability/AVAILABILITY] [status/STATUS] [sort/FIELD] [order/ORDER]` |
+| [View equipment and current holder](#view-equipment-and-its-holder-equipment-view) | `equipment view uuid/UUID` |
+| [Edit equipment](#edit-equipment-equipment-edit) | `equipment edit uuid/UUID [name/NAME] [category/CATEGORY] [condition/CONDITION] [notes/NOTES]` |
+| [Restore equipment](#restore-equipment-equipment-restore) | `equipment restore uuid/UUID` |
+| [Delete equipment](#delete-equipment-equipment-delete) | `equipment delete uuid/UUID` |
+| [Open the Loans tab](#open-the-loans-tab-loans-list) | `loans list` |
+| [Assign equipment](#assign-equipment-loans-add) | `loans add uuid/UUID[,UUID...] nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPECTED_RETURN_DATE` |
+| [Return equipment](#return-equipment-loans-return) | `loans return uuid/UUID[,UUID...] returned/ACTUAL_RETURN_DATE [condition/CONDITION]` |
+| [Undo the last record change](#undo-a-record-change-undo) | `undo` |
+| [Redo the last undone change](#redo-an-undone-change-redo) | `redo` |
+
+For `equipment add`, omitting `count/` or using `count/1` opens the new unit's details. A successful
+`count/2` or greater opens the full equipment directory and resets its filters and sorting, as described
+under [Add equipment](#add-equipment-equipment-add).
 
 See [search, filters and sorting](commands/search-and-planning.md) for accepted search parameter values.
 

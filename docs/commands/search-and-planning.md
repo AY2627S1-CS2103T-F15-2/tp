@@ -67,6 +67,10 @@ selects the default comparator. Parameter order is free. Existing reserved-prefi
 whitespace-delimited `name/`-style tokens are parameters even inside free text, with no quoting or
 escaping. Ordinary URLs/embedded slashes remain text.
 
+Unicode name search and value completion treat `Σ`, `σ` and `ς` as case-equivalent.
+For example, searching for `Σ` or `νικοσ` finds a stored member named `ΝΙΚΟΣ`;
+Tab completion of `member edit name/νικοσ` suggests the original spelling `ΝΙΚΟΣ`.
+
 The left list and Displayed count reflect the query. Equipment Total includes all retained units.
 Overall availability counts cover active equipment only; the right-hand inventory summary covers
 all retained groups, including deleted-only groups, regardless of the current filter. Group details
@@ -74,8 +78,12 @@ distinguish matching units from retained units. Criteria and order are visible i
 Zero results shows a reset hint. Opening details retains the filtered list. Refresh reevaluates queries against current
 data, including loan-only changes, without executing row callbacks. Errors retain criteria and input
 for correction. List commands clear filters.
-Deleting a result keeps the active filter and sort, including when no matches remain. Only an explicit
-list/reset command clears them; returning to a directory after a mutation does not reset the query.
+Deleting a result keeps the active filter and sort, including when no matches remain. List commands and
+**Reset search** clear that directory's filters and sorting. A successful `equipment add` with `count/2`
+or greater also resets equipment criteria and opens the full equipment directory. Adding one unit
+(without `count/` or with `count/1`) opens its details while retaining the current search. Other record
+mutations retain the active query when returning to the directory. Rejected commands preserve the
+previous criteria, view and selection.
 
 ## Inventory groups and duplicates
 
@@ -91,37 +99,3 @@ Deleted members are excluded from similarity warnings; their retained NUS IDs st
 Successful equipment additions warn about other UUIDs sharing normalized category and name.
 Warnings identify the existing records and are advisory: legitimate same-name members and multiple
 physical units can still be added. Existing identity-duplicate rejection is unchanged.
-
-## Integration contract
-
-Integrated baseline: team `823efd5e`, including member editing, soft-delete and restoration. Queries
-use the actual `Member.isDeleted()` contract. Search commands default to active members, explicit
-status filters find retained records, and list/reset keeps both states visible. Global active counts
-exclude deleted records even when a filtered view displays only deleted members. Delete/restore
-reevaluates filters and counts without erasing identities or loan history. Existing seven-argument
-DirectoryQuery callers retain all-records behavior; the status-aware search parser supplies the new
-member criterion explicitly. No new domain schema or reflection is introduced.
-
-`DirectoryQuery.members(data, eligible)` composes extra eligibility with the status filter.
-`DirectoryQuery.equipment(data, lookup, eligible)` and `InventoryGroups.summarize(data, lookup, eligible)`
-apply eligibility before availability lookup. Equipment lifecycle metadata is not present on this
-baseline; its future domain contract must be applied consistently when merged. The revised Week 10
-delegation removes archive/unarchive and the 30-day restoration limit; neither is assumed here.
-
-DisplayRequest optionally carries an immutable DirectoryQuery for MEMBERS/EQUIPMENT. A plain directory
-request preserves existing criteria; a request carrying a query replaces them. MemberListCommand and
-EquipmentListCommand explicitly carry DirectoryQuery.all() to reset filters/sorting. Search commands
-carry their supplied query; deletion and stale-detail fallback use plain navigation requests.
-MainWindow integration sets query criteria on lists
-and summaries, recovers selection using displayed order, and retains criteria during details mode.
-Keith remains the shell integrator; no shared theme/main FXML changes are needed.
-
-Command.isReadOnly() defaults to false for compatibility. Searches, directory lists, detail views, Help
-and Exit declare themselves read-only. LogicManager bypasses record saving and history recording for
-these commands; legacy internal commands retain their own persistence behavior.
-Transfer PR #107 was closed without merging; team master has the integrated member lifecycle contracts.
-When later transfer/history changes touch
-Command/LogicManager/MainWindow, retain query dispatch and the no-save/no-history query boundary.
-The member parser and diagnostic retain `search`, `edit` and `restore`. No unmerged teammate
-implementation is copied into this branch. Other owners' feature acceptance remains separate from
-this search/planning PR.

@@ -402,6 +402,10 @@ retaining collection position, reserved identities and historical loan reference
 list remains observable and includes deleted records. The model also retains user preferences through
 `UserPrefs` and `ReadOnlyUserPrefs`.
 
+`UniqueMemberList.setMembers` snapshots its input before validating identities and replacing contents.
+Passing its own observable view or a backed sublist therefore preserves the intended records instead
+of clearing the replacement. Invalid replacements leave the existing collection unchanged.
+
 `Name.forMember` collapses whitespace and applies Unicode NFC before validating new names. Validation
 allows letters followed by combining marks, spaces, straight/curly apostrophes, hyphens and periods,
 requires at least one letter, and limits the result to 100 Unicode code points. Add and edit share this
@@ -480,6 +484,11 @@ the read-only command path. `data` is the `ReadOnlyAddressBook` returned by the 
 containing `DisplayRequest.members(query)` or `DisplayRequest.equipment(query)`. Since the command
 is read-only, `LogicManager` returns without creating a transaction snapshot or saving data.
 Equipment queries additionally use `Model.getAvailability` to derive availability from current state.
+
+`DirectoryQuery.members(data, eligible)` combines caller eligibility with the member status filter.
+`DirectoryQuery.equipment(data, lookup, eligible)` applies eligibility and equipment status before
+resolving availability. Active totals exclude deleted records, while retained identities and loan
+history remain available for details and restoration. These query helpers do not change the stored schema.
 
 `MainWindow` passes the same query to the directory list and its summary before refreshing them.
 Both evaluate the query against current data, keeping displayed rows and matching counts consistent.
