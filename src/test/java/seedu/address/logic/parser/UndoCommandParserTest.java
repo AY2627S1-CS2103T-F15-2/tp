@@ -22,14 +22,14 @@ class UndoCommandParserTest {
     }
 
     @Test
-    void parse_extraArgumentsAndWrongCase_rejectsWithoutExecuting() {
+    void parse_extraArguments_rejectsWithoutExecuting() throws Exception {
         for (String argument : List.of("1", "undo", "uuid/value", "unknown/value", "count/2 count/3")) {
             ParseException error = assertThrows(ParseException.class, () ->
                     new UndoCommandParser().parse(argument));
             assertTrue(error.getMessage().contains(UndoCommand.MESSAGE_USAGE));
             assertThrows(ParseException.class, () -> new AddressBookParser().parseCommand("undo " + argument));
         }
-        assertThrows(ParseException.class, () -> new AddressBookParser().parseCommand("UNDO"));
+        assertInstanceOf(UndoCommand.class, new AddressBookParser().parseCommand("UNDO"));
         assertThrows(NullPointerException.class, () -> new UndoCommandParser().parse(null));
     }
 }

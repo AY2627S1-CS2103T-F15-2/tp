@@ -334,11 +334,18 @@ values can outlive or be shared by their containers.
 
 Availability, holders and inventory totals are derived, never persisted as independent fields.
 
+Historical `issueCondition` accepts all defined condition values, including DAMAGED/UNDER_REPAIR.
+This preserves observations of events outside current command rules; it is not a new-assignment
+eligibility check. Missing/null observations remain unknown. Loading and save/reload must preserve
+these values independently of current equipment condition. For a manual check, use disposable data
+and load one loan for each condition, then save/reload and compare its identity and observation.
+
 `Condition.fromText` defines the shared command/storage normalization: strip surrounding whitespace,
 match the four enum names without case, and reject unknown or blank text. Equipment still requires a
 condition; missing/null loan observations remain unknown. Adapters always serialize uppercase enum
 names. Manual check: load disposable equipment/loan fields with `good`, ` FaIr ` and `under_repair`,
 then save/reload; verify uppercase output, stable identities and rejection of `BROKEN`.
+
 `AvailabilityCalculator` only accepts condition and open-loan state; the deletion check belongs to
 `ModelManager`. `AddressBook` validates cross-record references, while `UniqueLoanList` enforces the
 one-open-loan-per-unit rule. `UniqueEquipmentList` checks UUID uniqueness and identity-preserving
@@ -427,6 +434,12 @@ future-dated. Expected dates remain unrestricted relative to today. Manual check
 load a 2099 assignment/actual return, inspect the warning and unchanged file, then load a future expected
 return only and confirm no warning. The command date restrictions remain enforced.
 
+Record conversion and root-reference failures include a zero-based collection index plus stored NUS ID/
+UUID, even if that identity is invalid. Original checked/domain causes remain attached. Null records
+report their position with identity unavailable; date errors include the rejected text. Diagnostics
+avoid echoing contact details. For manual checks, use disposable copies with an invalid loan date,
+missing reference, duplicate identity and invalid condition; verify context and unchanged source bytes.
+
 The supported unversioned schema treats omitted/null `members`, `equipment` and `loans` as empty.
 Retain both forms for legacy compatibility; saves canonicalize them to `[]` without touching populated
 collections. No migration or warning distinguishes null from absence in this schema. Missing member/
@@ -459,6 +472,11 @@ after a load rejection; never replace a populated array with an empty one merely
 ### Common classes
 
 Classes used by multiple components are in the `seedu.address.commons` package.
+
+`JsonUtil` enables Jackson's strict duplicate-property detection for JSON reads, including data and
+preferences. Repeated names in one object fail parsing before model conversion, even when their values
+are identical; the same field names in separate records remain valid. The checked loading exception
+retains the parser's duplicate-field name and location. Reading a rejected file does not rewrite it.
 
 `JsonUtil.fromJsonString` accepts one leading U+FEFF editor marker before Jackson parsing. It does
 not trim or remove markers elsewhere. Manual check: save synthetic data, prepend UTF-8 bytes EF BB BF,
@@ -1488,6 +1506,13 @@ new restriction relative to today's date.
 
 ### Saving data
 
+To check duplicate-property validation, use a disposable JAR folder and a backup of synthetic data.
+With Laplace closed, add a second `"loans": []` property to a valid saved root object. Launch the JAR
+and check the log for `Duplicate field 'loans'`. Do not enter commands after a loading error; close
+Laplace and verify the rejected file's bytes are unchanged. Restore the backup, then repeat with a
+second `returnedDate` property inside one loan. Removing the duplicate must allow the original
+members, equipment and open/completed loans to load and survive a save/reload.
+
 1. Command-log privacy: in a disposable folder, add/edit a synthetic member, search for their name,
    and submit a malformed command containing a synthetic phone/email. Inspect `addressbook.log.*`;
    expect input-received diagnostics without raw commands or contact values. `CommandLogPrivacyTest`
@@ -1600,6 +1625,22 @@ Use temporary data. Do not test against a real inventory.
    suggestions. Press Enter separately to invoke history. Both no-argument utilities must have
    command-name highlighting in previews.
 
+
+### Command-word aliases and casing
+
+`CommandWords.canonicalFamily` maps only `members` to `member` and `loan` to `loans`, using
+`Locale.ROOT` casing. Family parsers normalize only their action token; leaf parsers still receive
+unchanged parameter text. Top-level command words and appearance actions also ignore case. The same
+family vocabulary drives `CompletionService` and the Ctrl+Space `CommandCatalog`. Both offer canonical
+command words while preserving parameter text, prefix casing and existing Unicode whitespace behavior. Help describes the aliases; command examples remain canonical.
+
+Manual check: enter `LOAN LIST`, `Members View nus/A0123456X`, then a mixed-case `MEMBERS EDIT`
+with a mixed-case name. Verify the same navigation and case-preserved name as canonical commands.
+Try `equipments list`, `loan returns` and `MEMBERS ADD NAME/Camera`; expect the existing validation
+and canonical guidance. Tab after `LOAN LI` should suggest `list`; Tab after `Members` suggests `member`.
+Ctrl+Space after `MEM`, `members ` or `LOAN ` must also offer canonical commands without executing.
+Completing a field in `MEMBERS EDIT name/MiXeD Name ph` must retain the name exactly.
+No model, persistence, transaction or UML relationships change.
 
 ### Batch loan validation diagnostics
 
