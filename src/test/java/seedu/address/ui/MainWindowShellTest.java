@@ -1519,6 +1519,11 @@ public class MainWindowShellTest {
     public void layout_requiredDisplayScaling_keepsControlsWholeAndContentScrollable() {
         FxTestUtil.runAndWait(() -> {
             model.addPerson(new PersonBuilder().withName("Legacy Person").build());
+            String memberName = "Long Member Name ".repeat(5).strip();
+            String equipmentName = "Long Equipment Name ".repeat(5).strip();
+            model.addMember(new Member(id(9), new Name(memberName), new Phone("91234567"),
+                    new Email("member9@example.com")));
+            model.addEquipment(new Equipment(new UUID(0, 9), equipmentName, "Photography", Condition.GOOD, ""));
             for (int[] size : List.of(usableScene(1920, 1080, 1.0), usableScene(1920, 1080, 1.25),
                     usableScene(1280, 720, 1.5))) {
                 assertUsable("members", size);
@@ -1534,7 +1539,15 @@ public class MainWindowShellTest {
                 assertUsable("legacy", size);
                 submit("invalid ".repeat(100));
                 assertUsable("error", size);
-                button("membersNavigation").fire();
+                // Long active filters lengthen the context row beside Back to results and Reset search.
+                submit("member search q/" + memberName);
+                assertUsable("long-member-search", size);
+                submit("equipment search q/" + equipmentName);
+                assertUsable("long-equipment-search", size);
+                showEquipmentDetails(new UUID(0, 9));
+                assertUsable("long-equipment-details", size);
+                submit("equipment list");
+                submit("member list");
             }
         });
     }
