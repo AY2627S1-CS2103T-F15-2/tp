@@ -59,6 +59,7 @@ import seedu.address.logic.commands.MemberViewCommand;
 import seedu.address.logic.commands.ModeCommand;
 import seedu.address.logic.commands.RedoCommand;
 import seedu.address.logic.commands.UndoCommand;
+import seedu.address.logic.parser.CommandWords;
 import seedu.address.logic.parser.Prefix;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.equipment.Availability;
@@ -135,9 +136,10 @@ public final class CompletionService {
         if (!words.find() || caret <= words.start()) {
             return Optional.empty();
         }
-        String root = words.group();
+        String root = CommandWords.canonicalFamily(words.group());
         if (caret <= words.end()) {
-            return suggest(words.start(), words.end(), text.substring(words.start(), caret),
+            return suggest(words.start(), words.end(),
+                    CommandWords.canonicalFamily(text.substring(words.start(), caret)),
                     COMMANDS.keySet().stream().map(command -> command.split(" ")[0]), false);
         }
         List<String> children = COMMANDS.keySet().stream().filter(command -> command.startsWith(root + " "))
@@ -146,16 +148,16 @@ public final class CompletionService {
             return Optional.empty();
         }
         if (!words.find()) {
-            return suggest(caret, caret, "", children.stream(), false);
+            return suggest(caret, caret, "", children.stream(), true);
         }
         if (caret <= words.end()) {
             if (caret < words.start()) {
-                return suggest(caret, caret, "", children.stream(), false);
+                return suggest(caret, caret, "", children.stream(), true);
             }
             return suggest(words.start(), words.end(), text.substring(words.start(), caret),
-                    children.stream(), false);
+                    children.stream(), true);
         }
-        String command = root + " " + words.group();
+        String command = root + " " + words.group().toLowerCase(Locale.ROOT);
         List<Prefix> prefixes = COMMANDS.getOrDefault(command, List.of());
         return fields(text, caret, words.end(), command, prefixes, data);
     }

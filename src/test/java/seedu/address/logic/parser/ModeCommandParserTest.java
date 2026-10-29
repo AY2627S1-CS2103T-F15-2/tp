@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -21,11 +22,11 @@ class ModeCommandParserTest {
         GuiSettings original = new GuiSettings(1100, 700, 20, 30);
         model.setGuiSettings(original);
         AddressBook before = new AddressBook(model.getAddressBook());
-        for (String input : List.of("mode dark", "mode light", " mode \t dark \n")) {
+        for (String input : List.of("mode dark", "mode light", "MODE DARK", "Mode Light", " mode \t dark \n")) {
             var command = new AddressBookParser().parseCommand(input);
             assertTrue(command.isReadOnly());
             assertEquals(DisplayRequest.unchanged(), command.execute(model).getDisplayRequest());
-            assertEquals(input.contains("dark"), model.getGuiSettings().isDarkMode());
+            assertEquals(input.toLowerCase(Locale.ROOT).contains("dark"), model.getGuiSettings().isDarkMode());
             assertEquals(original, model.getGuiSettings().withDarkMode(false));
             assertEquals(before, model.getAddressBook());
         }
@@ -33,7 +34,7 @@ class ModeCommandParserTest {
 
     @Test
     void parse_invalidModes_rejectMissingExtraAndUnsupportedArguments() {
-        for (String input : List.of("mode", "mode DARK", "mode sepia", "mode dark light", "mode dark extra/yes")) {
+        for (String input : List.of("mode", "mode sepia", "mode dark light", "mode dark extra/yes")) {
             assertThrows(ParseException.class, () -> new AddressBookParser().parseCommand(input));
         }
     }

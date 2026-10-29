@@ -334,11 +334,18 @@ values can outlive or be shared by their containers.
 
 Availability, holders and inventory totals are derived, never persisted as independent fields.
 
+Historical `issueCondition` accepts all defined condition values, including DAMAGED/UNDER_REPAIR.
+This preserves observations of events outside current command rules; it is not a new-assignment
+eligibility check. Missing/null observations remain unknown. Loading and save/reload must preserve
+these values independently of current equipment condition. For a manual check, use disposable data
+and load one loan for each condition, then save/reload and compare its identity and observation.
+
 `Condition.fromText` defines the shared command/storage normalization: strip surrounding whitespace,
 match the four enum names without case, and reject unknown or blank text. Equipment still requires a
 condition; missing/null loan observations remain unknown. Adapters always serialize uppercase enum
 names. Manual check: load disposable equipment/loan fields with `good`, ` FaIr ` and `under_repair`,
 then save/reload; verify uppercase output, stable identities and rejection of `BROKEN`.
+
 `AvailabilityCalculator` only accepts condition and open-loan state; the deletion check belongs to
 `ModelManager`. `AddressBook` validates cross-record references, while `UniqueLoanList` enforces the
 one-open-loan-per-unit rule. `UniqueEquipmentList` checks UUID uniqueness and identity-preserving
@@ -401,6 +408,10 @@ retaining collection position, reserved identities and historical loan reference
 list remains observable and includes deleted records. The model also retains user preferences through
 `UserPrefs` and `ReadOnlyUserPrefs`.
 
+`UniqueMemberList.setMembers` snapshots its input before validating identities and replacing contents.
+Passing its own observable view or a backed sublist therefore preserves the intended records instead
+of clearing the replacement. Invalid replacements leave the existing collection unchanged.
+
 `Name.forMember` collapses whitespace and applies Unicode NFC before validating new names. Validation
 allows letters followed by combining marks, spaces, straight/curly apostrophes, hyphens and periods,
 requires at least one letter, and limits the result to 100 Unicode code points. Add and edit share this
@@ -415,6 +426,12 @@ The diagram follows the [course modeling notation](https://nus-cs2103-ay2627-s1.
 and shows selected structure; lifecycle behavior is explained in the text above.
 
 ### Storage component
+
+Record conversion and root-reference failures include a zero-based collection index plus stored NUS ID/
+UUID, even if that identity is invalid. Original checked/domain causes remain attached. Null records
+report their position with identity unavailable; date errors include the rejected text. Diagnostics
+avoid echoing contact details. For manual checks, use disposable copies with an invalid loan date,
+missing reference, duplicate identity and invalid condition; verify context and unchanged source bytes.
 
 The supported unversioned schema treats omitted/null `members`, `equipment` and `loans` as empty.
 Retain both forms for legacy compatibility; saves canonicalize them to `[]` without touching populated
@@ -449,6 +466,18 @@ after a load rejection; never replace a populated array with an empty one merely
 
 Classes used by multiple components are in the `seedu.address.commons` package.
 
+`JsonUtil` enables Jackson's strict duplicate-property detection for JSON reads, including data and
+preferences. Repeated names in one object fail parsing before model conversion, even when their values
+are identical; the same field names in separate records remain valid. The checked loading exception
+retains the parser's duplicate-field name and location. Reading a rejected file does not rewrite it.
+
+`JsonUtil.fromJsonString` accepts one leading U+FEFF editor marker before Jackson parsing. It does
+not trim or remove markers elsewhere. Manual check: save synthetic data, prepend UTF-8 bytes EF BB BF,
+load it, then save/reload and compare all records. The saved file should have no leading marker. A
+second marker or one inside object syntax must still fail; U+FEFF within a string remains data.
+BOM handling wraps the strict single-root parser: repeat null-root and trailing-content rejection
+checks both with and without a leading marker, verifying unchanged source bytes.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Implementation**
@@ -472,6 +501,11 @@ the read-only command path. `data` is the `ReadOnlyAddressBook` returned by the 
 containing `DisplayRequest.members(query)` or `DisplayRequest.equipment(query)`. Since the command
 is read-only, `LogicManager` returns without creating a transaction snapshot or saving data.
 Equipment queries additionally use `Model.getAvailability` to derive availability from current state.
+
+`DirectoryQuery.members(data, eligible)` combines caller eligibility with the member status filter.
+`DirectoryQuery.equipment(data, lookup, eligible)` applies eligibility and equipment status before
+resolving availability. Active totals exclude deleted records, while retained identities and loan
+history remain available for details and restoration. These query helpers do not change the stored schema.
 
 `MainWindow` passes the same query to the directory list and its summary before refreshing them.
 Both evaluate the query against current data, keeping displayed rows and matching counts consistent.
@@ -1476,6 +1510,11 @@ the record. Existing forward/reverse Tab cycling must continue to work.
    Automated transaction tests separately inject partial writes/failed atomic moves; do not simulate
    filesystem failures against a real user dataset.
 
+To verify return-date diagnostics, assign two disposable units on different days and return both on a
+date between their assignment dates. Expect the offending name, full UUID, attempted date and assignment
+date in the error, with neither loan closed and neither condition changed. A single-unit early return
+uses the same diagnostic. Assignment-day and today returns remain inclusive valid boundaries.
+
 ### Stored loan date validation
 
 In a disposable saved file, change each loan date field in turn to `0000-01-01`, `-0001-01-01`,
@@ -1484,6 +1523,13 @@ or `+10000-01-01`. Expect loading to report invalid data without rewriting that 
 new restriction relative to today's date.
 
 ### Saving data
+
+To check duplicate-property validation, use a disposable JAR folder and a backup of synthetic data.
+With Laplace closed, add a second `"loans": []` property to a valid saved root object. Launch the JAR
+and check the log for `Duplicate field 'loans'`. Do not enter commands after a loading error; close
+Laplace and verify the rejected file's bytes are unchanged. Restore the backup, then repeat with a
+second `returnedDate` property inside one loan. Removing the duplicate must allow the original
+members, equipment and open/completed loans to load and survive a save/reload.
 
 1. Command-log privacy: in a disposable folder, add/edit a synthetic member, search for their name,
    and submit a malformed command containing a synthetic phone/email. Inspect `addressbook.log.*`;
@@ -1614,3 +1660,39 @@ Use disposable records or the fresh bundled samples (their UUIDs share a prefix 
    data. Expected: errors with the previous view, selection, input for correction, data and history intact.
 5. Edit the last unit's group name/category and retry the old group pair. Expected: no matching group;
    the same unit prefix still resolves. Check Help, Tab and Ctrl+Space offer category/, name/ and short/.
+
+### Command-word aliases and casing
+
+`CommandWords.canonicalFamily` maps only `members` to `member` and `loan` to `loans`, using
+`Locale.ROOT` casing. Family parsers normalize only their action token; leaf parsers still receive
+unchanged parameter text. Top-level command words and appearance actions also ignore case. The same
+family vocabulary drives `CompletionService` and the Ctrl+Space `CommandCatalog`. Both offer canonical
+command words while preserving parameter text, prefix casing and existing Unicode whitespace behavior. Help describes the aliases; command examples remain canonical.
+
+Manual check: enter `LOAN LIST`, `Members View nus/A0123456X`, then a mixed-case `MEMBERS EDIT`
+with a mixed-case name. Verify the same navigation and case-preserved name as canonical commands.
+Try `equipments list`, `loan returns` and `MEMBERS ADD NAME/Camera`; expect the existing validation
+and canonical guidance. Tab after `LOAN LI` should suggest `list`; Tab after `Members` suggests `member`.
+Ctrl+Space after `MEM`, `members ` or `LOAN ` must also offer canonical commands without executing.
+Completing a field in `MEMBERS EDIT name/MiXeD Name ph` must retain the name exactly.
+No model, persistence, transaction or UML relationships change.
+
+### Batch loan validation diagnostics
+
+Assignment and return commands validate shared prerequisites first, then inspect every supplied unit
+without mutating the candidate. Each unit contributes its first blocking reason, including its UUID;
+return-date errors retain both dates and the unit name. Historical-availability checks run within
+that same per-unit validation path, so an overlap and another invalid unit appear together. `LoanBatchValidation` rejects before the model
+mutation: a sole error retains its original exception, while multiple errors produce an ordered summary
+and full details, retaining causes. The existing `ResultDisplay` Details/Copy actions expose long lists.
+Transaction, persistence and domain relationships are unchanged; no serialization or UML changes apply.
+
+Manual check in a disposable dataset: batch an available unit, a damaged unit and two nonexistent UUIDs.
+Expect three errors, including all invalid UUIDs, and no new loans. Assign the available unit separately,
+then return it alongside an unassigned unit and nonexistent UUID: both errors should appear, and the
+valid loan must remain open with its condition unchanged. Expand Details and copy the complete result.
+A future shared assignment/return date should instead report its shared date error alone.
+
+Historical batch regression: retain a completed loan for unit A, then assign A before its last return
+alongside damaged unit B. Expect both UUID-specific errors, unchanged memory/file bytes and no save.
+Retry A alone on its last return date: the same-day handoff succeeds and survives reload.

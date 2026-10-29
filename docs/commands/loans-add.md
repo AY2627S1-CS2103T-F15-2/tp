@@ -17,7 +17,8 @@ loans add uuid/UUID[,UUID...] nus/NUS_ID assigned/DATE expected/DATE
 ```
 
 All four parameters are required and may appear in any order. Family and subcommand names are
-lowercase and case-sensitive. Spaces and tabs separate parameters. Dates use `yyyy-MM-dd`,
+case-insensitive; `loan` aliases `loans`. Prefixes remain lowercase and case-sensitive.
+Spaces and tabs separate parameters. Dates use `yyyy-MM-dd`,
 for example `2026-10-13`; replace example dates with dates appropriate to your computer's local date.
 NUS IDs are case-insensitive and normalize to uppercase. Use the item's UUID, rather than a row
 number or equipment name, to distinguish identically named physical items.
@@ -50,3 +51,11 @@ conditions/dates and supplied-field error ordering. Loans presents open assignme
 
 Assignment refusal for an existing open loan names its current holder NUS ID, including when
 the requested new holder differs. The current loan is read before attempting any mutation.
+
+When several units fail validation, the result summarizes how many are invalid and lists each UUID's
+first blocking reason in input order. Open **Details** to expand the complete list or **Copy** to copy
+it. One invalid unit keeps its specific diagnostic. Shared member/date and syntax errors are reported
+before unit checks when they prevent meaningful validation. No loans or conditions change on rejection.
+
+Historical-availability failures are included in the same per-unit diagnostic list: a new assignment
+cannot precede that unit's last recorded return. Assignment on the return date remains valid.

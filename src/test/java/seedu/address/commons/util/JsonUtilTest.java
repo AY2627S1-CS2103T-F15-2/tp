@@ -54,21 +54,26 @@ public class JsonUtilTest {
         Path data = directory.resolve("data.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(data);
         String valid = "{\"persons\":[],\"members\":[],\"equipment\":[],\"loans\":[]}";
-        for (String input : List.of("null", "{", valid + " THIS IS NOT JSON", valid + "]",
-                valid + " {}", valid + " null")) {
-            Files.writeString(data, input);
-            byte[] before = Files.readAllBytes(data);
-            assertThrows(DataLoadingException.class, storage::readAddressBook, input);
-            assertArrayEquals(before, Files.readAllBytes(data));
+        for (String marker : List.of("", "\ufeff")) {
+            for (String input : List.of("null", "{", valid + " THIS IS NOT JSON", valid + "]",
+                    valid + " {}", valid + " null")) {
+                Files.writeString(data, marker + input);
+                byte[] before = Files.readAllBytes(data);
+                assertThrows(DataLoadingException.class, storage::readAddressBook, marker + input);
+                assertArrayEquals(before, Files.readAllBytes(data));
+            }
+            Files.writeString(data, marker + valid + " \t\r\n");
+            assertEquals(0, storage.readAddressBook().orElseThrow().getMemberList().size());
         }
-        Files.writeString(data, valid + " \t\r\n");
-        assertEquals(0, storage.readAddressBook().orElseThrow().getMemberList().size());
     }
 
     @Test
     public void fromJsonString_trailingRoot_rejectsButAllowsWhitespace() throws Exception {
-        assertThrows(IOException.class, () -> JsonUtil.fromJsonString("{} {}", SerializableTestClass.class));
-        JsonUtil.fromJsonString("{} \t\n", SerializableTestClass.class);
+        for (String marker : List.of("", "\ufeff")) {
+            assertThrows(IOException.class, () ->
+                    JsonUtil.fromJsonString(marker + "{} {}", SerializableTestClass.class));
+            JsonUtil.fromJsonString(marker + "{} \t\n", SerializableTestClass.class);
+        }
     }
 
     //TODO: @Test jsonUtil_writeThenReadObjectToJson_correctObject()
