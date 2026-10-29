@@ -401,6 +401,10 @@ retaining collection position, reserved identities and historical loan reference
 list remains observable and includes deleted records. The model also retains user preferences through
 `UserPrefs` and `ReadOnlyUserPrefs`.
 
+`UniqueMemberList.setMembers` snapshots its input before validating identities and replacing contents.
+Passing its own observable view or a backed sublist therefore preserves the intended records instead
+of clearing the replacement. Invalid replacements leave the existing collection unchanged.
+
 `Name.forMember` collapses whitespace and applies Unicode NFC before validating new names. Validation
 allows letters followed by combining marks, spaces, straight/curly apostrophes, hyphens and periods,
 requires at least one letter, and limits the result to 100 Unicode code points. Add and edit share this
@@ -449,6 +453,13 @@ after a load rejection; never replace a populated array with an empty one merely
 
 Classes used by multiple components are in the `seedu.address.commons` package.
 
+`JsonUtil.fromJsonString` accepts one leading U+FEFF editor marker before Jackson parsing. It does
+not trim or remove markers elsewhere. Manual check: save synthetic data, prepend UTF-8 bytes EF BB BF,
+load it, then save/reload and compare all records. The saved file should have no leading marker. A
+second marker or one inside object syntax must still fail; U+FEFF within a string remains data.
+BOM handling wraps the strict single-root parser: repeat null-root and trailing-content rejection
+checks both with and without a leading marker, verifying unchanged source bytes.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Implementation**
@@ -472,6 +483,11 @@ the read-only command path. `data` is the `ReadOnlyAddressBook` returned by the 
 containing `DisplayRequest.members(query)` or `DisplayRequest.equipment(query)`. Since the command
 is read-only, `LogicManager` returns without creating a transaction snapshot or saving data.
 Equipment queries additionally use `Model.getAvailability` to derive availability from current state.
+
+`DirectoryQuery.members(data, eligible)` combines caller eligibility with the member status filter.
+`DirectoryQuery.equipment(data, lookup, eligible)` applies eligibility and equipment status before
+resolving availability. Active totals exclude deleted records, while retained identities and loan
+history remain available for details and restoration. These query helpers do not change the stored schema.
 
 `MainWindow` passes the same query to the directory list and its summary before refreshing them.
 Both evaluate the query against current data, keeping displayed rows and matching counts consistent.
@@ -1451,6 +1467,11 @@ the record. Existing forward/reverse Tab cycling must continue to work.
    Automated transaction tests separately inject partial writes/failed atomic moves; do not simulate
    filesystem failures against a real user dataset.
 
+To verify return-date diagnostics, assign two disposable units on different days and return both on a
+date between their assignment dates. Expect the offending name, full UUID, attempted date and assignment
+date in the error, with neither loan closed and neither condition changed. A single-unit early return
+uses the same diagnostic. Assignment-day and today returns remain inclusive valid boundaries.
+
 ### Stored loan date validation
 
 In a disposable saved file, change each loan date field in turn to `0000-01-01`, `-0001-01-01`,
@@ -1571,3 +1592,24 @@ Use temporary data. Do not test against a real inventory.
    prepared without execution. Type `und`/`red` and test both Tab and Ctrl+Space; expect `undo`/`redo`
    suggestions. Press Enter separately to invoke history. Both no-argument utilities must have
    command-name highlighting in previews.
+
+
+### Batch loan validation diagnostics
+
+Assignment and return commands validate shared prerequisites first, then inspect every supplied unit
+without mutating the candidate. Each unit contributes its first blocking reason, including its UUID;
+return-date errors retain both dates and the unit name. Historical-availability checks run within
+that same per-unit validation path, so an overlap and another invalid unit appear together. `LoanBatchValidation` rejects before the model
+mutation: a sole error retains its original exception, while multiple errors produce an ordered summary
+and full details, retaining causes. The existing `ResultDisplay` Details/Copy actions expose long lists.
+Transaction, persistence and domain relationships are unchanged; no serialization or UML changes apply.
+
+Manual check in a disposable dataset: batch an available unit, a damaged unit and two nonexistent UUIDs.
+Expect three errors, including all invalid UUIDs, and no new loans. Assign the available unit separately,
+then return it alongside an unassigned unit and nonexistent UUID: both errors should appear, and the
+valid loan must remain open with its condition unchanged. Expand Details and copy the complete result.
+A future shared assignment/return date should instead report its shared date error alone.
+
+Historical batch regression: retain a completed loan for unit A, then assign A before its last return
+alongside damaged unit B. Expect both UUID-specific errors, unchanged memory/file bytes and no save.
+Retry A alone on its last return date: the same-day handoff succeeds and survives reload.
