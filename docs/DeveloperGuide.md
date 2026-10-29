@@ -431,6 +431,13 @@ and shows selected structure; lifecycle behavior is explained in the text above.
 
 ### Storage component
 
+After successful conversion, storage compares recorded assignment/actual-return dates with its local
+clock and logs an actionable warning containing equipment UUID, member ID and recorded dates. It does
+not reject or rewrite records on this basis: a clock rollback can make previously valid history appear
+future-dated. Expected dates remain unrestricted relative to today. Manual check with disposable data:
+load a 2099 assignment/actual return, inspect the warning and unchanged file, then load a future expected
+return only and confirm no warning. The command date restrictions remain enforced.
+
 Record conversion and root-reference failures include a zero-based collection index plus stored NUS ID/
 UUID, even if that identity is invalid. Original checked/domain causes remain attached. Null records
 report their position with identity unavailable; date errors include the rejected text. Diagnostics

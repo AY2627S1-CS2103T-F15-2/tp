@@ -706,6 +706,11 @@ expected return must be on or after assignment. Expected return may be in the fu
 In `UUID[,UUID...]`, the brackets and ellipsis describe optional additional UUIDs; do not type them.
 Enter full UUIDs separated by commas, with one `uuid/` prefix for the entire list.
 
+When saved history contains an assignment or actual return after the computer's date, loading retains
+the records and writes an identity-specific warning to `addressbook.log.*` beside the JAR. Verify the
+computer date first; if the saved dates are wrong, preserve the original and recover a backup. This
+warning accommodates clock rollback. It does not relax command date bounds or flag future expected returns.
+
 Example, assuming these identities exist and the assignment date is not in the future:
 
 ```text
