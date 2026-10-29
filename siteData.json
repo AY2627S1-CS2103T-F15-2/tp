@@ -83,6 +83,7 @@
         "saving-data": "Saving data",
         "loan-filter-visibility": "Loan filter visibility",
         "undo-and-redo": "Undo and redo",
+        "command-word-aliases-and-casing": "Command-word aliases and casing",
         "batch-loan-validation-diagnostics": "Batch loan validation diagnostics"
       },
       "headingKeywords": {}

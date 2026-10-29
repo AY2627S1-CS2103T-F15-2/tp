@@ -28,7 +28,8 @@ existing single-UUID form continues to work.</p> <p>Integration status: the assi
 <code class="hljs inline no-lang">LoansCommandParser</code>. A single assignment opens equipment details; a batch opens the Loans tab.
 Keith&#39;s application-shell integration and final GUI acceptance are tracked separately in issue #75.</p> <p>Format:</p> <pre><code class="hljs text"><span>loans add uuid/UUID[,UUID...] nus/NUS_ID assigned/DATE expected/DATE
 </span></code></pre><p>All four parameters are required and may appear in any order. Family and subcommand names are
-lowercase and case-sensitive. Spaces and tabs separate parameters. Dates use <code class="hljs inline no-lang">yyyy-MM-dd</code>,
+case-insensitive; <code class="hljs inline no-lang">loan</code> aliases <code class="hljs inline no-lang">loans</code>. Prefixes remain lowercase and case-sensitive.
+Spaces and tabs separate parameters. Dates use <code class="hljs inline no-lang">yyyy-MM-dd</code>,
 for example <code class="hljs inline no-lang">2026-10-13</code>; replace example dates with dates appropriate to your computer&#39;s local date.
 NUS IDs are case-insensitive and normalize to uppercase. Use the item&#39;s UUID, rather than a row
 number or equipment name, to distinguish identically named physical items.</p> <p>Example for the available sample camera and Jamie Lim:</p> <pre><code class="hljs text"><span>loans add uuid/550e8400-e29b-41d4-a716-446655440000 nus/A0234567R assigned/2026-10-13 expected/2026-10-20
@@ -49,7 +50,7 @@ the requested new holder differs. The current loan is read before attempting any
 first blocking reason in input order. Open <strong>Details</strong> to expand the complete list or <strong>Copy</strong> to copy
 it. One invalid unit keeps its specific diagnostic. Shared member/date and syntax errors are reported
 before unit checks when they prevent meaningful validation. No loans or conditions change on rejection.</p> <p>Historical-availability failures are included in the same per-unit diagnostic list: a new assignment
-cannot precede that unit&#39;s last recorded return. Assignment on the return date remains valid.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Thu, 29 Oct 2026, 15:51:12 GMT+8]</small></div></footer><!--]--></div>
+cannot precede that unit&#39;s last recorded return. Assignment on the return date remains valid.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Thu, 29 Oct 2026, 16:01:39 GMT+8]</small></div></footer><!--]--></div>
 </body><script src="/tp/markbind/js/bootstrap-utility.min.js"></script>
 <script src="/tp/markbind/js/polyfill.min.js"></script>
 <script src="/tp/markbind/js/vue.global.prod.min.js"></script>

@@ -30,7 +30,8 @@ the Loans panel and member/equipment details.</p> <p>Integration status: the ret
 <code class="hljs inline no-lang">LoansCommandParser</code>. A single return opens equipment details; a batch opens the Loans tab.
 Keith&#39;s application-shell integration and final GUI acceptance are tracked separately in issue #75.</p> <p>Format:</p> <pre><code class="hljs text"><span>loans return uuid/UUID[,UUID...] returned/DATE [condition/CONDITION]
 </span></code></pre><p>Both parameters are required and may appear in either order. Family and subcommand names are
-lowercase and case-sensitive. Spaces and tabs separate parameters. Use the equipment UUID and
+case-insensitive; <code class="hljs inline no-lang">loan</code> aliases <code class="hljs inline no-lang">loans</code>. Prefixes remain lowercase and case-sensitive.
+Spaces and tabs separate parameters. Use the equipment UUID and
 a real calendar date in <code class="hljs inline no-lang">yyyy-MM-dd</code> format.</p> <p>Example for the sample camera already held by Alex Tan:</p> <pre><code class="hljs text"><span>loans return uuid/550e8400-e29b-41d4-a716-446655440001 returned/2026-10-13
 </span></code></pre><p>Replace the example date with the actual return date, which must be on or after the loan&#39;s
 assignment date and no later than your computer&#39;s local date. Same-day, early and late returns
@@ -50,7 +51,7 @@ A save failure preserves the open loan, holder, availability and prior saved byt
 <a href="/tp/commands/MvpFields.html">MVP fields and failure behavior</a>.</p> <p>When several units fail validation, the result summarizes how many are invalid and lists each UUID&#39;s
 first blocking reason in input order. Open <strong>Details</strong> to expand the complete list or <strong>Copy</strong> to copy
 it. One invalid unit keeps its specific diagnostic. Shared member/date and syntax errors are reported
-before unit checks when they prevent meaningful validation. No loans or conditions change on rejection.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Thu, 29 Oct 2026, 15:51:12 GMT+8]</small></div></footer><!--]--></div>
+before unit checks when they prevent meaningful validation. No loans or conditions change on rejection.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Thu, 29 Oct 2026, 16:01:39 GMT+8]</small></div></footer><!--]--></div>
 </body><script src="/tp/markbind/js/bootstrap-utility.min.js"></script>
 <script src="/tp/markbind/js/polyfill.min.js"></script>
 <script src="/tp/markbind/js/vue.global.prod.min.js"></script>
