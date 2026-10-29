@@ -401,6 +401,10 @@ retaining collection position, reserved identities and historical loan reference
 list remains observable and includes deleted records. The model also retains user preferences through
 `UserPrefs` and `ReadOnlyUserPrefs`.
 
+`UniqueMemberList.setMembers` snapshots its input before validating identities and replacing contents.
+Passing its own observable view or a backed sublist therefore preserves the intended records instead
+of clearing the replacement. Invalid replacements leave the existing collection unchanged.
+
 `Name.forMember` collapses whitespace and applies Unicode NFC before validating new names. Validation
 allows letters followed by combining marks, spaces, straight/curly apostrophes, hyphens and periods,
 requires at least one letter, and limits the result to 100 Unicode code points. Add and edit share this
