@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import seedu.address.commons.util.ToStringBuilder;
@@ -26,6 +27,8 @@ import seedu.address.model.member.exceptions.MemberNotFoundException;
 
 /** Assigns available physical units to a member in one transaction. */
 public class LoanAddCommand extends Command {
+    public static final String MESSAGE_HISTORICAL_OVERLAP =
+            "Equipment %s cannot be assigned before its last recorded return date %s.";
     public static final String COMMAND_WORD = "loans add";
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Parameters: uuid/UUID[,UUID...] nus/NUS_ID assigned/DATE expected/DATE\n"
@@ -107,29 +110,20 @@ public class LoanAddCommand extends Command {
         }
         List<Loan> newLoans = new ArrayList<>();
         List<String> names = new ArrayList<>();
+        List<String> details = new ArrayList<>();
+        List<CommandException> errors = new ArrayList<>();
         for (UUID uuid : equipmentUuids) {
-            Equipment equipment;
             try {
-                equipment = model.findEquipment(uuid).orElseThrow(EquipmentNotFoundException::new);
-            } catch (EquipmentNotFoundException exception) {
-                throw new CommandException(String.format(MESSAGE_EQUIPMENT_NOT_FOUND, uuid), exception);
+                Equipment equipment = validateEquipment(model, uuid);
+                newLoans.add(new Loan(uuid, memberNusId, assignedDate, expectedReturnDate,
+                        null, equipment.getCondition(), null));
+                names.add(equipment.getName());
+                details.add(equipment.getName() + " (" + uuid + ")");
+            } catch (CommandException exception) {
+                errors.add(exception);
             }
-            if (equipment.isDeleted()) {
-                throw new CommandException(String.format(MESSAGE_DELETED, uuid));
-            }
-            Availability availability = model.getAvailability(uuid);
-            if (availability == Availability.ASSIGNED) {
-                String holder = model.findOpenLoan(uuid).map(loan -> loan.getMemberNusId().toString())
-                        .orElse("an unknown member");
-                throw new CommandException(String.format(MESSAGE_ASSIGNED, uuid, holder));
-            }
-            if (availability != Availability.AVAILABLE) {
-                throw new CommandException(String.format(MESSAGE_UNAVAILABLE, uuid, equipment.getCondition()));
-            }
-            newLoans.add(new Loan(uuid, memberNusId, assignedDate, expectedReturnDate,
-                    null, equipment.getCondition(), null));
-            names.add(equipment.getName());
         }
+        LoanBatchValidation.rejectInvalidUnits(errors, equipmentUuids.size());
         try {
             if (newLoans.size() == 1) {
                 model.addLoan(newLoans.get(0));
@@ -151,8 +145,51 @@ public class LoanAddCommand extends Command {
         String identifiers = equipmentUuids.size() == 1 ? first.toString() : equipmentUuids.toString();
         DisplayRequest display = equipmentUuids.size() == 1
                 ? DisplayRequest.equipmentDetails(first) : DisplayRequest.loans();
-        return new CommandResult(String.format(MESSAGE_SUCCESS, name, identifiers, member.getName(), memberNusId,
-                assignedDate, expectedReturnDate), display);
+        String feedback = equipmentUuids.size() == 1
+                ? String.format(MESSAGE_SUCCESS, name, identifiers, member.getName(), memberNusId,
+                        assignedDate, expectedReturnDate)
+                : "Assigned " + equipmentUuids.size() + " units to " + member.getName() + " (" + memberNusId
+                        + ") on " + assignedDate + "; expected return: " + expectedReturnDate + ".\n"
+                        + String.join("\n", details);
+        return new CommandResult(feedback, display);
+    }
+
+    /**
+     * Rejects new open intervals preceding a retained actual return, allowing same-day handoffs.
+     */
+    private void requireHistoricalAvailability(Model model, UUID uuid) throws CommandException {
+        Optional<LocalDate> lastReturn = model.getAddressBook().getLoanList().stream()
+                .filter(loan -> loan.getEquipmentUuid().equals(uuid))
+                .flatMap(loan -> loan.getReturnedDate().stream()).max(LocalDate::compareTo);
+        if (lastReturn.isPresent() && assignedDate.isBefore(lastReturn.orElseThrow())) {
+            throw new CommandException(String.format(MESSAGE_HISTORICAL_OVERLAP, uuid, lastReturn.orElseThrow()));
+        }
+    }
+
+    /**
+     * Returns an assignable unit or identifies its first blocking validation rule.
+     */
+    private Equipment validateEquipment(Model model, UUID uuid) throws CommandException {
+        Equipment equipment;
+        try {
+            equipment = model.findEquipment(uuid).orElseThrow(EquipmentNotFoundException::new);
+        } catch (EquipmentNotFoundException exception) {
+            throw new CommandException(String.format(MESSAGE_EQUIPMENT_NOT_FOUND, uuid), exception);
+        }
+        if (equipment.isDeleted()) {
+            throw new CommandException(String.format(MESSAGE_DELETED, uuid));
+        }
+        Availability availability = model.getAvailability(uuid);
+        if (availability == Availability.ASSIGNED) {
+            String holder = model.findOpenLoan(uuid).map(loan -> loan.getMemberNusId().toString())
+                    .orElse("an unknown member");
+            throw new CommandException(String.format(MESSAGE_ASSIGNED, uuid, holder));
+        }
+        if (availability != Availability.AVAILABLE) {
+            throw new CommandException(String.format(MESSAGE_UNAVAILABLE, uuid, equipment.getCondition()));
+        }
+        requireHistoricalAvailability(model, uuid);
+        return equipment;
     }
 
     @Override

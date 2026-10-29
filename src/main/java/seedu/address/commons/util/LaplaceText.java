@@ -12,6 +12,13 @@ public final class LaplaceText {
         return requireNonNull(value).replaceAll("(?U)\\s+", " ").strip();
     }
 
+    /**
+     * Removes surrounding Unicode whitespace without changing whitespace inside values.
+     */
+    public static String stripWhitespace(String value) {
+        return requireNonNull(value).replaceAll("(?U)^\\s+|\\s+$", "");
+    }
+
     /** Counts Unicode code points rather than UTF-16 units, rejecting invisible/control and invalid characters. */
     public static boolean isPrintable(String value, int minimum, int maximum) {
         int length = value.codePointCount(0, value.length());
@@ -20,5 +27,15 @@ public final class LaplaceText {
             return !Character.isISOControl(codePoint) && type != Character.FORMAT
                     && type != Character.SURROGATE && type != Character.UNASSIGNED;
         });
+    }
+
+    /**
+     * Returns a locale-independent simple case key without context-sensitive whole-string lowercasing.
+     * Uppercasing first maps both Greek lowercase sigma forms to the same code point.
+     */
+    public static String caseKey(String value) {
+        return requireNonNull(value).codePoints()
+                .map(codePoint -> Character.toLowerCase(Character.toUpperCase(codePoint)))
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
     }
 }

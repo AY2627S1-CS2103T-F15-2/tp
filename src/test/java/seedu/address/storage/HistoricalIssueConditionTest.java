@@ -9,10 +9,8 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
 import seedu.address.model.equipment.Condition;
 
@@ -28,8 +26,7 @@ public class HistoricalIssueConditionTest {
         Path file = directory.resolve("history.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
         for (Condition condition : Condition.values()) {
-            ObjectNode json = (ObjectNode) new ObjectMapper().readTree(JsonUtil.toJsonString(
-                    new JsonSerializableAddressBook(RootPersistenceTestData.fullAddressBook())));
+            ObjectNode json = RootPersistenceTestData.jsonSnapshot();
             ObjectNode loan = (ObjectNode) json.get("loans").get(0);
             loan.put("issueCondition", condition.name());
             Files.writeString(file, json.toString());
@@ -47,8 +44,7 @@ public class HistoricalIssueConditionTest {
         Path file = directory.resolve("legacy.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
         for (String value : new String[] {"", ",\"issueCondition\":null"}) {
-            ObjectNode json = (ObjectNode) new ObjectMapper().readTree(JsonUtil.toJsonString(
-                    new JsonSerializableAddressBook(RootPersistenceTestData.fullAddressBook())));
+            ObjectNode json = RootPersistenceTestData.jsonSnapshot();
             ObjectNode loan = (ObjectNode) json.get("loans").get(0);
             loan.remove("issueCondition");
             String record = loan.toString();

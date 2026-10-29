@@ -78,7 +78,7 @@ public class MemberEquipmentRoutingIntegrationTest {
         assertDisplay("member view\tnus/a0000001x", DisplayRequest.memberDetails(FIRST_MEMBER));
         assertDisplay("equipment view uuid/" + first, DisplayRequest.equipmentDetails(first));
         assertEquals(beforeReads, model.getAddressBook());
-        assertEquals(7, storage.saves);
+        assertEquals(4, storage.saves);
         assertReloadMatches();
         assertDisplay("member delete nus/a0000001x", DisplayRequest.members());
         assertDisplay("equipment delete\tuuid/" + first, DisplayRequest.equipment());
@@ -87,7 +87,7 @@ public class MemberEquipmentRoutingIntegrationTest {
         assertTrue(model.findEquipment(first).orElseThrow().isDeleted());
         assertTrue(model.hasEquipment(second));
         assertEquals(1, model.getAddressBook().getPersonList().size());
-        assertEquals(9, storage.saves);
+        assertEquals(6, storage.saves);
         assertReloadMatches();
     }
 
