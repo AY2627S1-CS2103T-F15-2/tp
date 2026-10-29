@@ -88,7 +88,8 @@
         "command-only-equipment-browsing": "Command-only equipment browsing",
         "atomic-save-access-policy": "Atomic-save access policy",
         "command-word-aliases-and-casing": "Command-word aliases and casing",
-        "batch-loan-validation-diagnostics": "Batch loan validation diagnostics"
+        "batch-loan-validation-diagnostics": "Batch loan validation diagnostics",
+        "command-based-loans-filters": "Command-based Loans filters"
       },
       "headingKeywords": {}
     },
@@ -291,7 +292,7 @@
     {
       "src": "commands/loans-list.md",
       "headings": {
-        "open-the-loans-tab": "Open the Loans tab"
+        "open-and-filter-the-loans-tab": "Open and filter the Loans tab"
       },
       "headingKeywords": {}
     },
