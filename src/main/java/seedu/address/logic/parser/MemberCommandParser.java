@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 
+import seedu.address.commons.util.LaplaceText;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -16,7 +17,7 @@ public class MemberCommandParser implements Parser<Command> {
     @Override
     public Command parse(String userInput) throws ParseException {
         requireNonNull(userInput);
-        String[] parts = userInput.stripLeading().split("\\s+", 2);
+        String[] parts = LaplaceText.stripWhitespace(userInput).split("(?U)\\s+", 2);
         String subcommand = parts[0];
         String arguments = parts.length == 2 ? parts[1] : "";
         return switch (subcommand) {

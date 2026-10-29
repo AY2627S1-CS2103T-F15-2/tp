@@ -1,5 +1,7 @@
 @startuml
 !include style.puml
+skinparam ParticipantFontColor #111111
+skinparam ParticipantBackgroundColor LOGIC_COLOR_T1
 title Read-only loan filter command
 actor User
 participant ":MainWindow" as UI

@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.ColumnConstraints;
@@ -21,6 +22,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.equipment.Condition;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.loan.Loan;
 import seedu.address.model.member.Member;
@@ -156,7 +158,7 @@ public class LoanPanel extends UiPart<Region> {
         if (loans.isEmpty()) {
             section.getChildren().add(label(emptyMessage, "loan-empty"));
         } else {
-            loans.forEach(loan -> section.getChildren().add(createLoanRow(loan)));
+            LoanRows.show(section, loans, this::createLoanRow);
         }
     }
 
@@ -206,9 +208,23 @@ public class LoanPanel extends UiPart<Region> {
         });
         VBox row = new VBox(6, status, identities);
         if (loan.isOpen()) {
+            ComboBox<String> observedCondition = new ComboBox<>();
+            observedCondition.getItems().add("Not recorded");
+            for (Condition condition : Condition.values()) {
+                observedCondition.getItems().add(condition.name());
+            }
+            observedCondition.setValue("Not recorded");
+            observedCondition.getStyleClass().add("loan-return-condition");
+            observedCondition.setAccessibleText("Observed return condition; Not recorded leaves it unknown");
+            row.getChildren().addAll(label("Observed return condition (optional)", "laplace-muted"), observedCondition);
             Button prepareReturn = new Button("Prepare return command");
-            prepareReturn.setOnAction(event -> onUse.accept("loans return uuid/" + loan.getEquipmentUuid()
-                    + " returned/" + LocalDate.now(clock)));
+            prepareReturn.setOnAction(event -> {
+                String observation = observedCondition.getValue();
+                String parameter = observation == null || observation.equals("Not recorded")
+                        ? "" : " condition/" + observation;
+                onUse.accept("loans return uuid/" + loan.getEquipmentUuid()
+                        + " returned/" + LocalDate.now(clock) + parameter);
+            });
             row.getChildren().add(prepareReturn);
         } else {
             memberColumn.getChildren().addAll(

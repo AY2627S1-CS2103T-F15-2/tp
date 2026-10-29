@@ -1,7 +1,8 @@
 package seedu.address.logic.parser;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
@@ -19,7 +20,6 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DisplayRequest;
-import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
@@ -71,13 +71,17 @@ public class LaplaceListIntegrationTest {
     @Test
     public void execute_listRoutes_preservesAndReloadsAllDataThroughRealStorage() throws Exception {
         AddressBook before = new AddressBook(model.getAddressBook());
+        storage.saveAddressBook(before);
+        byte[] persisted = Files.readAllBytes(storage.getAddressBookFilePath());
+        storage.saves = 0;
         assertEquals(new CommandResult("Listed 2 active members.", DisplayRequest.members(DirectoryQuery.all())),
                 logic.execute("member\tlist \t"));
         assertEquals(new CommandResult("Listed 2 equipment items.", DisplayRequest.equipment(DirectoryQuery.all())),
                 logic.execute("equipment list"));
         assertEquals(new CommandResult("Showing current loans.", DisplayRequest.loans()),
                 logic.execute("loans list"));
-        assertEquals(1, storage.saves);
+        assertEquals(0, storage.saves);
+        assertArrayEquals(persisted, Files.readAllBytes(storage.getAddressBookFilePath()));
         assertEquals(before, model.getAddressBook());
         assertTrue(model.getFilteredPersonList().isEmpty());
         ModelManager reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
@@ -120,7 +124,7 @@ public class LaplaceListIntegrationTest {
     }
 
     @Test
-    public void execute_saveFailure_preservesCauseAndUnchangedReadOnlyState() {
+    public void execute_storageUnavailable_listsAllDirectoriesWithoutSaving() throws Exception {
         IOException cause = new IOException("test save failure");
         StorageManager failingStorage = new StorageManager(
                 new JsonAddressBookStorage(temporaryFolder.resolve("failed.json")),
@@ -131,18 +135,13 @@ public class LaplaceListIntegrationTest {
             }
         };
         LogicManager failingLogic = new LogicManager(model, failingStorage);
-        org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> failingLogic.execute("equipment list"));
         AddressBook before = new AddressBook(model.getAddressBook());
-        for (String query : List.of("loans list", "loans list nus/a000 uuid/0000", "loans reset")) {
-            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> failingLogic.execute(query));
+        for (String route : new String[] {"member list", "equipment list", "loans list",
+            "loans list nus/a000 uuid/0000", "loans reset"}) {
+            failingLogic.execute(route);
             assertEquals(before, model.getAddressBook());
         }
-        for (String route : new String[] {"member list"}) {
-            CommandException failure = org.junit.jupiter.api.Assertions.assertThrows(CommandException.class, () ->
-                    failingLogic.execute(route));
-            assertSame(cause, failure.getCause());
-            assertEquals(before, model.getAddressBook());
-        }
+        assertFalse(Files.exists(failingStorage.getAddressBookFilePath()));
     }
 
     /** Counts calls while retaining the real JSON persistence implementation. */
