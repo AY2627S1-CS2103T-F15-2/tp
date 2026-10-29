@@ -1598,6 +1598,20 @@ public class MainWindowShellTest {
     }
 
     @Test
+    public void layout_narrowDirectoriesAtRequiredScaling_keepsViewportsReadable() {
+        FxTestUtil.runAndWait(() -> {
+            int[] size = usableScene(1280, 720, 1.5);
+            SplitPane directory = (SplitPane) node("directory");
+            for (String command : List.of("member list", "equipment list")) {
+                submit(command);
+                render("narrow-" + command, size[0], size[1]);
+                directory.setDividerPositions(0);
+                assertUsable("narrow-" + command, size);
+            }
+        });
+    }
+
+    @Test
     public void settings_savedDimensionsAndOffscreenLocation_clampsToUsableScreen() {
         FxTestUtil.runAndWait(() -> {
             window.dispose();
@@ -2102,7 +2116,8 @@ public class MainWindowShellTest {
                 assertTrue(scene.contains(bounds), context + ": scrolling region outside scene " + child);
                 Node viewport = child.lookup(child instanceof ScrollPane ? ".viewport" : ".clipped-container");
                 assertTrue(viewport.getBoundsInLocal().getHeight() >= MIN_VIEWPORT_HEIGHT,
-                        context + ": viewport too short for " + child);
+                        context + ": viewport height " + viewport.getBoundsInLocal().getHeight()
+                                + " is below " + MIN_VIEWPORT_HEIGHT + " for " + child);
                 continue;
             }
             if (child instanceof Control && !(child instanceof Label)) {
