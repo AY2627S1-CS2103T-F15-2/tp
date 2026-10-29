@@ -24,6 +24,7 @@ jobs:
   build:
     needs: package
     strategy:
+      fail-fast: false
       matrix:
         platform: [ubuntu-latest, macos-15-intel, macos-15, windows-latest]
     runs-on: ${{ matrix.platform }}
@@ -65,11 +66,12 @@ jobs:
 
       - name: Build and check with Gradle
         if: runner.os != 'Linux'
-        run: ./gradlew check coverage -PpackagedJar=build/candidate/Laplace.jar
+        shell: bash
+        run: ./gradlew check coverage "-PpackagedJar=build/candidate/Laplace.jar"
 
       - name: Build and check with Gradle in a graphical session
         if: runner.os == 'Linux'
-        run: xvfb-run --auto-servernum ./gradlew check coverage -PpackagedJar=build/candidate/Laplace.jar
+        run: xvfb-run --auto-servernum ./gradlew check coverage "-PpackagedJar=build/candidate/Laplace.jar"
 
       - name: Upload coverage reports to Codecov
         if: runner.os == 'Linux'
