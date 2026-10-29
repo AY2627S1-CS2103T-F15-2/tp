@@ -1,6 +1,6 @@
 Universal packaging verification — 29 October 2026 (Singapore)
 
-Candidate: build/libs/Laplace.jar
+Initial combined-workspace candidate: build/libs/Laplace.jar
 Size: 13,254,680 bytes
 SHA-256: ccf3090ee71abddfce7ccaede3c483dec8c1f656e4edc026419f053843021b34
 Base: team master 298343d7; local changes for issues #257 and #262.
@@ -21,7 +21,7 @@ PASS: separate packaged keyboard/save/reload session using a jlink runtime
       Transcript: build/reports/laplace/plain-java25-session.txt.
 PASS: a deliberately damaged candidate missing libglass.dylib is rejected.
 
-Documentation: lockfile installation and MarkBind build pass. Existing DG
+Initial combined-workspace documentation: lockfile installation and MarkBind build pass. Existing DG
 diagram-link warnings remain; generated diagrams are present. Introductory
 task and shared field table reviewed in-browser at 1280x720 and 800x900.
 No broken internal UG anchors or horizontal page overflow at 800px.
@@ -36,3 +36,17 @@ NOT VERIFIED: normal Main entry-point exit/restart with a standalone plain
 Before release, complete the Developer Guide's Single-JAR distribution
 checklist on the same candidate. These local checks do not establish full
 cross-platform acceptance or course approval.
+
+PR #262 branch verification after merging team master cfcc395d:
+Candidate: build/libs/Laplace.jar
+Size: 13,256,875 bytes
+SHA-256: 3142fd981d27c4926959a635b62984116b6fff8ede12a502a4db65b45902aa41
+Same macOS arm64 and Java 25.0.3 environment as above.
+PASS: ./gradlew check coverage shadowJar (990 tests, no failures/errors/skips).
+PASS: packaged probe with a fresh native cache and limited standard modules.
+PASS: separate packaged keyboard/save/reload session on the jlink Java 25
+      runtime containing no JavaFX modules.
+      Transcript: build/reports/laplace/plain-java25-pr262-session.txt.
+PASS: MarkBind documentation build; existing diagram-link warnings remain.
+The onboarding edits belong to the separate issue #257 branch. Outstanding
+platform and standalone entry-point coverage listed above still applies.
