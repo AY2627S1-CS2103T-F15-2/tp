@@ -1,101 +1,43 @@
 @startuml
-!pragma layout smetana
-top to bottom direction
-skinparam shadowing false
-skinparam defaultFontName Arial
+!include style.puml
 skinparam classAttributeIconSize 0
-skinparam linetype ortho
-hide circle
-
-class LoanAddCommandParser <<parser>> {
-  + parse(args: String): LoanAddCommand
+skinparam ArrowFontStyle plain
+skinparam classBackgroundColor MODEL_COLOR_T1
+skinparam classFontColor black
+skinparam classStereotypeFontColor black
+show members
+package Model {
+  interface Model <<interface>> {
+    + addLoans(loans: List<Loan>): void
+    + returnLoans(uuids: List<UUID>, date: LocalDate, condition: Condition): void
+  }
+  class ModelManager
+  class AddressBook {
+    + addLoans(loans: List<Loan>): void
+    + returnLoans(uuids: List<UUID>, date: LocalDate, condition: Condition): void
+  }
+  class UniqueLoanList {
+    + findOpenLoan(uuid: UUID): Optional<Loan>
+  }
+  class Loan {
+    + isOpen(): boolean
+    + withReturnedDate(date: LocalDate, condition: Condition): Loan
+  }
 }
-class LoanReturnCommandParser <<parser>> {
-  + parse(args: String): LoanReturnCommand
-}
-class LoanUuidListParser <<parser>> {
-  {static} ~ parse(value: String): List<UUID>
-}
-
-class LoanAddCommand <<command>> {
-  - equipmentUuids: List<UUID>
-  - memberNusId: NusId
-  {static} + batch(uuids, memberId, assigned, expected): LoanAddCommand
-  + isTransactional(): boolean
-  + execute(model: Model): CommandResult
-}
-class LoanReturnCommand <<command>> {
-  - equipmentUuids: List<UUID>
-  - returnCondition: Condition
-  + isTransactional(): boolean
-  + execute(model: Model): CommandResult
-}
-
-interface Model <<model>> {
-  + addLoans(loans: List<Loan>): void
-  + returnLoans(uuids: List<UUID>, date: LocalDate, condition: Condition): void
-  + getLoanList(): ObservableList<Loan>
-}
-class ModelManager <<model>> {
-  + addLoans(loans: List<Loan>): void
-  + returnLoans(uuids: List<UUID>, date: LocalDate, condition: Condition): void
-}
-class AddressBook <<model>> {
-  + addLoans(loans: List<Loan>): void
-  + returnLoans(uuids: List<UUID>, date: LocalDate, condition: Condition): void
-  + findOpenLoan(uuid: UUID): Optional<Loan>
-}
-class UniqueLoanList <<model>> {
-  + add(loan: Loan): void
-  + findOpenLoan(uuid: UUID): Optional<Loan>
-  + closeLoan(uuid: UUID, date: LocalDate): void
-  + setLoans(loans: List<Loan>): void
-}
-class Loan <<model>> {
-  - equipmentUuid: UUID
-  - memberNusId: NusId
-  - assignedDate: LocalDate
-  - expectedReturnDate: LocalDate
-  - returnedDate: LocalDate
-  - issueCondition: Condition
-  - returnCondition: Condition
-  + isOpen(): boolean
-  + withReturnedDate(date: LocalDate, condition: Condition): Loan
-}
-
-class JsonAdaptedLoan <<storage>> {
-  - issueCondition: String
-  - returnCondition: String
-  + toModelType(): Loan
-}
-class LoanPanel <<view>> {
-  + refresh(): void
-  - matchesFilters(loan: Loan): boolean
-}
-class LoanHistoryContent <<view>> {
-  {static} ~ add(content: VBox, loans: List<Loan>): void
-}
-
-LoanAddCommandParser ..> LoanAddCommand : creates
-LoanReturnCommandParser ..> LoanReturnCommand : creates
-LoanAddCommandParser ..> LoanUuidListParser : parses UUIDs
-LoanReturnCommandParser ..> LoanUuidListParser : parses UUIDs
-LoanAddCommand ..> Model : executes against
-LoanReturnCommand ..> Model : executes against
 ModelManager ..|> Model
-ModelManager "1" --> "1" AddressBook : delegates to
+ModelManager "0..1" --> "1" AddressBook : delegates to
 AddressBook "1" --> "0..1" UniqueLoanList : loans
-UniqueLoanList "0..*" --> "0..*" Loan : retains
-JsonAdaptedLoan ..> Loan : converts
-LoanPanel ..> Loan : displays
-LoanHistoryContent ..> Loan : displays
-
-note right of AddressBook
-  Batch changes use a candidate root.
-  Validation failure publishes nothing.
-end note
+UniqueLoanList "0..*" --> "0..*" Loan : retained values
 note bottom of Loan
-  UUID and NUS ID identify the unit and member.
-  Null returnedDate means the loan is open.
+  Immutable loan values retain the equipment UUID,
+  member NUS ID, dates and condition observations.
+  Null returnedDate denotes an open loan.
 end note
+legend bottom
+  Loan-facing Model APIs only; unrelated members are omitted.
+  UniqueLoanList is created lazily; an absent list reads as empty.
+  Immutable Loan values may be shared across root snapshots.
+  AddressBook validates references and batches before replacing records.
+  Command parsing, JSON conversion and UI filtering are separate views.
+endlegend
 @enduml
