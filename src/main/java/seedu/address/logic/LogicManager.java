@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.commons.util.LaplaceText;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -80,7 +81,7 @@ public class LogicManager implements Logic {
      * Returns the command family and action without retaining parameter values in history descriptions.
      */
     static String describeAction(String commandText) {
-        String[] words = commandText.trim().split("\\s+", 3);
+        String[] words = LaplaceText.normalize(commandText).split(" ", 3);
         return words.length > 1 ? words[0] + " " + words[1] : words[0];
     }
 
