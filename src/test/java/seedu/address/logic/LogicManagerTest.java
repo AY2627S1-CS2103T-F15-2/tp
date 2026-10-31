@@ -79,6 +79,34 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void describeAction_supportedWhitespace_omitsParameters() {
+        for (String separator : new String[] {" ", "\t", "\u2003", "\u00a0", " \u2003\t\u00a0"}) {
+            assertEquals("member edit", LogicManager.describeAction(separator + "member" + separator
+                    + "edit" + separator + "nus/A0123456X" + separator + "name/SpaceProbe" + separator));
+            assertEquals("undo", LogicManager.describeAction(separator + "undo" + separator));
+        }
+    }
+
+    @Test
+    public void execute_unicodeSeparatedEdit_undoRedoRestoresAndPersistsWithConciseFeedback() throws Exception {
+        Member original = new Member(new NusId("A0123456X"), AMY.getName(), AMY.getPhone(), AMY.getEmail());
+        model.addMember(original);
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        for (String separator : new String[] {" ", "\u2003", "\u00a0"}) {
+            logic.execute(String.join(separator, "member", "edit", "nus/A0123456X", "name/SpaceProbe"));
+            assertEquals("SpaceProbe", model.getMemberList().getFirst().getName().fullName);
+            assertEquals(model.getAddressBook(), saved.readAddressBook().orElseThrow());
+            assertEquals("Undid: member edit.", logic.execute("undo").getFeedbackToUser());
+            assertEquals(original, model.getMemberList().getFirst());
+            assertEquals(model.getAddressBook(), saved.readAddressBook().orElseThrow());
+            assertEquals("Redid: member edit.", logic.execute("redo").getFeedbackToUser());
+            assertEquals("SpaceProbe", model.getMemberList().getFirst().getName().fullName);
+            assertEquals(model.getAddressBook(), saved.readAddressBook().orElseThrow());
+            logic.execute("undo");
+        }
+    }
+
+    @Test
     public void execute_validCommand_success() throws Exception {
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
         assertCommandSuccess("member list", String.format(MemberListCommand.MESSAGE_SUCCESS, 0), expectedModel);
