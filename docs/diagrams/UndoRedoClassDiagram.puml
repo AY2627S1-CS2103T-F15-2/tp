@@ -22,10 +22,10 @@ class RedoCommand <<logic>> {
   + recordsHistory(): boolean
   + execute(model: Model): CommandResult
 }
-interface Storage <<storage>> {
+class Storage <<interface>> {
   + saveAddressBook(data): void
 }
-interface Model <<model>> {
+class Model <<interface>> {
   + createTransactionSnapshot(): Model
   + recordAddressBook(previous, description): void
   + publishTransaction(candidate): void
