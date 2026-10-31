@@ -14,7 +14,6 @@
 ## **Acknowledgements**
 
 * Laplace evolves the course-provided [AddressBook-Level3 starter](https://github.com/NUS-CS2103-AY2627-S1/tp).
-* The root structure in `ModelClassDiagram` adapts the team's [RootModelClass diagram](https://github.com/wtvlol/tp/blob/3a8b932635cee7489a277fa6c895d32c1894e84e/docs/diagrams/RootModelClass.puml).
 * Universal macOS packaging follows Apple's [Mach-O fat binary format](https://github.com/apple-oss-distributions/cctools/blob/main/include/mach-o/fat.h); the wrapper preserves the upstream JavaFX library slices.
 * Command text uses [IBM Plex Mono](https://github.com/IBM/plex) 2.004, copyright IBM Corp., under the SIL Open Font License. The faces and license are in `src/main/resources/fonts`.
 
