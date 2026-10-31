@@ -23,7 +23,8 @@ class JsonAdaptedMember {
     private final String name;
     private final String phone;
     private final String email;
-    private boolean deleted;
+    @JsonProperty("deleted")
+    private boolean isDeleted;
 
     /**
      * Constructs an adapter from raw JSON fields, deferring validation until conversion.
@@ -46,7 +47,7 @@ class JsonAdaptedMember {
         name = source.getName().fullName;
         phone = source.getPhone().value;
         email = source.getEmail().value;
-        deleted = source.isDeleted();
+        isDeleted = source.isDeleted();
     }
 
     /**
@@ -57,7 +58,7 @@ class JsonAdaptedMember {
         if (value == null || !value.isBoolean()) {
             throw new IllegalArgumentException("Member deleted must be a boolean.");
         }
-        deleted = value.booleanValue();
+        isDeleted = value.booleanValue();
     }
 
     /**
@@ -109,6 +110,6 @@ class JsonAdaptedMember {
         }
         Email modelEmail = Email.fromStoredMember(email);
 
-        return new Member(modelNusId, modelName, modelPhone, modelEmail, deleted);
+        return new Member(modelNusId, modelName, modelPhone, modelEmail, isDeleted);
     }
 }
