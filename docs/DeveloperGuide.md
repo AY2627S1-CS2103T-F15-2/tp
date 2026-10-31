@@ -14,6 +14,7 @@
 ## **Acknowledgements**
 
 * Laplace evolves the course-provided [AddressBook-Level3 starter](https://github.com/NUS-CS2103-AY2627-S1/tp).
+* The root structure in `ModelClassDiagram` adapts the team's [RootModelClass diagram](https://github.com/wtvlol/tp/blob/3a8b932635cee7489a277fa6c895d32c1894e84e/docs/diagrams/RootModelClass.puml).
 * Universal macOS packaging follows Apple's [Mach-O fat binary format](https://github.com/apple-oss-distributions/cctools/blob/main/include/mach-o/fat.h); the wrapper preserves the upstream JavaFX library slices.
 * Command text uses [IBM Plex Mono](https://github.com/IBM/plex) 2.004, copyright IBM Corp., under the SIL Open Font License. The faces and license are in `src/main/resources/fonts`.
 
@@ -68,99 +69,50 @@ For example, the `Logic` component defines its API in `Logic.java` and implement
 
 The sections below give more details of each component.
 
-### Contribution diagram index
+### Diagram notation
 
-The following diagrams document the current implementation of Keith's (`wtvlol`) merged contributions.
-The PR and authored-commit links establish provenance; supporting classes and subsequent changes by
-other contributors are included only where needed to explain the current design. Merging a teammate's
-work into a feature branch does not make that work part of Keith's authorship.
-
-| Contribution | Authored implementation commits | Current diagrams |
-| --- | --- | --- |
-| [#62: Root integration](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/62) | [147ba902](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/147ba902), [392b4840](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/392b4840) | RootModelClass, RootModelResetSequence |
-| [#81: UI foundation](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/81) | [65b39d4a](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/65b39d4a) | UiFoundationClass, FxTestExecutionSequence |
-| [#86: Identity deletion](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/86) | [4112c4de](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/4112c4de), [118fed7b](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/118fed7b) | IdentityDeletionClass, IdentityDeletionSequence |
-| [#93: Application shell](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/93) | [2e99cc08](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/2e99cc08), [a69514c9](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/a69514c9), [4ce33358](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/4ce33358) | ShellNavigationClass, ShellCommandSequence, ShellExecuteSequence, ShellRefreshSequence |
-| [#97: MVP completion](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/97) | [992988ad](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/992988ad), [2906d380](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/2906d380), [a2c349b9](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/a2c349b9), [37ec27aa](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/37ec27aa) | MutationTransactionClass, MutationTransactionSequence, MvpValidationActivity; deletion feedback and shell navigation above |
-| [#112: Tab completion](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/112) | [59beff9b](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/59beff9b), [c4517ac0](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/c4517ac0), [2df80011](https://github.com/AY2627S1-CS2103T-F15-2/tp/commit/2df80011) | AutocompleteClass, AutocompleteSequence |
-
-Names in the last column refer to the `.puml` sources in `docs/diagrams`, embedded in the relevant
-sections below. This set excludes deployment-permission PR #89, profile/photo PRs #22/#27/#35/#36,
-and unmerged remark/data-transfer PRs #7/#107. It does not replace other contributors' member, equipment,
-loan, directory-search or undo/redo diagrams.
-
+Diagrams show selected APIs and relationships rather than every implementation detail.
+Class diagrams distinguish stored references from dashed call, creation and parameter dependencies.
+Sequence diagrams describe the stated scenario; legends identify abbreviated calls and omitted objects.
 Notation follows the [course UML reference sheet](https://nus-cs2103-ay2627-s1.github.io/website/admin/uml-reference-sheet.html).
-Class diagrams show selected APIs and stored-reference roles; dashed dependencies describe calls,
-creation or parameter use. Sequence messages abbreviate Java calls where noted. Notes distinguish
-omitted infrastructure and current behavior from the original PR's historical behavior.
+The corresponding editable sources are in `docs/diagrams`.
 
 ### UI component
 
-Open-loan rows expose an optional observed-condition selector. The default is Not recorded; only an
-explicit choice adds `condition/` to the prepared return. This is the current return shortcut shared
-by navigation from member/equipment details through Loans. For manual verification, choose DAMAGED,
-prepare and inspect the input without submitting; reset to Not recorded and verify omission. Submit
-separate disposable examples and check recorded condition versus intentional unknown history.
+The UI displays member, equipment and loan records and accepts commands from the operator.
+`MainWindow` connects the command box, feedback, navigation and read-only record panels.
+Commands reach Logic through one execution callback; panels do not mutate domain records directly.
 
-The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/ui/Ui.java)
+The **API** is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/ui/Ui.java).
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-`MainWindow` owns navigation, the command pipeline and coalesced model refresh subscriptions. Its
-member/equipment directories, summaries, details and loan panel are read-only views. Most panels extend
-`UiPart` and load FXML; `EquipmentGroupPanel` and `CommandPreview` compose JavaFX controls directly.
-The inherited person panel remains an internal compatibility component, outside the supported navigation.
+`CommandResult` contains a typed `DisplayRequest` telling the shell which view to show.
+A directory request with a query applies those criteria; one without a query preserves the current
+criteria. Member selection uses NUS ID and equipment selection uses UUID, so a refresh can recover
+the selected record after an edit. Model notifications are combined into one queued refresh.
+Programmatic selection and refresh do not submit another command.
 
-`DisplayRequest` carries typed navigation intent. Directory requests with no query preserve criteria;
-explicit list commands reset them. `InventoryGroups.Group` derives normalized category/name groups and
-keeps separate retained and matching unit lists. Groups are never persisted. Selecting a group does not
-choose an arbitrary UUID; physical-unit selection routes `equipment view uuid/...` through the same
-pipeline as typed input. Refreshes preserve exact identities and recompute group membership after edits,
-loans, deletion and restoration. The group panel shares one scrolling surface with unit details.
+Equipment groups are derived from category and name. Each group retains its distinct physical units;
+selecting a group does not select an arbitrary unit. Member and equipment details link to related
+records through identity-based commands. `LoanPanel` shows open and completed loans and shares its
+identity filters with command-based navigation.
 
-`CommandPreview` copies exact plain text or prepares `CommandBox`; neither action executes a mutation.
-The command catalog supplies examples and explicit completion. Input history is bounded to 100 session
-entries. `ResultDisplay` keeps full feedback behind a compact, expandable view. Related-record links use
-identity-based commands. `LoanPanel` filters open and completed loans by stable member/equipment IDs.
-Only open loans derive urgency from expected return dates and an injectable clock, and offer a return
-shortcut for explicit review and submission. Completed rows show recorded conditions and return dates.
-Loan urgency refreshes on commands, data changes and opening the Loans tab; there is no background
-midnight timer.
+`CommandPreview` copies text or prepares the command box for review; execution requires Enter.
+Open-loan rows can prepare a return with an optional observed condition. `ResultDisplay` presents a
+compact summary with Details and Copy actions for long feedback. Help and Tab completion reuse the
+command vocabulary. The inherited person panel is outside supported navigation.
 
-`LaplaceTheme.css` defines shared looked-up colors; component styles refer to these tokens. A `dark` style
-class changes the palette for both windows, including table selection, feedback and command previews.
-`ModeCommand` updates only `GuiSettings.darkMode` and returns an unchanged display request. Its
-`isReadOnly()` flag means no **domain-record** persistence; preferences are saved by the existing shutdown
-path. Missing `darkMode` in earlier preference JSON defaults to false. Window geometry and appearance are
-preserved together; equipment/member/loan schemas are unchanged.
-
-Tests exercise actual FXML/CSS on the shared JavaFX thread, command/storage routing, identity preservation,
-filter scope, date boundaries, clipboard text, theme changes and preference compatibility. UI snapshots
-are written under `build/reports/laplace` for visual review. Shell tests also render the logical scene a
-maximized window keeps at 1920×1080 (100%/125% scaling) and 1280×720 (150%), after the taskbar and title
-bar. Controls outside scrolling content must stay whole and inside the scene; each scrolling region must
-keep a readable viewport. A narrow-directory regression also checks both lists at 853×400 logical
-pixels with the divider at its minimum position. Compact header and keyboard-hint padding preserves
-space for rows when the hint wraps. Both windows are limited to their screen's visual bounds, so the end of a
-scrolling region never lies below the screen. Command text and identifiers use bundled
-IBM Plex Mono. `LaplaceFonts` registers those faces once and applies interface fonts by full face name:
-Helvetica/Helvetica Bold, then Arial/Arial Bold or Segoe UI/Segoe UI Bold when unavailable, with a system
-fallback. This bypasses JavaFX family/weight substitution that can clip bold interface glyphs.
-The helper owns interface sizes and weights; CSS owns colors, layout and monospace text. It observes
-new children, graphics and label style changes so dynamic rows and headings receive the same treatment.
-Tests check resolved face names as well as rendered layouts; checking only a Bold style is insufficient.
-
-The feedback heading displays only Last result; the box carries neutral/success/error color, and assistive
-text contains the status plus the entire message. Ready command previews say `Press Enter to execute (ready)`;
-templates say `Replace uppercase placeholders (template)`. Copy and Use command still never execute a command.
+`LaplaceTheme.css` and `LaplaceFonts` centralize appearance. `mode dark` and `mode light` update GUI
+preferences without changing records or undo history; appearance and window geometry are saved on
+shutdown. Layout tests cover the supported screen sizes, while font tests check the resolved faces.
+See [Testing](Testing.md) for the shared JavaFX runtime and execution instructions.
 
 #### Shell execution and refresh
 
-The following focused views complement `UiClassDiagram`: they explain the command callback and typed
-navigation boundary introduced in #93, rather than claiming ownership of every panel shown. The current
-equipment group panel, query criteria, previews and loan-history presentation are supporting context
-from later work. `MainWindow` supplies a method-reference implementation of `CommandExecutor`; it does
-not implement that interface itself.
+The following views expand the command callback, typed navigation and refresh boundary.
+`MainWindow` supplies a method-reference implementation of `CommandExecutor`; it does not implement
+that interface itself.
 
 <puml src="diagrams/ShellNavigationClass.puml" alt="Shell ownership, command callback and typed display requests" />
 
@@ -193,9 +145,8 @@ exists and can remain visible in details.
 
 #### UI foundation and JavaFX test execution
 
-PR #81 supplied shared theme resources, `FxTestUtil` and the matching JavaFX test runtime. The production
-classes below show how the current UI loads those resources; `UiPart`, JavaFX and later font handling
-are context, not new classes attributed to that PR. Stylesheets are resources, not domain objects.
+The UI loads FXML, themes and fonts from bundled resources. The diagram also shows `FxTestUtil`,
+which runs UI tests on the shared JavaFX thread. Stylesheets are resources, not domain objects.
 
 <puml src="diagrams/UiFoundationClass.puml" alt="UI resource loading and shared JavaFX test-support dependencies" />
 
@@ -220,16 +171,8 @@ utilities. Help and explicit Ctrl+Space completion use `CommandCatalog`. Search 
 Batch loan completion replaces only the active UUID entry and excludes neighboring identities.
 `CompletionController` owns cycling and resets after input, caret, focus or model changes. Enter retains
 the ordinary parser and transactional command path. Tests compare family completion to parser routes,
-exercise real JavaFX events, and load production classes from the packaged JAR. Gradle enforces 100%
-instruction, line and branch coverage for the feature, including its UI wiring. See [Testing](Testing.md).
-
-The controller is created by `CommandBox` and retained through the field's registered callbacks, rather
-than a `CommandBox` member field. Static vocabulary uses no model reads. Record-value suggestions
-read the live root synchronously on the FX thread and observe member/equipment collection changes
-with weak listeners. These notifications invalidate record candidates after mutations, undo/redo
-and reload; rejected mutations and pure queries leave those collections unchanged. Cached record
-cycles check root identity cheaply, while unchanged candidates cycle without copying or rescanning
-records. Loan history and transaction validation are outside suggestion reads.
+exercise real JavaFX events, and load production classes from the packaged JAR.
+See [Testing](Testing.md) for execution and coverage checks.
 
 <puml src="diagrams/AutocompleteClass.puml" alt="Tab completion service, controller and read-only data dependencies" />
 
@@ -289,11 +232,19 @@ The inherited parser diagram below documents the remaining AB3 classes, not the 
 <puml src="diagrams/ParserClasses.puml" width="600"/>
 
 ### Model component
+
+The Model owns the in-memory records and their consistency rules. A `Member` is identified by NUS ID,
+an `Equipment` unit by UUID, and a `Loan` connects those identities. `AddressBook` checks relationships
+across records; the individual collections enforce identity uniqueness. `ModelManager` exposes stable
+observable lists, derives availability and coordinates transaction snapshots and undo/redo history.
+Views observe these lists without owning or editing their backing collections. Mutations run on an
+isolated copy, called a candidate. Publication updates live records only after that copy is saved.
+
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/model/Model.java)
 
 #### Root collection integration
 
-PR #62 integrated the four root collections and stable observable views. Each root has independent
+`AddressBook` contains four record collections and exposes stable observable views. Each root has independent
 collection containers; immutable entity values may be shared across snapshots. Domain containers are
 created lazily, while callers always receive stable unmodifiable lists. Cross-record loan integrity
 belongs to `AddressBook`, rather than the UI or serialization layer.
@@ -307,9 +258,9 @@ replacement backing views. Only then does it replace live fields and views, defe
 the complete dataset is visible. The current package overload also runs a model-state callback before
 notifications so observers see matching records and session history. It runs that callback even when
 records are unchanged, without list notifications; the public overload supplies a no-op callback.
-This coordination is supporting behavior from #137/#138. Validation failure leaves records/history
-intact. The callback must not throw or mutate records; the diagram does not promise recovery from
-arbitrary exceptions thrown by publication actions or external observer callbacks.
+Validation failure leaves records and history intact. The callback must not throw or mutate records;
+the diagram does not promise recovery from arbitrary exceptions thrown by publication actions or
+external observer callbacks.
 
 <puml src="diagrams/RootModelResetSequence.puml" alt="Root reset validation and complete publication before notification" />
 
@@ -344,14 +295,12 @@ Availability, holders and inventory totals are derived, never persisted as indep
 Historical `issueCondition` accepts all defined condition values, including DAMAGED/UNDER_REPAIR.
 This preserves observations of events outside current command rules; it is not a new-assignment
 eligibility check. Missing/null observations remain unknown. Loading and save/reload must preserve
-these values independently of current equipment condition. For a manual check, use disposable data
-and load one loan for each condition, then save/reload and compare its identity and observation.
+these values independently of current equipment condition.
 
 `Condition.fromText` defines the shared command/storage normalization: strip surrounding whitespace,
 match the four enum names without case, and reject unknown or blank text. Equipment still requires a
 condition; missing/null loan observations remain unknown. Adapters always serialize uppercase enum
-names. Manual check: load disposable equipment/loan fields with `good`, ` FaIr ` and `under_repair`,
-then save/reload; verify uppercase output, stable identities and rejection of `BROKEN`.
+names. See the [manual design contract checks](#design-contract-checks) for normalization scenarios.
 
 `AvailabilityCalculator` only accepts condition and open-loan state; the deletion check belongs to
 `ModelManager`. `AddressBook` validates cross-record references, while `UniqueLoanList` enforces the
@@ -363,8 +312,7 @@ replacement. These responsibilities keep editing and restoration from breaking l
 Successful batch feedback carries a compact count/date summary followed by per-unit identity lines.
 Return lines capture each borrower before mutation, avoiding attribution to only the first borrower.
 The existing ResultDisplay Details/Copy controls expose long results without expanding the compact
-feedback area by default. Manual check: return two disposable units from different borrowers, expand
-and copy feedback, and verify every name/full UUID/NUS ID against the retained loans.
+feedback area by default.
 
 The following class diagram traces batch assignment and return from their parsers to the
 model, JSON adapter and history views. It lists the loan-facing methods relevant to this
@@ -394,13 +342,6 @@ matching records and immutable history. The callback also runs when records are 
 The collection-to-entity multiplicities allow immutable values to be shared across independent
 transaction snapshots. Loan identities resolve through the root; `Loan` does not store direct
 `Member` or `Equipment` references. Equipment, loan and legacy Person details are omitted to keep this diagram focused.
-
-The root structure and stable-view portion adapts Keith's
-[PR #141 diagram](https://github.com/wtvlol/tp/blob/3a8b932635cee7489a277fa6c895d32c1894e84e/docs/diagrams/RootModelClass.puml).
-Member editing and retained deletion come from [#114](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/114)
-and [#116](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/116); record/history publication is supporting
-behavior from [#137](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/137)
-and [#138](https://github.com/AY2627S1-CS2103T-F15-2/tp/pull/138).
 
 `Member` is immutable and contains its NUS ID, name, phone, email and a `deleted` boolean. The existing
 four-field constructor creates an active member; the five-field constructor accepts deletion state.
@@ -434,25 +375,11 @@ and shows selected structure; lifecycle behavior is explained in the text above.
 
 ### Storage component
 
-After successful conversion, storage compares recorded assignment/actual-return dates with its local
-clock and logs an actionable warning containing equipment UUID, member ID and recorded dates. It does
-not reject or rewrite records on this basis: a clock rollback can make previously valid history appear
-future-dated. Expected dates remain unrestricted relative to today. Manual check with disposable data:
-load a 2099 assignment/actual return, inspect the warning and unchanged file, then load a future expected
-return only and confirm no warning. The command date restrictions remain enforced.
-
-Record conversion and root-reference failures include a zero-based collection index plus stored NUS ID/
-UUID, even if that identity is invalid. Original checked/domain causes remain attached. Null records
-report their position with identity unavailable; date errors include the rejected text. Diagnostics
-avoid echoing contact details. For manual checks, use disposable copies with an invalid loan date,
-missing reference, duplicate identity and invalid condition; verify context and unchanged source bytes.
-
-The supported unversioned schema treats omitted/null `members`, `equipment` and `loans` as empty.
-Retain both forms for legacy compatibility; saves canonicalize them to `[]` without touching populated
-collections. No migration or warning distinguishes null from absence in this schema. Missing member/
-equipment `deleted` flags still mean active; explicit null flags remain invalid. For manual verification,
-load a legacy persons-only file with each collection omitted, null and empty, save/reload, and compare
-the retained persons. Use only disposable data.
+Storage loads records and preferences from local JSON and saves changes without exposing partial files.
+`StorageManager` delegates to one JSON storage class for each file. Adapters convert stored text into
+immutable domain values, and the root validates references before a loaded dataset is accepted.
+Record mutations save an isolated candidate before the live Model is updated. Invalid loads and failed
+saves preserve the existing data file.
 
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
@@ -479,26 +406,19 @@ adapter collections; value fields and conversion methods are omitted.
 The legacy `persons` collection remains required: absent and explicit null are rejected; empty and
 populated arrays are accepted and round-trip. Keep this existing contract until a versioned migration
 can distinguish omission safely. Removing legacy command routes does not authorize dropping stored
-persons. `JsonSerializableAddressBookTest` covers missing/null rejection and older files;
-`JsonAddressBookStorageTest` covers current all-collection and legacy persons save/reload. To verify
-manually, use separate disposable copies with absent/null/empty/populated arrays and preserve originals
-after a load rejection; never replace a populated array with an empty one merely to make loading pass.
+persons. Compatibility and diagnostics are expanded under
+[Loading and compatibility](#loading-and-compatibility); disposable-file scenarios are in the
+[manual design contract checks](#design-contract-checks).
 
 ### Common classes
 
-Classes used by multiple components are in the `seedu.address.commons` package.
+The `seedu.address.commons` package supplies shared configuration, logging, JSON and text utilities.
+Keeping these services outside the four main components lets them apply consistent parsing and
+diagnostics without depending on UI controls or domain commands.
 
-`JsonUtil` enables Jackson's strict duplicate-property detection for JSON reads, including data and
-preferences. Repeated names in one object fail parsing before model conversion, even when their values
-are identical; the same field names in separate records remain valid. The checked loading exception
-retains the parser's duplicate-field name and location. Reading a rejected file does not rewrite it.
-
-`JsonUtil.fromJsonString` accepts one leading U+FEFF editor marker before Jackson parsing. It does
-not trim or remove markers elsewhere. Manual check: save synthetic data, prepend UTF-8 bytes EF BB BF,
-load it, then save/reload and compare all records. The saved file should have no leading marker. A
-second marker or one inside object syntax must still fail; U+FEFF within a string remains data.
-BOM handling wraps the strict single-root parser: repeat null-root and trailing-content rejection
-checks both with and without a leading marker, verifying unchanged source bytes.
+Shared text utilities normalize new command input while stored legacy values keep their spelling.
+JSON utilities reject ambiguous input, including repeated properties, before domain conversion.
+See [Loading and compatibility](#loading-and-compatibility) for the detailed boundary.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -582,10 +502,10 @@ A renamed group can disappear, while full UUID references remain stable.
 
 ### Identity-based deletion
 
-The #86 leaf parsers require one normalized NUS ID or UUID and construct commands that resolve the
+The member/equipment deletion leaf parsers require one normalized NUS ID or UUID and construct commands that resolve the
 stored entity. The root enforces the open-loan constraint. Member failures report the held-item count;
 equipment failures report the current holder. Successful feedback uses the stored name and identity.
-The #97 follow-up captures that context before mutation and preserves original domain failure causes.
+Commands capture that context before mutation and preserve original domain failure causes.
 
 <puml src="diagrams/IdentityDeletionClass.puml" alt="Member and equipment deletion parsers, commands and model boundary" />
 
@@ -593,8 +513,7 @@ The #97 follow-up captures that context before mutation and preserves original d
 
 This member example runs on the isolated candidate supplied by `LogicManager`. Equipment differences
 are noted below the sequence. Successful command execution still requires the transaction's atomic save
-before the live root changes. Current soft deletion retains details and closed loans; it supersedes the
-permanent deletion and related-history cleanup in the original #62/#86 implementation.
+before the live root changes. Soft deletion retains details and closed loans.
 
 <puml src="diagrams/IdentityDeletionSequence.puml" alt="Identity lookup, deletion guards and contextual member feedback" />
 
@@ -602,12 +521,12 @@ permanent deletion and related-history cleanup in the original #62/#86 implement
 
 ### Domain mutation transactions
 
-PR #97 introduced the transaction boundary used by current Laplace mutations. Commands explicitly opt
+Laplace mutations use an explicit transaction boundary. Commands opt
 in with `isTransactional()`. `LogicManager` executes on independent candidate containers, saves the
 candidate atomically, then calls `publishTransaction` to publish records and matching session history
 through the existing observable root. Commands marked `isReadOnly()` return before recording or saving.
 This contract does not turn remaining legacy commands into transactional mutations automatically.
-The history steps are supporting context from #137/#138; see [Undo/redo](#undo-redo-feature).
+See [Undo/redo](#undo-redo-feature) for session history behavior.
 
 <puml src="diagrams/MutationTransactionClass.puml" alt="Domain transaction and atomic storage class relationships" />
 
@@ -625,18 +544,16 @@ matching history before record observers run.
 
 [Open full-size diagram](diagrams/MutationTransactionSequence.png)
 
-The next activity uses equipment creation to connect #97's input normalization, reading-order validation
-and bounded UUID retries to the current batch-add implementation. Batch counts and reserving every UUID
-before insertion are later supporting behavior. Other parsers reuse the same argument-validation
+The next activity connects equipment input normalization, reading-order validation, bounded UUID
+retries and reservation of every batch UUID before insertion. Other parsers reuse the same argument-validation
 boundary; exact field rules remain in the command documentation and User Guide.
 
 <puml src="diagrams/MvpValidationActivity.puml" alt="Equipment input validation and bounded UUID reservation activity" />
 
 [Open full-size diagram](diagrams/MvpValidationActivity.png)
 
-The original #97 presentation hid completed loans. Current loan panels and entity details show retained
-completed history; see [Loan workflow and history](#loan-workflow-and-history). The shell diagrams above
-show the current navigation boundary without reinstating that historical presentation policy.
+Loan panels and entity details show retained completed history; see
+[Loan workflow and history](#loan-workflow-and-history).
 
 ### Adding multiple physical equipment units
 
@@ -892,6 +809,42 @@ Shell tests exercise the real command box, preserved filters, missing details, l
 `ModelManagerTest` checks history availability inside synchronous collection listeners, unchanged-record
 history transitions, and rollback when replacement records are invalid.
 
+### Completion execution details
+
+The controller is created by `CommandBox` and retained through the field's registered callbacks, rather
+than a `CommandBox` member field. Static vocabulary uses no model reads. Record-value suggestions
+read the live root synchronously on the FX thread and observe member/equipment collection changes
+with weak listeners. These notifications invalidate record candidates after mutations, undo/redo
+and reload; rejected mutations and pure queries leave those collections unchanged. Cached record
+cycles check root identity cheaply, while unchanged candidates cycle without copying or rescanning
+records. Loan history and transaction validation are outside suggestion reads.
+
+### Loading and compatibility
+
+After successful conversion, storage compares recorded assignment/actual-return dates with its local
+clock and logs an actionable warning containing equipment UUID, member ID and recorded dates. It does
+not reject or rewrite records on this basis: a clock rollback can make previously valid history appear
+future-dated. Expected dates remain unrestricted relative to today. Command date restrictions remain enforced.
+
+Record conversion and root-reference failures include a zero-based collection index plus stored NUS ID/
+UUID, even if that identity is invalid. Original checked/domain causes remain attached. Null records
+report their position with identity unavailable; date errors include the rejected text. Diagnostics
+avoid echoing contact details.
+
+The supported unversioned schema treats omitted/null `members`, `equipment` and `loans` as empty.
+Retain both forms for legacy compatibility; saves canonicalize them to `[]` without touching populated
+collections. No migration or warning distinguishes null from absence in this schema. Missing member/
+equipment `deleted` flags still mean active; explicit null flags remain invalid.
+
+`JsonUtil` enables Jackson's strict duplicate-property detection for JSON reads, including data and
+preferences. Repeated names in one object fail parsing before model conversion, even when their values
+are identical; the same field names in separate records remain valid. The checked loading exception
+retains the parser's duplicate-field name and location. Reading a rejected file does not rewrite it.
+
+`JsonUtil.fromJsonString` accepts one leading UTF-8 byte-order mark before parsing, without removing
+markers elsewhere. Strict root and duplicate-property validation still apply. Stored string contents
+are preserved. See the [manual design contract checks](#design-contract-checks) for disposable-file checks.
+
 ### \[Proposed\] Data archiving
 
 _{Explain here how the data archiving feature will be implemented}_
@@ -926,12 +879,14 @@ Laplace is a local, single-user desktop application for a CCA EXCO member to man
 
 **Requirements baseline and scope**:
 
-These requirements consolidate the [team's project notes](https://docs.google.com/document/d/1XzYR2IpGc__mSZEy5GKMmVK8809j3Ln42VA8_9-va48/edit?usp=sharing): Week 4 (direction), Week 5 (all 41 user stories), and Week 6 (MVP and feature specifications). They describe intended behavior, including requirements beyond the MVP; they do not claim that every feature is implemented. Where the earlier schema differs from the later Feature Specifications, the latter defines the MVP baseline.
+The requirements below distinguish the delivered product from proposals. A future story records an
+intended capability without committing the release to implementing it. Current commands and limitations
+are specified in the User Guide; implementation sections describe the shipped design.
 
 * **MVP baseline:** Add, list, view, and delete members and equipment; identify members by NUS ID and equipment by a generated UUID; issue and return individual items; show holdings and holders; validate input and preserve consistency on failure.
 * **Broader requirements:** Editing, archiving, recovery, import/export, search and filtering, summaries, batch operations, condition recording at handover, and histories remain documented below even if they are not delivered this semester. Undo/redo is implemented with a ten-change session limit.
 * **Deletion and retention:** Members and equipment are soft-deleted only without open loans. Records and closed history are retained; restoration has no time limit. This supersedes the original permanent-deletion and proposed 30-day recovery policies. The Loans tab and entity details show completed loan history.
-* **Single-user boundary:** Import/export supports the same user's local records and backups. The earlier idea of handing a snapshot to another EXCO member is retained as a considered use of export, but is excluded from the course product's regular operations. Shared datasets, concurrent users, and member self-service are outside scope.
+* **Single-user boundary:** Import/export supports the same user's local records and backups. Sharing an exported dataset with another operator is outside regular product operations. Shared datasets, concurrent users, and member self-service are outside scope.
 
 ### User stories
 
@@ -1342,22 +1297,13 @@ the same file is used on Windows, Linux (including graphical WSL), Intel macOS a
 Apple Silicon macOS. Java 25 for the user's processor remains the only required installation.
 No architecture property or alternate JAR filename is needed.
 
-The existing JavaFX 17.0.7 Windows and Linux libraries remain bundled. The macOS libraries have
-identical resource names across architectures, so ordinary JAR merging would discard one copy.
-`gradle/universal-javafx.gradle` instead wraps the original Intel and ARM libraries in a Mach-O
-universal binary, with each original slice preserved byte-for-byte and aligned to 16 KiB.
-macOS chooses the matching slice. Header generation uses Java APIs available on every build OS;
-Apple's `lipo` tool is not a build dependency.
-`verifyUniversalJar` checks both slices against the original dependencies, native resource uniqueness,
-Windows/Linux native presence and the 100 MB size limit, matching
-[Constraint-Single-File](https://nus-cs2103-ay2627-s1.github.io/website/admin/tp-constraints.html#constraint-single-file)
-requirements.
+The build bundles JavaFX libraries for each supported platform. For macOS, it preserves both Intel and
+Apple Silicon libraries in the same JAR. `verifyUniversalJar` checks the bundled libraries and the
+100 MB limit. Packaging details are in `gradle/universal-javafx.gradle`.
 
-The CI packaging job builds and uploads one candidate JAR. All four OS/architecture jobs download that
-same artifact and use `-PpackagedJar=build/candidate/Laplace.jar` for structural verification and the
-packaged keyboard probe. The probe uses only that JAR's production classes and native libraries;
-plain JDKs and `--limit-modules` prevent installed JavaFX from masking a missing native library.
-A Linux graphical session is provided by Xvfb. CI logs identify the environment and the JAR SHA-256.
+The configured CI matrix tests one shared candidate across the four OS/architecture combinations.
+The packaged probe uses that candidate's classes and libraries so installed JavaFX cannot hide missing
+files. See [DevOps](DevOps.md) for the workflow; verify completed runs before publication.
 
 Before publication, inspect the four jobs and repeat the initial-launch/normal-exit checks above with
 the same candidate in separate empty writable folders. Record Java version, OS, processor, SHA-256,
@@ -1725,10 +1671,8 @@ Manual check in a disposable folder: save a valid file, set mode `0644` on POSIX
 and confirm `0644` survives. Set `0444`, retry a change, and confirm rejection, unchanged records and
 unchanged file bytes. On Windows, repeat with a custom ACL and the read-only attribute. Restore write
 access, retry, and reload. `AtomicFileWriterTest` checks the platform's available attribute views,
-new-file policy, read-only rejection and injected metadata failure cleanup. `AtomicFileWriterAclTest`
-runs on real Windows ACL filesystems: its parent grants inherited Everyone read access, and it checks
-that existing/new-file candidates allow only owner reads before and after content writing. This test
-is explicitly platform-gated; host-independent policy tests also verify ordering and failure cleanup.
+new-file policy, read-only rejection and injected metadata failure cleanup. Windows ACL tests run
+only on Windows; their absence on another platform is not evidence of Windows verification.
 
 ### Command-word aliases and casing
 
@@ -1795,3 +1739,28 @@ that input/error remain while view and filters stay unchanged. Run `loans reset`
 and total history is visible. Repeat with the data file read-only: all valid filter commands still
 succeed with unchanged bytes and undo state. Existing hidden-batch-change tests also verify that
 mutation and refresh retain filters and that reset reveals every record.
+
+### Design contract checks
+
+Use isolated synthetic records and close Laplace before editing JSON. Keep the original fixture for
+comparison after each rejection.
+
+1. **Prepared return condition:** On an open loan, choose DAMAGED and prepare the return. Expect
+   `condition/DAMAGED` in the input. Choose Not recorded and prepare again; expect no condition field.
+   Submit separate examples and verify recorded versus unknown historical conditions.
+2. **Condition compatibility:** Load loans with each defined issue/return condition, including DAMAGED
+   and UNDER_REPAIR. Save and reload; identities and observations must remain unchanged. Repeat with
+   `good`, ` FaIr ` and `under_repair`; output must use uppercase names. `BROKEN` must reject loading.
+3. **Batch return feedback:** Return two units borrowed by different members. Expand and copy feedback;
+   each name, full UUID and NUS ID must match that unit's retained loan.
+4. **Clock rollback:** Load an assignment/actual return dated in 2099. Expect a warning in the log and
+   unchanged recorded dates. A future expected date alone must not produce this warning.
+5. **Conversion diagnostics:** In separate fixtures, insert an invalid loan date, missing reference,
+   duplicate identity and invalid condition. Expect a collection index and available record identity,
+   with rejected source bytes preserved.
+6. **Legacy collections:** Test `{"persons":[]}` with members/equipment/loans individually omitted,
+   null and empty. Each must load as an empty domain collection and save as an array. For `persons`,
+   absent/null must reject; empty/populated arrays must load and retain their records on save/reload.
+7. **Editor marker:** Prepend one UTF-8 byte-order mark (EF BB BF) to valid JSON. Expect successful
+   loading and the same records after saving/reloading. A second leading marker, a null root or
+   trailing content must reject without changing source bytes. A marker inside a string remains data.
