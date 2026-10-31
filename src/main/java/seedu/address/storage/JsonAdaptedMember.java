@@ -12,7 +12,9 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 
-/** Jackson-facing contract for a {@link Member}. */
+/**
+ * Converts between stored JSON fields and a {@link Member}.
+ */
 class JsonAdaptedMember {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Member's %s field is missing!";
@@ -23,7 +25,9 @@ class JsonAdaptedMember {
     private final String email;
     private boolean deleted;
 
-    /** Constructs an adapter from raw JSON fields. */
+    /**
+     * Constructs an adapter from raw JSON fields, deferring validation until conversion.
+     */
     @JsonCreator
     public JsonAdaptedMember(@JsonProperty("nusId") String nusId,
             @JsonProperty("name") String name, @JsonProperty("phone") String phone,
@@ -34,7 +38,9 @@ class JsonAdaptedMember {
         this.email = email;
     }
 
-    /** Constructs an adapter from a domain member. */
+    /**
+     * Constructs an adapter from a domain member, retaining their deletion state.
+     */
     public JsonAdaptedMember(Member source) {
         nusId = source.getNusId().value;
         name = source.getName().fullName;
@@ -61,7 +67,11 @@ class JsonAdaptedMember {
         return "NUS ID " + nusId;
     }
 
-    /** Converts this adapter to its domain type. */
+    /**
+     * Converts this adapter to a member, accepting valid legacy contact formats.
+     *
+     * @throws IllegalValueException If a required field is missing or invalid.
+     */
     public Member toModelType() throws IllegalValueException {
         if (nusId == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
