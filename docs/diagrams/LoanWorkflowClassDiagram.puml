@@ -7,7 +7,7 @@ skinparam classFontColor black
 skinparam classStereotypeFontColor black
 show members
 package Model {
-  interface Model <<interface>> {
+  interface "Model" as LoanModel <<interface>> {
     + addLoans(loans: List<Loan>): void
     + returnLoans(uuids: List<UUID>, date: LocalDate, condition: Condition): void
   }
@@ -24,7 +24,7 @@ package Model {
     + withReturnedDate(date: LocalDate, condition: Condition): Loan
   }
 }
-ModelManager ..|> Model
+ModelManager .up.|> LoanModel
 ModelManager "0..1" --> "1" AddressBook : delegates to
 AddressBook "1" --> "0..1" UniqueLoanList : loans
 UniqueLoanList "0..*" --> "0..*" Loan : retained values
