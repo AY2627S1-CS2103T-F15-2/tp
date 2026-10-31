@@ -34,6 +34,48 @@ public class DirectorySearchIntegrationTest {
     public Path directory;
 
     @Test
+    public void search_formattedPhoneAfterSaveReload_returnsTypedQueryWithoutSaving() throws Exception {
+        CountingStorage storage = new CountingStorage(directory);
+        LogicManager writer = new LogicManager(new ModelManager(), storage);
+        writer.execute("member add nus/A8400001X name/Anne-Marie Lim phone/+65 9123-4567"
+                + " email/anne-marie@example.com");
+        ModelManager model = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        LogicManager logic = new LogicManager(model, storage);
+        byte[] saved = Files.readAllBytes(storage.getAddressBookFilePath());
+        storage.fail = true;
+        for (String text : List.of("+6591234567", "+65 9123-4567", "9123\u20034567", "23-45")) {
+            var result = logic.execute("member search q/" + text);
+            assertEquals("Found 1 member.", result.getFeedbackToUser());
+            assertEquals(DisplayRequest.Type.MEMBERS, result.getDisplayRequest().getType());
+            assertEquals(model.getMemberList(), result.getDisplayRequest().getQuery().orElseThrow()
+                    .members(model.getAddressBook()));
+        }
+        assertEquals(1, storage.saves);
+        assertTrue(java.util.Arrays.equals(saved, Files.readAllBytes(storage.getAddressBookFilePath())));
+        assertEquals("+6591234567", model.getMemberList().getFirst().getPhone().value);
+    }
+
+    @Test
+    public void search_zeroOneAndManyResults_usesCorrectNounsWithoutSaving() throws Exception {
+        ModelManager model = SearchData.sample();
+        CountingStorage storage = new CountingStorage(directory);
+        LogicManager logic = new LogicManager(model, storage);
+        String[][] cases = {
+            {"member search q/missing", "Found 0 members."},
+            {"member search q/alex1@", "Found 1 member."},
+            {"member search", "Found 2 members."},
+            {"equipment search q/missing", "Found 0 equipment items."},
+            {"equipment search condition/damaged", "Found 1 equipment item."},
+            {"equipment search", "Found 3 equipment items."}
+        };
+        for (String[] testCase : cases) {
+            assertEquals(testCase[1], logic.execute(testCase[0]).getFeedbackToUser());
+        }
+        assertEquals(0, storage.saves);
+        assertFalse(Files.exists(storage.getAddressBookFilePath()));
+    }
+
+    @Test
     public void search_greekSigmaAfterSaveReload_preservesSpellingAndNeverSaves() throws Exception {
         ModelManager model = new ModelManager();
         CountingStorage storage = new CountingStorage(directory);
@@ -43,7 +85,7 @@ public class DirectorySearchIntegrationTest {
         LogicManager reopened = new LogicManager(reloaded, storage);
         byte[] saved = Files.readAllBytes(storage.getAddressBookFilePath());
         for (String query : List.of("Σ", "σ", "ς", "νικοσ", "νικος")) {
-            assertEquals("Found 1 members.", reopened.execute("member search q/" + query).getFeedbackToUser());
+            assertEquals("Found 1 member.", reopened.execute("member search q/" + query).getFeedbackToUser());
         }
         assertEquals(1, storage.saves);
         assertTrue(java.util.Arrays.equals(saved, Files.readAllBytes(storage.getAddressBookFilePath())));
@@ -84,8 +126,8 @@ public class DirectorySearchIntegrationTest {
         logic.execute("member delete nus/A0000002X");
         assertEquals(2, model.getMemberList().size());
         byte[] saved = Files.readAllBytes(storage.getAddressBookFilePath());
-        assertEquals("Found 1 members.", logic.execute("member search").getFeedbackToUser());
-        assertEquals("Found 1 members.", logic.execute("member search status/DELETED").getFeedbackToUser());
+        assertEquals("Found 1 member.", logic.execute("member search").getFeedbackToUser());
+        assertEquals("Found 1 member.", logic.execute("member search status/DELETED").getFeedbackToUser());
         assertEquals("Found 2 members.", logic.execute("member search status/all").getFeedbackToUser());
         assertEquals(DirectoryQuery.Status.ACTIVE,
                 logic.execute("member search").getDisplayRequest().getQuery().orElseThrow().status());
