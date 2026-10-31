@@ -156,7 +156,8 @@ public class EquipmentGroupPanel extends VBox {
                     .filter(unit -> InventoryGroups.keyOf(unit).equals(key)).toList();
             title.setText(all.isEmpty() ? "Equipment group no longer exists" : all.getFirst().getName());
             long active = all.stream().filter(unit -> !unit.isDeleted()).count();
-            counts.setText(key.category() + " · " + matching.size() + " matching / " + all.size()
+            String category = all.isEmpty() ? key.category() : all.getFirst().getCategory();
+            counts.setText(category + " · " + matching.size() + " matching / " + all.size()
                     + " retained units · " + active + " active · " + (all.size() - active) + " deleted"
                     + (showAll.isSelected() ? " · Table shows all units" : " · Table shows matching units"));
             List<Equipment> shown = showAll.isSelected() ? all : matching;
