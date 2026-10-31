@@ -53,7 +53,7 @@ LogicManager "0..*" -down-> "1" Model : live model
 LogicManager "0..*" -right-> "1" Storage : saves before publication
 Command ..> Model : operates on candidate
 ModelManager .up.|> Model
-ModelManager "0..1" *-down-> "1" AddressBook : addressBook
+ModelManager "0..1" -down-> "1" AddressBook : addressBook
 ModelManager "0..*" -right-> "1" AddressBookHistory : history
 AddressBookHistory "0..*" -left-> "0..11" AddressBook : states {ordered}
 
