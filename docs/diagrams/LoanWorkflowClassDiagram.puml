@@ -25,8 +25,8 @@ package Model {
   }
 }
 ModelManager .up.|> LoanModel
-ModelManager "0..1" --> "1" AddressBook : delegates to
-AddressBook "1" --> "0..1" UniqueLoanList : loans
+ModelManager "0..*" --> "1" AddressBook : delegates to
+AddressBook "1" *--> "0..1" UniqueLoanList : loans
 UniqueLoanList "0..*" --> "0..*" Loan : retained values
 note bottom of Loan
   Immutable loan values retain the equipment UUID,

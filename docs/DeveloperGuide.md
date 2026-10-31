@@ -319,8 +319,8 @@ arbitrary exceptions thrown by publication actions or external observer callback
 
 The following diagram shows the equipment-related subset of the current model. Member/person
 collections, preferences, JavaFX collection wrappers and interfaces are omitted to keep its scope clear.
-Solid arrows show stored references; the dashed loan-to-equipment arrow describes UUID resolution,
-not an object reference stored inside `Loan`.
+Solid arrows show stored references, and filled diamonds mark containers owned by `AddressBook`. The
+dashed loan-to-equipment arrow describes UUID resolution, not an object reference stored inside `Loan`.
 
 <puml src="diagrams/EquipmentModel.puml" alt="Equipment model, retained identities and loan references" />
 
@@ -380,25 +380,21 @@ JSON conversion belongs to [Storage](#storage-component). In the UI, `LoanPanel.
 `LoanQuery.matches` to retained loans. Member and equipment detail panels use `LoanHistoryContent.add`
 for identity-scoped history. These views do not own or mutate the retained loan records.
 
-#### Root and member model
+#### Model overview
 
-<puml src="diagrams/ModelClassDiagram.puml" alt="Root collections, stable views and immutable member details" />
+<puml src="diagrams/ModelClassDiagram.puml" alt="Root, collections, members, equipment and the loan identities that link them" />
 
-The diagram combines the root collection structure with the member model used by editing, soft-delete
-and restoration. `ModelManager` delegates to `AddressBook`, which maintains person, member, equipment
-and loan containers. `UniquePersonList` is always present; the three domain containers are initialized
-on demand, so their multiplicities are `0..1`. A null container represents an empty collection.
-
-Each root maintains four stable `CollectionView<E>` objects, one per collection. This private nested
-class extends JavaFX `SimpleListProperty<E>`. Public unmodifiable wrappers and collection factories
-are omitted. `resetData` validates replacement containers and loan references before installing new
-backing lists. Notifications are suspended until every view reflects the replacement dataset.
-The package-private overload runs a publication callback before notifications resume, coordinating
-matching records and immutable history. The callback also runs when records are unchanged.
+The diagram shows how the root, its collections and the three record types fit together, with the
+member details used by editing, soft-delete and restoration. `ModelManager` delegates to `AddressBook`,
+which owns person, member, equipment and loan containers. `UniquePersonList` is always present; the
+three domain containers are initialized on demand, so their multiplicities are `0..1`. A null container
+represents an empty collection. Stable views and `resetData` are explained in
+[Root collection integration](#root-collection-integration).
 
 The collection-to-entity multiplicities allow immutable values to be shared across independent
 transaction snapshots. Loan identities resolve through the root; `Loan` does not store direct
-`Member` or `Equipment` references. Equipment, loan and legacy Person details are omitted to keep this diagram focused.
+`Member` or `Equipment` references. Other equipment and loan fields, and legacy Person details, are
+omitted to keep this diagram focused.
 
 The root structure and stable-view portion adapts Keith's
 [PR #141 diagram](https://github.com/wtvlol/tp/blob/3a8b932635cee7489a277fa6c895d32c1894e84e/docs/diagrams/RootModelClass.puml).
@@ -752,8 +748,8 @@ classes, collection wrappers, domain entities and preferences are omitted. The l
 candidate own separate roots; multiple immutable history values may reference the same private stored
 snapshots. Accordingly, snapshot sharing uses ordinary associations rather than exclusive composition.
 The ordered `states` association has multiplicity `0..11`, including empty history before the first change.
-An `AddressBook` snapshot has no `ModelManager` owner, hence `0..1` at the model end of root composition;
-every model still owns exactly one root. The logic associations allow model/storage collaborators to
+An `AddressBook` snapshot has no `ModelManager`, and the package constructor can reuse a supplied root,
+hence `0..*` at the model end of that association. Every model still refers to exactly one root. The logic associations allow model/storage collaborators to
 be shared by more than one `LogicManager` instance.
 
 <puml src="diagrams/UndoRedoClassDiagram.puml" alt="Undo and redo command, model, snapshot history and storage dependencies" />

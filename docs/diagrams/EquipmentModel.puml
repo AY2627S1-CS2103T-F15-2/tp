@@ -41,9 +41,9 @@ class AvailabilityCalculator {
   {static} + calculate(condition, hasOpenLoan): Availability
 }
 
-ModelManager "1" --> "1" AddressBook : addressBook
-AddressBook "1" --> "0..1" UniqueEquipmentList : equipment
-AddressBook "1" --> "0..1" UniqueLoanList : loans
+ModelManager "0..*" --> "1" AddressBook : addressBook
+AddressBook "1" *--> "0..1" UniqueEquipmentList : equipment
+AddressBook "1" *--> "0..1" UniqueLoanList : loans
 UniqueEquipmentList "0..*" --> "0..*" Equipment : contains values
 UniqueLoanList "0..*" --> "0..*" Loan : contains values
 ModelManager ..> AvailabilityCalculator : calls for active units
