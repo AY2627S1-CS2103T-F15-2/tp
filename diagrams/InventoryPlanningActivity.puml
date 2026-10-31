@@ -12,25 +12,25 @@ note right
 Retain every physical unit per key.
 Emit groups in first-match order.
 end note
-while (More groups?) is ([yes])
+while () is ([more groups])
     :Read next group's full unit list;
     :Initialize availability and deleted counts;
-    while (More units in this group?) is ([yes])
+    while () is ([more units in this group])
         :Read next physical unit;
-        if (Unit is deleted?) then ([yes])
+        if () then ([unit is deleted])
             :Increment deleted count;
-        else ([no])
+        else ([else])
             :Look up availability by UUID;
             :Increment that availability count;
         endif
-    endwhile ([no])
+    endwhile ([else])
     :EquipmentPresentation.counts(...) formats
     available, assigned, unavailable counts
     (zero for absent states), plus deleted
     count only when nonzero;
     :Prefix counts with the first unit's
     stored category and name;
-endwhile ([no])
+endwhile ([else])
 :Display group lines in the equipment summary;
 stop
 @enduml
