@@ -27,6 +27,42 @@ import seedu.address.model.person.Phone;
 
 public class DirectoryQueryTest {
     @Test
+    public void members_formattedPhoneSubstring_matchesWithoutChangingOtherFields() {
+        ModelManager model = sample();
+        AddressBook before = new AddressBook(model.getAddressBook());
+        for (String text : List.of("91234567", "9123 4567", "9123-4567", " 9123\u00a04567 ", "23-45")) {
+            assertEquals(List.of(member(1), member(2)), query(text, "", null, null,
+                    DirectoryQuery.Holding.ANY, DirectoryQuery.Sort.ID, false).members(model.getAddressBook()), text);
+        }
+        assertEquals(List.of(member(1)), query("9123-4567", "", null, null,
+                DirectoryQuery.Holding.YES, DirectoryQuery.Sort.ID, false).members(model.getAddressBook()));
+        for (String text : List.of("-", " - - ", "9123x4567", "alex tan@example.com", "alex-tan")) {
+            assertTrue(query(text, "", null, null, DirectoryQuery.Holding.ANY,
+                    DirectoryQuery.Sort.ID, false).members(model.getAddressBook()).isEmpty(), text);
+        }
+        assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
+    public void members_phoneFormatting_preservesNameAndEmailPunctuationAndInternationalPrefix() {
+        AddressBook data = new AddressBook();
+        Member member = new Member(new NusId("A8400001X"), Name.forMember("Anne-Marie Lim"),
+                Phone.forMember("+65 9123-4567"), Email.forMember("anne-marie@example.com"));
+        data.addMember(member);
+        for (String text : List.of("+65 9123-4567", "65-9123", "Anne-Marie", "anne-marie@", "Marie Lim")) {
+            assertEquals(List.of(member), query(text, "", null, null, DirectoryQuery.Holding.ANY,
+                    DirectoryQuery.Sort.DEFAULT, false).members(data), text);
+        }
+        assertTrue(query("AnneMarie", "", null, null, DirectoryQuery.Holding.ANY,
+                DirectoryQuery.Sort.DEFAULT, false).members(data).isEmpty());
+        ModelManager equipmentModel = new ModelManager();
+        equipmentModel.addEquipment(new Equipment(new UUID(0, 1), "91234567", "Numbers", Condition.GOOD, ""));
+        assertTrue(query("9123-4567", "", null, null, DirectoryQuery.Holding.ANY,
+                DirectoryQuery.Sort.DEFAULT, false).equipment(equipmentModel.getAddressBook(),
+                        equipmentModel::getAvailability).isEmpty());
+    }
+
+    @Test
     public void members_greekSigmaVariants_matchesWithoutChangingStoredSpelling() {
         AddressBook data = new AddressBook();
         Member member = new Member(new NusId("A8400001X"), Name.forMember("ΝΙΚΟΣ"),

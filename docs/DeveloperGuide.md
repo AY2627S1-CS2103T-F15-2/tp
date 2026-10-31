@@ -366,14 +366,19 @@ The existing ResultDisplay Details/Copy controls expose long results without exp
 feedback area by default. Manual check: return two disposable units from different borrowers, expand
 and copy feedback, and verify every name/full UUID/NUS ID against the retained loans.
 
-The following class diagram traces batch assignment and return from their parsers to the
-model, JSON adapter and history views. It lists the loan-facing methods relevant to this
-workflow; shared infrastructure and unrelated methods are omitted. `AddressBook` validates
-each batch in a candidate root, while `UniqueLoanList` retains completed loans and rejects
-a second open loan for the same equipment UUID. `MemberDetailsPanel` and
-`EquipmentDetailsPanel` both call `LoanHistoryContent.add` for their selected identity.
+The following class diagram focuses on the Model's loan responsibilities. `ModelManager` delegates
+to `AddressBook`, which checks cross-record references and validates batches. `UniqueLoanList` retains
+completed loans and rejects a second open loan for the same equipment UUID. Immutable loan values
+can be shared across transaction snapshots without sharing mutable collection containers.
 
-<puml src="diagrams/LoanWorkflowClassDiagram.puml" alt="Loan workflow and history class diagram" />
+<puml src="diagrams/LoanWorkflowClassDiagram.puml" alt="Model responsibilities for batch loans and retained history" />
+
+[Open full-size diagram](diagrams/LoanWorkflowClassDiagram.png)
+
+Command parsing and execution are described under [Domain mutation transactions](#domain-mutation-transactions);
+JSON conversion belongs to [Storage](#storage-component). In the UI, `LoanPanel.refresh()` applies
+`LoanQuery.matches` to retained loans. Member and equipment detail panels use `LoanHistoryContent.add`
+for identity-scoped history. These views do not own or mutate the retained loan records.
 
 #### Model overview
 

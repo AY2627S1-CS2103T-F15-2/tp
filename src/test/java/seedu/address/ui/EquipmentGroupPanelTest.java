@@ -68,6 +68,19 @@ class EquipmentGroupPanelTest {
     }
 
     @Test
+    void groupHeader_showsStoredCategorySpelling() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = model();
+            EquipmentGroupPanel panel = new EquipmentGroupPanel(model.getAddressBook(), model::getAvailability,
+                    unused -> { }, unused -> { }, unused -> { });
+            mount(panel);
+            panel.showGroup(InventoryGroups.keyOf(CAMERA), DirectoryQuery.all());
+            String header = ((Label) panel.lookup("#groupCounts")).getText();
+            assertTrue(header.startsWith("Photo · "), header);
+        });
+    }
+
+    @Test
     void unitColumn_showsUuidPrefixAndSuffix() {
         UUID first = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
         UUID second = UUID.fromString("a1b2c3d4-e5f6-47a8-9b0c-123455440000");

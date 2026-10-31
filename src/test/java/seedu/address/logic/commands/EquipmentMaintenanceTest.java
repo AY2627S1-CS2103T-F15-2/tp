@@ -129,11 +129,11 @@ public class EquipmentMaintenanceTest {
     public void search_statusDefaultsAndComposedFilters_keepDeletedUnitsDiscoverable() throws Exception {
         ModelManager model = model();
         model.deleteEquipment(CAMERA);
-        assertEquals("Found 1 equipment items.", parser.parseCommand("equipment search").execute(model)
+        assertEquals("Found 1 equipment item.", parser.parseCommand("equipment search").execute(model)
                 .getFeedbackToUser());
         assertEquals("Found 2 equipment items.", parser.parseCommand("equipment search status/all").execute(model)
                 .getFeedbackToUser());
-        assertEquals("Found 1 equipment items.", parser.parseCommand("equipment search status/DELETED q/Camera"
+        assertEquals("Found 1 equipment item.", parser.parseCommand("equipment search status/DELETED q/Camera"
                 + " category/photo condition/GOOD availability/UNAVAILABLE sort/id order/desc").execute(model)
                 .getFeedbackToUser());
         assertTrue(parser.parseCommand("equipment list").isReadOnly());
