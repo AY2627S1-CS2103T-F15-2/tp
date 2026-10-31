@@ -1088,6 +1088,8 @@ it and use the arrow, Page Up/Down, Home and End keys, to reach all entries with
 successful command, a red box is an error, and the box is neutral before the first command.
 The heading displays only **Last result**; assistive text includes the status and full message.
 **Details** expands the complete feedback and **Copy** includes all UUIDs from batch creation.
+Feedback starts as one compact line. In short windows, tighter spacing gives more room to the
+directories and Loans; scroll within those views to reach further records and controls.
 
 ### Keyboard controls and Help
 

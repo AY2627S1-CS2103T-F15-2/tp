@@ -109,7 +109,12 @@ public class MainWindowShellTest {
     private final List<String> session = new ArrayList<>();
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws Exception {
+        String packagedJar = System.getProperty("laplace.packagedLayoutJar");
+        if (packagedJar != null) {
+            assertEquals(Path.of(packagedJar).toUri(),
+                    MainWindow.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        }
         FxTestUtil.runAndWait(() -> {
             model = sample();
             storage = new RecordingStorage(temporaryDirectory);
@@ -1632,6 +1637,51 @@ public class MainWindowShellTest {
                 submit("equipment list");
                 submit("member list");
             }
+        });
+    }
+
+    @Test
+    public void layout_smallScaledScene_showsLoanIdentitiesAndMultipleDirectoryRows() {
+        FxTestUtil.runAndWait(() -> {
+            int[] size = usableScene(1280, 720, 1.5);
+            submit("loans list");
+            render("compact-loans", size[0], size[1]);
+            ScrollPane scroll = (ScrollPane) node("singlePanelPlaceholder").lookup(".scroll-pane");
+            Bounds viewport = scroll.lookup(".viewport").localToScene(
+                    scroll.lookup(".viewport").getBoundsInLocal());
+            for (Node link : node("openLoans").lookupAll(".loan-identity-link")) {
+                assertTrue(viewport.contains(link.localToScene(link.getBoundsInLocal())),
+                        "First loan identities must be readable without scrolling");
+            }
+            for (String command : List.of("member list", "equipment list")) {
+                submit(command);
+                render("compact-" + command, size[0], size[1]);
+                Bounds visible = rows().lookup(".clipped-container").localToScene(
+                        rows().lookup(".clipped-container").getBoundsInLocal());
+                long wholeRows = rows().lookupAll(".list-cell").stream().map(ListCell.class::cast)
+                        .filter(cell -> !cell.isEmpty())
+                        .filter(cell -> visible.contains(cell.localToScene(cell.getBoundsInLocal()))).count();
+                assertTrue(wholeRows >= 2, "At least two directory rows must be readable: " + command
+                        + "; viewport=" + visible
+                        + "; cells=" + rows().lookupAll(".list-cell").stream().map(ListCell.class::cast)
+                                .filter(cell -> !cell.isEmpty())
+                                .map(cell -> cell.localToScene(cell.getBoundsInLocal())).toList());
+            }
+            model.addEquipment(new Equipment(new UUID(0, 4), "Camera 1", "Photography", Condition.GOOD, ""));
+            showEquipmentDetails(new UUID(0, 1));
+            render("compact-units", size[0], size[1]);
+            TableView<?> units = (TableView<?>) node("physicalUnits");
+            ScrollPane groupScroll = (ScrollPane) node("directorySummaryPlaceholder").lookup(".scroll-pane");
+            Bounds unitViewport = groupScroll.lookup(".viewport").localToScene(
+                    groupScroll.lookup(".viewport").getBoundsInLocal());
+            assertEquals(2, units.getItems().size());
+            long wholeUnits = units.lookupAll(".table-row-cell").stream().map(IndexedCell.class::cast)
+                    .filter(cell -> !cell.isEmpty())
+                    .filter(cell -> unitViewport.contains(cell.localToScene(cell.getBoundsInLocal()))).count();
+            assertTrue(wholeUnits >= 2, "Two unit rows must be visible without scrolling the group");
+            assertTrue(window.getPrimaryStage().getScene().getRoot().getStyleClass().contains("compact"));
+            render("regular-after-compact", 1100, 700);
+            assertFalse(window.getPrimaryStage().getScene().getRoot().getStyleClass().contains("compact"));
         });
     }
 

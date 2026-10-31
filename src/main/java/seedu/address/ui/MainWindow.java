@@ -22,6 +22,7 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -126,6 +127,13 @@ public class MainWindow extends UiPart<Stage> {
         helpWindow = new HelpWindow(new Stage(), command -> commandBox.prepare(command));
         setWindowDefaultSize(logic.getGuiSettings());
         applyAppearance();
+        Region root = (Region) primaryStage.getScene().getRoot();
+        root.heightProperty().addListener((observable, previous, height) -> {
+            root.getStyleClass().remove("compact");
+            if (height.doubleValue() < 600) {
+                root.getStyleClass().add("compact");
+            }
+        });
         helpMenuItem.setAccelerator(KeyCombination.valueOf("F1"));
         primaryStage.addEventFilter(KeyEvent.KEY_PRESSED, helpFilter);
         primaryStage.addEventFilter(KeyEvent.KEY_RELEASED, activationReleaseFilter);

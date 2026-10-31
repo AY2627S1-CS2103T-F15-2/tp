@@ -459,3 +459,69 @@
     -fx-background-radius: 0;
     -fx-border-radius: 0;
 }
+
+/* Preserve content space at the logical height left by small scaled displays. */
+.laplace-root.compact .laplace-content {
+    -fx-padding: 4;
+    -fx-spacing: 4;
+}
+
+.laplace-root.compact .laplace-header {
+    -fx-padding: 4 8;
+}
+
+.laplace-root.compact .status-bar {
+    -fx-padding: 0 8 4 8;
+}
+
+.laplace-root.compact .loan-content {
+    -fx-padding: 4;
+    -fx-spacing: 4;
+}
+
+.laplace-root.compact .loan-section {
+    -fx-spacing: 4;
+}
+
+.laplace-root.compact .loan-row {
+    -fx-padding: 6;
+    -fx-spacing: 4;
+}
+
+.laplace-root.compact .loan-panel .text-field {
+    -fx-padding: 4;
+}
+
+.laplace-root.compact .laplace-feedback {
+    -fx-padding: 4 8;
+}
+
+.laplace-root.compact .directory-list-header {
+    -fx-padding: 2 6;
+    -fx-spacing: 0;
+}
+
+.laplace-root.compact .directory-list .laplace-row {
+    -fx-padding: 2 6;
+    -fx-spacing: 0;
+}
+
+.laplace-root.compact .laplace-command .text-field {
+    -fx-padding: 4 12;
+}
+
+.laplace-root.compact #directoryListPlaceholder {
+    -fx-min-width: 340;
+}
+
+.laplace-root.compact #directorySummaryPlaceholder {
+    -fx-min-width: 400;
+}
+
+.laplace-root.compact .group-panel {
+    -fx-padding: 4;
+}
+
+.laplace-root.compact .group-content {
+    -fx-spacing: 4;
+}

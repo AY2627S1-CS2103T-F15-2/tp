@@ -197,3 +197,27 @@ tasks.register('verifyPackagedAutocomplete', JavaExec) {
 }
 
 check.dependsOn verifyPackagedAutocomplete
+
+// Exercise the actual release classes, resources and natives at the required logical display sizes.
+tasks.register('verifyPackagedLayout', Test) {
+    dependsOn testClasses
+    if (!providers.gradleProperty('packagedJar').isPresent()) {
+        dependsOn shadowJar
+    }
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = files(packagedJar) + sourceSets.test.output + configurations.testRuntimeClasspath.filter {
+        !it.name.startsWith('javafx-')
+    }
+    useJUnitPlatform()
+    enableAssertions = true
+    jvmArgs '--limit-modules=java.se,jdk.unsupported', '--enable-native-access=ALL-UNNAMED'
+    filter {
+        includeTestsMatching 'seedu.address.ui.MainWindowShellTest.layout*'
+        includeTestsMatching 'seedu.address.ui.ResultDisplayTest'
+    }
+    doFirst {
+        systemProperty 'laplace.packagedLayoutJar', packagedJar.get().asFile.absolutePath
+    }
+}
+
+check.dependsOn verifyPackagedLayout
