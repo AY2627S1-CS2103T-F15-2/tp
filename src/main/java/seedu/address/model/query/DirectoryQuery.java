@@ -66,10 +66,12 @@ public record DirectoryQuery(String text, String category, Condition condition, 
         if (descending) {
             comparator = comparator.reversed();
         }
+        String phoneText = text.replace(" ", "").replace("-", "");
         return data.getMemberList().stream().filter(eligible)
                 .filter(member -> matchesStatus(member.isDeleted()))
                 .filter(member -> matches(member.getName().fullName, member.getNusId().value,
-                        member.getPhone().value, member.getEmail().value))
+                        member.getPhone().value, member.getEmail().value)
+                        || !phoneText.isEmpty() && member.getPhone().value.contains(phoneText))
                 .filter(member -> holding == Holding.ANY || (holdings(data, member) > 0) == (holding == Holding.YES))
                 .sorted(comparator).toList();
     }

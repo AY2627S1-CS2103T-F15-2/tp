@@ -32,7 +32,8 @@ public class DirectorySearchCommand extends Command {
         requireNonNull(model);
         int count = members ? query.members(model.getAddressBook()).size()
                 : query.equipment(model.getAddressBook(), model::getAvailability).size();
-        return new CommandResult("Found " + count + (members ? " members." : " equipment items."),
+        String noun = members ? "member" : "equipment item";
+        return new CommandResult("Found " + count + " " + noun + (count == 1 ? "." : "s."),
                 members ? DisplayRequest.members(query) : DisplayRequest.equipment(query));
     }
 }
