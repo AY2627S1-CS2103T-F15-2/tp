@@ -141,7 +141,12 @@ maximized window keeps at 1920×1080 (100%/125% scaling) and 1280×720 (150%), a
 bar. Controls outside scrolling content must stay whole and inside the scene; each scrolling region must
 keep a readable viewport. A narrow-directory regression also checks both lists at 853×400 logical
 pixels with the divider at its minimum position. Compact header and keyboard-hint padding preserves
-space for rows when the hint wraps. Both windows are limited to their screen's visual bounds, so the end of a
+space for rows when the hint wraps. Below 600 logical pixels of scene height, the shell uses compact
+padding, a wider minimum directory pane, and tighter card/loan spacing. Feedback places its heading
+beside the collapsed text; Details retains the expanded result. A regression checks the first loan's
+identity links, at least two complete directory rows, and two unit-table rows at 853×400. `verifyPackagedLayout` repeats the
+layout tests with production classes/resources loaded from the built JAR; it checks that code source
+explicitly. These logical-size tests do not establish actual operating-system scaling support. Both windows are limited to their screen's visual bounds, so the end of a
 scrolling region never lies below the screen. Command text and identifiers use bundled
 IBM Plex Mono. `LaplaceFonts` registers those faces once and applies interface fonts by full face name:
 Helvetica/Helvetica Bold, then Arial/Arial Bold or Segoe UI/Segoe UI Bold when unavailable, with a system
@@ -1418,6 +1423,11 @@ for both detail timelines and loan-directory sections, including panels refreshe
    in each appearance. Exit normally and relaunch; the selected mode persists. `mode sepia` is rejected.
 8. Review at 1920×1080 with 100%/125% scaling and 1280×720 with 150% scaling on supported systems.
    Check wrapping, scrolling, visible focus and contrast. Logical-size snapshots alone do not verify OS scaling.
+   At 1280×720 with 150% scaling, run `loans list`, `member list`, and `equipment list` with sample data.
+   Without scrolling, check the first open loan's identity links and at least two directory rows.
+   Open an equipment group with multiple units and check two unit rows are visible before scrolling.
+   Scroll to all remaining rows and expand/collapse a long Last result; Copy must
+   retain the complete feedback. Resize taller and confirm normal spacing returns.
    At 1280×720 with 150% scaling, open Help and scroll to the end; the last example's Use command button
    must be visible without moving the window.
 

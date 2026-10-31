@@ -96,6 +96,7 @@ public class EquipmentGroupPanel extends VBox {
         detailArea.setMinHeight(0);
         detailArea.getChildren().setAll(prompt);
         VBox body = new VBox(8, title, counts, availabilityCounts, showAll, units, detailArea);
+        body.getStyleClass().add("group-content");
         body.setMinWidth(0);
         scroll.setContent(body);
         scroll.setFitToWidth(true);
