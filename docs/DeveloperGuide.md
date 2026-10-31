@@ -748,8 +748,8 @@ classes, collection wrappers, domain entities and preferences are omitted. The l
 candidate own separate roots; multiple immutable history values may reference the same private stored
 snapshots. Accordingly, snapshot sharing uses ordinary associations rather than exclusive composition.
 The ordered `states` association has multiplicity `0..11`, including empty history before the first change.
-An `AddressBook` snapshot has no `ModelManager` owner, hence `0..1` at the model end of root composition;
-every model still owns exactly one root. The logic associations allow model/storage collaborators to
+An `AddressBook` snapshot has no `ModelManager`, and the package constructor can reuse a supplied root,
+hence `0..*` at the model end of that association. Every model still refers to exactly one root. The logic associations allow model/storage collaborators to
 be shared by more than one `LogicManager` instance.
 
 <puml src="diagrams/UndoRedoClassDiagram.puml" alt="Undo and redo command, model, snapshot history and storage dependencies" />

@@ -60,7 +60,7 @@ show Equipment members
 show Loan members
 
 ModelManager ..|> Model
-ModelManager "0..1" --> "1" AddressBook
+ModelManager "0..*" --> "1" AddressBook
 ModelManager --> "1" UserPrefs
 ModelManager --> "1" AddressBookHistory
 AddressBook ..|> ReadOnlyAddressBook
