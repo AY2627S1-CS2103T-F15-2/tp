@@ -350,11 +350,11 @@ transaction snapshots. Loan identities resolve through the root; `Loan` does not
 `Member` or `Equipment` references. Other equipment and loan fields, and legacy Person details, are
 omitted to keep this diagram focused.
 
-`Member` is immutable and contains its NUS ID, name, phone, email and a `deleted` boolean. The existing
+`Member` is immutable and contains its NUS ID, name, phone, email and an `isDeleted` boolean. The existing
 four-field constructor creates an active member; the five-field constructor accepts deletion state.
 Equality and hashing include all five fields, while `isSameMember` compares only the NUS ID.
 The diagram shows object-valued fields once, as navigable association lines with multiplicities.
-Role labels are omitted for readability. The primitive `deleted` flag appears in the attributes
+Role labels are omitted for readability. The primitive `isDeleted` flag appears in the attributes
 compartment. Interface classifiers use the `<<interface>>` keyword and dashed realization lines.
 
 Editing replaces supplied details without changing the NUS ID or deletion state. Deleted members must

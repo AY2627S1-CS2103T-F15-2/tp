@@ -43,7 +43,7 @@ package Model as ModelPackage {
         -memberNusId: NusId
     }
     class Member {
-        -deleted: boolean {readOnly}
+        -isDeleted: boolean {readOnly}
         +isDeleted(): boolean
         +isSameMember(otherMember: Member): boolean
     }
