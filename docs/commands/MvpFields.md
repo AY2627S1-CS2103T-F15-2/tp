@@ -33,8 +33,10 @@ markers fail when encountered; an earlier invalid field is therefore reported be
 For example, `member add phone/123 nus/bad` reports the phone error; reversing these fields reports the NUS ID error.
 
 An absent required field has no position in the input. Missing fields are reported after all supplied fields
-have been validated, using lexicographic prefix order as the deterministic tie-breaker. List commands accept
-whitespace only. Model/business checks run after parsing and before any records can be committed.
+have been validated, using lexicographic prefix order as the deterministic tie-breaker. Member/equipment
+lists, loan reset, undo, redo, Help and Exit accept whitespace only after their command words. Extra input
+reports `This command takes no arguments.` with usage; loan list still accepts optional filters.
+Model/business checks run after parsing and before any records can be committed.
 
 Command words ignore case; `members` and `loan` alias `member` and `loans`.
 Prefixes remain lowercase and case-sensitive, and parameter order is free. The reserved

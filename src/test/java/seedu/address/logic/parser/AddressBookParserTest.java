@@ -100,13 +100,34 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_exit() throws Exception {
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD) instanceof ExitCommand);
-        assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD + " 3") instanceof ExitCommand);
+        assertThrows(ParseException.class, () -> parser.parseCommand(ExitCommand.COMMAND_WORD + " 3"));
     }
 
     @Test
     public void parseCommand_help() throws Exception {
         assertTrue(parser.parseCommand(HelpCommand.COMMAND_WORD) instanceof HelpCommand);
-        assertTrue(parser.parseCommand(HelpCommand.COMMAND_WORD + " 3") instanceof HelpCommand);
+        assertThrows(ParseException.class, () -> parser.parseCommand(HelpCommand.COMMAND_WORD + " 3"));
+    }
+
+    @Test
+    public void parseCommand_noArgumentCommands_rejectsAllExtraInputWithAccurateUsage() throws Exception {
+        for (String command : List.of("member list", "equipment list", "loans reset", "undo", "redo",
+                "help", "exit", "MEMBERS LIST", "LOAN RESET", "HELP", "EXIT")) {
+            assertTrue(parser.parseCommand(command + "\u2003\u00a0\t").isReadOnly()
+                    || command.equals("undo") || command.equals("redo"));
+            for (String extra : List.of("extra", "2", "nus/A0123456X", "unknown/", "s/o", "name/a name/b")) {
+                ParseException error = org.junit.jupiter.api.Assertions.assertThrows(ParseException.class, () ->
+                        parser.parseCommand(command + "\u2003" + extra));
+                assertTrue(error.getMessage().startsWith("This command takes no arguments.\n"), command);
+                String canonical = command.toLowerCase(Locale.ROOT).replace("members", "member")
+                        .replace("loan reset", "loans reset");
+                assertTrue(error.getMessage().contains(canonical + ":"), command);
+                assertTrue(error.getCause() instanceof ParseException);
+            }
+        }
+        assertThrows(ParseException.class, "Unexpected text before parameters.\n"
+                + seedu.address.logic.commands.LoanListCommand.MESSAGE_USAGE, () ->
+                parser.parseCommand("loans list extra"));
     }
 
     @Test

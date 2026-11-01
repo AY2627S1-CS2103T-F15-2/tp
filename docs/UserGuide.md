@@ -106,6 +106,8 @@ Help, usage messages, Tab and Ctrl+Space suggestions use the canonical `member`,
 - Use the full field names: `nus/`, `name/`, `phone/` and `email/`. Short alternatives are not accepted.
 - `member list` and `equipment list` take no arguments. `loans list` accepts optional identity filters;
   `loans reset` takes no arguments. Extra text and unsupported prefixes are rejected.
+- `undo`, `redo`, `help` and `exit` also take no arguments. For example, `exit extra` reports
+  `This command takes no arguments.` and keeps Laplace open; `help extra` does not open Help.
 - An empty or whitespace-only submission does nothing.
 
 On success, the input clears and the requested list/details view appears. Adding a member or one equipment
