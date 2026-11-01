@@ -896,11 +896,6 @@ The displayed/total summary explains retained records hidden by the filters.
 
 <puml src="diagrams/LoanFilterCommandSequence.puml" alt="Read-only loan filter command and synchronized panel fields" />
 
-### \[Proposed\] Data archiving
-
-_{Explain here how the data archiving feature will be implemented}_
-
-
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Documentation, logging, testing, dev-ops**
