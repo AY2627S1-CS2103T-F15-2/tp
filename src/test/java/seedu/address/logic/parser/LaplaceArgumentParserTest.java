@@ -47,8 +47,8 @@ public class LaplaceArgumentParserTest {
         for (String input : new String[] {"", " ", "\t \n"}) {
             assertEquals("", LaplaceArgumentParser.parse(input, Set.of(), Set.of()).getPreamble());
         }
-        assertParseFailure("Unexpected text before parameters.", "extra", Set.of(), Set.of());
-        assertParseFailure("Unknown parameter: notes/", "notes/", Set.of(), Set.of());
+        assertParseFailure("This command takes no arguments.", "extra", Set.of(), Set.of());
+        assertParseFailure("This command takes no arguments.", "notes/", Set.of(), Set.of());
     }
 
     @Test

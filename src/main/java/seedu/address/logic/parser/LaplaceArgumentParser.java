@@ -62,6 +62,9 @@ public final class LaplaceArgumentParser {
                 throw new IllegalArgumentException("Required and optional prefixes must not overlap.");
             }
         }
+        if (allowed.isEmpty() && !LaplaceText.stripWhitespace(args).isEmpty()) {
+            throw new ParseException("This command takes no arguments.");
+        }
 
         ArgumentMultimap result = new ArgumentMultimap();
         Set<Prefix> seen = new HashSet<>();
