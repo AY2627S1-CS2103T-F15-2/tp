@@ -26,7 +26,7 @@ note bottom of oldest
   A further undo is unavailable.
 end note
 note bottom of latest
-  Nine intermediate snapshots are omitted here.
+  Nine intermediate history states are omitted here.
   From s2, ten redos restore s12.
   A failed save never evicts live history.
 end note
