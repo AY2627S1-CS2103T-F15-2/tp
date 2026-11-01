@@ -69,7 +69,8 @@ import seedu.address.model.query.DirectoryQuery;
 public final class CompletionService {
     private static final Logger logger = LogsCenter.getLogger(CompletionService.class);
     private static final Pattern WORD = Pattern.compile("\\S+");
-    private static final Pattern MARKER = Pattern.compile("(?U)(?<!\\S)[A-Za-z][A-Za-z0-9_-]*/");
+    private static final Pattern MARKER = Pattern.compile(
+            "(?U)(?<!\\S)(?!(?i:[sd]/o)(?=\\s|$))[A-Za-z][A-Za-z0-9_-]*/");
     private static final Pattern ARGUMENT_WHITESPACE = Pattern.compile("(?U)\\s");
     private static final Map<String, List<Prefix>> COMMANDS = Map.ofEntries(
             Map.entry(MemberAddCommand.COMMAND_WORD,

@@ -106,6 +106,8 @@ Help, usage messages, Tab and Ctrl+Space suggestions use the canonical `member`,
 - Use the full field names: `nus/`, `name/`, `phone/` and `email/`. Short alternatives are not accepted.
 - `member list` and `equipment list` take no arguments. `loans list` accepts optional identity filters;
   `loans reset` takes no arguments. Extra text and unsupported prefixes are rejected.
+- `undo`, `redo`, `help` and `exit` also take no arguments. For example, `exit extra` reports
+  `This command takes no arguments.` and keeps Laplace open; `help extra` does not open Help.
 - An empty or whitespace-only submission does nothing.
 
 On success, the input clears and the requested list/details view appears. Adding a member or one equipment
@@ -241,6 +243,8 @@ Matching ignores case, trims surrounding whitespace and treats runs of whitespac
 For example, `q/ALEX TAN` matches `Alex Tan`. The complete query text must occur within one searchable
 field; it does not search the names of equipment the member holds. Greek `Σ`, `σ` and `ς` are
 case-equivalent. Search does not change stored spelling, correct typos or interpret regular expressions.
+For phone matches, spaces and hyphens in the query are ignored: `q/9123 4567` and
+`q/9123-4567` both match `91234567`. This does not remove punctuation from names or emails.
 All supplied filters must match: `q/alex holding/yes` finds members whose name, NUS ID, phone or email
 contains `alex` **and** who currently hold equipment. Filter values such as `YES`, `Deleted` and `DESC`
 also ignore case; field prefixes such as `holding/` must remain lowercase.
@@ -259,7 +263,7 @@ member search q/jamie status/deleted
 ```
 
 The first example finds **members currently holding equipment, most units first**. In fresh sample
-data, Alex Tan holds two units and Priya Nair holds one, so Alex appears first. The second narrows
+data, Alex Tan holds two units and Jamie Lim holds one, so Alex appears first. The second narrows
 holders to those matching `alex`; the third finds members with `example.com` in a searchable field
 who hold nothing. The last finds a retained deleted member matching `jamie`, if one exists.
 
@@ -278,6 +282,7 @@ These rules apply to both `member search` and `equipment search`:
   parameter, invalid choices and sort fields for the other directory are rejected with usage guidance.
   For example, `member search sort/condition` and `equipment search holding/yes` are invalid.
 - Whitespace-delimited tokens such as `name/` are reserved parameter markers even inside query text.
+  Standalone `s/o` and `d/o`, in any letter case, are literal text rather than markers.
   There is no quoting or escaping mechanism. Ordinary URLs and embedded slashes remain text, as in
   the [advanced input reference](#advanced-input-reference).
 - An empty result shows a reset hint when the directory contains retained records. It does not mean
@@ -300,7 +305,7 @@ member view nus/NUS_ID
 
 Example: `member view nus/a0123456x` finds the same identity as `member view nus/A0123456X`.
 
-Details show the NUS ID, name, phone, email and current held-item count. The **Held Equipment** section
+Details show the NUS ID, name, phone, email and current held-item count. The **Current holdings** section
 shows each open loan's full equipment UUID, name, assignment date and expected return date. Items are
 ordered by **expected return date, equipment name, then UUID**. Returned items are not current holdings.
 The matching member row is selected when the member list is visible.
@@ -902,7 +907,7 @@ on or after 20 September 2026; choose valid actual dates for your own operation.
 | Field | Accepted input and stored form |
 | --- | --- |
 | NUS ID `nus/` | One English letter, exactly seven digits, and an optional final English letter, e.g. `A0123456X` or `E0123456`, in any letter case. Stored uppercase. |
-| Member name `name/` | 1–100 characters. Letters in any language, accents, spaces, apostrophes (`'` or `’`), hyphens and periods are allowed; include at least one letter. See [name counting and accents](#exact-text-and-character-rules) for the precise limit. |
+| Member name `name/` | 1–100 characters. Letters in any language, accents, spaces, apostrophes (`'` or `’`), hyphens, periods and standalone `s/o` or `d/o` tokens (any letter case) are allowed; include at least one letter. See [name counting and accents](#exact-text-and-character-rules) for the precise limit. |
 | Phone `phone/` | Optional `+`, then 8–15 digits. Spaces and hyphens are removed: `+65 9123-4567` becomes `+6591234567`. |
 | Email `email/` | 3–254 characters using English letters, digits and the punctuation described in the [exact email rules](#exact-text-and-character-rules). Include one `@`, a dotted domain and no spaces. Stored lowercase. |
 | Equipment UUID `uuid/` | Copy the full identifier from the item's details, e.g. `550e8400-e29b-41d4-a716-446655440000`, or use Tab to complete it. Shortened identifiers and the short labels in unit tables are rejected. |
@@ -924,6 +929,8 @@ in the commands above are enough to get started.
   Leading/trailing whitespace is ignored. Runs of whitespace in text values become one ordinary space.
 - A value continues to the next parameter marker. A start-of-value or whitespace-delimited token such as
   `notes/` or `unknown/` is reserved as a marker. Unknown markers are errors, even inside free text.
+  The exceptions are standalone `s/o` and `d/o`, ignoring case: `name/Ravi s/o Kumar` is valid.
+  Other tokens remain reserved: `notes/Use w/ XLR cable` is rejected as `Unknown parameter: w/`.
   There is no quoting or escaping. An ordinary URL such as `https://example.com` is not a marker.
 
 ### Exact text and character rules
@@ -936,7 +943,7 @@ Use that shared table for phone numbers, equipment names, categories, conditions
 | Field | Exact accepted input and stored form |
 | --- | --- |
 | NUS ID `nus/` | One ASCII letter, exactly seven digits, and an optional final ASCII letter. Case-insensitive; stored/displayed uppercase, such as `A0123456X` or `E0123456`. |
-| Member name `name/` | 1–100 Unicode code points after whitespace and NFC normalization. Unicode letters with combining marks, spaces, straight (`'`) or curly (`’`) apostrophes, hyphens and periods; must contain at least one letter. Combining marks must follow a letter or its marks. Examples: `அருண்`, `Anne O’Connor`. |
+| Member name `name/` | 1–100 Unicode code points after whitespace and NFC normalization. Unicode letters with combining marks, spaces, straight (`'`) or curly (`’`) apostrophes, hyphens, periods and standalone `s/o` or `d/o` (any letter case); must contain at least one letter. Combining marks must follow a letter or its marks. Examples: `அருண்`, `Anne O’Connor`, `Ravi s/o Kumar`. |
 | Email `email/` | 3–254 ASCII characters, one `@`, no spaces and at least one domain dot. Local-part characters: letters, digits, `.`, `_`, `%`, `+`, `-`. Domain labels contain letters/digits/hyphens and cannot begin/end with a hyphen. ASCII validation occurs before conversion to lowercase; non-ASCII lookalikes such as `K` are rejected. Stored lowercase. |
 | Equipment UUID `uuid/` | Full `8-4-4-4-12` hexadecimal form, such as `550e8400-e29b-41d4-a716-446655440000`. Case-insensitive input; lowercase display. Shortened UUID values and compact display labels are rejected. Use Tab to complete a full UUID. |
 | Dates | Exactly `yyyy-MM-dd` with a Gregorian year from `0001` through `9999`, such as `2026-10-15`. Assignment/actual-return dates cannot be later than the computer's local date. Expected return may be in the future. |
@@ -1018,7 +1025,7 @@ issue, return or delete records.
 To explore without changing the sample records:
 
 1. Run `loans list`. The Loans tab shows three open loans and the closed speaker/tripod loans in history.
-2. Run `member view nus/A0123456X`. Alex's details show the camera and laptop under Held Equipment.
+2. Run `member view nus/A0123456X`. Alex's details show the camera and laptop under **Current holdings**.
 3. Run `equipment view uuid/550e8400-e29b-41d4-a716-446655440003`. The microphone's details identify
    Jamie as the holder and show its assignment and expected return dates.
 4. Run `loans list` again to return to the Loans tab.
@@ -1067,6 +1074,7 @@ uppercase placeholders and press Enter yourself. Availability and validation rul
 The **Loans** tab shows current open assignments, exact-identity links, assigned/due dates and an
 **Overdue** or **Due today** label when applicable. Rows reflow at narrower widths. **Prepare return command**
 fills the input with the unit UUID and today's local date; review it before pressing Enter.
+The status and return controls share a wrapping row below the identities and dates.
 
 Filter both sections by NUS ID and equipment UUID. The filtered-result summary shows displayed versus
 total counts in both sections, including records hidden after a successful batch command.
@@ -1088,6 +1096,8 @@ it and use the arrow, Page Up/Down, Home and End keys, to reach all entries with
 successful command, a red box is an error, and the box is neutral before the first command.
 The heading displays only **Last result**; assistive text includes the status and full message.
 **Details** expands the complete feedback and **Copy** includes all UUIDs from batch creation.
+Feedback starts as one compact line. In short windows, tighter spacing gives more room to the
+directories and Loans; scroll within those views to reach further records and controls.
 
 ### Keyboard controls and Help
 

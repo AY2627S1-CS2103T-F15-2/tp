@@ -36,6 +36,28 @@ public class CompletionServiceTest {
     private final ModelManager model = ViewTestData.model();
 
     @Test
+    public void complete_patronymicName_keepsLiteralTokensAndFollowingFields() {
+        for (String token : List.of("s/o", "S/O", "d/o", "D/o")) {
+            ModelManager data = new ModelManager();
+            String name = "Ravi " + token + " Kumar";
+            data.addMember(new Member(new NusId("A8400001X"), Name.forMember(name),
+                    Phone.forMember("91234567"), Email.forMember("ravi@example.com")));
+            String input = "member edit name/Ravi " + token + " K phone/91234567";
+            int caret = input.indexOf(" phone/");
+            Completion completion = service.complete(input, caret, data.getAddressBook()).orElseThrow();
+            assertEquals(List.of(name), completion.candidates());
+            assertEquals("member edit name/" + name + " phone/91234567",
+                    input.substring(0, completion.start()) + name + input.substring(completion.end()));
+            String prefixInput = "member edit name/" + name + " ph";
+            assertEquals(List.of("phone/"), service.complete(prefixInput, prefixInput.length(), data.getAddressBook())
+                    .orElseThrow().candidates());
+        }
+        for (String input : List.of("member edit name/Ravi s/only K", "member edit name/Ravi w/o K")) {
+            assertTrue(service.complete(input, input.length(), model.getAddressBook()).isEmpty());
+        }
+    }
+
+    @Test
     public void complete_greekSigmaAndUnicodeWhitespace_preservesOriginalCandidate() {
         ModelManager data = new ModelManager();
         String name = "ΝΙΚΟΣ\u2003Camera";

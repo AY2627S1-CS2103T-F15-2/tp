@@ -85,6 +85,7 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.query.InventoryGroups;
+import seedu.address.model.util.SampleDataUtil;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -109,7 +110,12 @@ public class MainWindowShellTest {
     private final List<String> session = new ArrayList<>();
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws Exception {
+        String packagedJar = System.getProperty("laplace.packagedLayoutJar");
+        if (packagedJar != null) {
+            assertEquals(Path.of(packagedJar).toUri(),
+                    MainWindow.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        }
         FxTestUtil.runAndWait(() -> {
             model = sample();
             storage = new RecordingStorage(temporaryDirectory);
@@ -119,6 +125,13 @@ public class MainWindowShellTest {
             window.show();
             window.fillInnerParts();
             layout();
+            String requiredScale = System.getProperty("laplace.requiredScale");
+            if (requiredScale != null) {
+                double scale = Double.parseDouble(requiredScale);
+                assertEquals(scale, window.getPrimaryStage().getOutputScaleX(), 0.01);
+                assertEquals(1280 / scale, Screen.getPrimary().getBounds().getWidth(), 1);
+                assertEquals(720 / scale, Screen.getPrimary().getBounds().getHeight(), 1);
+            }
         });
     }
 
@@ -1632,6 +1645,75 @@ public class MainWindowShellTest {
                 submit("equipment list");
                 submit("member list");
             }
+        });
+    }
+
+    @Test
+    public void layout_shippedSampleAtSmallScaledSize_showsCompleteFirstLoanCard() {
+        FxTestUtil.runAndWait(() -> {
+            model.setAddressBook(SampleDataUtil.getSampleAddressBook());
+            submit("loans list");
+            int[] size = usableScene(1280, 720, 1.5);
+            render("complete-sample-loan", size[0], size[1]);
+            ScrollPane scroll = (ScrollPane) node("singlePanelPlaceholder").lookup(".scroll-pane");
+            Bounds viewport = scroll.lookup(".viewport").localToScene(
+                    scroll.lookup(".viewport").getBoundsInLocal());
+            Node firstCard = ((javafx.scene.layout.VBox) node("openLoans")).getChildren().getFirst();
+            assertTrue(viewport.contains(firstCard.localToScene(firstCard.getBoundsInLocal())),
+                    "The complete first sample loan card must be visible without scrolling");
+            assertEquals(2, firstCard.lookupAll(".loan-identity-link").size());
+            assertEquals(3, firstCard.lookupAll(".loan-date").size());
+            assertTrue(firstCard.lookup(".loan-status").isVisible());
+            assertTrue(firstCard.lookup(".loan-return-condition").isVisible());
+            Button prepare = (Button) firstCard.lookup(".loan-prepare-return");
+            assertTrue(viewport.contains(prepare.localToScene(prepare.getBoundsInLocal())));
+            prepare.fire();
+            assertTrue(field().getText().startsWith("loans return uuid/"));
+        });
+    }
+
+    @Test
+    public void layout_smallScaledScene_showsLoanIdentitiesAndMultipleDirectoryRows() {
+        FxTestUtil.runAndWait(() -> {
+            int[] size = usableScene(1280, 720, 1.5);
+            submit("loans list");
+            render("compact-loans", size[0], size[1]);
+            ScrollPane scroll = (ScrollPane) node("singlePanelPlaceholder").lookup(".scroll-pane");
+            Bounds viewport = scroll.lookup(".viewport").localToScene(
+                    scroll.lookup(".viewport").getBoundsInLocal());
+            for (Node link : node("openLoans").lookupAll(".loan-identity-link")) {
+                assertTrue(viewport.contains(link.localToScene(link.getBoundsInLocal())),
+                        "First loan identities must be readable without scrolling");
+            }
+            for (String command : List.of("member list", "equipment list")) {
+                submit(command);
+                render("compact-" + command, size[0], size[1]);
+                Bounds visible = rows().lookup(".clipped-container").localToScene(
+                        rows().lookup(".clipped-container").getBoundsInLocal());
+                long wholeRows = rows().lookupAll(".list-cell").stream().map(ListCell.class::cast)
+                        .filter(cell -> !cell.isEmpty())
+                        .filter(cell -> visible.contains(cell.localToScene(cell.getBoundsInLocal()))).count();
+                assertTrue(wholeRows >= 2, "At least two directory rows must be readable: " + command
+                        + "; viewport=" + visible
+                        + "; cells=" + rows().lookupAll(".list-cell").stream().map(ListCell.class::cast)
+                                .filter(cell -> !cell.isEmpty())
+                                .map(cell -> cell.localToScene(cell.getBoundsInLocal())).toList());
+            }
+            model.addEquipment(new Equipment(new UUID(0, 4), "Camera 1", "Photography", Condition.GOOD, ""));
+            showEquipmentDetails(new UUID(0, 1));
+            render("compact-units", size[0], size[1]);
+            TableView<?> units = (TableView<?>) node("physicalUnits");
+            ScrollPane groupScroll = (ScrollPane) node("directorySummaryPlaceholder").lookup(".scroll-pane");
+            Bounds unitViewport = groupScroll.lookup(".viewport").localToScene(
+                    groupScroll.lookup(".viewport").getBoundsInLocal());
+            assertEquals(2, units.getItems().size());
+            long wholeUnits = units.lookupAll(".table-row-cell").stream().map(IndexedCell.class::cast)
+                    .filter(cell -> !cell.isEmpty())
+                    .filter(cell -> unitViewport.contains(cell.localToScene(cell.getBoundsInLocal()))).count();
+            assertTrue(wholeUnits >= 2, "Two unit rows must be visible without scrolling the group");
+            assertTrue(window.getPrimaryStage().getScene().getRoot().getStyleClass().contains("compact"));
+            render("regular-after-compact", 1100, 700);
+            assertFalse(window.getPrimaryStage().getScene().getRoot().getStyleClass().contains("compact"));
         });
     }
 

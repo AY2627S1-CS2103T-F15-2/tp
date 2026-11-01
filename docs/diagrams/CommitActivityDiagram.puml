@@ -7,15 +7,15 @@ skinparam ArrowFontSize 12
 title Command execution and record-history publication
 start
 :Parse command;
-if (Parsing succeeds?) then (yes)
-else (no)
+if () then ([parsing fails])
   :Report ParseException and
 leave records and history unchanged;
   stop
+else ([else])
 endif
-if (isTransactional()?) then (yes)
+if () then ([command is transactional])
   :Copy records and preferences into a candidate\nand initially share immutable history;
-else (no)
+else ([else])
   :Use the live model;
 endif
 :Execute command on the chosen model;
@@ -23,19 +23,19 @@ note right
   Undo/redo navigate candidate history here.
   Unavailable steps are execution failures.
 end note
-if (Execution succeeds?) then (yes)
-else (no)
+if () then ([execution fails])
   :Report execution error and
 do not save or publish;
   stop
+else ([else])
 endif
-if (isReadOnly()?) then (yes)
+if () then ([command is read-only])
   :Return result without a domain save
 or history entry;
   stop
-else (no)
+else ([else])
 endif
-if (recordsHistory()?) then (yes)
+if () then ([command records history])
   :Record candidate relative to live records;
   note right
     If data changed: discard redo, append state,
@@ -43,19 +43,19 @@ if (recordsHistory()?) then (yes)
     If unchanged: preserve history and redo.
     All history changes remain candidate-only.
   end note
-else (no)
+else ([else])
   :Keep the chosen model's history and
 do not append another action;
 endif
 :Atomically save the chosen model's records;
-if (Save succeeds?) then (yes)
-  if (isTransactional()?) then (yes)
+if () then ([save succeeds])
+  if () then ([command is transactional])
     :publishTransaction(candidate) to
 publish records and history to live model;
-  else (no)
+  else ([else])
   endif
   :Return successful command result;
-else (no)
+else ([else])
   :Report CommandException with I/O cause and
 do not publish candidate records or history;
 endif

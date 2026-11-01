@@ -2,13 +2,12 @@
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
-<VBox spacing="4" styleClass="laplace-feedback,laplace-neutral"
+<HBox spacing="8" alignment="TOP_LEFT" styleClass="laplace-feedback,laplace-neutral"
       xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-  <Label text="Last result" styleClass="laplace-muted" />
-  <HBox spacing="10" alignment="CENTER_LEFT">
-    <TextArea fx:id="resultDisplay" editable="false" wrapText="true" HBox.hgrow="ALWAYS" prefHeight="38"
+  <Label text="Last result" styleClass="laplace-muted" minWidth="-Infinity" />
+  <HBox spacing="10" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+    <TextArea fx:id="resultDisplay" editable="false" wrapText="true" HBox.hgrow="ALWAYS" prefHeight="24"
               minHeight="0" minWidth="0" accessibleText="Ready" />
     <HBox fx:id="feedbackActions" spacing="4" minWidth="-Infinity" alignment="CENTER_LEFT" />
   </HBox>
-</VBox>
+</HBox>

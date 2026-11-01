@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,13 +55,27 @@ public class AddressBookParser {
             case "member" -> new MemberCommandParser().parse(arguments);
             case "equipment" -> new EquipmentCommandParser().parse(arguments);
             case "loans" -> new LoansCommandParser().parse(arguments);
-            case ExitCommand.COMMAND_WORD -> new ExitCommand();
-            case HelpCommand.COMMAND_WORD -> new HelpCommand();
+            case ExitCommand.COMMAND_WORD -> parseNoArgumentCommand(arguments, new ExitCommand(),
+                    ExitCommand.MESSAGE_USAGE);
+            case HelpCommand.COMMAND_WORD -> parseNoArgumentCommand(arguments, new HelpCommand(),
+                    HelpCommand.MESSAGE_USAGE);
             default -> {
                 logger.finer("Rejected an unknown command.");
                 throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
             }
         };
+    }
+
+    /**
+     * Returns a utility command after validating its arguments, retaining usage and the original failure cause.
+     */
+    private Command parseNoArgumentCommand(String arguments, Command command, String usage) throws ParseException {
+        try {
+            LaplaceArgumentParser.parse(arguments, Set.of(), Set.of());
+        } catch (ParseException exception) {
+            throw new ParseException(exception.getMessage() + "\n" + usage, exception);
+        }
+        return command;
     }
 
 }

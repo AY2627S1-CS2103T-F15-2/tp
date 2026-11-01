@@ -12,6 +12,7 @@ public class EquipmentListCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Lists all equipment items, including deleted units. Takes no arguments.";
     public static final String MESSAGE_SUCCESS = "Listed %d equipment items.";
+    public static final String MESSAGE_SUCCESS_SINGULAR = "Listed %d equipment item.";
 
     @Override
     public boolean isReadOnly() {
@@ -21,7 +22,9 @@ public class EquipmentListCommand extends Command {
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
-        return new CommandResult(String.format(MESSAGE_SUCCESS, model.getEquipmentList().size()),
+        int count = model.getEquipmentList().size();
+        String message = count == 1 ? MESSAGE_SUCCESS_SINGULAR : MESSAGE_SUCCESS;
+        return new CommandResult(String.format(message, count),
                 DisplayRequest.equipment(DirectoryQuery.all()));
     }
 }

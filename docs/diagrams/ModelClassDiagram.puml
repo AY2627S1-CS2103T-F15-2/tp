@@ -8,7 +8,7 @@ skinparam arrowColor MODEL_COLOR
 skinparam classBackgroundColor MODEL_COLOR
 hide empty members
 
-title Root collections, stable views and immutable members
+title Model overview: root, collections and records
 
 package Model as ModelPackage {
     class Model <<interface>> {
@@ -23,17 +23,9 @@ package Model as ModelPackage {
     class UserPrefs
     class AddressBookHistory
     class AddressBook {
-        +resetData(newData: ReadOnlyAddressBook): void
-        ~resetData(newData: ReadOnlyAddressBook, publishModelState: Runnable): void
         +setMember(target: Member, editedMember: Member): void
         +removeMember(member: Member): void
         +restoreMember(member: Member): void
-    }
-    class "AddressBook.CollectionView<E>" as CollectionView {
-        -notificationsSuspended: boolean
-        -notificationPending: boolean
-        -suspendNotifications(): void
-        -resumeNotifications(): void
     }
     class UniquePersonList
     class UniqueEquipmentList
@@ -43,8 +35,13 @@ package Model as ModelPackage {
         +setDeleted(nusId: NusId, isDeleted: boolean): void
     }
     class Person
-    class Equipment
-    class Loan
+    class Equipment {
+        -uuid: UUID
+    }
+    class Loan {
+        -equipmentUuid: UUID
+        -memberNusId: NusId
+    }
     class Member {
         -deleted: boolean {readOnly}
         +isDeleted(): boolean
@@ -55,31 +52,29 @@ package Model as ModelPackage {
     class Phone
     class Email
 }
-package "JavaFX" {
-    class "SimpleListProperty<E>" as SimpleListProperty
-}
 show Model methods
 show AddressBook methods
 show UniqueMemberList methods
 show Member members
-show CollectionView members
+show Equipment members
+show Loan members
 
 ModelManager ..|> Model
-ModelManager --> "1" AddressBook
+ModelManager "0..*" --> "1" AddressBook
 ModelManager --> "1" UserPrefs
 ModelManager --> "1" AddressBookHistory
 AddressBook ..|> ReadOnlyAddressBook
 UserPrefs ..|> ReadOnlyUserPrefs
-AddressBook --> "4" CollectionView
-CollectionView --|> SimpleListProperty
-AddressBook --> "1" UniquePersonList
-AddressBook --> "0..1" UniqueMemberList
-AddressBook --> "0..1" UniqueEquipmentList
-AddressBook --> "0..1" UniqueLoanList
+AddressBook "1" *--> "1" UniquePersonList
+AddressBook "1" *--> "0..1" UniqueMemberList
+AddressBook "1" *--> "0..1" UniqueEquipmentList
+AddressBook "1" *--> "0..1" UniqueLoanList
 UniquePersonList "0..*" --> "0..*" Person
 UniqueMemberList "0..*" --> "0..*" Member
 UniqueEquipmentList "0..*" --> "0..*" Equipment
 UniqueLoanList "0..*" --> "0..*" Loan
+Loan ..> Member : resolved by memberNusId
+Loan ..> Equipment : resolved by equipmentUuid
 Member --> "1" NusId
 Member --> "1" Name
 Member --> "1" Phone
@@ -88,7 +83,7 @@ Member --> "1" Email
 legend bottom
   Domain containers are lazy; immutable entities can be shared by snapshots.
   The member collection retains active and deleted records.
-  Four stable views publish records and history before notifying observers.
-  Public wrappers, other entity details and history internals are omitted.
+  Dashed loan arrows are identity lookups through the root, not stored objects.
+  Stable views, other entity details and history internals are omitted.
 endlegend
 @enduml

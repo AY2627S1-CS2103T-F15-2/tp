@@ -18,6 +18,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
@@ -206,7 +207,7 @@ public class LoanPanel extends UiPart<Region> {
             GridPane.setColumnIndex(memberColumn, isWide ? 1 : 0);
             GridPane.setRowIndex(memberColumn, isWide ? 0 : 1);
         });
-        VBox row = new VBox(6, status, identities);
+        VBox row = new VBox(6, identities);
         if (loan.isOpen()) {
             ComboBox<String> observedCondition = new ComboBox<>();
             observedCondition.getItems().add("Not recorded");
@@ -216,8 +217,8 @@ public class LoanPanel extends UiPart<Region> {
             observedCondition.setValue("Not recorded");
             observedCondition.getStyleClass().add("loan-return-condition");
             observedCondition.setAccessibleText("Observed return condition; Not recorded leaves it unknown");
-            row.getChildren().addAll(label("Observed return condition (optional)", "laplace-muted"), observedCondition);
             Button prepareReturn = new Button("Prepare return command");
+            prepareReturn.getStyleClass().add("loan-prepare-return");
             prepareReturn.setOnAction(event -> {
                 String observation = observedCondition.getValue();
                 String parameter = observation == null || observation.equals("Not recorded")
@@ -225,8 +226,11 @@ public class LoanPanel extends UiPart<Region> {
                 onUse.accept("loans return uuid/" + loan.getEquipmentUuid()
                         + " returned/" + LocalDate.now(clock) + parameter);
             });
-            row.getChildren().add(prepareReturn);
+            FlowPane actions = new FlowPane(8, 4, status,
+                    label("Observed return condition (optional)", "laplace-muted"), observedCondition, prepareReturn);
+            row.getChildren().add(actions);
         } else {
+            row.getChildren().addFirst(status);
             memberColumn.getChildren().addAll(
                     label("Returned: " + loan.getReturnedDate().orElseThrow(), "loan-date"),
                     label("Return condition: " + loan.getReturnCondition().map(Enum::name).orElse("Not recorded"),

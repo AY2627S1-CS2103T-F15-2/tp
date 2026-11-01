@@ -83,6 +83,51 @@ Reviewable local evidence is recorded in [AutocompleteVerification.txt](gui/Auto
 [AutocompleteKeyboardSession.txt](gui/AutocompleteKeyboardSession.txt), and
 [AutocompletePackagedSession.txt](gui/AutocompletePackagedSession.txt).
 
+## Packaged display-scaling checks
+
+`./gradlew verifyPackagedLayout` runs the shell layout and feedback tests with production classes,
+FXML, stylesheets and native libraries loaded from the candidate JAR. The shipped-sample regression
+requires the entire first open-loan card at 853×400 logical pixels: status, identity links, dates,
+issue condition, return-condition selection and Prepare return command. Directory and unit-table
+regressions also require complete rows. Additional records remain reachable by scrolling.
+
+On Linux with Java 25, GTK and Xvfb installed, reproduce the reported display configuration with:
+
+```sh
+xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" \
+  ./gradlew verifyPackagedLayout -PgtkScale=1.5
+```
+
+For an existing candidate add `-PpackagedJar=build/candidate/Laplace.jar`. `gtkScale` passes the actual
+`glass.gtk.uiScale` setting to the test JVM, and the tests require an output scale of 1.5 and screen
+bounds corresponding to a 1280×720 display. This verifies GTK scaling under Xvfb; it does not establish
+compatibility with every desktop compositor or Windows/macOS display setting. Snapshots are written
+under `build/reports/laplace`, including `shell-complete-sample-loan-853x400.png`.
+The [Linux before/after verification record](gui/CompactLayoutVerification.txt) lists the exact JAR
+hashes, environment and checks. [Before](gui/CompactLoanLinuxBefore.png) and
+[after](gui/CompactLoanLinuxAfter.png) snapshots use shipped fictional sample data.
+
+## Capacity and failure injection
+
+These checks require a source checkout and Java 25. They are separate from the released-JAR manual
+scenarios in the Developer Guide; testers do not need to hand-create a large dataset.
+
+`LoanHistoryCapacityTest` builds its synthetic fixture in code: 1,000 members, 5,000 equipment units
+and 10,000 completed loans. It checks retained counts and bounded history controls in the Loans and
+detail panels. Completion controller/service tests check that static vocabulary does not read record
+collections and that unchanged cycles reuse candidates. These structural checks do not establish the
+NFR07 timing target; that benchmark needs its own repeatable fixture and measured platform results.
+
+`LaplaceTransactionTest` injects partial temporary-file writes and failed atomic replacements for real
+mutation commands, including assignment and return. It checks unchanged live records, history and
+previous file bytes, then successful retry after the injected failure is removed. Run it with
+`./gradlew test --tests 'seedu.address.storage.LaplaceTransactionTest'`.
+`AtomicFileWriterTest` checks access-policy ordering, metadata preservation and cleanup;
+`AtomicFileWriterAclTest` checks real Windows ACL behavior and is platform-gated.
+`ReadOnlyCommandIntegrationTest` checks that navigation, Help and Exit do not save domain records.
+`CommandLogPrivacyTest` checks logs with the application logger hierarchy enabled at all levels.
+These test descriptions document verification scope, not a claim that a particular run passed.
+
 ## Types of tests
 
 This project has three types of tests:

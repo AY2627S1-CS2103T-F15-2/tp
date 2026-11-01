@@ -13,6 +13,8 @@ import javafx.scene.layout.Region;
  */
 public class ResultDisplay extends UiPart<Region> {
 
+    private static final double COLLAPSED_HEIGHT = 24;
+
     private static final String FXML = "ResultDisplay.fxml";
 
     @FXML
@@ -42,12 +44,12 @@ public class ResultDisplay extends UiPart<Region> {
         getRoot().getStyleClass().add(isError ? "laplace-error" : "laplace-success");
         resultDisplay.setAccessibleText((isError ? "Error: " : "Success: ") + feedbackToUser);
         resultDisplay.setText(feedbackToUser);
-        resultDisplay.setPrefHeight(38);
+        resultDisplay.setPrefHeight(COLLAPSED_HEIGHT);
         Button expand = new Button("Details");
         expand.setAccessibleText("Expand or collapse the complete command result");
         expand.setOnAction(event -> {
-            boolean isExpanded = resultDisplay.getPrefHeight() > 38;
-            resultDisplay.setPrefHeight(isExpanded ? 38 : 130);
+            boolean isExpanded = resultDisplay.getPrefHeight() > COLLAPSED_HEIGHT;
+            resultDisplay.setPrefHeight(isExpanded ? COLLAPSED_HEIGHT : 130);
             expand.setText(isExpanded ? "Details" : "Collapse");
         });
         feedbackActions.getChildren().setAll(expand, CommandPreview.copyButton("Copy", feedbackToUser));

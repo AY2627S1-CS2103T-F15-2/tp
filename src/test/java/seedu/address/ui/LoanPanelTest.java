@@ -321,7 +321,7 @@ public class LoanPanelTest {
             panel.getRoot().applyCss();
             VBox row = row(panel, "openLoans", 0);
             ComboBox<?> observed = (ComboBox<?>) row.lookup(".loan-return-condition");
-            Button prepare = (Button) row.getChildren().getLast();
+            Button prepare = (Button) row.lookup(".loan-prepare-return");
             assertEquals("Not recorded", observed.getValue());
             for (String condition : List.of("DAMAGED", "Not recorded", "FAIR")) {
                 observed.getSelectionModel().select(observed.getItems().indexOf(condition));
@@ -357,7 +357,7 @@ public class LoanPanelTest {
                         : days == 8 ? "Overdue · 1 day" : "Overdue · 3 days";
                 VBox first = row(panel, "openLoans", 0);
                 assertEquals(expected, ((Label) first.lookup(".loan-status")).getText());
-                Button prepare = (Button) first.getChildren().getLast();
+                Button prepare = (Button) first.lookup(".loan-prepare-return");
                 prepare.fire();
                 assertEquals("loans return uuid/" + FIRST_UUID + " returned/" + today, commands.getLast());
                 assertEquals(before, data);
@@ -393,7 +393,7 @@ public class LoanPanelTest {
             VBox first = row(panel, "openLoans", 0);
             equipmentButton(first).fire();
             assertEquals(List.of(FIRST_UUID), selected);
-            Button prepareReturn = (Button) first.getChildren().getLast();
+            Button prepareReturn = (Button) first.lookup(".loan-prepare-return");
             prepareReturn.fire();
             assertEquals(before, data);
         });

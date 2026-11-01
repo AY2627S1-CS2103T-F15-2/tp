@@ -210,8 +210,8 @@ public class MvpValidationTest {
         assertFirst("loans add uuid/bad assigned/2026-02-30", "Invalid equipment UUID");
         assertFirst("loans return returned/2026-02-30 uuid/bad", "Date must be");
         assertFirst("loans return uuid/bad returned/2026-02-30", "Invalid equipment UUID");
-        assertFirst("member list extra unknown/value", "Unexpected text");
-        assertFirst("equipment list unknown/value extra", "Unknown parameter");
+        assertFirst("member list extra unknown/value", "This command takes no arguments.");
+        assertFirst("equipment list unknown/value extra", "This command takes no arguments.");
     }
 
     @Test

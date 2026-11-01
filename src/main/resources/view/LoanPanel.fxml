@@ -12,19 +12,18 @@
   <ScrollPane fitToWidth="true" hbarPolicy="NEVER" minWidth="0.0" VBox.vgrow="ALWAYS">
     <content>
       <VBox spacing="18.0" minWidth="0.0" styleClass="loan-content">
-        <Label text="Loans" styleClass="laplace-title,loan-title" wrapText="true" />
-        <Label text="Current assignments and completed history"
-               styleClass="laplace-muted,loan-subtitle" wrapText="true" />
+        <HBox spacing="10.0" alignment="CENTER_LEFT">
+          <Label text="Loans" styleClass="laplace-title,loan-title" wrapText="true" />
+          <Label text="Current assignments and completed history"
+                 styleClass="laplace-muted,loan-subtitle" wrapText="true" />
+        </HBox>
         <HBox spacing="10.0">
           <TextField fx:id="memberFilter" promptText="Filter by NUS ID" HBox.hgrow="ALWAYS" />
           <TextField fx:id="equipmentFilter" promptText="Filter by equipment UUID" HBox.hgrow="ALWAYS" />
-        </HBox>
-        <HBox spacing="10.0" alignment="CENTER_LEFT">
-          <Label fx:id="filterSummary" wrapText="true" minWidth="0.0" HBox.hgrow="ALWAYS"
-                 styleClass="laplace-muted" />
           <Button fx:id="resetFilters" text="Reset filters" onAction="#handleResetFilters"
                   minWidth="-Infinity" />
         </HBox>
+        <Label fx:id="filterSummary" wrapText="true" minWidth="0.0" styleClass="laplace-muted" />
         <VBox spacing="12.0" minWidth="0.0" styleClass="laplace-surface,loan-section">
           <HBox spacing="12.0" alignment="CENTER_LEFT">
             <Label text="Open loans" styleClass="loan-section-title" />

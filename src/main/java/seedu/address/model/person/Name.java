@@ -25,7 +25,7 @@ public class Name {
 
     public static final String MEMBER_MESSAGE_CONSTRAINTS =
             "Invalid member name. Use 1-100 characters: letters with optional combining marks, spaces, "
-                    + "apostrophes, hyphens, or periods. Include at least one letter.";
+                    + "apostrophes, hyphens, periods, or standalone s/o and d/o. Include at least one letter.";
 
     public final String fullName;
 
@@ -46,10 +46,11 @@ public class Name {
 
     /**
      * Validates a member name, accepting combining marks only after a letter or its preceding marks.
-     * Legacy person names retain their original rules.
+     * Standalone s/o and d/o tokens ignore case. Legacy person names retain their original rules.
      */
     public static boolean isValidMemberName(String value) {
-        return LaplaceText.isPrintable(value, 1, 100) && value.matches("(?:\\p{L}\\p{M}*|[ .'\u2019-])+")
+        return LaplaceText.isPrintable(value, 1, 100)
+                && value.replaceAll("(?i)(?<!\\S)[sd]/o(?!\\S)", "s").matches("(?:\\p{L}\\p{M}*|[ .'\u2019-])+")
                 && value.codePoints().anyMatch(Character::isLetter);
     }
 
