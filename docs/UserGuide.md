@@ -1005,6 +1005,7 @@ keeps its normal navigation behavior outside an active completion cycle.
 ## Sample records on first launch
 
 When there is no saved data file, Laplace starts with five fictional members and seven equipment items.
+Fresh samples contain no legacy contacts; saving them writes an empty `persons` array.
 The samples include two cameras, a damaged tripod, a microphone, a speaker, a projector under repair
 and an event laptop. Three open loans illustrate current holders, one overdue item and a member holding
 multiple items. Two closed loans show a FAIR speaker return and a GOOD-to-DAMAGED tripod return.
@@ -1315,6 +1316,8 @@ close Laplace without entering commands, preserve the original file and repair a
 
 The saved root still requires a `persons` array for legacy compatibility. For a dataset with no legacy
 contacts, keep `"persons": []`; omitting it or writing null is rejected with `Persons list is missing.`
+Fresh sample datasets use this empty array. Existing legacy contacts are preserved when loading and
+saving an older file; this change does not automatically remove stored records.
 Populated legacy arrays are retained and saved even though their old commands are unavailable. Do not
 remove an existing array during recovery. Current saves always include it.
 

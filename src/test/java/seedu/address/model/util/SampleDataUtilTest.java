@@ -10,11 +10,12 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
@@ -36,9 +37,9 @@ public class SampleDataUtilTest {
     public java.nio.file.Path testFolder;
 
     @Test
-    public void getSampleAddressBook_preservesLegacyPersonsAndAddsUniqueMembers() {
+    public void getSampleAddressBook_omitsLegacyPersonsAndAddsUniqueMembers() {
         ReadOnlyAddressBook book = SampleDataUtil.getSampleAddressBook(CLOCK);
-        assertEquals(Arrays.asList(SampleDataUtil.getSamplePersons()), book.getPersonList());
+        assertTrue(book.getPersonList().isEmpty());
         assertEquals(List.of("Alex Tan", "Jamie Lim", "Priya Nair", "Siti Nur", "Daniel Wong"),
                 book.getMemberList().stream()
                         .map(member -> member.getName().fullName).toList());
@@ -131,6 +132,9 @@ public class SampleDataUtilTest {
         ReadOnlyAddressBook book = SampleDataUtil.getSampleAddressBook(CLOCK);
         JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("sample.json"));
         storage.saveAddressBook(book);
+        var json = new ObjectMapper().readTree(testFolder.resolve("sample.json").toFile());
+        assertTrue(json.get("persons").isArray());
+        assertEquals(0, json.get("persons").size());
         assertEquals(new AddressBook(book), new AddressBook(storage.readAddressBook().orElseThrow()));
     }
 
