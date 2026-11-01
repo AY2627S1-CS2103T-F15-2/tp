@@ -1341,14 +1341,21 @@ They are not prerequisites for testing the released JAR.
 2. Inspect the sample histories. **Expected:** The speaker records FAIR at issue and return; the tripod
    records GOOD at issue and DAMAGED on return and is UNAVAILABLE. The assigned camera has an unknown
    issue condition. Samples are not appended when an existing valid dataset is loaded.
-3. Resize/move the window, switch to dark mode, enter `exit`, and relaunch from the same folder.
+3. Create a saved records fixture with
+   `member add nus/A8400098X name/Preference Probe phone/91112222 email/preferences@example.com`.
+   **Expected:** Success and an existing data file at the status area's path. Resize/move the window,
+   switch to dark mode, enter `exit`, and relaunch from the same folder.
    **Expected:** Normal exit and restored geometry/appearance. Test `help`, close Help, then exit using
    the window control too. For rejected startup files, follow [Invalid saved data](#invalid-saved-data).
-4. With Laplace closed, back up the data file and replace `preferences.json` with `{"guiSettings":null}`.
+4. With Laplace closed, back up both the saved data file and the valid dark-mode `preferences.json`.
+   Keep these backups unchanged for comparison and restoration. Replace the working `preferences.json`
+   with `{"guiSettings":null}`.
    Relaunch. **Expected:** Default light appearance/geometry, a preference-loading log diagnostic,
-   default settings saved to preferences, and unchanged domain-data bytes.
-5. Repeat with `{}` in `preferences.json`. **Expected:** Missing settings use defaults. Restore a valid
-   preferences backup and verify that valid dark-mode and geometry settings still load.
+   default settings saved to preferences, and domain-data bytes matching the records backup. Close Laplace.
+5. While Laplace is closed, replace the working `preferences.json` with `{}` and relaunch.
+   **Expected:** Missing settings use defaults; domain-data bytes still match the records backup.
+   Close Laplace, restore the valid preferences backup from step 4, and relaunch.
+   **Expected:** The backed-up dark mode and geometry return; records remain unchanged.
 
 ### Member registration, viewing, deletion and restoration
 
@@ -1418,10 +1425,11 @@ They are not prerequisites for testing the released JAR.
 1. Enter `member list extra`, `equipment list extra`, `loans reset extra`, `undo 2`, `redo count/2`,
    `help extra` and `exit extra`. **Expected:** Each reports `This command takes no arguments.` with
    its accepted usage. Help stays closed; invalid Exit does not close the application.
-2. Enter the bare commands, using `exit` last. **Expected:** List/reset navigate normally, undo/redo
-   operate or report empty history, Help opens, and bare Exit closes Laplace.
-3. Enter `loans list extra`. **Expected:** `Unexpected text before parameters.` with loan-list usage;
+2. Enter `loans list extra`. **Expected:** `Unexpected text before parameters.` with loan-list usage;
    this command accepts optional filters and therefore retains its parameter-specific diagnostic.
+3. Enter the bare commands from step 1, using `exit` last. **Expected:** List/reset navigate normally,
+   undo/redo operate or report empty history, and Help opens. Close Help before entering bare `exit`.
+   **Expected:** Laplace closes after the final command; there are no subsequent commands in this scenario.
 
 ### Unicode command separators and aliases
 
