@@ -39,7 +39,7 @@ if () then ([command records history])
   :Record candidate relative to live records;
   note right
     If data changed: discard redo, append state,
-    retain at most 10 changes / 11 snapshots.
+    retain at most 10 changes / 11 history states.
     If unchanged: preserve history and redo.
     All history changes remain candidate-only.
   end note
