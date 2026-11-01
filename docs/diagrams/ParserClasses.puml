@@ -3,36 +3,39 @@
 skinparam arrowThickness 1.1
 skinparam arrowColor LOGIC_COLOR_T4
 skinparam classBackgroundColor LOGIC_COLOR
+hide empty members
 
-Class "{abstract}\nCommand" as Command
-Class XYZCommand
+class AddressBookParser
+interface Parser <<interface>>
+class MemberCommandParser
+class MemberDeleteCommandParser
+class LaplaceArgumentParser
+class ParserUtil
+class CliSyntax
+class Prefix
+class ArgumentMultimap
+abstract class Command
+class MemberDeleteCommand
 
-package "Parser classes"{
-Class "<<interface>>\nParser" as Parser
-Class AddressBookParser
-Class XYZCommandParser
-Class CliSyntax
-Class ParserUtil
-Class ArgumentMultimap
-Class ArgumentTokenizer
-Class Prefix
-}
-
-Class HiddenOutside #FFFFFF
-HiddenOutside ..> AddressBookParser
-
-AddressBookParser .down.> XYZCommandParser: <<create>>
-
-XYZCommandParser ..> XYZCommand : <<create>>
-AddressBookParser ..> Command : <<use>>
-XYZCommandParser .up.|> Parser
-XYZCommandParser ..> ArgumentMultimap
-XYZCommandParser ..> ArgumentTokenizer
-ArgumentTokenizer .left.> ArgumentMultimap
-XYZCommandParser ..> CliSyntax
+AddressBookParser ..> MemberCommandParser : <<create>>
+MemberCommandParser ..|> Parser
+MemberDeleteCommandParser ..|> Parser
+MemberCommandParser ..> MemberDeleteCommandParser : <<create>>
+MemberDeleteCommandParser ..> MemberDeleteCommand : <<create>>
+MemberDeleteCommand -up-|> Command
+AddressBookParser ..> Command : returns
+MemberDeleteCommandParser ..> LaplaceArgumentParser : validates arguments
+MemberDeleteCommandParser ..> ParserUtil : parseNusId
+MemberDeleteCommandParser ..> CliSyntax : PREFIX_NUS_ID
 CliSyntax ..> Prefix
-XYZCommandParser ..> ParserUtil
-ParserUtil .down.> Prefix
-ArgumentTokenizer .down.> Prefix
-XYZCommand -up-|> Command
+LaplaceArgumentParser ..> Prefix
+LaplaceArgumentParser ..> ArgumentMultimap : <<create>>
+MemberDeleteCommandParser ..> ArgumentMultimap : reads values
+
+legend bottom
+  Focus: member delete; other family, leaf and utility parsers are omitted.
+  MemberCommandParser implements Parser<Command>.
+  MemberDeleteCommandParser implements Parser<MemberDeleteCommand>.
+  AddressBookParser uses parseCommand() and does not implement Parser<T>.
+endlegend
 @enduml
