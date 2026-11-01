@@ -21,6 +21,7 @@ public class MemberCommandInvariantTest {
     public void execute_wrongIdentityFromModel_throwsAssertionErrorBeforeMutation() {
         assertTrue(MemberEditCommand.class.desiredAssertionStatus());
         assertTrue(MemberRestoreCommand.class.desiredAssertionStatus());
+        assertTrue(MemberDeleteCommand.class.desiredAssertionStatus());
         ModelManager model = new ModelManager() {
             @Override
             public Optional<Member> findMember(NusId nusId) {
@@ -30,7 +31,8 @@ public class MemberCommandInvariantTest {
         model.addMember(new Member(BEN.getNusId(), BEN.getName(), BEN.getPhone(), BEN.getEmail(), true));
         AddressBook before = new AddressBook(model.getAddressBook());
         List<Command> commands = List.of(new MemberEditCommand(ALEX.getNusId(), Optional.of(ALEX.getName()),
-                Optional.empty(), Optional.empty()), new MemberRestoreCommand(ALEX.getNusId()));
+                Optional.empty(), Optional.empty()), new MemberRestoreCommand(ALEX.getNusId()),
+                new MemberDeleteCommand(ALEX.getNusId()));
 
         for (Command command : commands) {
             AssertionError error = assertThrows(AssertionError.class, () -> command.execute(model));

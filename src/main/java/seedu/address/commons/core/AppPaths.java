@@ -16,6 +16,9 @@ public final class AppPaths {
     private AppPaths() {
     }
 
+    /**
+     * Returns the JAR folder, or the working directory when running unpackaged development classes.
+     */
     public static Path getHomeDirectory() {
         return HOME_DIRECTORY;
     }
@@ -28,6 +31,9 @@ public final class AppPaths {
         return HOME_DIRECTORY.resolve("preferences.json");
     }
 
+    /**
+     * Returns the base log path before the logging framework appends rotation numbers.
+     */
     public static Path getLogFilePath() {
         return HOME_DIRECTORY.resolve("addressbook.log");
     }

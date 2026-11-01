@@ -227,7 +227,7 @@ public final class CompletionService {
                     return completeLoanIdentity(text, start, end, caret, data).or(() -> prefix);
                 }
                 return suggest(start, end, text.substring(start, caret),
-                        getValues(command, markers.get(i), data), true).or(() -> prefix);
+                        getCandidateValues(command, markers.get(i), data), true).or(() -> prefix);
             }
         }
         return prefix;
@@ -263,9 +263,10 @@ public final class CompletionService {
     }
 
     /**
-     * Returns candidate values for finite options; new identities, dates, counts, and free-form notes remain manual.
+     * Returns stored or finite-option values suggested for this command's prefix.
+     * New member IDs, dates, counts, and notes fields return no suggestions; equipment queries can reuse stored notes.
      */
-    private Stream<String> getValues(String command, String prefix, Supplier<ReadOnlyAddressBook> data) {
+    private Stream<String> getCandidateValues(String command, String prefix, Supplier<ReadOnlyAddressBook> data) {
         switch (prefix) {
             case "nus/":
                 if (command.equals(MemberAddCommand.COMMAND_WORD)) {
