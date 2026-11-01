@@ -86,7 +86,7 @@ deactivate controller
 note over field, controller
   External text, caret, anchor or focus changes clear the cycle.
   Weak collection listeners invalidate record candidates after changes.
-  Static vocabulary does not read records or construct snapshots.
+  Static vocabulary does not read records or construct transaction candidates.
   Enter clears it and follows ordinary command submission.
   Replacement uses the original start/end range, preserving later fields
   and Unicode separators. Completing one batch UUID preserves its neighbors.

@@ -59,6 +59,6 @@ legend bottom
   No completion dependency calls Logic.execute or storage.
   Static completion does not read records. Collection notifications
   invalidate record candidates; unchanged cycles reuse prepared values.
-  No root snapshots are constructed. Ordinary Enter submission remains separate.
+  No transaction candidates are constructed. Ordinary Enter submission remains separate.
 endlegend
 @enduml

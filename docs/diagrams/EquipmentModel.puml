@@ -50,7 +50,7 @@ ModelManager ..> AvailabilityCalculator : calls for active units
 Loan ..> Equipment : resolved by equipmentUuid
 
 note bottom of Equipment
-  Immutable values can be shared by snapshots.
+  Immutable values can be shared by independent roots.
   Edits replace a value; UUID never changes.
   No stored quantity, holder or availability.
 end note

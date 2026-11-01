@@ -67,7 +67,7 @@ logic -> candidate : recordAddressBook(previousData, "equipment add")
 note right of candidate
   Stage one history entry for the whole batch.
   Clear redo only for a real record change.
-  Retain at most 10 changes / 11 snapshots.
+  Retain at most 10 changes / 11 history states.
 end note
 candidate --> logic : return
 logic -> candidate : getAddressBook()
