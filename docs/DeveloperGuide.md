@@ -1098,6 +1098,10 @@ Use case ends.
 * 4c. A date is invalid, the assignment date is after today, or the expected return date precedes assignment.
     * 4c1. Laplace explains the violated date rule.
     * Use case resumes at step 3.
+* 4d. The assignment is more than ten calendar years before today, or the expected return is more than ten
+  calendar years after today, while all validation rules pass.
+    * 4d1. Laplace saves the assignment and appends a date-check warning to the normal success feedback.
+    * Use case ends successfully.
 
 #### UC04: Record an equipment return
 
@@ -1126,6 +1130,9 @@ Use case ends.
 * 4b. The actual return date is invalid, before assignment, or after today.
     * 4b1. Laplace explains the allowed date range.
     * Use case resumes at step 3.
+* 4c. The actual return is more than ten calendar years before today while all validation rules pass.
+    * 4c1. Laplace saves the return and appends a date-check warning to the normal success feedback.
+    * Use case ends successfully.
 
 Passing the expected return date never closes a loan automatically. A return after the expected date is valid. After return, only items in `GOOD` or `FAIR` condition become available.
 

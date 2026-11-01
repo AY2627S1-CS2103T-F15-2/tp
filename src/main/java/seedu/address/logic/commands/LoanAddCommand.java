@@ -151,6 +151,12 @@ public class LoanAddCommand extends Command {
                 : "Assigned " + equipmentUuids.size() + " units to " + member.getName() + " (" + memberNusId
                         + ") on " + assignedDate + "; expected return: " + expectedReturnDate + ".\n"
                         + String.join("\n", details);
+        if (assignedDate.isBefore(today.minusYears(10))) {
+            feedback += "\nWarning: assigned/ is over 10 years before today (" + today + "). Check the date.";
+        }
+        if (expectedReturnDate.isAfter(today.plusYears(10))) {
+            feedback += "\nWarning: expected/ is over 10 years after today (" + today + "). Check the date.";
+        }
         return new CommandResult(feedback, display);
     }
 
