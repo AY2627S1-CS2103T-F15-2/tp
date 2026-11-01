@@ -17,12 +17,12 @@ object "<u>h0:AddressBookHistory</u>" as history {
 }
 
 note bottom of history
-  No snapshots are recorded until a successful mutation.
+  No history states are recorded until a successful mutation.
   The loaded live records are the baseline s0.
 end note
 
 legend bottom
-  s0 denotes the loaded live baseline, not a stored snapshot yet.
-  The live observable AddressBook remains separate from future stored snapshots.
+  s0 denotes the loaded live baseline, not a stored history state yet.
+  The live observable AddressBook remains separate from future stored history states.
 endlegend
 @enduml

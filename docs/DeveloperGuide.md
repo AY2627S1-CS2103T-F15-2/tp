@@ -214,9 +214,9 @@ parser (for example, `EquipmentCommandParser` and `EquipmentAddCommandParser`). 
 The retired top-level words `add`, `edit`, `delete`, `clear`, `find`, and `list` now reach the existing
 unknown-command branch and throw `ParseException("Unknown command.")`. In particular, `list members`
 is rejected; the supported command is `member list`. Rejection occurs before a command is constructed
-or executed, before a transaction snapshot is created, and before storage is called.
+or executed, before a transaction candidate is created, and before storage is called.
 
-For supported commands, `LogicManager` executes transactional mutations on an isolated model snapshot,
+For supported commands, `LogicManager` executes transactional mutations on an isolated model candidate,
 saves that candidate state, and publishes it to the live root only after saving succeeds. Commands
 marked `isReadOnly()` return without saving. This retirement does not change those execution rules.
 
@@ -235,7 +235,7 @@ The inherited parser diagram below documents the remaining AB3 classes, not the 
 The Model owns the in-memory records and their consistency rules. A `Member` is identified by NUS ID,
 an `Equipment` unit by UUID, and a `Loan` connects those identities. `AddressBook` checks relationships
 across records; the individual collections enforce identity uniqueness. `ModelManager` exposes stable
-observable lists, derives availability and coordinates transaction snapshots and undo/redo history.
+observable lists, derives availability and coordinates transaction candidates and undo/redo history.
 Views observe these lists without owning or editing their backing collections. Mutations run on an
 isolated copy, called a candidate. Publication updates live records only after that copy is saved.
 
@@ -244,7 +244,7 @@ isolated copy, called a candidate. Publication updates live records only after t
 #### Root collection integration
 
 `AddressBook` contains four record collections and exposes stable observable views. Each root has independent
-collection containers; immutable entity values may be shared across snapshots. Domain containers are
+collection containers; immutable entity values may be shared across independent roots. Domain containers are
 created lazily, while callers always receive stable unmodifiable lists. Cross-record loan integrity
 belongs to `AddressBook`, rather than the UI or serialization layer.
 
@@ -276,7 +276,7 @@ dashed loan-to-equipment arrow describes UUID resolution, not an object referenc
 
 `AddressBook` creates equipment/loan containers lazily, hence the `0..1` multiplicities. A null container
 means an empty collection to callers. The `0..*` multiplicity at each collection end of the value
-associations accounts for immutable objects shared across transaction snapshots; it does not mean
+associations accounts for immutable objects shared across transaction candidates; it does not mean
 one physical unit has several UUIDs. Equipment collections hold distinct UUIDs, and editing replaces a
 value at its existing position. Ordinary associations are used instead of composition because immutable
 values can outlive or be shared by their containers.
@@ -287,7 +287,7 @@ values can outlive or be shared by their containers.
 | Loan → member (omitted from diagram) | Each loan's `memberNusId` resolves to one retained member. A member may have multiple open or closed loans. |
 | Identity and details | UUID identifies a physical unit. Name/category determine a derived inventory group; matching descriptions do not merge identities. |
 | Lifecycle | Deleted records retain UUIDs, details and closed loans. Open loans cannot reference deleted equipment or deleted members. |
-| Availability | `ModelManager` returns UNAVAILABLE for deleted units; otherwise the calculator returns ASSIGNED for an open loan, AVAILABLE for GOOD/FAIR, and UNAVAILABLE for DAMAGED/UNDER_REPAIR. |
+| Availability | A derived state, never an independently stored value. Deleted units are UNAVAILABLE. For active units, an open loan means ASSIGNED; otherwise GOOD/FAIR means AVAILABLE and DAMAGED/UNDER_REPAIR means UNAVAILABLE. |
 
 Availability, holders and inventory totals are derived, never persisted as independent fields.
 
@@ -316,7 +316,7 @@ feedback area by default.
 The following class diagram focuses on the Model's loan responsibilities. `ModelManager` delegates
 to `AddressBook`, which checks cross-record references and validates batches. `UniqueLoanList` retains
 completed loans and rejects a second open loan for the same equipment UUID. Immutable loan values
-can be shared across transaction snapshots without sharing mutable collection containers.
+can be shared across transaction candidates without sharing mutable collection containers.
 
 <puml src="diagrams/LoanWorkflowClassDiagram.puml" alt="Model responsibilities for batch loans and retained history" />
 
@@ -339,7 +339,7 @@ represents an empty collection. Stable views and `resetData` are explained in
 [Root collection integration](#root-collection-integration).
 
 The collection-to-entity multiplicities allow immutable values to be shared across independent
-transaction snapshots. Loan identities resolve through the root; `Loan` does not store direct
+transaction candidates. Loan identities resolve through the root; `Loan` does not store direct
 `Member` or `Equipment` references. Other equipment and loan fields, and legacy Person details, are
 omitted to keep this diagram focused.
 
@@ -356,7 +356,7 @@ retaining collection position, reserved identities and historical loan reference
 list remains observable and includes deleted records. The model also retains user preferences through
 `UserPrefs` and `ReadOnlyUserPrefs`.
 
-`UniqueMemberList.setMembers` snapshots its input before validating identities and replacing contents.
+`UniqueMemberList.setMembers` copies its input before validating identities and replacing contents.
 Passing its own observable view or a backed sublist therefore preserves the intended records instead
 of clearing the replacement. Invalid replacements leave the existing collection unchanged.
 
@@ -442,7 +442,7 @@ the read-only command path. `data` is the `ReadOnlyAddressBook` returned by the 
 
 `DirectorySearchCommand` counts matches using `DirectoryQuery`, then returns a `CommandResult`
 containing `DisplayRequest.members(query)` or `DisplayRequest.equipment(query)`. Since the command
-is read-only, `LogicManager` returns without creating a transaction snapshot or saving data.
+is read-only, `LogicManager` returns without creating a transaction candidate or saving data.
 Equipment queries additionally use `Model.getAvailability` to derive availability from current state.
 
 `DirectoryQuery.members(data, eligible)` combines caller eligibility with the member status filter.
@@ -452,7 +452,7 @@ history remain available for details and restoration. These query helpers do not
 
 `MainWindow` passes the same query to the directory list and its summary before refreshing them.
 Both evaluate the query against current data, keeping displayed rows and matching counts consistent.
-Sorting affects returned snapshots rather than stored records. Navigation requests without a query
+Sorting affects derived result lists rather than stored records. Navigation requests without a query
 preserve the current criteria; explicit list commands pass `DirectoryQuery.all()` to reset them.
 After mutations, the shell refreshes the views with their retained queries and recovers selection by
 NUS ID or equipment UUID when possible.
@@ -587,7 +587,7 @@ command. Parsing is separate from UUID generation and does not access or mutate 
 
 The diagram omits shared-validator lifelines and command-constructor normalization calls. The parser
 returns a command; it does not execute it. Missing/unknown family or subcommand errors stop earlier in
-the chain. Neither a parser failure nor invalid count creates a transaction snapshot or saves data.
+the chain. Neither a parser failure nor invalid count creates a transaction candidate or saves data.
 
 #### Equipment-add execution and publication
 
@@ -611,7 +611,7 @@ Validation, UUID-generation and command-execution failures occur before the save
 from the successful execution path shown. A failure after candidate insertion still discards that
 candidate, so a later successful command cannot accidentally save a failed batch.
 
-Editing, soft deletion and restoration use the same snapshot/save/publish boundary with different
+Editing, soft deletion and restoration use the same candidate/save/publish boundary with different
 command bodies. Member/equipment list, search and view commands, `loans list`, `help` and `exit` declare
 `isReadOnly()`. They return without saving records or creating history entries, so they do not follow
 this mutation sequence. Normal shutdown still saves user preferences separately.
@@ -641,7 +641,7 @@ Root loan validation applies this invariant both to new loans and complete datas
 
 `JsonAdaptedEquipment` writes a boolean `deleted`. An absent flag defaults to false for earlier files;
 explicit null and non-boolean values fail loading. Closed loans may reference deleted equipment.
-All maintenance commands are transactional: execute against a snapshot, save atomically, then publish.
+All maintenance commands are transactional: execute against a candidate, save atomically, then publish.
 No-change/rejected edits and failed writes leave live state and previously saved bytes unchanged.
 
 Directory queries share `DirectoryQuery.Status` across members and equipment. Equipment search defaults
@@ -657,24 +657,24 @@ details show the retained completed loan history.
 The CLI commands `undo` and `redo` restore complete record states within the current session.
 `AddressBookHistory` is an immutable value owned by `ModelManager`, composed with the existing
 `AddressBook` rather than replacing or subclassing its observable root. It retains at most ten
-reversible changes (eleven snapshots). Each snapshot has independent collection containers for
+reversible changes (eleven history states). Each history state has independent collection containers for
 members, physical equipment, loans and retained legacy persons; immutable entity values may be shared.
 
 The class diagram below shows only the command, persistence and record-history collaborators. Parser
 classes, collection wrappers, domain entities and preferences are omitted. The live model and each
 candidate own separate roots; multiple immutable history values may reference the same private stored
-snapshots. Accordingly, snapshot sharing uses ordinary associations rather than exclusive composition.
+history states. Accordingly, history state sharing uses ordinary associations rather than exclusive composition.
 The ordered `states` association has multiplicity `0..11`, including empty history before the first change.
-An `AddressBook` snapshot has no `ModelManager`, and the package constructor can reuse a supplied root,
+An `AddressBook` history state has no `ModelManager`, and the package constructor can reuse a supplied root,
 hence `0..*` at the model end of that association. Every model still refers to exactly one root. The logic associations allow model/storage collaborators to
 be shared by more than one `LogicManager` instance.
 
-<puml src="diagrams/UndoRedoClassDiagram.puml" alt="Undo and redo command, model, snapshot history and storage dependencies" />
+<puml src="diagrams/UndoRedoClassDiagram.puml" alt="Undo and redo command, model, record history and storage dependencies" />
 
 The first successful mutation records both the preceding state and the candidate state. Later mutations
-append a snapshot and a short action description, such as `equipment add`, without retaining command
+append a history state and a short action description, such as `equipment add`, without retaining command
 parameter values in the description. Once ten changes are retained, the oldest change and its preceding
-snapshot are discarded. A batch creation, issue or return is one history entry regardless of unit count.
+history state are discarded. A batch creation, issue or return is one history entry regardless of unit count.
 
 #### Transaction and persistence boundary
 
@@ -687,7 +687,7 @@ snapshot are discarded. A batch creation, issue or return is one history entry r
    discards any redo branch; an unchanged candidate leaves history untouched.
 4. `UndoCommand`/`RedoCommand` instead check availability and navigate the candidate's existing history.
    They return `DisplayRequest.unchanged()` and do not record another action. Redo restores the recorded
-   snapshot directly, preserving UUIDs, loan dates, conditions and references without replaying commands.
+   history state directly, preserving UUIDs, loan dates, conditions and references without replaying commands.
 5. The existing atomic JSON save persists the candidate records once. Only after success does
    `Model.publishTransaction()` publish the candidate records and history to the live model. It preserves
    the live observable root and current preferences. Parse, validation and save failures leave live data,
@@ -741,30 +741,30 @@ No undo/redo buttons or new shortcuts are provided.
 
 These object diagrams show a small equipment workflow after each successful command is saved and
 published. `u` denotes the UUID generated by the first add command. At startup, `s0` denotes the loaded
-live baseline; it becomes a stored snapshot on the first successful mutation. From that point onward,
-each `sN` is a complete stored record snapshot whose label shows only the relevant unit.
-The highlighted stored snapshot has the same record values
-as the live model; it is not the live `AddressBook` object. The integer `position` selects a snapshot,
+live baseline; it becomes a stored history state on the first successful mutation. From that point onward,
+each `sN` is a complete stored history state whose label shows only the relevant unit.
+The highlighted stored history state has the same record values
+as the live model; it is not the live `AddressBook` object. The integer `position` selects a history state,
 so the dashed `states[position]` arrow is a derived selection, not a separately stored pointer field.
 
-1. On launch, history `h0` has no snapshots or descriptions. The loaded record state is the baseline `s0`;
+1. On launch, history `h0` has no history states or descriptions. The loaded record state is the baseline `s0`;
    this example assumes it contains no equipment. Undo and redo are unavailable.
 
-<puml src="diagrams/UndoRedoState0.puml" alt="Startup with empty history and no recorded snapshots" />
+<puml src="diagrams/UndoRedoState0.puml" alt="Startup with empty history and no recorded history states" />
 
 2. Run `equipment add name/Camera category/Photo condition/GOOD`. After saving, `h1` retains `s0` and
    `s1`, with position 1 and one action description. A batch would still create only one history entry.
 
-<puml src="diagrams/UndoRedoState1.puml" alt="First equipment addition records before and after snapshots" />
+<puml src="diagrams/UndoRedoState1.puml" alt="First equipment addition records before and after history states" />
 
 3. Run `equipment edit uuid/u condition/FAIR`, substituting the real UUID for `u`. History `h2` appends
    `s2` at position 2. The unit keeps its identity.
 
-<puml src="diagrams/UndoRedoState2.puml" alt="Equipment edit appends a third snapshot with the same UUID" />
+<puml src="diagrams/UndoRedoState2.puml" alt="Equipment edit appends a third history state with the same UUID" />
 
 4. Run `undo`. New history `h3` selects `s1` at position 1; `s2` remains available for redo.
 
-<puml src="diagrams/UndoRedoState3.puml" alt="Undo selects the preceding snapshot without discarding redo" />
+<puml src="diagrams/UndoRedoState3.puml" alt="Undo selects the preceding history state without discarding redo" />
 
 5. Run `equipment list`. The directory opens, but the same history `h3`, position and redo branch remain.
 
@@ -772,7 +772,7 @@ so the dashed `states[position]` arrow is a derived selection, not a separately 
 
 6. Run `redo`. New history `h4` selects the recorded `s2` again without executing the edit command.
 
-<puml src="diagrams/UndoRedoState6.puml" alt="Redo selects the existing edited snapshot without replaying a command" />
+<puml src="diagrams/UndoRedoState6.puml" alt="Redo selects the existing edited history state without replaying a command" />
 
 7. Run `undo` again, creating `h5` at position 1, then `equipment edit uuid/u condition/DAMAGED`.
    Successful saving publishes `h6` with a new `s3`. It retains `s0` and `s1` and drops the old redo state
@@ -782,13 +782,13 @@ so the dashed `states[position]` arrow is a derived selection, not a separately 
 
 #### Retention limit and command flow
 
-After twelve successful record changes, only snapshots `s2` through `s12` and the ten actions between
+After twelve successful record changes, only history states `s2` through `s12` and the ten actions between
 them remain in the current history. The earliest reachable state is `s2`: ten undos reach position 0,
 and ten redos can return to `s12`. These limits apply to reversible commands, not the number of records.
-Older history values referenced transiently during a transaction can share stored snapshots; the bound
+Older history values referenced transiently during a transaction can share stored history states; the bound
 applies to the history retained by each model. A failed save cannot evict entries from the live history.
 
-<puml src="diagrams/UndoRedoLimit.puml" alt="Eleven retained snapshots permit at most ten undo or redo steps" />
+<puml src="diagrams/UndoRedoLimit.puml" alt="Eleven retained history states permit at most ten undo or redo steps" />
 
 The activity diagram summarizes `LogicManager.execute()`. Public directory, details and utility commands
 take the `isReadOnly()` path without saving records or changing history. Only successful transactional
@@ -799,11 +799,11 @@ internal commands that do not declare themselves read-only.
 
 #### Design considerations and verification
 
-Complete snapshots keep linked member/equipment/loan data consistent and make batch restoration atomic.
+Complete history states keep linked member/equipment/loan data consistent and make batch restoration atomic.
 They cost more memory than per-command inverse operations, so retention is capped at ten changes.
 Inverse operations would require separate reversal logic for every command and batch failure path.
 
-`AddressBookHistoryTest` covers the cap, branching, descriptions, snapshot isolation and invalid navigation.
+`AddressBookHistoryTest` covers the cap, branching, descriptions, history state isolation and invalid navigation.
 Command/parser tests cover syntax and empty history. `UndoRedoIntegrationTest` verifies identity and loan
 restoration, lifecycle changes, exact saved states, ten undos/redos, restart behavior and failed-save retries.
 Shell tests exercise the real command box, preserved filters, missing details, loans and error feedback.
@@ -968,7 +968,7 @@ Priority expresses product importance, not implementation status. **MVP** denote
 |----|----------|-------|--------|-------------|----------------|
 | US01 | `* *` | Future | newly appointed CCA EXCO member | import member and equipment records from a local file | avoid re-entering existing lists manually. |
 | US02 | `* *` | Future | cautious CCA EXCO member | preview additions, changes, and rejected records before confirming an import | correct problems before changing my current records. |
-| US03 | `* *` | Future | CCA EXCO member | export all Laplace data to one portable snapshot file | keep a complete backup of my records. |
+| US03 | `* *` | Future | CCA EXCO member | export all Laplace data to one portable backup snapshot file | keep a complete backup of my records. |
 | US04 | `* * *` | MVP | CCA EXCO member | add a member with their NUS ID, name, phone number, and email | keep track of a person who has joined the CCA. |
 | US05 | `* * *` | MVP | CCA EXCO member | list all active members | review the current membership at a glance. |
 | US06 | `* * *` | MVP | CCA EXCO member | view one member's full details | verify their information before an operation. |
@@ -1005,7 +1005,7 @@ Priority expresses product importance, not implementation status. **MVP** denote
 | US37 | `* *` | Implemented | CCA EXCO member who made a mistake | undo my most recent successful data-changing action | recover without reconstructing the previous state manually. |
 | US38 | `* *` | Implemented | CCA EXCO member | redo an action I just undid | recover when the undo itself was a mistake. |
 | US39 | `*` | Future | CCA EXCO member investigating a discrepancy | view a recent history of data-changing actions | understand how the current records came about. |
-| US40 | `* *` | Future | CCA EXCO member recovering from data loss | restore a previously exported complete snapshot | resume operations without rebuilding every record. |
+| US40 | `* *` | Future | CCA EXCO member recovering from data loss | restore a previously exported complete backup snapshot | resume operations without rebuilding every record. |
 | US41 | `* * *` | MVP | CCA EXCO member entering invalid data | receive an actionable error with no partial change applied | correct my input while trusting that the records remain consistent. |
 | US42 | `* *` | Future | newly appointed CCA EXCO member | access command instructions and examples | learn operations and check syntax when I forget it. |
 | US43 | `* * *` | MVP | CCA EXCO member | retrieve a member by their exact NUS ID | distinguish members even when they share a name. |
@@ -1198,27 +1198,27 @@ Use case ends.
 
 #### UC07: Restore a complete backup
 
-**Scope:** Future. **Related stories:** US03, US40, US41.
-**Precondition:** The EXCO member has a previously exported complete snapshot. Laplace can accept a restore request even if its normal data file cannot be loaded.
+**Scope:** Future; not available in this release. **Related stories:** US03, US40, US41.
+**Precondition:** The EXCO member has a previously exported complete backup snapshot. The proposed operation must support recovery even if the normal data file cannot be loaded.
 
 **MSS**
 
-1. The EXCO member selects a local snapshot for restoration.
-2. Laplace validates the complete snapshot and explains that restoration will replace the current dataset.
+1. The EXCO member selects a local backup snapshot for restoration.
+2. Laplace validates the complete backup snapshot and explains that restoration will replace the current dataset.
 3. The EXCO member confirms replacement.
-4. Laplace restores and saves the snapshot as one operation, then shows the restored records.
+4. Laplace restores and saves the backup snapshot as one operation, then shows the restored records.
 
 Use case ends.
 
 **Extensions**
 
-* 2a. The snapshot is unreadable, incompatible, incomplete, or contains invalid records or broken loan references.
+* 2a. The backup snapshot is unreadable, incompatible, incomplete, or contains invalid records or broken loan references.
     * 2a1. Laplace rejects it and explains the problem without replacing current data.
     * Use case resumes at step 1.
-* 3a. The EXCO member cancels replacement.
+* 2b. The EXCO member cancels instead of confirming replacement.
     * Use case ends with current data unchanged.
-* 4a. The snapshot has changed since validation.
-    * 4a1. Laplace discards the previous validation result without replacing current data.
+* 3a. The backup snapshot has changed since validation.
+    * 3a1. Laplace discards the previous validation result without replacing current data.
     * Use case resumes at step 2.
 
 #### UC08: Undo a mistaken change
@@ -1290,9 +1290,9 @@ These are acceptance targets for the intended product, not measurements of the c
 | Equipment item / unit | One individually tracked physical object. Identical models are separate items, each with its own identifier. |
 | UUID | Universally unique identifier. Laplace generates one immutable UUID for each equipment item; names and descriptions are not equipment identifiers. |
 | Category | A broad grouping recorded on an equipment item, such as cameras or sports equipment. One category can contain different equipment types. |
-| Equipment type | A particular kind or model of equipment, such as a Canon EOS R50 camera. Several physical units can share a type; the future batch and summary stories refer to these units, rather than every item in a broad category. |
+| Equipment type | A particular kind or model of equipment, such as a Canon EOS R50 camera. Physical units with the same normalized category and name form an inventory group used by batch creation and inventory summaries. |
 | Condition | The recorded physical state of an item: `GOOD`, `FAIR`, `DAMAGED`, or `UNDER_REPAIR` in the MVP. |
-| Availability | A derived state: `ASSIGNED` when an open loan exists; otherwise `AVAILABLE` for `GOOD` or `FAIR` condition, and `UNAVAILABLE` for `DAMAGED` or `UNDER_REPAIR`. It is not entered independently. |
+| Availability | A derived state, never an independently stored value. Deleted units are UNAVAILABLE. For active units, an open loan means ASSIGNED; otherwise GOOD/FAIR means AVAILABLE and DAMAGED/UNDER_REPAIR means UNAVAILABLE. |
 | Equipment loan / assignment | A relationship between one member and one equipment item, with assignment, expected return, and optional actual return dates. A member may have several loans; an item has at most one open loan. |
 | Open loan / outstanding equipment | A loan with no actual return date, or the item covered by that loan. The associated member remains responsible until return is recorded. |
 | Closed loan | A loan whose actual return date has been recorded. It no longer determines a current holder. |
@@ -1301,14 +1301,21 @@ These are acceptance targets for the intended product, not measurements of the c
 | Expected return date | The due date, on or after assignment. Reaching it does not automatically record a return. |
 | Actual return date | The recorded date of return, from the assignment date through the computer's local date, inclusive. |
 | Overdue loan | An open loan whose expected return date is before the computer's local date. This definition does not imply automatic notifications. |
-| Active record | A member or equipment record included in normal lists, rather than archived or deleted. Active equipment can still be assigned or unavailable. |
-| Archive | A proposed operation that removes an inactive member from the active list while preserving their record and history. |
-| Delete | Marking a retained record deleted, allowed only without open loans. Its identity, details and closed history remain stored. |
+| Active record | A member or equipment record whose deletion flag is false. All-record lists also display retained deleted records; active-only searches exclude them. Active equipment can still be assigned or unavailable. |
+| Archive | A future proposal for setting aside an inactive member while preserving history. Archival is not implemented and is distinct from the shipped soft-delete/restore operations. |
+| Delete | Soft deletion: marking a retained record deleted, allowed only without open loans. Its identity remains reserved, and its details and closed history stay stored. |
 | Restore | Reactivating a retained deleted member or equipment unit without a time limit, preserving identity and history. |
-| Snapshot | A complete local export of Laplace's persistent records and their relationships at a point in time, used as a backup. It differs from importing selected member or equipment records. |
-| Fuzzy search | Proposed matching of incomplete or approximate text against records; distinct from the MVP's exact identifier lookup. |
+| Retained record | An active or soft-deleted member/equipment record still stored in the dataset. Soft-deleted records can be restored without changing their identity or closed loan history. |
+| Inventory group | A derived group of physical equipment units with matching normalized category and name. Group totals distinguish available, assigned, unavailable, and deleted units; a group is not a separately persisted equipment identity. |
+| Candidate | The isolated model copy on which a transactional mutation runs, created by `Model.createTransactionSnapshot()`. It has independent mutable collection containers and is discarded on failure. |
+| Transaction | A record-changing operation staged on a candidate, persisted atomically, then published to the live model. Batches and undo/redo succeed or fail as a whole. |
+| Publication | Updating the existing live observable model with the successfully saved candidate's records and matching session history. It happens after persistence succeeds. |
+| History state | A private stored copy of the records retained for undo/redo. A selected history state is copied into a candidate for navigation; it is not the live model or a user-exported file. |
+| Backup snapshot | A proposed complete local export of persistent records and their relationships for later recovery. Export and restore-backup are Future capabilities (US03, US40, UC07); this term does not denote a transaction candidate or a session history state. |
+| Display request | An immutable navigation intent returned with command feedback. The UI uses it to choose a directory, group, or detail view without parsing message text. It is not persisted record data. |
+| Compact UUID label | A shortened UUID shown as a visual aid in an inventory group. It can collide with another label and is not a command identifier; exact-unit commands use the full UUID. |
 | Atomic operation | An operation whose changes succeed together or leave the preceding consistent state intact. |
-| MVP | Minimum viable product; the Week 6 baseline, which is a subset of the full requirements recorded here. |
+| MVP | Minimum viable product; the delivered baseline capabilities, which are a subset of the full requirements recorded here. |
 
 --------------------------------------------------------------------------------------------------------------------
 

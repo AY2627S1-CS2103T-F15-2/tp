@@ -17,7 +17,7 @@ participant "writer:AtomicFileWriter" as writer
 activate logic
 logic -> logic : addressBookParser.parseCommand(text)
 note right of logic
-  Parse failure returns before snapshot or execution.
+  Parse failure returns before candidate creation or execution.
   This example assumes isTransactional() is true
   and isReadOnly() is false.
 end note

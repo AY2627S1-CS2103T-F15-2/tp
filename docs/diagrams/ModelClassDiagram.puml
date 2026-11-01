@@ -81,7 +81,7 @@ Member --> "1" Phone
 Member --> "1" Email
 
 legend bottom
-  Domain containers are lazy; immutable entities can be shared by snapshots.
+  Domain containers are lazy; immutable entities can be shared by independent roots.
   The member collection retains active and deleted records.
   Dashed loan arrows are identity lookups through the root, not stored objects.
   Stable views, other entity details and history internals are omitted.

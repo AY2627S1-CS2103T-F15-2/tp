@@ -60,8 +60,8 @@ AddressBookHistory "0..*" -left-> "0..11" AddressBook : states {ordered}
 legend bottom
   Operation parameter types are abbreviated; unrelated members are omitted.
   UndoCommand and RedoCommand are transactional; recordsHistory() returns false.
-  Live/candidate roots are separate from the history's private snapshots.
-  History values may share snapshots; getters return defensive record copies.
+  Live/candidate roots are separate from the history's private history states.
+  History values may share history states; getters return defensive record copies.
   descriptions.size() = max(0, states.size() - 1).
 endlegend
 @enduml
