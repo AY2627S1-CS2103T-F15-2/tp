@@ -5,7 +5,7 @@ or rewritten merely by loading the file.
 
 | Field | New Laplace input |
 | --- | --- |
-| Member name | 1-100 Unicode code points after whitespace and NFC normalization, with at least one letter; letters with attached combining marks, spaces, straight (`'`) or curly (`’`) apostrophes, hyphens and periods only. |
+| Member name | 1-100 Unicode code points after whitespace and NFC normalization, with at least one letter; letters with attached combining marks, spaces, straight (`'`) or curly (`’`) apostrophes, hyphens, periods and standalone `s/o` or `d/o` tokens in any letter case. |
 | Phone | Optional leading `+`, then 8-15 digits after typed whitespace and hyphens are removed. |
 | Email | 3-254 ASCII characters; exactly one `@`; nonempty local part and dotted domain; local characters are letters/digits/`.`/`_`/`%`/`+`/`-`; domain labels cannot begin/end with `-`. Stored lowercase. |
 | Equipment name | 1-100 printable Unicode characters after normalization. |
@@ -33,13 +33,16 @@ markers fail when encountered; an earlier invalid field is therefore reported be
 For example, `member add phone/123 nus/bad` reports the phone error; reversing these fields reports the NUS ID error.
 
 An absent required field has no position in the input. Missing fields are reported after all supplied fields
-have been validated, using lexicographic prefix order as the deterministic tie-breaker. List commands accept
-whitespace only. Model/business checks run after parsing and before any records can be committed.
+have been validated, using lexicographic prefix order as the deterministic tie-breaker. Member/equipment
+lists, loan reset, undo, redo, Help and Exit accept whitespace only after their command words. Extra input
+reports `This command takes no arguments.` with usage; loan list still accepts optional filters.
+Model/business checks run after parsing and before any records can be committed.
 
 Command words ignore case; `members` and `loan` alias `member` and `loans`.
 Prefixes remain lowercase and case-sensitive, and parameter order is free. The reserved
-start/whitespace-delimited `[A-Za-z][A-Za-z0-9_-]*/` marker grammar is unchanged. Unknown markers are rejected
-even inside text values. No quoting or escaping is introduced; embedded slashes and ordinary URLs remain text.
+start/whitespace-delimited `[A-Za-z][A-Za-z0-9_-]*/` marker grammar excludes standalone `s/o` and `d/o`
+tokens in any letter case. Other unknown markers are rejected even inside text values, including `w/`.
+No quoting or escaping is introduced; embedded slashes and ordinary URLs remain text.
 
 ## Persistence and presentation
 

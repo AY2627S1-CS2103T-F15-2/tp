@@ -47,8 +47,28 @@ public class LaplaceArgumentParserTest {
         for (String input : new String[] {"", " ", "\t \n"}) {
             assertEquals("", LaplaceArgumentParser.parse(input, Set.of(), Set.of()).getPreamble());
         }
-        assertParseFailure("Unexpected text before parameters.", "extra", Set.of(), Set.of());
-        assertParseFailure("Unknown parameter: notes/", "notes/", Set.of(), Set.of());
+        assertParseFailure("This command takes no arguments.", "extra", Set.of(), Set.of());
+        assertParseFailure("This command takes no arguments.", "notes/", Set.of(), Set.of());
+    }
+
+    @Test
+    public void parse_patronymicTokens_preservesLiteralTextAndRejectsOtherMarkers() throws Exception {
+        for (String token : new String[] {"s/o", "S/O", "s/O", "d/o", "D/O", "D/o"}) {
+            String name = "Ravi " + token + " Kumar";
+            ArgumentMultimap result = LaplaceArgumentParser.parse("name/" + name + " nus/A0123456X",
+                    Set.of(PREFIX_MEMBER_NAME, PREFIX_NUS_ID), Set.of());
+            assertEquals(name, result.getValue(PREFIX_MEMBER_NAME).orElseThrow());
+            assertEquals("A0123456X", result.getValue(PREFIX_NUS_ID).orElseThrow());
+            assertEquals(token, LaplaceArgumentParser.parse("notes/" + token, Set.of(), Set.of(PREFIX_NOTES))
+                    .getValue(PREFIX_NOTES).orElseThrow());
+        }
+        for (String suffix : new String[] {"only", "oKumar", "o/", "o,"}) {
+            assertParseFailure("Unknown parameter: s/", "name/Ravi s/" + suffix,
+                    Set.of(PREFIX_MEMBER_NAME), Set.of());
+        }
+        assertParseFailure("Unknown parameter: w/", "notes/Use w/ XLR cable", Set.of(), Set.of(PREFIX_NOTES));
+        assertParseFailure("Repeated parameter: name/", "name/Ravi s/o Kumar name/Other",
+                Set.of(PREFIX_MEMBER_NAME), Set.of());
     }
 
     @Test

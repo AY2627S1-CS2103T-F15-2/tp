@@ -83,6 +83,27 @@ Reviewable local evidence is recorded in [AutocompleteVerification.txt](gui/Auto
 [AutocompleteKeyboardSession.txt](gui/AutocompleteKeyboardSession.txt), and
 [AutocompletePackagedSession.txt](gui/AutocompletePackagedSession.txt).
 
+## Capacity and failure injection
+
+These checks require a source checkout and Java 25. They are separate from the released-JAR manual
+scenarios in the Developer Guide; testers do not need to hand-create a large dataset.
+
+`LoanHistoryCapacityTest` builds its synthetic fixture in code: 1,000 members, 5,000 equipment units
+and 10,000 completed loans. It checks retained counts and bounded history controls in the Loans and
+detail panels. Completion controller/service tests check that static vocabulary does not read record
+collections and that unchanged cycles reuse candidates. These structural checks do not establish the
+NFR07 timing target; that benchmark needs its own repeatable fixture and measured platform results.
+
+`LaplaceTransactionTest` injects partial temporary-file writes and failed atomic replacements for real
+mutation commands, including assignment and return. It checks unchanged live records, history and
+previous file bytes, then successful retry after the injected failure is removed. Run it with
+`./gradlew test --tests 'seedu.address.storage.LaplaceTransactionTest'`.
+`AtomicFileWriterTest` checks access-policy ordering, metadata preservation and cleanup;
+`AtomicFileWriterAclTest` checks real Windows ACL behavior and is platform-gated.
+`ReadOnlyCommandIntegrationTest` checks that navigation, Help and Exit do not save domain records.
+`CommandLogPrivacyTest` checks logs with the application logger hierarchy enabled at all levels.
+These test descriptions document verification scope, not a claim that a particular run passed.
+
 ## Types of tests
 
 This project has three types of tests:

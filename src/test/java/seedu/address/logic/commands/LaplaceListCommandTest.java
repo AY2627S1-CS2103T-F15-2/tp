@@ -3,6 +3,8 @@ package seedu.address.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.SearchData.item;
+import static seedu.address.testutil.SearchData.member;
 
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +31,35 @@ public class LaplaceListCommandTest {
                 new MemberListCommand().execute(model));
         assertEquals(new CommandResult("Listed 0 equipment items.", DisplayRequest.equipment(DirectoryQuery.all())),
                 new EquipmentListCommand().execute(model));
+    }
+
+    @Test
+    public void execute_oneRecordPerDirectory_reportsSingularWithoutMutation() {
+        ModelManager model = new ModelManager();
+        model.addMember(member(1));
+        model.addEquipment(item(1, Condition.GOOD));
+        AddressBook before = new AddressBook(model.getAddressBook());
+        assertEquals(new CommandResult("Listed 1 active member.", DisplayRequest.members(DirectoryQuery.all())),
+                new MemberListCommand().execute(model));
+        assertEquals(new CommandResult("Listed 1 equipment item.", DisplayRequest.equipment(DirectoryQuery.all())),
+                new EquipmentListCommand().execute(model));
+        assertEquals(before, model.getAddressBook());
+        assertEquals("Listed 0 active members.", String.format(MemberListCommand.MESSAGE_SUCCESS, 0));
+        assertEquals("Listed 0 equipment items.", String.format(EquipmentListCommand.MESSAGE_SUCCESS, 0));
+    }
+
+    @Test
+    public void execute_oneActiveAndOneDeletedMember_keepsDeletedSuffixAndBothRows() {
+        ModelManager model = new ModelManager();
+        model.addMember(member(1));
+        model.addMember(member(2));
+        model.deleteMember(member(2));
+        AddressBook before = new AddressBook(model.getAddressBook());
+        CommandResult result = new MemberListCommand().execute(model);
+        assertEquals("Listed 1 active member. 1 deleted member(s) remain visible.", result.getFeedbackToUser());
+        assertEquals(DisplayRequest.members(DirectoryQuery.all()), result.getDisplayRequest());
+        assertEquals(2, result.getDisplayRequest().getQuery().orElseThrow().members(model.getAddressBook()).size());
+        assertEquals(before, model.getAddressBook());
     }
 
     @Test

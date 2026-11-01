@@ -12,6 +12,7 @@ public class MemberListCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Lists active and deleted members together. Takes no arguments.";
     public static final String MESSAGE_SUCCESS = "Listed %d active members.";
+    public static final String MESSAGE_SUCCESS_SINGULAR = "Listed %d active member.";
 
     @Override
     public boolean isReadOnly() {
@@ -23,7 +24,7 @@ public class MemberListCommand extends Command {
         requireNonNull(model);
         long deleted = model.getMemberList().stream().filter(member -> member.isDeleted()).count();
         long active = model.getMemberList().size() - deleted;
-        String feedback = String.format(MESSAGE_SUCCESS, active);
+        String feedback = String.format(active == 1 ? MESSAGE_SUCCESS_SINGULAR : MESSAGE_SUCCESS, active);
         if (deleted > 0) {
             feedback += " " + deleted + " deleted member(s) remain visible.";
         }
