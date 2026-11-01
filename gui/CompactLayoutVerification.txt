@@ -1,0 +1,49 @@
+Compact layout verification — PR #322
+Verified 1 November 2026 (Singapore time)
+
+Regression target
+One complete first open-loan card from the shipped sample data must fit
+without scrolling at 853x400 logical pixels, including status, both
+identities, dates, issue condition, observed return condition and Prepare
+return command. Further cards remain reachable through scrolling.
+Two complete member/equipment directory rows and two physical-unit rows
+are checked separately; visibility assertions are not relaxed.
+
+Linux environment
+Docker Desktop Linux x86_64 under AMD64 emulation on Apple Silicon.
+Temurin 25.0.5+8, GTK 3, Xvfb -screen 0 1280x720x24.
+The test JVM uses -Dglass.gtk.uiScale=1.5 and
+-Dlaplace.requiredScale=1.5. Shell setup asserts actual output scale 1.5
+and screen bounds matching 1280x720 divided by that scale.
+Production classes, FXML, CSS and natives load from the candidate JAR.
+JUnit Console 1.14.4 runs the compiled test helpers with no development
+production classes or external JavaFX libraries on the classpath.
+
+Before
+Previous PR #322 candidate, ce93b960.
+JAR SHA-256:
+8231f6c8e2fccf832229c1e60309a45caa7ef052b4ceb1c6cc909798149a651b
+The complete-card regression fails its viewport-containment assertion.
+Snapshot: CompactLoanLinuxBefore.png
+
+After
+Reflowed loan heading, filters and return actions; compact shell spacing
+and directory widths account for Linux font metrics.
+JAR SHA-256:
+280e70cfe588b42fb9a3fe48190318a212ae56b11931e08f8afbd18c58f1ba78
+23 Linux GUI tests passed, 0 failed, 0 aborted, 0 skipped.
+Selected tests: the complete shipped-sample card; compact directory/unit
+rows; required logical display sizes; narrow directories; LoanPanelTest;
+ResultDisplayTest. The return-action tests retain condition selection,
+intentional omission and prepare-without-execution checks.
+Snapshot: CompactLoanLinuxAfter.png
+
+Reproduction
+See Testing.md, Packaged display-scaling checks. That Gradle task runs
+the packaged shell layout and feedback suite; gtkScale forwards both
+the GTK setting and the expected-scale/screen assertions to its JVM.
+
+Limits
+These are GTK/Xvfb checks, not manual pointer tests or verification of
+every desktop compositor, Windows setting or macOS scaling setting.
+The snapshots show logical scene content, not full desktop screenshots.

@@ -168,6 +168,7 @@
         "testing-guide": "Testing guide",
         "running-tests": "Running tests",
         "autocomplete-checks": "Autocomplete checks",
+        "packaged-display-scaling-checks": "Packaged display-scaling checks",
         "capacity-and-failure-injection": "Capacity and failure injection",
         "types-of-tests": "Types of tests"
       },
