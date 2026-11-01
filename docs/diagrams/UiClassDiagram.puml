@@ -5,7 +5,7 @@ skinparam classBackgroundColor UI_COLOR
 hide empty members
 
 package "UI (supported views)" {
-  interface Ui
+  class Ui <<interface>>
   class UiManager
   class MainWindow
   class CommandBox
@@ -19,8 +19,8 @@ package "UI (supported views)" {
   class HelpWindow
   class CommandPreview
 }
-interface Logic
-interface ReadOnlyAddressBook
+class Logic <<interface>>
+class ReadOnlyAddressBook <<interface>>
 class DisplayRequest <<immutable>>
 class "InventoryGroups.Group" as Group <<derived>>
 class GuiSettings <<immutable>>
