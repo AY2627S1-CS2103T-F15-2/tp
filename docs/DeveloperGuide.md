@@ -822,6 +822,10 @@ records. Loan history and transaction validation are outside suggestion reads.
 
 ### Loading and compatibility
 
+`SampleDataUtil` populates only members, equipment and loans on first launch. Its legacy person
+fixtures remain available to tests but are not inserted into fresh datasets. The serialized `persons`
+array remains required, and existing legacy contacts continue to load and round-trip unchanged.
+
 After successful conversion, storage compares recorded assignment/actual-return dates with its local
 clock and logs an actionable warning containing equipment UUID, member ID and recorded dates. It does
 not reject or rewrite records on this basis: a clock rollback can make previously valid history appear

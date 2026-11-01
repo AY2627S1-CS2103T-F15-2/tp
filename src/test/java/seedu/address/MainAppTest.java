@@ -27,6 +27,7 @@ import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.util.SampleDataUtil;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.Storage;
@@ -155,7 +156,23 @@ public class MainAppTest {
         assertNotNull(app.logic);
         assertNotNull(app.ui);
         assertFalse(app.model.getAddressBook().getMemberList().isEmpty());
+        assertTrue(app.model.getAddressBook().getPersonList().isEmpty());
         assertFalse(Files.exists(file));
+    }
+
+    @Test
+    public void initModel_existingLegacyContacts_preservesThemAfterMutationAndReload() throws Exception {
+        Path file = directory.resolve("existing.json");
+        Storage storage = storage(file);
+        var data = ViewTestData.model();
+        data.addPerson(SampleDataUtil.getSamplePersons()[0]);
+        var expected = List.copyOf(data.getAddressBook().getPersonList());
+        storage.saveAddressBook(data.getAddressBook());
+        MainApp app = new MainApp();
+        app.initModel(storage, new UserPrefs());
+        assertEquals(expected, app.model.getAddressBook().getPersonList());
+        app.logic.execute("member add nus/A8400999X name/New Member phone/91112222 email/new@example.com");
+        assertEquals(expected, storage.readAddressBook().orElseThrow().getPersonList());
     }
 
     private Storage storage(Path file) {

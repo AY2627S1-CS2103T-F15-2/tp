@@ -64,9 +64,6 @@ public class SampleDataUtil {
         requireNonNull(clock);
         LocalDate today = LocalDate.now(clock);
         AddressBook sampleAb = new AddressBook();
-        for (Person samplePerson : getSamplePersons()) {
-            sampleAb.addPerson(samplePerson);
-        }
 
         NusId alexId = new NusId("A0123456X");
         sampleAb.addMember(new Member(alexId, new Name("Alex Tan"), new Phone("91234567"),
