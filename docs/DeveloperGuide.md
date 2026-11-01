@@ -955,69 +955,75 @@ intended capability without committing the release to implementing it. Current c
 are specified in the User Guide; implementation sections describe the shipped design.
 
 * **MVP baseline:** Add, list, view, and delete members and equipment; identify members by NUS ID and equipment by a generated UUID; issue and return individual items; show holdings and holders; validate input and preserve consistency on failure.
-* **Broader requirements:** Editing, archiving, recovery, import/export, search and filtering, summaries, batch operations, condition recording at handover, and histories remain documented below even if they are not delivered this semester. Undo/redo is implemented with a ten-change session limit.
+* **Delivered beyond the baseline:** Member/equipment editing and restoration, substring search, filters and sorting, inventory group summaries, batch creation/issue/return, handover condition recording, and retained loan histories are implemented. Undo/redo retains up to ten changes per session.
+* **Future proposals:** Import/export with preview, restoring a complete exported backup, archival, approximate-name matching, and a browsable action audit remain unimplemented. They are labeled Future in the stories and use cases below.
 * **Deletion and retention:** Members and equipment are soft-deleted only without open loans. Records and closed history are retained; restoration has no time limit. This supersedes the original permanent-deletion and proposed 30-day recovery policies. The Loans tab and entity details show completed loan history.
-* **Single-user boundary:** Import/export supports the same user's local records and backups. Sharing an exported dataset with another operator is outside regular product operations. Shared datasets, concurrent users, and member self-service are outside scope.
+* **Single-user boundary:** Proposed import/export would support the same user's local records and backups. Sharing an exported dataset with another operator is outside regular product operations. Shared datasets, concurrent users, and member self-service are outside scope.
 
 ### User stories
 
 Priorities: High (must have) — `* * *`; Medium (nice to have) — `* *`; Low (lower-priority candidate) — `*`.
-Priority expresses product importance, not implementation status. **MVP** denotes the Week 6 baseline; **Future** denotes a requirement outside that baseline, without a delivery commitment. **Implemented** marks an addition now available beyond that baseline. US01–US41 retain the numbering of the Week 5 stories; US42–US46 make supporting requirements explicit.
+Priority expresses product importance, not implementation status. **MVP** marks delivered baseline capabilities; **Implemented** marks delivered additions. **Future** marks an unimplemented proposal without a delivery commitment. Existing story IDs are retained for traceability; new stories are appended rather than renumbering earlier requirements.
 
 | ID | Priority | Scope | As a … | I want to … | So that I can … |
 |----|----------|-------|--------|-------------|----------------|
 | US01 | `* *` | Future | newly appointed CCA EXCO member | import member and equipment records from a local file | avoid re-entering existing lists manually. |
 | US02 | `* *` | Future | cautious CCA EXCO member | preview additions, changes, and rejected records before confirming an import | correct problems before changing my current records. |
-| US03 | `* *` | Future | CCA EXCO member | export all Laplace data to one portable snapshot file | keep a complete backup of my records. |
+| US03 | `* *` | Future | CCA EXCO member | export all Laplace data to one portable backup snapshot file | keep a complete backup of my records. |
 | US04 | `* * *` | MVP | CCA EXCO member | add a member with their NUS ID, name, phone number, and email | keep track of a person who has joined the CCA. |
-| US05 | `* * *` | MVP | CCA EXCO member | list all active members | review the current membership at a glance. |
-| US06 | `* * *` | MVP | CCA EXCO member | view one member's full details | verify their information before an operation. |
-| US07 | `* *` | Future | CCA EXCO member | edit a member's details while keeping their identifier stable | keep corrected or changed information accurate without breaking loan references. |
+| US05 | `* * *` | MVP | CCA EXCO member | list member records, including retained deleted records | review membership and recognize records that are no longer eligible for new loans. |
+| US06 | `* * *` | MVP | CCA EXCO member | view one member's full contact details | verify how to contact that person before an operation. |
+| US07 | `* *` | Implemented | CCA EXCO member | correct or update a member's details | keep contact information accurate while retaining their loan history. |
 | US08 | `* *` | Future | CCA EXCO member | archive an inactive member | keep the active list relevant while retaining historical records. |
-| US09 | `* * *` | MVP | CCA EXCO member | delete a member record created in error when it has no outstanding equipment | remove unwanted records without losing track of a current holder. |
-| US10 | `* *` | Implemented | CCA EXCO member | restore a retained deleted member without a time limit | recover from an accidental deletion. |
-| US11 | `* *` | Future | CCA EXCO member | filter and sort members by a chosen field | focus on the people relevant to my current task. |
-| US12 | `* *` | Future | busy CCA EXCO member | find members using incomplete queries or approximate names | retrieve the right record quickly even when I do not know the exact identifier. |
+| US09 | `* * *` | MVP | CCA EXCO member | mark a mistaken member record as deleted | prevent further use of that record while retaining its history. |
+| US10 | `* *` | Implemented | CCA EXCO member | restore an accidentally deleted member record | resume using it without re-entering the member details. |
+| US11 | `* *` | Implemented | CCA EXCO member | filter and sort members by a chosen field | focus on the people relevant to my current task. |
+| US12 | `* *` | Implemented | busy CCA EXCO member | find members using part of their recorded identity or contact details | retrieve relevant records without knowing the complete value. |
 | US13 | `* * *` | MVP | CCA EXCO member adding data | have duplicate NUS IDs rejected with an explanation | avoid conflicting records for the same member. |
-| US14 | `* * *` | MVP | CCA EXCO member | add one equipment item with an automatically generated unique UUID | track each newly acquired physical unit separately. |
+| US14 | `* * *` | MVP | CCA EXCO member | register a newly acquired physical equipment unit | track it separately from other units with matching descriptions. |
 | US15 | `*` | Implemented | CCA EXCO member receiving a batch | add several units of the same equipment type in one operation | record a delivery without repeating the same entry process. |
-| US16 | `* * *` | MVP | CCA EXCO member | list all active equipment and its availability | review the current inventory at a glance. |
-| US17 | `* * *` | Implemented | CCA EXCO member | open an equipment group by category/name and view a unit by full UUID using Tab completion | verify its identity, condition, and recorded information. |
+| US16 | `* * *` | MVP | CCA EXCO member | list equipment records and their availability, including retained deleted units | review the inventory and distinguish units eligible for issue from retained records. |
+| US17 | `* * *` | Implemented | CCA EXCO member | inspect an equipment group and one of its physical units | verify the unit's identity, condition, and recorded information. |
 | US18 | `* *` | Implemented | CCA EXCO member | edit an equipment record while retaining its UUID | keep item information accurate without breaking loan references. |
-| US19 | `* * *` | MVP | CCA EXCO member | delete an equipment record created in error when it is not on loan | remove unwanted entries without losing track of an issued item. |
-| US20 | `* *` | Implemented | CCA EXCO member | restore a retained deleted equipment record without a time limit | recover from an accidental deletion. |
+| US19 | `* * *` | MVP | CCA EXCO member | mark a mistaken equipment record as deleted | prevent further issue against it while retaining its history. |
+| US20 | `* *` | Implemented | CCA EXCO member | restore an accidentally deleted equipment record | resume tracking the same unit without re-entering its details. |
 | US21 | `* *` | Implemented | CCA EXCO member | filter and sort equipment by category, condition, or availability | identify suitable items for my current task. |
-| US22 | `* *` | Implemented (substring search); Future (approximate names) | busy CCA EXCO member | find equipment using incomplete queries or approximate names | locate an item even when I do not know its UUID. |
+| US22 | `* *` | Implemented | busy CCA EXCO member | find equipment using part of its recorded identity or description | locate relevant units without knowing a complete UUID or description. |
 | US23 | `* *` | Implemented | CCA EXCO member planning an activity | see counts of available, assigned, and unavailable units of an equipment type | decide whether there is enough equipment without counting manually. |
 | US24 | `* * *` | MVP | CCA EXCO member issuing equipment | assign an available item to a member and record its assignment date | track who is responsible for the item and when it was issued. |
-| US25 | `* * *` | MVP | CCA EXCO member issuing equipment | record an expected return date on or after the assignment date | know when the item should come back. |
+| US25 | `* * *` | MVP | CCA EXCO member issuing equipment | record an expected return date | know when to follow up on the loan. |
 | US26 | `* * *` | MVP | CCA EXCO member receiving equipment | record an assigned item as returned with its actual return date | keep the holder and availability information accurate. |
 | US27 | `* * *` | MVP | CCA EXCO member | view all equipment currently held by one member | check that member's outstanding responsibilities in one place. |
 | US28 | `* * *` | MVP | CCA EXCO member | see an assigned item's current holder and contact details | identify whom to approach when the item is needed. |
 | US29 | `* * *` | MVP | CCA EXCO member issuing equipment | have assignments of already assigned, damaged, or under-repair items rejected | avoid recording multiple holders or issuing unsuitable equipment. |
-| US30 | `*` | Future | CCA EXCO member distributing a kit | assign several items to one member in one operation | process a bundled issue quickly. |
-| US31 | `*` | Future | CCA EXCO member receiving a kit | record several items from one member as returned in one operation | process a bundled return quickly. |
-| US32 | `* *` | Future | CCA EXCO member issuing equipment | record an item's condition at issue | establish its starting condition for later comparison. |
-| US33 | `* *` | Future | CCA EXCO member receiving equipment | record an item's condition at return | identify changes while the handover is still fresh. |
+| US30 | `*` | Implemented | CCA EXCO member distributing a kit | assign several items to one member in one operation | process a bundled issue quickly. |
+| US31 | `*` | Implemented | CCA EXCO member receiving a kit | record several items as returned in one operation | process a bundled return quickly, including units borrowed by different members. |
+| US32 | `* *` | Implemented | CCA EXCO member issuing equipment | retain a record of each item's condition at issue | compare it with the condition observed at return. |
+| US33 | `* *` | Implemented | CCA EXCO member receiving equipment | record an item's observed condition at return | identify changes while the handover is still fresh. |
 | US34 | `* *` | Implemented | CCA EXCO member investigating an item | view its past equipment loans | trace who held it and when. |
-| US35 | `* *` | Future | CCA EXCO member reviewing a member | view that member's past equipment loans | resolve questions about previous loans without searching separate records. |
+| US35 | `* *` | Implemented | CCA EXCO member reviewing a member | view that member's past equipment loans | resolve questions about previous loans without searching separate records. |
 | US36 | `* *` | Future | CCA EXCO member archiving a member | be warned and prevented from archiving a member with outstanding equipment | resolve responsibility before removing the member from active records. |
 | US37 | `* *` | Implemented | CCA EXCO member who made a mistake | undo my most recent successful data-changing action | recover without reconstructing the previous state manually. |
 | US38 | `* *` | Implemented | CCA EXCO member | redo an action I just undid | recover when the undo itself was a mistake. |
 | US39 | `*` | Future | CCA EXCO member investigating a discrepancy | view a recent history of data-changing actions | understand how the current records came about. |
-| US40 | `* *` | Future | CCA EXCO member recovering from data loss | restore a previously exported complete snapshot | resume operations without rebuilding every record. |
+| US40 | `* *` | Future | CCA EXCO member recovering from data loss | restore a previously exported complete backup snapshot | resume operations without rebuilding every record. |
 | US41 | `* * *` | MVP | CCA EXCO member entering invalid data | receive an actionable error with no partial change applied | correct my input while trusting that the records remain consistent. |
-| US42 | `* *` | Future | newly appointed CCA EXCO member | access command instructions and examples | learn operations and check syntax when I forget it. |
-| US43 | `* * *` | MVP | CCA EXCO member | retrieve a member by their exact NUS ID | distinguish members even when they share a name. |
+| US42 | `* *` | Implemented | newly appointed CCA EXCO member | access command instructions and examples | learn operations and check syntax when I forget it. |
+| US43 | `* * *` | MVP | CCA EXCO member | identify a member unambiguously when names match | choose the correct borrower for a loan or follow-up. |
 | US44 | `* * *` | MVP | CCA EXCO member | retrieve equipment by its exact UUID | distinguish physical units even when their descriptions match. |
 | US45 | `* * *` | MVP | CCA EXCO member | have successful changes saved locally and loaded on the next launch | continue managing records across sessions without re-entering them. |
 | US46 | `* *` | Implemented | CCA EXCO member investigating a discrepancy | filter and reset loan history by member or equipment identity from the command box | inspect the relevant open and completed loans using the keyboard. |
+| US47 | `* * *` | Implemented | CCA EXCO member following up on loans | see all outstanding loans and identify overdue or due-today returns | prioritize reminders and recover equipment on time. |
+| US48 | `* *` | Future | CCA EXCO member unsure of a member's spelling | find a member using an approximate name | recover from spelling mistakes in a query. |
+| US49 | `* *` | Future | CCA EXCO member unsure of an equipment description | find equipment using an approximate name | locate a unit despite spelling mistakes in a query. |
+
+**Domain rules supporting these stories:** Member NUS IDs and equipment UUIDs remain stable. Deletion retains records and history and is blocked by open loans. Restoration has no deadline. Expected return cannot precede assignment. New issues record the unit's current condition; legacy history can have unknown observations. A new successful record change after undo invalidates redo; read-only actions and rejected commands do not. These rules constrain the delivered operations rather than changing their user goals.
 
 ### Use cases
 
-For all use cases, the **system** is Laplace and the **actor** is the CCA EXCO member operating their local installation. The application is running with a valid dataset unless stated otherwise. The member borrowing equipment is not a second system actor. **MSS** means main success scenario. Extension labels refer to the MSS step at which the alternative occurs; each extension states where execution resumes or ends.
+For all use cases, the **system** is Laplace and the **actor** is the CCA EXCO member operating their local installation. The application is running with a valid dataset unless stated otherwise. The member borrowing equipment is a recorded entity, not a second system actor. **MSS** means main success scenario. An extension labeled `Na` occurs just after step N has completed; each extension states where execution resumes or ends.
 
-For every data-changing use case, a validation failure leaves all records unchanged. If saving fails at the final update step, Laplace reports that the operation was not saved and retains the preceding consistent state; the use case ends unsuccessfully. Success is reported only after persistence succeeds. These rules also apply to proposed future operations.
+For every data-changing use case, a validation failure leaves all records unchanged. If saving fails, Laplace reports that the operation was not saved and retains the preceding consistent state; the use case ends unsuccessfully. Success is reported only after persistence succeeds. A batch succeeds or fails as a whole. These rules also apply to proposed future operations.
 
 #### UC01: Register a member
 
@@ -1039,8 +1045,9 @@ Use case ends.
 * 2b. The NUS ID already exists, ignoring letter case.
     * 2b1. Laplace rejects the duplicate and identifies the existing member.
     * Use case resumes at step 1.
-
-Names, phone numbers, or email addresses shared by different NUS IDs do not by themselves constitute duplicates.
+* 3a. The new member shares a name, phone number, or email address with an active member under another NUS ID.
+    * 3a1. Laplace also shows a possible-duplicate advisory identifying the existing records. The new member stays saved under their distinct identity.
+    * Use case ends.
 
 #### UC02: Register physical equipment units
 
@@ -1049,129 +1056,125 @@ Names, phone numbers, or email addresses shared by different NUS IDs do not by t
 **MSS**
 
 1. The EXCO member provides the units' name, category, condition, optional notes, and optional count.
-2. Laplace validates the details and count (default 1, range 1-100), then reserves a distinct UUID per unit.
-3. Laplace saves all units in one transaction and reports their UUIDs and derived availability.
-   One unit opens details; a batch opens the unfiltered equipment directory.
+2. Laplace validates the details and count (default 1, range 1–100), then reserves a distinct UUID per unit.
+3. Laplace saves all units together and reports their UUIDs and derived availability. Units recorded as `DAMAGED` or `UNDER_REPAIR` are unavailable for issue.
 
 Use case ends.
 
 **Extensions**
 
-* 2a. Required details are missing or invalid.
-    * 2a1. Laplace explains what needs correcting.
+* 2a. Required details or the count are missing where required, invalid, or repeated.
+    * 2a1. Laplace explains what needs correcting without adding any units.
     * Use case resumes at step 1.
 * 2b. Laplace cannot generate a unique identifier.
     * 2b1. Laplace reports the failure without adding any units.
     * Use case ends.
-
-Matching descriptions are permitted: each physical unit receives its own UUID. An item in `DAMAGED` or `UNDER_REPAIR` condition may be registered but is unavailable for issue.
+* 3a. The new units' category and name match equipment already recorded before this request.
+    * 3a1. Laplace also shows a possible-duplicate advisory identifying those records. Every new physical unit stays saved under its own UUID; units in the same new batch do not warn about each other.
+    * Use case ends.
 
 #### UC03: Issue equipment to a member
 
-**Scope:** MVP. **Related stories:** US06, US16, US24, US25, US27–US29, US43, US44.
+**Scope:** Implemented for individual and batch assignments. **Related stories:** US06, US16, US24, US25, US27–US30, US32, US41, US43, US44.
 
 **MSS**
 
-1. The EXCO member requests the intended member's details by NUS ID and the equipment inventory.
-2. Laplace shows the member's details and current holdings, and the equipment with its availability and UUIDs.
-   The EXCO member can search, open a category/name group by command, and open an individual unit using
-   its full UUID using Tab completion before preparing the assignment.
-3. The EXCO member requests assignment of one item to that member, supplying the assignment and expected return dates.
-4. Laplace validates the references, availability, and dates, then saves an open loan and shows the updated holder and holdings.
+1. The EXCO member requests the intended member's details by NUS ID.
+2. Laplace shows that member's details and current holdings.
+3. The EXCO member requests the equipment inventory.
+4. Laplace shows the equipment, its availability, and its UUIDs.
+5. The EXCO member requests assignment of one or more distinct equipment units to that member, supplying the assignment and expected return dates.
+6. Laplace validates all references, availability, and dates, then saves every open loan together, recording each unit's issue condition and showing the updated holder and holdings.
 
 Use case ends.
 
 **Extensions**
 
-* 2a. The member identifier is invalid or no matching member exists.
-    * 2a1. Laplace explains the problem.
+* 1a. The member identifier is invalid or no matching member exists.
+    * 1a1. Laplace explains the problem without showing another member's details.
     * Use case resumes at step 1.
-* 2b. No equipment is available for issue.
-    * 2b1. Laplace shows that no suitable item is available.
-    * Use case ends.
-* 4a. A supplied identifier is invalid or does not identify an existing record.
-    * 4a1. Laplace identifies the invalid or missing reference.
-    * Use case resumes at step 3.
-* 4b. The item already has an open loan, or its condition is `DAMAGED` or `UNDER_REPAIR`.
-    * 4b1. Laplace refuses the assignment and gives the reason, including the current holder when applicable.
-    * Use case resumes at step 3.
-* 4c. A date is invalid, the assignment date is after today, or the expected return date precedes assignment.
-    * 4c1. Laplace explains the violated date rule.
-    * Use case resumes at step 3.
+* 5a. A supplied identifier is invalid, repeated, or does not identify an existing record.
+    * 5a1. Laplace rejects the request and explains the invalid or missing reference without creating any loans.
+    * Use case resumes at step 5.
+* 5b. The selected member is deleted.
+    * 5b1. Laplace refuses assignment and explains that the member must first be restored.
+    * Use case resumes at step 1.
+* 5c. Any selected equipment unit is deleted.
+    * 5c1. Laplace refuses the entire assignment and identifies the unit that must be restored before issue.
+    * Use case resumes at step 5.
+* 5d. Any selected unit already has an open loan or is `DAMAGED` or `UNDER_REPAIR`.
+    * 5d1. Laplace refuses the entire assignment and reports the affected units and reasons, including the current holder when applicable.
+    * Use case resumes at step 5.
+* 5e. A date is invalid, assignment is after today or before a selected unit's last recorded return, or expected return precedes assignment.
+    * 5e1. Laplace explains the violated date rule and creates no loans, including for otherwise valid units in a batch.
+    * Use case resumes at step 5.
 
 #### UC04: Record an equipment return
 
-**Scope:** MVP. **Related stories:** US17, US26–US28, US41, US44.
+**Scope:** Implemented for individual and batch returns. **Related stories:** US17, US26–US28, US31, US33, US41, US44.
 
 **MSS**
 
 1. The EXCO member requests an item's details by UUID.
-2. Laplace shows the item, current holder, assignment date, and expected return date.
-3. The EXCO member requests that the item be recorded as returned and supplies the actual return date.
-4. Laplace validates and saves the return, closes the loan, removes the current holder, and updates availability and the member's holdings.
+2. Laplace shows the item and its current loan details, if any.
+3. The EXCO member requests that one or more distinct units be recorded as returned, supplies the actual return date, and optionally supplies their observed return condition.
+4. Laplace validates and saves all returns together, closes their loans, and updates holders and holdings. A supplied return condition is recorded in history and becomes each unit's current condition; otherwise the current condition is retained. Units in `GOOD` or `FAIR` condition become available, while `DAMAGED` or `UNDER_REPAIR` units remain unavailable. A return after the expected date is valid; reaching the due date alone never records a return.
 
 Use case ends.
 
 **Extensions**
 
-* 2a. The UUID is invalid or no item matches it.
-    * 2a1. Laplace explains the problem.
+* 1a. The UUID is invalid or no item matches it.
+    * 1a1. Laplace explains why it cannot show the requested item.
     * Use case resumes at step 1.
-* 2b. The item has no open loan.
-    * 2b1. Laplace reports that the item is not currently assigned.
-    * Use case ends.
-* 4a. The supplied item reference is invalid, missing, or has no open loan, including an already recorded return.
-    * 4a1. Laplace rejects the request and explains the problem.
-    * Use case resumes at step 1.
-* 4b. The actual return date is invalid, before assignment, or after today.
-    * 4b1. Laplace explains the allowed date range.
+* 3a. A return identifier is invalid or repeated, a unit is missing, or any selected unit has no open loan, including an already recorded return.
+    * 3a1. Laplace rejects the entire return request and explains the affected references or units without changing any records.
     * Use case resumes at step 3.
-
-Passing the expected return date never closes a loan automatically. A return after the expected date is valid. After return, only items in `GOOD` or `FAIR` condition become available.
+* 3b. The actual return date is invalid, before any selected loan's assignment, or after today.
+    * 3b1. Laplace explains the allowed date range and makes no returns.
+    * Use case resumes at step 3.
+* 3c. The observed condition is not a recognized condition value.
+    * 3c1. Laplace explains the accepted values: `GOOD`, `FAIR`, `DAMAGED`, and `UNDER_REPAIR`.
+    * Use case resumes at step 3.
+* 3d. An open loan refers to a missing member because the stored relationships are inconsistent.
+    * 3d1. Laplace reports the affected equipment and missing-member relationship and makes no returns.
+    * Use case ends unsuccessfully; the operator must recover consistent data before retrying.
 
 #### UC05: Delete an erroneous member or equipment record
 
 **Scope:** MVP. **Related stories:** US05, US09, US16, US19, US41.
 
+The EXCO member chooses the record kind before starting. A member is identified by NUS ID; a physical equipment unit is identified by UUID. The selected kind determines which directory and identifier are used in the steps below.
+
 **MSS**
 
-1. The EXCO member requests the member list or equipment list, according to the kind of record to remove.
-2. Laplace shows the requested records and their identifiers.
-3. The EXCO member requests deletion of one record using its NUS ID or UUID, respectively.
-4. Laplace verifies that the record has no open loans, marks it deleted while retaining its details and closed loans, and confirms the deletion.
+1. The EXCO member requests the directory for the selected record kind.
+2. Laplace shows the records and their identifiers, including retained deleted records.
+3. The EXCO member requests deletion of one record using the identifier for that kind.
+4. Laplace verifies deletion eligibility and marks the record deleted, retaining its identity, details, and closed loans, then saves and confirms the deletion.
 
 Use case ends.
 
 **Extensions**
 
-* 2a. The requested list is empty.
+* 2a. The requested directory is empty.
     * Use case ends.
-* 4a. The identifier is invalid or no matching record exists.
-    * 4a1. Laplace reports the problem without deleting anything.
+* 3a. The identifier is invalid or no matching record exists.
+    * 3a1. Laplace reports the problem without deleting anything.
     * Use case resumes at step 3.
-* 4b. The member still holds equipment, or the equipment item is currently assigned.
-    * 4b1. Laplace refuses deletion and explains that the outstanding items must first be returned.
-    * Use case ends without deletion. The EXCO member may complete UC04 and start UC05 again.
-
-Already-deleted records are rejected without a save. To recover a record, find it with a `status/deleted`
-search, then issue `member restore nus/NUS_ID` or `equipment restore uuid/UUID`. Laplace clears the
-flag, saves and opens its details. Unknown/already-active records fail without changes. Recovery has no
-time limit; equipment condition is preserved. Closed history remains retained throughout.
-
-#### UC05a: Edit equipment details
-
-**Scope:** Implemented. **Related story:** US18.
-
-1. The EXCO member views a physical unit and supplies its UUID with one or more edited details.
-2. Laplace validates the fields and requires an active unit and an actual change.
-3. Laplace replaces the details under the same UUID, saves and displays the updated unit.
-
-Invalid fields, unknown UUIDs, deleted units and no-change edits leave the dataset unchanged. An open
-loan permits details/condition edits and retains its reference; save failure preserves the previous state.
+* 3b. The selected member still holds equipment.
+    * 3b1. Laplace refuses member deletion and explains that the outstanding equipment must first be returned.
+    * Use case ends without deletion; the EXCO member may complete UC04 and restart UC05.
+* 3c. The selected equipment unit has an open loan.
+    * 3c1. Laplace refuses equipment deletion and identifies its holder.
+    * Use case ends without deletion; the EXCO member may complete UC04 and restart UC05.
+* 3d. The selected member or equipment unit is already deleted.
+    * 3d1. Laplace rejects the repeated deletion without saving and explains how to restore the retained record.
+    * Use case ends.
 
 #### UC06: Import records after reviewing a preview
 
-**Scope:** Future. **Related stories:** US01, US02, US13, US41.
+**Scope:** Future; not available in this release. **Related stories:** US01, US02, US13, US41.
 
 **MSS**
 
@@ -1190,40 +1193,40 @@ Use case ends.
 * 2b. Records are invalid, identifiers conflict, or the proposed changes would break loan references.
     * 2b1. Laplace identifies the affected records and reasons and prevents confirmation until they are resolved.
     * Use case resumes at step 1 after the EXCO member corrects or chooses another file.
-* 3a. The EXCO member cancels.
+* 2c. The EXCO member cancels instead of confirming the preview.
     * Use case ends with current data unchanged.
-* 4a. The source file or current dataset has changed since the preview.
-    * 4a1. Laplace invalidates the old preview without applying it.
+* 3a. The source file or current dataset has changed since the preview.
+    * 3a1. Laplace invalidates the old preview without applying it.
     * Use case resumes at step 2.
 
 #### UC07: Restore a complete backup
 
-**Scope:** Future. **Related stories:** US03, US40, US41.
-**Precondition:** The EXCO member has a previously exported complete snapshot. Laplace can accept a restore request even if its normal data file cannot be loaded.
+**Scope:** Future; not available in this release. **Related stories:** US03, US40, US41.
+**Precondition:** The EXCO member has a previously exported complete backup snapshot. The proposed operation must support recovery even if the normal data file cannot be loaded.
 
 **MSS**
 
-1. The EXCO member selects a local snapshot for restoration.
-2. Laplace validates the complete snapshot and explains that restoration will replace the current dataset.
+1. The EXCO member selects a local backup snapshot for restoration.
+2. Laplace validates the complete backup snapshot and explains that restoration will replace the current dataset.
 3. The EXCO member confirms replacement.
-4. Laplace restores and saves the snapshot as one operation, then shows the restored records.
+4. Laplace restores and saves the backup snapshot as one operation, then shows the restored records.
 
 Use case ends.
 
 **Extensions**
 
-* 2a. The snapshot is unreadable, incompatible, incomplete, or contains invalid records or broken loan references.
+* 2a. The backup snapshot is unreadable, incompatible, incomplete, or contains invalid records or broken loan references.
     * 2a1. Laplace rejects it and explains the problem without replacing current data.
     * Use case resumes at step 1.
-* 3a. The EXCO member cancels replacement.
+* 2b. The EXCO member cancels instead of confirming replacement.
     * Use case ends with current data unchanged.
-* 4a. The snapshot has changed since validation.
-    * 4a1. Laplace discards the previous validation result without replacing current data.
+* 3a. The backup snapshot has changed since validation.
+    * 3a1. Laplace discards the previous validation result without replacing current data.
     * Use case resumes at step 2.
 
 #### UC08: Undo a mistaken change
 
-**Scope:** Implemented for up to ten changes per session. **Related stories:** US37, US38, US41.
+**Scope:** Implemented for up to ten changes per session; restarting clears session history. **Related stories:** US37, US41.
 
 **MSS**
 
@@ -1235,33 +1238,155 @@ Use case ends.
 
 **Extensions**
 
-* 2a. There is no action available to undo.
-    * 2a1. Laplace explains that no undo is available and leaves the data unchanged.
+* 1a. There is no action available to undo.
+    * 1a1. Laplace explains that no undo is available and leaves the data unchanged.
     * Use case ends.
-* 3a. The EXCO member decides the undo was a mistake and requests redo before any new data-changing action.
-    * 3a1. Laplace reapplies and saves the undone action and shows the resulting records.
+* 3a. The EXCO member decides the undo was a mistake and requests redo.
+    * The EXCO member performs UC11.
     * Use case ends.
-* 3b. The EXCO member requests redo after a new successful data-changing action has invalidated it.
-    * 3b1. Laplace explains that no redo is available and leaves the current data unchanged.
-    * Use case ends.
-
-A new successful data-changing action after undo invalidates redo. Read-only actions and failed commands do not add undo entries or invalidate redo. History retains at most ten changes per session, including the deleted records covered by those changes. Older changes are discarded; restarting clears undo and redo history.
 
 #### UC09: Filter loan history
 
+**Scope:** Implemented. **Related stories:** US34, US35, US46, US47.
+
 **MSS**
 
-1. The operator requests loan history with member and/or equipment identity text.
+1. The EXCO member requests loan history with member and/or equipment identity text.
 2. Laplace shows matching open and completed loans and their displayed/total counts.
-3. The operator requests a filter reset.
+3. The EXCO member requests a filter reset.
 4. Laplace shows all retained loans.
+
+Use case ends.
 
 **Extensions**
 
-* 1a. The command contains an unknown or repeated parameter.
-  * 1a1. Laplace reports the error and retains the previous view, criteria and records. The use case ends.
-* 3a. The reset command has extra arguments.
-  * 3a1. Laplace rejects the command without changing criteria or records. The use case resumes at step 3.
+* 1a. The request contains an unknown or repeated parameter.
+    * 1a1. Laplace reports the error and retains the previous view, criteria, and records.
+    * Use case ends.
+* 1b. No retained loans match the supplied criteria.
+    * 1b1. Laplace shows empty matching results with the displayed/total counts and preserves the criteria.
+    * Use case resumes at step 3.
+* 3a. The reset request has extra arguments.
+    * 3a1. Laplace rejects it without changing criteria or records.
+    * Use case resumes at step 3.
+
+#### UC10: Edit equipment details
+
+**Scope:** Implemented. **Related stories:** US18, US41, US44, US45.
+
+**MSS**
+
+1. The EXCO member supplies a unit's UUID and one or more corrected details.
+2. Laplace validates the fields and requires an existing active unit and an actual change.
+3. Laplace replaces the details under the same UUID, saves, and displays the updated unit. Existing loan references are retained, including when the unit is on loan.
+
+Use case ends.
+
+**Extensions**
+
+* 2a. Fields are missing, invalid, repeated, or not supported, or the UUID is invalid or unknown.
+    * 2a1. Laplace explains the problem without changing records.
+    * Use case resumes at step 1.
+* 2b. The unit is deleted.
+    * 2b1. Laplace explains that the unit must first be restored.
+    * Use case ends.
+* 2c. The supplied details make no change.
+    * 2c1. Laplace reports that there is no change to save.
+    * Use case resumes at step 1.
+
+#### UC11: Redo an undone change
+
+**Scope:** Implemented within the retained session history. **Related stories:** US38, US41.
+
+**MSS**
+
+1. The EXCO member requests redo of an undone action.
+2. Laplace restores and saves the corresponding recorded state, including linked records, and identifies the redone action.
+3. The EXCO member inspects the resulting records.
+
+Use case ends.
+
+**Extensions**
+
+* 1a. No redo is available, including after a new successful data-changing action has discarded the undone branch or after restarting.
+    * 1a1. Laplace explains that no redo is available and leaves the current data unchanged.
+    * Use case ends.
+
+#### UC12: Edit member details
+
+**Scope:** Implemented. **Related stories:** US06, US07, US41, US43, US45.
+
+**MSS**
+
+1. The EXCO member supplies the member's NUS ID and one or more corrected contact details.
+2. Laplace validates the fields and requires an existing active member and an actual change.
+3. Laplace saves the corrected details under the same NUS ID and shows the updated member. Current and completed loans remain attached to that identity.
+
+Use case ends.
+
+**Extensions**
+
+* 2a. Fields are missing, invalid, repeated, or not supported, or the NUS ID is invalid or unknown.
+    * 2a1. Laplace explains the problem without changing records.
+    * Use case resumes at step 1.
+* 2b. The member is deleted.
+    * 2b1. Laplace explains that the member must first be restored.
+    * Use case ends.
+* 2c. The supplied details make no change.
+    * 2c1. Laplace reports that there is no change to save.
+    * Use case resumes at step 1.
+
+#### UC13: Restore a deleted member or equipment unit
+
+**Scope:** Implemented without a restoration deadline. **Related stories:** US10, US20, US41, US45.
+
+The record kind determines the directory and identifier: NUS ID for a member, UUID for an equipment unit.
+
+**MSS**
+
+1. The EXCO member requests retained deleted records of the selected kind.
+2. Laplace shows matching retained records and their identities.
+3. The EXCO member requests restoration of one record using its identity.
+4. Laplace clears its deletion flag, saves, and shows the restored record with the same identity, details, and closed loan history. An equipment unit retains its condition and becomes available only if that condition permits issue.
+
+Use case ends.
+
+**Extensions**
+
+* 2a. No deleted records match the request.
+    * Use case ends.
+* 3a. The identity is malformed or unknown.
+    * 3a1. Laplace explains the problem without changing records.
+    * Use case resumes at step 3.
+* 3b. The record is already active.
+    * 3b1. Laplace rejects the restoration without saving.
+    * Use case ends.
+
+#### UC14: Search, filter, and sort members or equipment
+
+**Scope:** Implemented for substring search and supported filters/sorts; approximate-name matching remains future work. **Related stories:** US11, US12, US21–US23, US41, US48, US49.
+
+The EXCO member chooses the member or equipment directory before starting. Member criteria include current holdings; equipment criteria include category, condition, and availability. Both support identity/description text, lifecycle status, and their supported sort fields.
+
+**MSS**
+
+1. The EXCO member requests records of the selected kind with search text, filters, and a sort order.
+2. Laplace shows matching records in that order with their counts and the applied criteria. Omitted lifecycle status selects active records.
+3. The EXCO member inspects a matching record or refines the criteria.
+
+Use case ends.
+
+**Extensions**
+
+* 1a. A criterion or sort field is invalid, unsupported for the selected directory, unknown, or repeated.
+    * 1a1. Laplace explains the error and preserves the previous criteria, view, and records.
+    * Use case resumes at step 1.
+* 2a. No records match.
+    * 2a1. Laplace shows an empty result with the applied criteria; stored records remain unchanged.
+    * Use case resumes at step 1.
+* 3a. The EXCO member requests all records of the selected kind instead of refining the criteria.
+    * 3a1. Laplace clears the search criteria and shows all retained records, including deleted ones, in the default order.
+    * Use case ends.
 
 ### Non-Functional Requirements
 
@@ -1290,7 +1415,7 @@ These are acceptance targets for the intended product, not measurements of the c
 | Equipment item / unit | One individually tracked physical object. Identical models are separate items, each with its own identifier. |
 | UUID | Universally unique identifier. Laplace generates one immutable UUID for each equipment item; names and descriptions are not equipment identifiers. |
 | Category | A broad grouping recorded on an equipment item, such as cameras or sports equipment. One category can contain different equipment types. |
-| Equipment type | A particular kind or model of equipment, such as a Canon EOS R50 camera. Several physical units can share a type; the future batch and summary stories refer to these units, rather than every item in a broad category. |
+| Equipment type | A particular kind or model of equipment, such as a Canon EOS R50 camera. Physical units with the same normalized category and name form an inventory group used by batch creation and inventory summaries. |
 | Condition | The recorded physical state of an item: `GOOD`, `FAIR`, `DAMAGED`, or `UNDER_REPAIR` in the MVP. |
 | Availability | A derived state: `ASSIGNED` when an open loan exists; otherwise `AVAILABLE` for `GOOD` or `FAIR` condition, and `UNAVAILABLE` for `DAMAGED` or `UNDER_REPAIR`. It is not entered independently. |
 | Equipment loan / assignment | A relationship between one member and one equipment item, with assignment, expected return, and optional actual return dates. A member may have several loans; an item has at most one open loan. |
@@ -1308,7 +1433,7 @@ These are acceptance targets for the intended product, not measurements of the c
 | Snapshot | A complete local export of Laplace's persistent records and their relationships at a point in time, used as a backup. It differs from importing selected member or equipment records. |
 | Fuzzy search | Proposed matching of incomplete or approximate text against records; distinct from the MVP's exact identifier lookup. |
 | Atomic operation | An operation whose changes succeed together or leave the preceding consistent state intact. |
-| MVP | Minimum viable product; the Week 6 baseline, which is a subset of the full requirements recorded here. |
+| MVP | Minimum viable product; the delivered baseline capabilities, which are a subset of the full requirements recorded here. |
 
 --------------------------------------------------------------------------------------------------------------------
 
