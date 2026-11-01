@@ -33,7 +33,7 @@ restored --> before : restored
 before --> candidate : restored
 deactivate before
 note over before, restored
-  History values are immutable; private snapshots may be shared.
+  History values are immutable; private history states may be shared.
   No command is replayed and no UUID or date is regenerated.
 end note
 candidate -> restored : getCurrentState()
