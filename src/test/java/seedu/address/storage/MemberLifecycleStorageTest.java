@@ -72,7 +72,7 @@ public class MemberLifecycleStorageTest {
 
     @Test
     public void read_decomposedStoredMemberName_preservesExactSpellingAndLoanReferences() throws Exception {
-        ModelManager model = fullModel();
+        ModelManager model = createFullModel();
         Path file = directory.resolve("decomposed-name.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
         storage.saveAddressBook(model.getAddressBook());
@@ -96,7 +96,7 @@ public class MemberLifecycleStorageTest {
 
     @Test
     public void commands_deleteEditRestoreEdit_rejectsDeletedEditsWithoutSaving() throws Exception {
-        ModelManager model = fullModel();
+        ModelManager model = createFullModel();
         Path file = directory.resolve("edit-lifecycle.json");
         JsonAddressBookStorage disk = new JsonAddressBookStorage(file);
         StorageManager storage = new StorageManager(disk, new JsonUserPrefsStorage(directory.resolve("prefs.json")));
@@ -144,7 +144,7 @@ public class MemberLifecycleStorageTest {
 
     @Test
     public void read_deletedMemberWithClosedHistory_roundTripsButOpenLoanIsRejected() throws Exception {
-        ModelManager model = fullModel();
+        ModelManager model = createFullModel();
         model.deleteMember(model.findMember(ID).orElseThrow());
         Path file = directory.resolve("history.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
@@ -161,42 +161,42 @@ public class MemberLifecycleStorageTest {
 
     @Test
     public void commands_partialWriteAndFailedMove_preservesStateAndAllowsRetry() throws Exception {
-        for (boolean initiallyDeleted : List.of(false, true)) {
-            for (boolean partialWrite : List.of(false, true)) {
-                verifyFailedMutation(initiallyDeleted, partialWrite);
+        for (boolean wasInitiallyDeleted : List.of(false, true)) {
+            for (boolean shouldWritePartially : List.of(false, true)) {
+                verifyFailedMutation(wasInitiallyDeleted, shouldWritePartially);
             }
         }
     }
 
-    private void verifyFailedMutation(boolean initiallyDeleted, boolean partialWrite) throws Exception {
-        Path run = Files.createDirectory(directory.resolve(initiallyDeleted + "-" + partialWrite));
-        ModelManager model = fullModel();
-        if (initiallyDeleted) {
+    private void verifyFailedMutation(boolean wasInitiallyDeleted, boolean shouldWritePartially) throws Exception {
+        Path run = Files.createDirectory(directory.resolve(wasInitiallyDeleted + "-" + shouldWritePartially));
+        ModelManager model = createFullModel();
+        if (wasInitiallyDeleted) {
             model.deleteMember(model.findMember(ID).orElseThrow());
         }
-        FailingWriter writer = new FailingWriter(partialWrite);
+        FailingWriter writer = new FailingWriter(shouldWritePartially);
         JsonAddressBookStorage disk = new JsonAddressBookStorage(run.resolve("live.json"), writer);
         StorageManager storage = new StorageManager(disk, new JsonUserPrefsStorage(run.resolve("prefs.json")));
         storage.saveAddressBook(model.getAddressBook());
         byte[] saved = Files.readAllBytes(disk.getAddressBookFilePath());
         AddressBook before = new AddressBook(model.getAddressBook());
         LogicManager logic = new LogicManager(model, storage);
-        String command = (initiallyDeleted ? "member restore nus/" : "member delete nus/") + ID;
-        writer.fail = true;
+        String command = (wasInitiallyDeleted ? "member restore nus/" : "member delete nus/") + ID;
+        writer.shouldFail = true;
         CommandException error = assertThrows(CommandException.class, () -> logic.execute(command));
         assertSame(writer.failure, error.getCause());
         assertEquals(before, model.getAddressBook());
         assertArrayEquals(saved, Files.readAllBytes(disk.getAddressBookFilePath()));
-        writer.fail = false;
+        writer.shouldFail = false;
         logic.execute(command);
         ModelManager reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
-        assertEquals(!initiallyDeleted, reloaded.findMember(ID).orElseThrow().isDeleted());
+        assertEquals(!wasInitiallyDeleted, reloaded.findMember(ID).orElseThrow().isDeleted());
         assertEquals(before.getLoanList(), reloaded.getLoanList());
         assertEquals(model.getAddressBook(), reloaded.getAddressBook());
         assertThrows(CommandException.class, () -> logic.execute(command));
     }
 
-    private ModelManager fullModel() throws Exception {
+    private ModelManager createFullModel() throws Exception {
         ReadOnlyAddressBook source = new JsonAddressBookStorage(
                 Path.of("src/test/data/JsonSerializableAddressBookTest/fullAddressBook.json"))
                 .readAddressBook().orElseThrow();
@@ -215,17 +215,17 @@ public class MemberLifecycleStorageTest {
      * Injects a real partial candidate write or a failed atomic installation.
      */
     private static class FailingWriter extends AtomicFileWriter {
-        private final boolean partialWrite;
+        private final boolean shouldWritePartially;
         private final IOException failure = new IOException("Controlled lifecycle save failure");
-        private boolean fail;
+        private boolean shouldFail;
 
-        FailingWriter(boolean partialWrite) {
-            this.partialWrite = partialWrite;
+        FailingWriter(boolean shouldWritePartially) {
+            this.shouldWritePartially = shouldWritePartially;
         }
 
         @Override
         void writeTemporaryFile(Path temporary, byte[] bytes) throws IOException {
-            if (fail && partialWrite) {
+            if (shouldFail && shouldWritePartially) {
                 Files.write(temporary, new byte[] {bytes[0]});
                 throw failure;
             }
@@ -234,7 +234,7 @@ public class MemberLifecycleStorageTest {
 
         @Override
         void replaceFile(Path temporary, Path target) throws IOException {
-            if (fail) {
+            if (shouldFail) {
                 throw failure;
             }
             super.replaceFile(temporary, target);

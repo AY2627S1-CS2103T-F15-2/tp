@@ -40,8 +40,7 @@ public class MemberEditCommand extends Command {
     /**
      * Creates an edit with at least one supplied field; empty optionals preserve stored values.
      */
-    public MemberEditCommand(NusId targetNusId, Optional<Name> name, Optional<Phone> phone,
-            Optional<Email> email) {
+    public MemberEditCommand(NusId targetNusId, Optional<Name> name, Optional<Phone> phone, Optional<Email> email) {
         this.targetNusId = requireNonNull(targetNusId);
         this.name = requireNonNull(name);
         this.phone = requireNonNull(phone);

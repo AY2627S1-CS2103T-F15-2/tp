@@ -5,7 +5,9 @@ import static java.util.Objects.requireNonNull;
 import seedu.address.model.Model;
 import seedu.address.model.query.LoanQuery;
 
-/** Opens the Loans tab without modifying member, equipment or loan records. */
+/**
+ * Opens the Loans tab without modifying member, equipment or loan records.
+ */
 public class LoanListCommand extends Command {
     public static final String COMMAND_WORD = "loans list";
     public static final String MESSAGE_USAGE = COMMAND_WORD

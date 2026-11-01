@@ -19,7 +19,7 @@ public class Member {
     private final Name name;
     private final Phone phone;
     private final Email email;
-    private final boolean deleted;
+    private final boolean isDeleted;
 
     /**
      * Constructs a {@code Member} with the given details.
@@ -37,11 +37,11 @@ public class Member {
         this.name = name;
         this.phone = phone;
         this.email = email;
-        deleted = isDeleted;
+        this.isDeleted = isDeleted;
     }
 
     public boolean isDeleted() {
-        return deleted;
+        return isDeleted;
     }
 
     public NusId getNusId() {
@@ -82,12 +82,12 @@ public class Member {
                 && name.equals(otherMember.name)
                 && phone.equals(otherMember.phone)
                 && email.equals(otherMember.email)
-                && deleted == otherMember.deleted;
+                && isDeleted == otherMember.isDeleted;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(nusId, name, phone, email, deleted);
+        return Objects.hash(nusId, name, phone, email, isDeleted);
     }
 
     @Override
@@ -97,7 +97,7 @@ public class Member {
                 .add("name", name)
                 .add("phone", phone)
                 .add("email", email)
-                .add("deleted", deleted)
+                .add("deleted", isDeleted)
                 .toString();
     }
 }

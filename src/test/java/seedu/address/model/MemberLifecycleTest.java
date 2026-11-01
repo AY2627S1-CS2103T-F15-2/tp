@@ -36,7 +36,7 @@ public class MemberLifecycleTest {
 
     @Test
     public void deleteAndRestore_retainedIdentityAndHistory_remainsRecoverableWithoutClock() {
-        ModelManager model = model();
+        ModelManager model = createModel();
         ObservableList<Member> view = model.getMemberList();
         model.deleteMember(ALEX);
         Member deleted = model.findMember(ALEX.getNusId()).orElseThrow();
@@ -58,7 +58,7 @@ public class MemberLifecycleTest {
 
     @Test
     public void lifecycle_invalidRequests_preservesRootAndRecords() {
-        ModelManager model = model();
+        ModelManager model = createModel();
         AddressBook before = new AddressBook(model.getAddressBook());
         assertThrows(IllegalStateException.class, () -> model.restoreMember(ALEX));
         assertThrows(NullPointerException.class, () -> model.restoreMember(null));
@@ -81,7 +81,7 @@ public class MemberLifecycleTest {
         };
         invalid.addMember(new Member(ALEX.getNusId(), ALEX.getName(), ALEX.getPhone(), ALEX.getEmail(), true));
         invalid.addEquipment(CAMERA);
-        ModelManager model = model();
+        ModelManager model = createModel();
         AddressBook before = new AddressBook(model.getAddressBook());
         assertThrows(MemberDeletedException.class, () -> model.setAddressBook(invalid));
         assertEquals(before, model.getAddressBook());
@@ -94,7 +94,7 @@ public class MemberLifecycleTest {
         assertThrows(MemberNotFoundException.class, () -> members.setDeleted(ALEX.getNusId(), true));
     }
 
-    private ModelManager model() {
+    private ModelManager createModel() {
         ModelManager model = new ModelManager();
         model.addMember(ALEX);
         model.addEquipment(CAMERA);

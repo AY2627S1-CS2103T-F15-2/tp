@@ -21,7 +21,7 @@ import seedu.address.model.person.Phone;
 
 public class MemberAddCommandTest {
 
-    private static final Member ALEX = member("A0123456X");
+    private static final Member ALEX = createMember("A0123456X");
 
     @Test
     public void execute_validMember_addsAndRequestsDetails() throws Exception {
@@ -55,7 +55,7 @@ public class MemberAddCommandTest {
     public void execute_sameNameDifferentIds_retainsBoth() throws Exception {
         ModelManager model = new ModelManager();
         new MemberAddCommand(ALEX).execute(model);
-        Member second = member("A0234567R");
+        Member second = createMember("A0234567R");
         new MemberAddCommand(second).execute(model);
         assertEquals(2, model.getMemberList().size());
         assertEquals(ALEX, model.findMember(ALEX.getNusId()).orElseThrow());
@@ -71,17 +71,17 @@ public class MemberAddCommandTest {
     @Test
     public void equalsAndToString_retainedMember_valueBehavior() {
         MemberAddCommand command = new MemberAddCommand(ALEX);
-        MemberAddCommand equal = new MemberAddCommand(member("a0123456x"));
+        MemberAddCommand equal = new MemberAddCommand(createMember("a0123456x"));
         assertEquals(command, command);
         assertEquals(command, equal);
         assertEquals(command.hashCode(), equal.hashCode());
-        assertNotEquals(command, new MemberAddCommand(member("A0234567R")));
+        assertNotEquals(command, new MemberAddCommand(createMember("A0234567R")));
         assertNotEquals(command, null);
         assertNotEquals(command, "member add");
         assertTrue(command.toString().contains(ALEX.toString()));
     }
 
-    private static Member member(String nusId) {
+    private static Member createMember(String nusId) {
         return new Member(new NusId(nusId), new Name("Alex Tan"),
                 new Phone("91234567"), new Email("alex@example.com"));
     }

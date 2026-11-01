@@ -27,7 +27,7 @@ public class MemberCardTest {
     @Test
     public void constructor_memberAndCount_displaysSnapshotWithoutActivationHandlers() {
         FxTestUtil.runAndWait(() -> {
-            Region root = new MemberCard(member("A0123456X", "Alex Tan", "alex@example.com"), 2).getRoot();
+            Region root = new MemberCard(createMember("A0123456X", "Alex Tan", "alex@example.com"), 2).getRoot();
             assertEquals("Alex Tan", label(root, "name").getText());
             assertEquals("A0123456X · 91234567", label(root, "identityAndPhone").getText());
             assertEquals("alex@example.com", label(root, "email").getText());
@@ -35,9 +35,9 @@ public class MemberCardTest {
             assertTrue(root.getStyleClass().contains("laplace-row"));
             assertNull(root.getOnMouseClicked());
             assertNull(root.getOnKeyPressed());
-            assertEquals("0 items held", label(new MemberCard(member(
+            assertEquals("0 items held", label(new MemberCard(createMember(
                     "A0123456X", "Alex Tan", "alex@example.com"), 0).getRoot(), "itemsHeld").getText());
-            assertEquals("1 item held", label(new MemberCard(member(
+            assertEquals("1 item held", label(new MemberCard(createMember(
                     "A0123456X", "Alex Tan", "alex@example.com"), 1).getRoot(), "itemsHeld").getText());
         });
     }
@@ -47,7 +47,7 @@ public class MemberCardTest {
         FxTestUtil.runAndWait(() -> {
             assertThrows(NullPointerException.class, () -> new MemberCard(null, 0));
             assertThrows(IllegalArgumentException.class, () -> {
-                new MemberCard(member("A0123456X", "Alex Tan", "alex@example.com"), -1);
+                new MemberCard(createMember("A0123456X", "Alex Tan", "alex@example.com"), -1);
             });
         });
     }
@@ -55,8 +55,8 @@ public class MemberCardTest {
     @Test
     public void constructor_sameNames_distinguishesIdentities() {
         FxTestUtil.runAndWait(() -> {
-            Region first = new MemberCard(member("A0123456X", "Alex Tan", "alex@example.com"), 0).getRoot();
-            Region second = new MemberCard(member("A0234567R", "Alex Tan", "alex@example.com"), 0).getRoot();
+            Region first = new MemberCard(createMember("A0123456X", "Alex Tan", "alex@example.com"), 0).getRoot();
+            Region second = new MemberCard(createMember("A0234567R", "Alex Tan", "alex@example.com"), 0).getRoot();
             assertEquals(label(first, "name").getText(), label(second, "name").getText());
             assertNotEquals(label(first, "identityAndPhone").getText(), label(second, "identityAndPhone").getText());
         });
@@ -67,7 +67,7 @@ public class MemberCardTest {
         FxTestUtil.runAndWait(() -> {
             String longName = "Alexandra Catherine Elizabeth Tan Wei Ling";
             String longEmail = "alexandra.catherine.elizabeth.tan@example.com";
-            Region root = new MemberCard(member("A0123456X", longName, longEmail), 12).getRoot();
+            Region root = new MemberCard(createMember("A0123456X", longName, longEmail), 12).getRoot();
             VBox container = new VBox(root);
             new Scene(container, 210, 400);
             container.getStyleClass().add("laplace-root");
@@ -120,7 +120,7 @@ public class MemberCardTest {
         return (Label) root.lookup("#" + id);
     }
 
-    private static Member member(String nusId, String name, String email) {
+    private static Member createMember(String nusId, String name, String email) {
         return new Member(new NusId(nusId), new Name(name), new Phone("91234567"), new Email(email));
     }
 }

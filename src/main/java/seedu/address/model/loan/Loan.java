@@ -34,6 +34,10 @@ public class Loan {
     /**
      * Constructs a {@code Loan} with the given details.
      *
+     * @param equipmentUuid The identity of the borrowed physical unit.
+     * @param memberNusId The identity of the borrowing member.
+     * @param assignedDate The date the unit was assigned.
+     * @param expectedReturnDate The agreed return date, on or after assignment.
      * @param returnedDate The actual return date, or {@code null} for an open loan.
      */
     public Loan(UUID equipmentUuid, NusId memberNusId, LocalDate assignedDate,

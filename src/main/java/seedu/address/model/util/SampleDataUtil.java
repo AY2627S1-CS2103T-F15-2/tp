@@ -90,7 +90,9 @@ public class SampleDataUtil {
         return sampleAb;
     }
 
-    /** Adds overdue, returned and multiple-holding examples alongside the basic camera workflow. */
+    /**
+     * Adds overdue, returned and multiple-holding examples alongside the basic camera workflow.
+     */
     private static void addMoreSampleData(AddressBook book, LocalDate today, NusId alexId) {
         book.addMember(new Member(new NusId("A0456789B"), Name.forMember("Siti Nur"),
                 Phone.forMember("+65 8123-4567"), Email.forMember("siti.nur@example.com")));

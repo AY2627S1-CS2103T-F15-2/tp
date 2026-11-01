@@ -32,7 +32,7 @@ import seedu.address.testutil.FxTestUtil;
 class LoanHistoryCapacityTest {
     @Test
     void largeHistory_reusesVisibleRowsAndKeepsEveryLoanReachable() {
-        List<Loan> loans = history();
+        List<Loan> loans = createHistory();
         FxTestUtil.runAndWait(() -> {
             VBox section = new VBox();
             int[] rendered = {0};
@@ -58,7 +58,7 @@ class LoanHistoryCapacityTest {
 
     @Test
     void documentedCapacity_detailsAndDirectory_boundControlsAndRefreshFilters() {
-        ModelManager model = modelAtCapacity();
+        ModelManager model = createModelAtCapacity();
         FxTestUtil.runAndWait(() -> {
             MemberDetailsPanel member = new MemberDetailsPanel(model.getAddressBook(), model::getAvailability);
             member.showMember(ALEX.getNusId());
@@ -99,7 +99,7 @@ class LoanHistoryCapacityTest {
         root.layout();
     }
 
-    private static ModelManager modelAtCapacity() {
+    private static ModelManager createModelAtCapacity() {
         ModelManager model = new ModelManager();
         model.addMember(ALEX);
         model.addEquipment(CAMERA);
@@ -110,13 +110,13 @@ class LoanHistoryCapacityTest {
         for (int index = 1; index < 5_000; index++) {
             model.addEquipment(new Equipment(new UUID(1, index), "Spare", "Photo", Condition.GOOD, ""));
         }
-        for (Loan loan : history()) {
+        for (Loan loan : createHistory()) {
             model.addLoan(loan);
         }
         return model;
     }
 
-    private static List<Loan> history() {
+    private static List<Loan> createHistory() {
         return IntStream.range(0, 10_000).mapToObj(index -> {
             LocalDate date = LocalDate.of(1980, 1, 1).plusDays(index);
             return new Loan(CAMERA.getUuid(), ALEX.getNusId(), date, date, date);
