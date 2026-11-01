@@ -83,6 +83,30 @@ Reviewable local evidence is recorded in [AutocompleteVerification.txt](gui/Auto
 [AutocompleteKeyboardSession.txt](gui/AutocompleteKeyboardSession.txt), and
 [AutocompletePackagedSession.txt](gui/AutocompletePackagedSession.txt).
 
+## Packaged display-scaling checks
+
+`./gradlew verifyPackagedLayout` runs the shell layout and feedback tests with production classes,
+FXML, stylesheets and native libraries loaded from the candidate JAR. The shipped-sample regression
+requires the entire first open-loan card at 853×400 logical pixels: status, identity links, dates,
+issue condition, return-condition selection and Prepare return command. Directory and unit-table
+regressions also require complete rows. Additional records remain reachable by scrolling.
+
+On Linux with Java 25, GTK and Xvfb installed, reproduce the reported display configuration with:
+
+```sh
+xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" \
+  ./gradlew verifyPackagedLayout -PgtkScale=1.5
+```
+
+For an existing candidate add `-PpackagedJar=build/candidate/Laplace.jar`. `gtkScale` passes the actual
+`glass.gtk.uiScale` setting to the test JVM, and the tests require an output scale of 1.5 and screen
+bounds corresponding to a 1280×720 display. This verifies GTK scaling under Xvfb; it does not establish
+compatibility with every desktop compositor or Windows/macOS display setting. Snapshots are written
+under `build/reports/laplace`, including `shell-complete-sample-loan-853x400.png`.
+The [Linux before/after verification record](gui/CompactLayoutVerification.txt) lists the exact JAR
+hashes, environment and checks. [Before](gui/CompactLoanLinuxBefore.png) and
+[after](gui/CompactLoanLinuxAfter.png) snapshots use shipped fictional sample data.
+
 ## Capacity and failure injection
 
 These checks require a source checkout and Java 25. They are separate from the released-JAR manual

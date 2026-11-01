@@ -85,6 +85,7 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.query.InventoryGroups;
+import seedu.address.model.util.SampleDataUtil;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -124,6 +125,13 @@ public class MainWindowShellTest {
             window.show();
             window.fillInnerParts();
             layout();
+            String requiredScale = System.getProperty("laplace.requiredScale");
+            if (requiredScale != null) {
+                double scale = Double.parseDouble(requiredScale);
+                assertEquals(scale, window.getPrimaryStage().getOutputScaleX(), 0.01);
+                assertEquals(1280 / scale, Screen.getPrimary().getBounds().getWidth(), 1);
+                assertEquals(720 / scale, Screen.getPrimary().getBounds().getHeight(), 1);
+            }
         });
     }
 
@@ -1637,6 +1645,30 @@ public class MainWindowShellTest {
                 submit("equipment list");
                 submit("member list");
             }
+        });
+    }
+
+    @Test
+    public void layout_shippedSampleAtSmallScaledSize_showsCompleteFirstLoanCard() {
+        FxTestUtil.runAndWait(() -> {
+            model.setAddressBook(SampleDataUtil.getSampleAddressBook());
+            submit("loans list");
+            int[] size = usableScene(1280, 720, 1.5);
+            render("complete-sample-loan", size[0], size[1]);
+            ScrollPane scroll = (ScrollPane) node("singlePanelPlaceholder").lookup(".scroll-pane");
+            Bounds viewport = scroll.lookup(".viewport").localToScene(
+                    scroll.lookup(".viewport").getBoundsInLocal());
+            Node firstCard = ((javafx.scene.layout.VBox) node("openLoans")).getChildren().getFirst();
+            assertTrue(viewport.contains(firstCard.localToScene(firstCard.getBoundsInLocal())),
+                    "The complete first sample loan card must be visible without scrolling");
+            assertEquals(2, firstCard.lookupAll(".loan-identity-link").size());
+            assertEquals(3, firstCard.lookupAll(".loan-date").size());
+            assertTrue(firstCard.lookup(".loan-status").isVisible());
+            assertTrue(firstCard.lookup(".loan-return-condition").isVisible());
+            Button prepare = (Button) firstCard.lookup(".loan-prepare-return");
+            assertTrue(viewport.contains(prepare.localToScene(prepare.getBoundsInLocal())));
+            prepare.fire();
+            assertTrue(field().getText().startsWith("loans return uuid/"));
         });
     }
 

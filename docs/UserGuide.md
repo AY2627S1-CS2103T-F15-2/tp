@@ -1074,6 +1074,7 @@ uppercase placeholders and press Enter yourself. Availability and validation rul
 The **Loans** tab shows current open assignments, exact-identity links, assigned/due dates and an
 **Overdue** or **Due today** label when applicable. Rows reflow at narrower widths. **Prepare return command**
 fills the input with the unit UUID and today's local date; review it before pressing Enter.
+The status and return controls share a wrapping row below the identities and dates.
 
 Filter both sections by NUS ID and equipment UUID. The filtered-result summary shows displayed versus
 total counts in both sections, including records hidden after a successful batch command.

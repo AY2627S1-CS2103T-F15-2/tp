@@ -1478,7 +1478,8 @@ They are not prerequisites for testing the released JAR.
 8. Review at 1920×1080 with 100%/125% scaling and 1280×720 with 150% scaling on supported systems.
    Check wrapping, scrolling, visible focus and contrast. Logical-size snapshots alone do not verify OS scaling.
    At 1280×720 with 150% scaling, run `loans list`, `member list`, and `equipment list` with sample data.
-   Without scrolling, check the first open loan's identity links and at least two directory rows.
+   Without scrolling, check one complete open-loan card, including status, both identities, all dates,
+   issue condition, observed return condition and Prepare return command; also check two directory rows.
    Open an equipment group with multiple units and check two unit rows are visible before scrolling.
    Scroll to all remaining rows and expand/collapse a long Last result; Copy must
    retain the complete feedback. Resize taller and confirm normal spacing returns.
