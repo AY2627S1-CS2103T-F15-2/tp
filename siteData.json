@@ -46,7 +46,7 @@
         "setting-up-getting-started": "Setting up, getting started",
         "design": "Design",
         "architecture": "Architecture",
-        "contribution-diagram-index": "Contribution diagram index",
+        "diagram-notation": "Diagram notation",
         "ui-component": "UI component",
         "tab-completion": "Tab completion",
         "logic-component": "Logic component",
@@ -61,6 +61,8 @@
         "adding-multiple-physical-equipment-units": "Adding multiple physical equipment units",
         "equipment-editing-deletion-and-restoration": "Equipment editing, deletion and restoration",
         "undo-redo-feature": "Undo/redo feature",
+        "completion-execution-details": "Completion execution details",
+        "loading-and-compatibility": "Loading and compatibility",
         "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
         "appendix-requirements": "Appendix: Requirements",
@@ -89,7 +91,8 @@
         "atomic-save-access-policy": "Atomic-save access policy",
         "command-word-aliases-and-casing": "Command-word aliases and casing",
         "batch-loan-validation-diagnostics": "Batch loan validation diagnostics",
-        "command-based-loans-filters": "Command-based Loans filters"
+        "command-based-loans-filters": "Command-based Loans filters",
+        "design-contract-checks": "Design contract checks"
       },
       "headingKeywords": {}
     },
