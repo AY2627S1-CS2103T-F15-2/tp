@@ -6,7 +6,7 @@ skinparam classBackgroundColor LOGIC_COLOR
 hide empty members
 
 class AddressBookParser
-interface Parser
+interface Parser <<interface>>
 class MemberCommandParser
 class MemberDeleteCommandParser
 class LaplaceArgumentParser
