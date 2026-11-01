@@ -118,6 +118,9 @@ public class LoanReturnCommand extends Command {
                 ? String.format(MESSAGE_SUCCESS, firstName, identifiers, firstMemberName, firstMemberId, returnedDate)
                 : String.format(MESSAGE_BATCH_SUCCESS, equipmentUuids.size(), returnedDate)
                         + "\n" + String.join("\n", details);
+        if (returnedDate.isBefore(today.minusYears(10))) {
+            feedback += "\nWarning: returned/ is over 10 years before today (" + today + "). Check the date.";
+        }
         return new CommandResult(feedback, display);
     }
 
