@@ -52,10 +52,13 @@ The bulk of the app's work is done by the following four components:
 
 **How the architecture components interact with each other**
 
-The *Sequence Diagram* below is an inherited AB3 example using `delete 1`. That command is now rejected;
-see [command routing and legacy compatibility](#command-routing-and-legacy-compatibility) for current behavior.
+The *Sequence Diagram* below traces `member delete nus/A0123456X` for an active member without
+open loans. Logic parses the command, changes an isolated candidate, saves it atomically and then
+publishes to the live model. Failures before publication leave live records unchanged.
 
-<puml src="diagrams/ArchitectureSequenceDiagram.puml" width="574" />
+<puml src="diagrams/ArchitectureSequenceDiagram.puml" alt="Member deletion across UI, Logic, candidate model and atomic storage" />
+
+[Open full-size diagram](diagrams/ArchitectureSequenceDiagram.png)
 
 Each of the four main components (also shown in the diagram above),
 
@@ -190,19 +193,21 @@ original suffix, including Unicode separators and neighboring batch UUIDs, and n
 
 **API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/logic/Logic.java)
 
-The following inherited class diagram shows the AB3 `Logic` structure; its person-command routes are retired:
+The class diagram shows the `Logic` API, its manager, parsers and current Laplace commands.
+`XYZCommand` stands for a concrete command such as `MemberDeleteCommand`.
 
-<puml src="diagrams/LogicClassDiagram.puml" width="550"/>
+<puml src="diagrams/LogicClassDiagram.puml" alt="Logic API, manager, parser and command dependencies" />
 
-The sequence diagram below is a historical AB3 example of `execute("delete 1")`, not a supported Laplace flow.
+The sequence below expands `member delete nus/A0123456X`: `AddressBookParser` delegates to
+`MemberCommandParser`, then `MemberDeleteCommandParser`, which validates the NUS ID and constructs
+`MemberDeleteCommand`. The command soft-deletes the member on the candidate, preserving identity
+and retained history. Deletion is blocked when the member has open loans. `LogicManager` records the
+change and saves before publishing; the result requests the Members directory through `DisplayRequest`.
+The storage lifeline abbreviates `StorageManager`, JSON serialization and `AtomicFileWriter`.
 
-<puml src="diagrams/DeleteSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `delete 1` Command" />
+<puml src="diagrams/DeleteSequenceDiagram.puml" alt="Member delete family and leaf parsing, candidate execution, save and publication" />
 
-<box type="info" seamless>
-
-**Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, the lifeline continues till the end of diagram.
-</box>
-
+[Open full-size diagram](diagrams/DeleteSequenceDiagram.png)
 
 #### Command routing and legacy compatibility
 
@@ -226,9 +231,12 @@ JSON `persons` data is retained and round-trips when supported commands save. Pe
 used by members, legacy command/parser implementations and their unit tests, and the legacy UI panel
 remain for a separate dependency-aware cleanup. Removing public routes does not remove stored records.
 
-The inherited parser diagram below documents the remaining AB3 classes, not the active root dispatch:
+The parser diagram focuses on the active member-delete route and the shared argument grammar.
+Other family, leaf and utility parsers follow the same delegation pattern and are omitted for readability:
 
-<puml src="diagrams/ParserClasses.puml" width="600"/>
+<puml src="diagrams/ParserClasses.puml" alt="Current member family and delete leaf parsers with shared validation helpers" />
+
+[Open full-size diagram](diagrams/ParserClasses.png)
 
 ### Model component
 
