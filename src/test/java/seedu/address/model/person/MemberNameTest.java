@@ -14,6 +14,23 @@ import org.junit.jupiter.api.Test;
  */
 public class MemberNameTest {
     @Test
+    public void forMember_patronymicTokens_preservesCaseAndRestrictsOtherSlashes() {
+        for (String name : List.of("Ravi s/o Kumar", "Mary D/O Tan", "Ravi S/o Kumar", "d/o Devi")) {
+            assertEquals(name, Name.forMember(name).fullName);
+            assertEquals(name, Name.fromStoredMember(name).fullName);
+            assertTrue(Name.isValidMemberName(name), name);
+            assertThrows(IllegalArgumentException.class, () -> new Name(name));
+        }
+        assertEquals("Ravi s/o Kumar", Name.forMember(" Ravi\u2003s/o\u00a0Kumar ").fullName);
+        assertEquals("A".repeat(96) + " s/o", Name.forMember("A".repeat(96) + " s/o").fullName);
+        for (String name : List.of("Ravi s/only Kumar", "Ravi as/o Kumar", "Ravi s/oKumar", "Ravi / Kumar",
+                "Ravi w/o Kumar", "Ravi s/o, Kumar", "A".repeat(97) + " s/o")) {
+            assertFalse(Name.isValidMemberName(name), name);
+            assertThrows(IllegalArgumentException.class, () -> Name.forMember(name));
+        }
+    }
+
+    @Test
     public void forMember_unicodeNames_acceptsMarksAndTypographicApostrophes() {
         for (String name : List.of("அருண்", "Anne O\u2019Connor", "Anne-Marie O'Connor", "李明", "Alex Tan")) {
             assertEquals(name, Name.forMember(name).fullName);
