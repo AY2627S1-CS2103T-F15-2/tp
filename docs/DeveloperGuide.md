@@ -1063,7 +1063,7 @@ Use case ends.
 
 **Extensions**
 
-* 2a. Required details or the count are missing where required, invalid, or repeated.
+* 2a. A required detail is missing, or a supplied detail or count is invalid or repeated.
     * 2a1. Laplace explains what needs correcting without adding any units.
     * Use case resumes at step 1.
 * 2b. Laplace cannot generate a unique identifier.
@@ -1091,7 +1091,7 @@ Use case ends.
 **Extensions**
 
 * 1a. The member identifier is invalid or no matching member exists.
-    * 1a1. Laplace explains the problem without showing another member's details.
+    * 1a1. Laplace explains the problem and retains the previous view.
     * Use case resumes at step 1.
 * 5a. A supplied identifier is invalid, repeated, or does not identify an existing record.
     * 5a1. Laplace rejects the request and explains the invalid or missing reference without creating any loans.
@@ -1108,6 +1108,11 @@ Use case ends.
 * 5e. A date is invalid, assignment is after today or before a selected unit's last recorded return, or expected return precedes assignment.
     * 5e1. Laplace explains the violated date rule and creates no loans, including for otherwise valid units in a batch.
     * Use case resumes at step 5.
+
+* 6a. The assignment is more than ten calendar years before today, or the expected return is more than ten
+  calendar years after today, while all validation rules pass.
+    * 6a1. Laplace appends a date-check warning to the normal success feedback; the assignment is saved.
+    * Use case ends successfully.
 
 #### UC04: Record an equipment return
 
@@ -1140,6 +1145,10 @@ Use case ends.
     * 3d1. Laplace reports the affected equipment and missing-member relationship and makes no returns.
     * Use case ends unsuccessfully; the operator must recover consistent data before retrying.
 
+* 4a. The actual return is more than ten calendar years before today while all validation rules pass.
+    * 4a1. Laplace appends a date-check warning to the normal success feedback; the return is saved.
+    * Use case ends successfully.
+
 #### UC05: Delete an erroneous member or equipment record
 
 **Scope:** MVP. **Related stories:** US05, US09, US16, US19, US41.
@@ -1169,7 +1178,7 @@ Use case ends.
     * 3c1. Laplace refuses equipment deletion and identifies its holder.
     * Use case ends without deletion; the EXCO member may complete UC04 and restart UC05.
 * 3d. The selected member or equipment unit is already deleted.
-    * 3d1. Laplace rejects the repeated deletion without saving and explains how to restore the retained record.
+    * 3d1. Laplace rejects the repeated deletion without saving. For a member, it also explains how to restore the retained record.
     * Use case ends.
 
 #### UC06: Import records after reviewing a preview
@@ -1245,14 +1254,14 @@ Use case ends.
     * The EXCO member performs UC11.
     * Use case ends.
 
-#### UC09: Filter loan history
+#### UC09: Review and filter loan history
 
 **Scope:** Implemented. **Related stories:** US34, US35, US46, US47.
 
 **MSS**
 
-1. The EXCO member requests loan history with member and/or equipment identity text.
-2. Laplace shows matching open and completed loans and their displayed/total counts.
+1. The EXCO member requests loan history, optionally filtering by member and/or equipment identity text.
+2. Laplace shows matching open and completed loans and their displayed/total counts. Open loans show Overdue or Due today status when applicable.
 3. The EXCO member requests a filter reset.
 4. Laplace shows all retained loans.
 
@@ -1262,9 +1271,9 @@ Use case ends.
 
 * 1a. The request contains an unknown or repeated parameter.
     * 1a1. Laplace reports the error and retains the previous view, criteria, and records.
-    * Use case ends.
-* 1b. No retained loans match the supplied criteria.
-    * 1b1. Laplace shows empty matching results with the displayed/total counts and preserves the criteria.
+    * Use case resumes at step 1.
+* 2a. No retained loans match the supplied criteria.
+    * 2a1. Laplace shows empty matching results with the displayed/total counts and preserves the criteria.
     * Use case resumes at step 3.
 * 3a. The reset request has extra arguments.
     * 3a1. Laplace rejects it without changing criteria or records.
@@ -1318,7 +1327,7 @@ Use case ends.
 
 **MSS**
 
-1. The EXCO member supplies the member's NUS ID and one or more corrected contact details.
+1. The EXCO member supplies the member's NUS ID and one or more corrected details.
 2. Laplace validates the fields and requires an existing active member and an actual change.
 3. Laplace saves the corrected details under the same NUS ID and shows the updated member. Current and completed loans remain attached to that identity.
 
@@ -1415,7 +1424,7 @@ These are acceptance targets for the intended product, not measurements of the c
 | Equipment item / unit | One individually tracked physical object. Identical models are separate items, each with its own identifier. |
 | UUID | Universally unique identifier. Laplace generates one immutable UUID for each equipment item; names and descriptions are not equipment identifiers. |
 | Category | A broad grouping recorded on an equipment item, such as cameras or sports equipment. One category can contain different equipment types. |
-| Equipment type | A particular kind or model of equipment, such as a Canon EOS R50 camera. Physical units with the same normalized category and name form an inventory group used by batch creation and inventory summaries. |
+| Equipment type | A particular kind or model of equipment, such as a Canon EOS R50 camera. Physical units with the same normalized category and name form an inventory group, which inventory summaries use. |
 | Condition | The recorded physical state of an item: `GOOD`, `FAIR`, `DAMAGED`, or `UNDER_REPAIR` in the MVP. |
 | Availability | A derived state: `ASSIGNED` when an open loan exists; otherwise `AVAILABLE` for `GOOD` or `FAIR` condition, and `UNAVAILABLE` for `DAMAGED` or `UNDER_REPAIR`. It is not entered independently. |
 | Equipment loan / assignment | A relationship between one member and one equipment item, with assignment, expected return, and optional actual return dates. A member may have several loans; an item has at most one open loan. |

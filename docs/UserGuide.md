@@ -673,6 +673,11 @@ loans add uuid/UUID[,UUID...] nus/NUS_ID assigned/ASSIGNMENT_DATE expected/EXPEC
 All four parameters are required. Use the actual UUID from `equipment list` and the NUS ID from
 `member list`. Both identities must exist. Assignment must be on or before the computer's local date;
 expected return must be on or after assignment. Expected return may be in the future.
+Successful assignment/return commands warn if `assigned/` or `returned/` is more than ten calendar
+years before today, or `expected/` is more than ten calendar years after today. Exactly ten years does
+not trigger a warning. The dates are still accepted and saved; verify the warning and use `undo` to
+correct a typo before resubmitting. A batch reports each applicable date warning once. Loading saved
+history keeps its existing rules; these advisories apply only when executing commands.
 In `UUID[,UUID...]`, the brackets and ellipsis describe optional additional UUIDs; do not type them.
 Enter full UUIDs separated by commas, with one `uuid/` prefix for the entire list.
 
@@ -949,7 +954,9 @@ Use that shared table for phone numbers, equipment names, categories, conditions
 | Dates | Exactly `yyyy-MM-dd` with a Gregorian year from `0001` through `9999`, such as `2026-10-15`. Assignment/actual-return dates cannot be later than the computer's local date. Expected return may be in the future. |
 
 Saved loan dates must also use the four-digit Gregorian range `0001`–`9999`. Year zero, negative years,
-and five-digit years are invalid stored data. Loading does not compare historical dates with today's clock.
+and five-digit years are invalid stored data. Loading does not reject historical records based on today's clock.
+The [ten-year date advisories](#assign-equipment-loans-add) apply to successful assignment and return
+commands, without changing the saved-file loading rules.
 
 Newly added or edited member names use Unicode NFC normalization: `José Tan` and `José Tan`
 (with a separate combining acute accent) are stored as the same canonical spelling. Existing saved
