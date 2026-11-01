@@ -35,7 +35,7 @@ alt valid input
   root --> logic : command
   ref over logic, command
     Continue with EquipmentTransactionSequence:
-    snapshot, execute, save, publish
+    candidate, execute, save, publish
   end ref
 else invalid input
   leaf --> family : throws ParseException

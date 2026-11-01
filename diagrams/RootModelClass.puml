@@ -57,7 +57,7 @@ note bottom of CollectionView
   Wrappers and factory fields are omitted.
 end note
 legend bottom
-  Immutable entity values may be shared by independent snapshots;
+  Immutable entity values may be shared by independent roots;
   their associations are not composition. Loan IDs resolve through
   the root, not through stored Member or Equipment object links.
 endlegend

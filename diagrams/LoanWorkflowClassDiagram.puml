@@ -36,7 +36,7 @@ end note
 legend bottom
   Loan-facing Model APIs only; unrelated members are omitted.
   UniqueLoanList is created lazily; an absent list reads as empty.
-  Immutable Loan values may be shared across root snapshots.
+  Immutable Loan values may be shared across independent roots.
   AddressBook validates references and batches before replacing records.
   Command parsing, JSON conversion and UI filtering are separate views.
 endlegend

@@ -35,7 +35,7 @@ Search -> Query : members(data)
 activate Query
 note right of Query
 Filter by status, text, and holdings;
-sort a snapshot of matching members.
+sort a derived list of matching members.
 end note
 Query --> Search : matchingMembers
 deactivate Query
