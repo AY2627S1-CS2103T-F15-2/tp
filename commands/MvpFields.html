@@ -31,8 +31,10 @@ Loading a saved name preserves its exact spelling; editing only another field do
 before the next marker. A blank required value occupies its supplied field&#39;s position. Unknown and repeated
 markers fail when encountered; an earlier invalid field is therefore reported before a later marker error.
 For example, <code class="hljs inline no-lang">member add phone/123 nus/bad</code> reports the phone error; reversing these fields reports the NUS ID error.</p> <p>An absent required field has no position in the input. Missing fields are reported after all supplied fields
-have been validated, using lexicographic prefix order as the deterministic tie-breaker. List commands accept
-whitespace only. Model/business checks run after parsing and before any records can be committed.</p> <p>Command words ignore case; <code class="hljs inline no-lang">members</code> and <code class="hljs inline no-lang">loan</code> alias <code class="hljs inline no-lang">member</code> and <code class="hljs inline no-lang">loans</code>.
+have been validated, using lexicographic prefix order as the deterministic tie-breaker. Member/equipment
+lists, loan reset, undo, redo, Help and Exit accept whitespace only after their command words. Extra input
+reports <code class="hljs inline no-lang">This command takes no arguments.</code> with usage; loan list still accepts optional filters.
+Model/business checks run after parsing and before any records can be committed.</p> <p>Command words ignore case; <code class="hljs inline no-lang">members</code> and <code class="hljs inline no-lang">loan</code> alias <code class="hljs inline no-lang">member</code> and <code class="hljs inline no-lang">loans</code>.
 Prefixes remain lowercase and case-sensitive, and parameter order is free. The reserved
 start/whitespace-delimited <code class="hljs inline no-lang">[A-Za-z][A-Za-z0-9_-]*/</code> marker grammar excludes standalone <code class="hljs inline no-lang">s/o</code> and <code class="hljs inline no-lang">d/o</code>
 tokens in any letter case. Other unknown markers are rejected even inside text values, including <code class="hljs inline no-lang">w/</code>.
@@ -58,7 +60,7 @@ reassignment names the current holder, and successful deletion includes the stor
 be edited. A blank <code class="hljs inline no-lang">notes/</code> clears notes. Descriptive and condition edits are permitted during a loan;
 ASSIGNED still takes precedence until return. Deleted units must be restored before editing or lending.
 The persisted equipment <code class="hljs inline no-lang">deleted</code> flag defaults to false when absent and rejects null/non-booleans.
-Deletion retains closed history and blocks open loans; restoration has no time limit.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Sun, 1 Nov 2026, 13:34:28 GMT+8]</small></div></footer><!--]--></div>
+Deletion retains closed history and blocks open loans; restoration has no time limit.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Sun, 1 Nov 2026, 13:36:06 GMT+8]</small></div></footer><!--]--></div>
 </body><script src="/tp/markbind/js/bootstrap-utility.min.js"></script>
 <script src="/tp/markbind/js/polyfill.min.js"></script>
 <script src="/tp/markbind/js/vue.global.prod.min.js"></script>
