@@ -64,6 +64,24 @@ class UiManagerTest {
     }
 
     @Test
+    void showDataLoadingError_longDiagnostic_retainsFullSelectableText() {
+        FxTestUtil.runAndWait(() -> {
+            String diagnostic = "members[987]: " + "Invalid field details. ".repeat(250) + "Check the email.";
+            ShownDialog dialog = observeDialog(() -> UiManager.showDataLoadingError(
+                    directory.resolve("data.json"), new DataLoadingException(new IOException(diagnostic))));
+            TextArea details = (TextArea) dialog.pane().getContent();
+            String text = details.getText();
+            assertTrue(text.contains("Problem: " + diagnostic));
+            assertTrue(text.contains("The original data file has been preserved."));
+            assertFalse(details.isEditable());
+            assertTrue(details.isWrapText());
+            assertTrue(dialog.resizable());
+            details.selectAll();
+            assertEquals(text, details.getSelectedText());
+        });
+    }
+
+    @Test
     void showAlertDialogAndWait_preservesOwnerAndContent() {
         FxTestUtil.runAndWait(() -> {
             Path dataFile = directory.resolve("data.json");
@@ -92,7 +110,8 @@ class UiManagerTest {
         Platform.runLater(() -> {
             for (Window window : List.copyOf(Window.getWindows())) {
                 if (window.getScene().getRoot() instanceof DialogPane pane) {
-                    shown.set(new ShownDialog(pane, ((Stage) window).getOwner()));
+                    Stage stage = (Stage) window;
+                    shown.set(new ShownDialog(pane, stage.getOwner(), stage.isResizable()));
                     window.hide();
                 }
             }
@@ -102,5 +121,5 @@ class UiManagerTest {
         return shown.get();
     }
 
-    private record ShownDialog(DialogPane pane, Window owner) {}
+    private record ShownDialog(DialogPane pane, Window owner, boolean resizable) {}
 }
