@@ -45,6 +45,7 @@ public class MemberDeleteCommand extends Command {
         requireNonNull(model);
         try {
             Member member = model.findMember(targetNusId).orElseThrow(MemberNotFoundException::new);
+            assert member.getNusId().equals(targetNusId) : "Member lookup must preserve the requested identity.";
             int heldCount = model.findOpenLoansForMember(targetNusId).size();
             try {
                 model.deleteMember(member);

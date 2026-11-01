@@ -1,6 +1,7 @@
 package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.storage.JsonAdaptedMember.MISSING_FIELD_MESSAGE_FORMAT;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -13,6 +14,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.member.NusId;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
@@ -24,6 +26,22 @@ public class JsonAdaptedMemberTest {
     private static final String VALID_NAME = ALEX.getName().toString();
     private static final String VALID_PHONE = ALEX.getPhone().toString();
     private static final String VALID_EMAIL = ALEX.getEmail().toString();
+
+    @Test
+    public void serialize_deletionFlag_preservesStoredPropertyNameAndRoundTrips() throws Exception {
+        JsonAdaptedMember adaptedMember = new JsonAdaptedMember(ALEX);
+        for (boolean isDeleted : new boolean[] {false, true}) {
+            adaptedMember.setDeleted(BooleanNode.valueOf(isDeleted));
+
+            String json = JsonUtil.toJsonString(adaptedMember);
+            JsonAdaptedMember restored = JsonUtil.fromJsonString(json, JsonAdaptedMember.class);
+
+            assertTrue(json.contains("\"deleted\" : " + isDeleted));
+            assertFalse(json.contains("\"isDeleted\""));
+            assertEquals(isDeleted, restored.toModelType().isDeleted());
+            assertEquals(ALEX.getNusId(), restored.toModelType().getNusId());
+        }
+    }
 
     @Test
     public void setDeleted_nullValue_throwsIllegalArgumentException() throws Exception {

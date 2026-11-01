@@ -39,6 +39,7 @@ public class MemberRestoreCommand extends Command {
         requireNonNull(model);
         try {
             Member member = model.findMember(targetNusId).orElseThrow(MemberNotFoundException::new);
+            assert member.getNusId().equals(targetNusId) : "Member lookup must preserve the requested identity.";
             model.restoreMember(member);
             return new CommandResult(String.format(MESSAGE_SUCCESS, targetNusId, member.getName()),
                     DisplayRequest.memberDetails(targetNusId));

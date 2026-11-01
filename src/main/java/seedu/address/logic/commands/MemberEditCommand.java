@@ -58,6 +58,7 @@ public class MemberEditCommand extends Command {
         requireNonNull(model);
         try {
             Member stored = model.findMember(targetNusId).orElseThrow(MemberNotFoundException::new);
+            assert stored.getNusId().equals(targetNusId) : "Member lookup must preserve the requested identity.";
             if (stored.isDeleted()) {
                 throw new MemberDeletedException();
             }

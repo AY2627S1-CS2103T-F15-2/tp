@@ -13,7 +13,9 @@ final class LoanHistoryContent {
     private LoanHistoryContent() {
     }
 
-    /** Adds current and completed loan facts for the selected identity. */
+    /**
+     * Adds current and completed loan facts for the selected identity.
+     */
     static void add(VBox content, List<Loan> loans) {
         DetailsPanelContent.text(content, "loanHistoryTitle", "Loan history", "details-section-title");
         if (loans.isEmpty()) {
@@ -23,9 +25,9 @@ final class LoanHistoryContent {
         VBox rows = new VBox(10);
         rows.setId("loanHistory");
         content.getChildren().add(rows);
-        List<Loan> ordered = loans.stream().sorted(Comparator.comparing(Loan::getAssignedDate).reversed()
+        List<Loan> orderedLoans = loans.stream().sorted(Comparator.comparing(Loan::getAssignedDate).reversed()
                 .thenComparing(loan -> loan.getEquipmentUuid().toString())).toList();
-        LoanRows.show(rows, ordered, LoanHistoryContent::createRow);
+        LoanRows.show(rows, orderedLoans, LoanHistoryContent::createRow);
     }
 
     /**

@@ -12,7 +12,9 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 
-/** Jackson-facing contract for a {@link Member}. */
+/**
+ * Converts between stored JSON fields and a {@link Member}.
+ */
 class JsonAdaptedMember {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Member's %s field is missing!";
@@ -21,9 +23,12 @@ class JsonAdaptedMember {
     private final String name;
     private final String phone;
     private final String email;
-    private boolean deleted;
+    @JsonProperty("deleted")
+    private boolean isDeleted;
 
-    /** Constructs an adapter from raw JSON fields. */
+    /**
+     * Constructs an adapter from raw JSON fields, deferring validation until conversion.
+     */
     @JsonCreator
     public JsonAdaptedMember(@JsonProperty("nusId") String nusId,
             @JsonProperty("name") String name, @JsonProperty("phone") String phone,
@@ -34,13 +39,15 @@ class JsonAdaptedMember {
         this.email = email;
     }
 
-    /** Constructs an adapter from a domain member. */
+    /**
+     * Constructs an adapter from a domain member, retaining their deletion state.
+     */
     public JsonAdaptedMember(Member source) {
         nusId = source.getNusId().value;
         name = source.getName().fullName;
         phone = source.getPhone().value;
         email = source.getEmail().value;
-        deleted = source.isDeleted();
+        isDeleted = source.isDeleted();
     }
 
     /**
@@ -51,7 +58,7 @@ class JsonAdaptedMember {
         if (value == null || !value.isBoolean()) {
             throw new IllegalArgumentException("Member deleted must be a boolean.");
         }
-        deleted = value.booleanValue();
+        isDeleted = value.booleanValue();
     }
 
     /**
@@ -61,7 +68,11 @@ class JsonAdaptedMember {
         return "NUS ID " + nusId;
     }
 
-    /** Converts this adapter to its domain type. */
+    /**
+     * Converts this adapter to a member, accepting valid legacy contact formats.
+     *
+     * @throws IllegalValueException If a required field is missing or invalid.
+     */
     public Member toModelType() throws IllegalValueException {
         if (nusId == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
@@ -99,6 +110,6 @@ class JsonAdaptedMember {
         }
         Email modelEmail = Email.fromStoredMember(email);
 
-        return new Member(modelNusId, modelName, modelPhone, modelEmail, deleted);
+        return new Member(modelNusId, modelName, modelPhone, modelEmail, isDeleted);
     }
 }
