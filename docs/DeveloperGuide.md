@@ -14,6 +14,9 @@
 ## **Acknowledgements**
 
 * Laplace evolves the course-provided [AddressBook-Level3 starter](https://github.com/NUS-CS2103-AY2627-S1/tp).
+* [JavaFX (OpenJFX)](https://openjfx.io/) 17.0.7 provides the GUI. JavaFX libraries and native binaries for Windows, Linux, Intel macOS and Apple Silicon macOS are bundled in `Laplace.jar`, under [GPLv2 with the Classpath Exception](https://github.com/openjdk/jfx/blob/jfx17/LICENSE).
+* [Jackson](https://github.com/FasterXML/jackson) provides JSON serialization and deserialization through `jackson-databind` and `jackson-datatype-jsr310`, both resolved to 2.7.4 at runtime. These runtime libraries are bundled in `Laplace.jar` under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+* [JUnit 5](https://docs.junit.org/5.14.4/overview.html) (Jupiter 5.14.4) provides automated testing under the [Eclipse Public License 2.0](https://github.com/junit-team/junit-framework/blob/r5.14.4/LICENSE.md). It is a test dependency and is not bundled in `Laplace.jar`.
 * Universal macOS packaging follows Apple's [Mach-O fat binary format](https://github.com/apple-oss-distributions/cctools/blob/main/include/mach-o/fat.h); the wrapper preserves the upstream JavaFX library slices.
 * Command text uses [IBM Plex Mono](https://github.com/IBM/plex) 2.004, copyright IBM Corp., under the SIL Open Font License. The faces and license are in `src/main/resources/fonts`.
 
