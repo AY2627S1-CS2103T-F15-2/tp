@@ -1231,7 +1231,9 @@ automatically discover or move those older files.
 
 ### Handle a startup failure
 
-1. If **Could not load saved data** appears, record its **Data file:** path. Laplace preserves the
+1. If **Could not load saved data** appears, record its **Data file:** path and **Problem:** diagnostic.
+   The diagnostic identifies the invalid record or field when that information is available. Its
+   read-only text area supports scrolling and copying long messages. Laplace preserves the
    original data file and opens no editable directory or command box. Dismiss the dialog and wait
    for startup to stop. For other launch failures, check Java 25 and the JAR filename, and retain the
    terminal error; do not replace the dataset just because Java could not start.

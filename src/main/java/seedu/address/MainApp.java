@@ -124,7 +124,7 @@ public class MainApp extends Application {
     public void start(Stage primaryStage) throws DataLoadingException {
         logger.info("Starting AddressBook " + MainApp.VERSION);
         if (startupFailure != null) {
-            UiManager.showDataLoadingError(storage.getAddressBookFilePath());
+            UiManager.showDataLoadingError(storage.getAddressBookFilePath(), startupFailure);
             // Preserve the checked cause so the JavaFX launcher terminates unsuccessfully.
             throw startupFailure;
         }

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javafx.application.Platform;
 import javafx.scene.control.DialogPane;
+import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import seedu.address.commons.core.AppPaths;
@@ -125,7 +126,17 @@ public class MainAppTest {
             assertNull(app.model);
             assertNull(app.logic);
             assertNull(app.ui);
-            FxTestUtil.runAndWait(() -> assertFailedStartupDialog(app, file));
+            FxTestUtil.runAndWait(() -> {
+                String message = assertFailedStartupDialog(app, file);
+                assertTrue(message.contains("Problem:"));
+                assertFalse(message.contains("IllegalValueException:"));
+                assertFalse(message.contains("[Source:"));
+                if (invalid.contains("alice@@example.com")) {
+                    assertTrue(message.contains("members[0]"), message);
+                    assertTrue(message.contains(data.getMemberList().getFirst().getNusId().value), message);
+                    assertTrue(message.contains("Emails should be"), message);
+                }
+            });
             app.stop();
             assertArrayEquals(before, Files.readAllBytes(file));
         }
@@ -164,13 +175,17 @@ public class MainAppTest {
     }
 
     /** Closes the real modal dialog from its nested event loop and inspects the displayed guidance. */
-    private void assertFailedStartupDialog(MainApp app, Path file) {
+    private String assertFailedStartupDialog(MainApp app, Path file) {
         Stage primary = new Stage();
         AtomicReference<String> content = new AtomicReference<>();
+        AtomicReference<TextArea> details = new AtomicReference<>();
         Platform.runLater(() -> {
             for (Window window : List.copyOf(Window.getWindows())) {
                 if (window.getScene().getRoot() instanceof DialogPane pane) {
                     content.set(pane.getContentText());
+                    if (pane.getContent() instanceof TextArea area) {
+                        details.set(area);
+                    }
                     window.hide();
                 }
             }
@@ -182,5 +197,10 @@ public class MainAppTest {
         assertTrue(content.get().contains("back up"));
         assertTrue(content.get().contains("Repair"));
         assertFalse(primary.isShowing());
+        assertNotNull(details.get());
+        assertEquals(content.get(), details.get().getText());
+        assertFalse(details.get().isEditable());
+        assertTrue(details.get().isWrapText());
+        return content.get();
     }
 }

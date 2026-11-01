@@ -3,13 +3,17 @@ package seedu.address.ui;
 import java.nio.file.Path;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import seedu.address.MainApp;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.Logic;
 
@@ -57,13 +61,25 @@ public class UiManager implements Ui {
     /**
      * Shows recovery guidance before startup aborts, without opening an editable main window.
      */
-    public static void showDataLoadingError(Path dataFilePath) {
-        showAlertDialogAndWait(null, AlertType.ERROR, "Could not load saved data",
+    public static void showDataLoadingError(Path dataFilePath, DataLoadingException failure) {
+        Throwable cause = failure.getCause() == null ? failure : failure.getCause();
+        String diagnostic = cause instanceof JsonProcessingException jsonFailure
+                ? jsonFailure.getOriginalMessage() : cause.getMessage();
+        Alert alert = createAlert(null, AlertType.ERROR, "Could not load saved data",
                 "Laplace cannot safely open this data file.",
                 "Data file: " + dataFilePath.toAbsolutePath() + "\n\n"
+                        + "Problem: " + (diagnostic == null ? "The saved data is invalid."
+                                : diagnostic.replaceAll("\\s+", " ").strip()) + "\n\n"
                         + "The original data file has been preserved. Close Laplace and back up this file. "
                         + "Repair it or move it to a safe location before restarting. "
                         + "Moving the file starts a separate sample dataset; it does not recover your records.");
+        TextArea details = new TextArea(alert.getContentText());
+        details.setEditable(false);
+        details.setWrapText(true);
+        details.setPrefRowCount(8);
+        alert.getDialogPane().setContent(details);
+        alert.setResizable(true);
+        alert.showAndWait();
     }
 
     private Image getImage(String imagePath) {
@@ -71,14 +87,13 @@ public class UiManager implements Ui {
     }
 
     void showAlertDialogAndWait(Alert.AlertType type, String title, String headerText, String contentText) {
-        showAlertDialogAndWait(mainWindow.getPrimaryStage(), type, title, headerText, contentText);
+        createAlert(mainWindow.getPrimaryStage(), type, title, headerText, contentText).showAndWait();
     }
 
     /**
-     * Shows an alert dialog on {@code owner} with the given parameters.
-     * This method only returns after the user has closed the alert dialog.
+     * Creates an alert dialog on {@code owner} with the given parameters.
      */
-    private static void showAlertDialogAndWait(Stage owner, AlertType type, String title, String headerText,
+    private static Alert createAlert(Stage owner, AlertType type, String title, String headerText,
                                                String contentText) {
         final Alert alert = new Alert(type);
         alert.getDialogPane().getStylesheets().add("view/DarkTheme.css");
@@ -87,7 +102,7 @@ public class UiManager implements Ui {
         alert.setHeaderText(headerText);
         alert.setContentText(contentText);
         alert.getDialogPane().setId(ALERT_DIALOG_PANE_FIELD_ID);
-        alert.showAndWait();
+        return alert;
     }
 
     /**

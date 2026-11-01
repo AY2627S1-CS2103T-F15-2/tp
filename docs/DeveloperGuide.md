@@ -832,6 +832,11 @@ UUID, even if that identity is invalid. Original checked/domain causes remain at
 report their position with identity unavailable; date errors include the rejected text. Diagnostics
 avoid echoing contact details.
 
+Startup passes the checked loading failure to `UiManager`. The recovery dialog shows its immediate
+cause's diagnostic without the exception class prefix; Jackson failures omit the source dump. A wrapped,
+read-only text area keeps long diagnostics scrollable and copyable. Startup still aborts without an
+editable main window, and the rejected file remains unchanged.
+
 The supported unversioned schema treats omitted/null `members`, `equipment` and `loans` as empty.
 Retain both forms for legacy compatibility; saves canonicalize them to `[]` without touching populated
 collections. No migration or warning distinguishes null from absence in this schema. Missing member/
