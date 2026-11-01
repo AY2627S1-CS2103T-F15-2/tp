@@ -1,39 +1,45 @@
 @startuml
 !include style.puml
 skinparam ArrowFontStyle plain
+actor User as user USER_COLOR
+participant ":UI" as ui UI_COLOR
+participant ":Logic" as logic LOGIC_COLOR
+participant "live:Model" as live MODEL_COLOR
+participant "candidate:Model" as candidate MODEL_COLOR
+participant ":Storage" as storage STORAGE_COLOR
 
-Actor User as user USER_COLOR
-Participant ":UI" as ui UI_COLOR
-Participant ":Logic" as logic LOGIC_COLOR
-Participant ":Model" as model MODEL_COLOR
-Participant ":Storage" as storage STORAGE_COLOR
-
-user -[USER_COLOR]> ui : "delete 1"
-activate ui UI_COLOR
-
-ui -[UI_COLOR]> logic : execute("delete 1")
-activate logic LOGIC_COLOR
-
-logic -[LOGIC_COLOR]> model : deletePerson(p)
-activate model MODEL_COLOR
-
-model -[MODEL_COLOR]-> logic
-deactivate model
-
-logic -[LOGIC_COLOR]> storage : saveAddressBook(addressBook)
-activate storage STORAGE_COLOR
-
-storage -[STORAGE_COLOR]> storage : Save to file
-activate storage STORAGE_COLOR_T1
-storage --[STORAGE_COLOR]> storage
+title Successful member deletion
+user -> ui : member delete nus/A0123456X
+activate ui
+ui -> logic : execute("member delete nus/A0123456X")
+activate logic
+note over logic
+  Parse through the member family and delete leaf parser.
+  The member exists, is active and holds no open loans.
+end note
+logic -> live : createTransactionSnapshot()
+live --> logic : candidate
+logic -> candidate : findMember(nusId)
+candidate --> logic : member
+logic -> candidate : findOpenLoansForMember(nusId)
+candidate --> logic : empty list
+logic -> candidate : deleteMember(member)
+note over candidate : Soft deletion preserves identity and history.
+logic -> candidate : recordAddressBook(previous, "member delete")
+note over logic, live : previous = live.getAddressBook()
+logic -> storage : saveAddressBook(candidate.getAddressBook())
+activate storage
+storage -> storage : Serialize and replace the file atomically
+storage --> logic : saved
 deactivate storage
-
-storage --[STORAGE_COLOR]> logic
-deactivate storage
-
-logic --[LOGIC_COLOR]> ui
+logic -> live : publishTransaction(candidate)
+note over live : Existing observable root is retained.
+logic --> ui : CommandResult with DisplayRequest.members()
 deactivate logic
-
-ui--[UI_COLOR]> user
+ui --> user : Feedback and refreshed Members directory
 deactivate ui
+legend bottom
+  Component-level view: Logic delegates model calls to MemberDeleteCommand.
+  Parse, validation or save failure prevents publication to the live model.
+endlegend
 @enduml

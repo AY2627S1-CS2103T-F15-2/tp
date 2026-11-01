@@ -1,70 +1,63 @@
 @startuml
 !include style.puml
 skinparam ArrowFontStyle plain
+participant ":LogicManager" as logic LOGIC_COLOR
+participant ":AddressBookParser" as root LOGIC_COLOR
+participant ":MemberCommandParser" as family LOGIC_COLOR
+participant ":MemberDeleteCommandParser" as leaf LOGIC_COLOR
+participant "d:MemberDeleteCommand" as command LOGIC_COLOR
+participant "live:Model" as live MODEL_COLOR
+participant "candidate:Model" as candidate MODEL_COLOR
+participant ":Storage" as storage STORAGE_COLOR
 
-box Logic LOGIC_COLOR_T1
-participant ":LogicManager" as LogicManager LOGIC_COLOR
-participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
-participant ":DeleteCommandParser" as DeleteCommandParser LOGIC_COLOR
-participant "d:DeleteCommand" as DeleteCommand LOGIC_COLOR
-participant "r:CommandResult" as CommandResult LOGIC_COLOR
-end box
-
-box Model MODEL_COLOR_T1
-participant "m:Model" as Model MODEL_COLOR
-end box
-
-[-> LogicManager : execute("delete 1")
-activate LogicManager
-
-LogicManager -> AddressBookParser : parseCommand("delete 1")
-activate AddressBookParser
-
-create DeleteCommandParser
-AddressBookParser -> DeleteCommandParser
-activate DeleteCommandParser
-
-DeleteCommandParser --> AddressBookParser
-deactivate DeleteCommandParser
-
-AddressBookParser -> DeleteCommandParser : parse("1")
-activate DeleteCommandParser
-
-create DeleteCommand
-DeleteCommandParser -> DeleteCommand
-activate DeleteCommand
-
-DeleteCommand --> DeleteCommandParser :
-deactivate DeleteCommand
-
-DeleteCommandParser --> AddressBookParser : d
-deactivate DeleteCommandParser
-'Hidden arrow to position the destroy marker below the end of the activation bar.
-DeleteCommandParser -[hidden]-> AddressBookParser
-destroy DeleteCommandParser
-
-AddressBookParser --> LogicManager : d
-deactivate AddressBookParser
-
-LogicManager -> DeleteCommand : execute(m)
-activate DeleteCommand
-
-DeleteCommand -> Model : deletePerson(1)
-activate Model
-
-Model --> DeleteCommand
-deactivate Model
-
-create CommandResult
-DeleteCommand -> CommandResult
-activate CommandResult
-
-CommandResult --> DeleteCommand
-deactivate CommandResult
-
-DeleteCommand --> LogicManager : r
-deactivate DeleteCommand
-
-[<--LogicManager
-deactivate LogicManager
+title Successful member delete: parsing, execution and publication
+[-> logic : execute("member delete nus/A0123456X")
+activate logic
+logic -> root : parseCommand("member delete nus/A0123456X")
+activate root
+root -> family : parse("delete nus/A0123456X")
+activate family
+family -> leaf : parse("nus/A0123456X")
+activate leaf
+note over leaf
+  LaplaceArgumentParser validates required nus/.
+  ParserUtil.parseNusId produces the normalized identity.
+end note
+create command
+leaf -> command : MemberDeleteCommand(nusId)
+leaf --> family : d
+deactivate leaf
+family --> root : d
+deactivate family
+root --> logic : d
+deactivate root
+logic -> command : isTransactional()
+command --> logic : true
+logic -> live : createTransactionSnapshot()
+live --> logic : candidate
+logic -> command : execute(candidate)
+activate command
+command -> candidate : findMember(nusId)
+candidate --> command : member
+command -> candidate : findOpenLoansForMember(nusId)
+candidate --> command : empty list
+command -> candidate : deleteMember(member)
+note over candidate : Active member is soft-deleted; open loans would block deletion.
+command --> logic : result:CommandResult (DisplayRequest.members())
+deactivate command
+logic -> command : isReadOnly()
+command --> logic : false
+logic -> command : recordsHistory()
+command --> logic : true
+logic -> candidate : recordAddressBook(previous, "member delete")
+logic -> storage : saveAddressBook(candidate.getAddressBook())
+storage --> logic : saved atomically
+logic -> live : publishTransaction(candidate)
+[<-- logic : result
+deactivate logic
+legend bottom
+  Successful path only; previous = live.getAddressBook().
+  Family and leaf parser construction and incidental whitespace are omitted.
+  Invalid input, missing/deleted members, open loans or save failure leave live data unchanged.
+endlegend
 @enduml
