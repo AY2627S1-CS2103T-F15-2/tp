@@ -23,30 +23,30 @@ public class AppPathsTest {
     public Path directory;
 
     @Test
-    public void homeDirectoryFor_packagedOrDevelopment_resolvesExpectedHome() {
+    public void resolveHomeDirectory_packagedOrDevelopment_resolvesExpectedHome() {
         Path home = directory.resolve("release folder");
         Path launch = directory.resolve("launch folder");
-        assertEquals(home, AppPaths.homeDirectoryFor(home.resolve("Laplace.jar"), launch));
-        assertEquals(home, AppPaths.homeDirectoryFor(home.resolve("Laplace.JAR"), launch));
-        assertEquals(launch, AppPaths.homeDirectoryFor(home.resolve("classes"), launch));
+        assertEquals(home, AppPaths.resolveHomeDirectory(home.resolve("Laplace.jar"), launch));
+        assertEquals(home, AppPaths.resolveHomeDirectory(home.resolve("Laplace.JAR"), launch));
+        assertEquals(launch, AppPaths.resolveHomeDirectory(home.resolve("classes"), launch));
         assertEquals(AppPaths.getHomeDirectory().resolve("data/addressbook.json"), AppPaths.getDataFilePath());
         assertEquals(AppPaths.getHomeDirectory().resolve("preferences.json"), AppPaths.getPreferencesFilePath());
         assertEquals(AppPaths.getHomeDirectory().resolve("addressbook.log"), AppPaths.getLogFilePath());
     }
 
     @Test
-    public void homeDirectoryFor_nullPaths_rejectsNull() {
-        assertThrows(NullPointerException.class, () -> AppPaths.homeDirectoryFor(null, directory));
-        assertThrows(NullPointerException.class, () -> AppPaths.homeDirectoryFor(directory, null));
+    public void resolveHomeDirectory_nullPaths_rejectsNull() {
+        assertThrows(NullPointerException.class, () -> AppPaths.resolveHomeDirectory(null, directory));
+        assertThrows(NullPointerException.class, () -> AppPaths.resolveHomeDirectory(directory, null));
     }
 
     @Test
-    public void homeDirectoryForLocation_escapedOrMalformedUri_decodesOrFailsWithoutFallback() {
+    public void resolveHomeDirectoryForLocation_escapedOrMalformedUri_decodesOrFailsWithoutFallback() {
         Path home = directory.resolve("release %t with spaces");
-        assertEquals(home, AppPaths.homeDirectoryForLocation(home.resolve("Laplace.jar").toUri().toString(),
+        assertEquals(home, AppPaths.resolveHomeDirectoryForLocation(home.resolve("Laplace.jar").toUri().toString(),
                 directory));
         IllegalStateException failure = assertThrows(IllegalStateException.class, () ->
-                AppPaths.homeDirectoryForLocation("file:/invalid%location/Laplace.jar", directory));
+                AppPaths.resolveHomeDirectoryForLocation("file:/invalid%location/Laplace.jar", directory));
         assertEquals("Could not locate the Laplace application folder.", failure.getMessage());
         assertInstanceOf(URISyntaxException.class, failure.getCause());
     }

@@ -5,7 +5,7 @@ import static java.util.Objects.requireNonNull;
 import seedu.address.model.Model;
 
 /**
- * Reports a recognised Laplace command whose business behaviour has not been implemented.
+ * Reports a recognized Laplace command whose business behavior has not been implemented.
  */
 public class NotImplementedCommand extends Command {
 

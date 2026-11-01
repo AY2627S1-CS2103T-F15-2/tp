@@ -223,10 +223,10 @@ public final class CompletionService {
                     end--;
                 }
                 if (command.startsWith("loans ") && markers.get(i).equals(PREFIX_EQUIPMENT_UUID.getPrefix())) {
-                    return loanIdentity(text, start, end, caret, data).or(() -> prefix);
+                    return completeLoanIdentity(text, start, end, caret, data).or(() -> prefix);
                 }
                 return suggest(start, end, text.substring(start, caret),
-                        values(command, markers.get(i), data), true).or(() -> prefix);
+                        getValues(command, markers.get(i), data), true).or(() -> prefix);
             }
         }
         return prefix;
@@ -239,8 +239,10 @@ public final class CompletionService {
         return ARGUMENT_WHITESPACE.matcher(String.valueOf(character)).matches();
     }
 
-    /** Completes one batch entry while preserving neighboring UUIDs and excluding identities already listed. */
-    private Optional<Completion> loanIdentity(String text, int start, int end, int caret,
+    /**
+     * Completes one batch entry while preserving neighboring UUIDs and excluding identities already listed.
+     */
+    private Optional<Completion> completeLoanIdentity(String text, int start, int end, int caret,
             Supplier<ReadOnlyAddressBook> data) {
         int entryStart = Math.max(start, text.lastIndexOf(',', caret - 1) + 1);
         int comma = text.indexOf(',', caret);
@@ -259,8 +261,10 @@ public final class CompletionService {
                         .filter(uuid -> !used.contains(uuid)), true);
     }
 
-    /** New identities, dates, counts, and free-form notes remain manual; finite options use parser enum values. */
-    private Stream<String> values(String command, String prefix, Supplier<ReadOnlyAddressBook> data) {
+    /**
+     * Returns candidate values for finite options; new identities, dates, counts, and free-form notes remain manual.
+     */
+    private Stream<String> getValues(String command, String prefix, Supplier<ReadOnlyAddressBook> data) {
         switch (prefix) {
             case "nus/":
                 if (command.equals(MemberAddCommand.COMMAND_WORD)) {

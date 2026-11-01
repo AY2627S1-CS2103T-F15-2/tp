@@ -67,7 +67,7 @@ public class UniqueMemberListTest {
 
     @Test
     public void add_sameNormalizedNusId_throwsDuplicateMemberExceptionAndDoesNotModifyList() {
-        Member duplicateIdentity = memberWithAlexIdentityAndDifferentDetails();
+        Member duplicateIdentity = createMemberWithAlexIdentityAndDifferentDetails();
         members.add(ALEX);
 
         assertThrows(DuplicateMemberException.class, () -> members.add(duplicateIdentity));
@@ -83,7 +83,7 @@ public class UniqueMemberListTest {
     public void remove_memberWithSameIdentity_removesStoredMember() {
         members.add(ALEX);
 
-        members.remove(memberWithAlexIdentityAndDifferentDetails());
+        members.remove(createMemberWithAlexIdentityAndDifferentDetails());
 
         assertTrue(members.asUnmodifiableObservableList().isEmpty());
     }
@@ -99,12 +99,12 @@ public class UniqueMemberListTest {
     @Test
     public void setMembers_nullListOrMember_throwsNullPointerExceptionAndDoesNotModifyList() {
         members.add(ALEX);
-        List<Member> memberWithNull = new ArrayList<>();
-        memberWithNull.add(BEN);
-        memberWithNull.add(null);
+        List<Member> membersWithNull = new ArrayList<>();
+        membersWithNull.add(BEN);
+        membersWithNull.add(null);
 
         assertThrows(NullPointerException.class, () -> members.setMembers(null));
-        assertThrows(NullPointerException.class, () -> members.setMembers(memberWithNull));
+        assertThrows(NullPointerException.class, () -> members.setMembers(membersWithNull));
         assertEquals(List.of(ALEX), members.asUnmodifiableObservableList());
     }
 
@@ -113,7 +113,7 @@ public class UniqueMemberListTest {
         members.add(BEN);
 
         assertThrows(DuplicateMemberException.class, () ->
-                members.setMembers(List.of(ALEX, memberWithAlexIdentityAndDifferentDetails())));
+                members.setMembers(List.of(ALEX, createMemberWithAlexIdentityAndDifferentDetails())));
         assertEquals(List.of(BEN), members.asUnmodifiableObservableList());
     }
 
@@ -164,7 +164,7 @@ public class UniqueMemberListTest {
     public void setMember_sameIdentity_replacesDetailsWithoutChangingOrderOrView() {
         members.setMembers(List.of(ALEX, BEN));
         ObservableList<Member> view = members.asUnmodifiableObservableList();
-        Member edited = memberWithAlexIdentityAndDifferentDetails();
+        Member edited = createMemberWithAlexIdentityAndDifferentDetails();
         members.setMember(ALEX, edited);
         assertEquals(List.of(edited, BEN), view);
         // A caller can retain an older snapshot while resolving the same stable identity.
@@ -182,7 +182,7 @@ public class UniqueMemberListTest {
         assertEquals(List.of(ALEX), members.asUnmodifiableObservableList());
     }
 
-    private Member memberWithAlexIdentityAndDifferentDetails() {
+    private Member createMemberWithAlexIdentityAndDifferentDetails() {
         return new Member(new NusId("a0123456x"), new Name("Different Name"),
                 new Phone("81112222"), new Email("different@example.com"));
     }

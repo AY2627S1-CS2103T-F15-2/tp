@@ -35,7 +35,7 @@ public final class AppPaths {
     /**
      * Selects the runtime home without changing the JVM's working-directory properties.
      */
-    static Path homeDirectoryFor(Path codeLocation, Path workingDirectory) {
+    static Path resolveHomeDirectory(Path codeLocation, Path workingDirectory) {
         requireNonNull(codeLocation);
         requireNonNull(workingDirectory);
         Path location = codeLocation.toAbsolutePath().normalize();
@@ -47,16 +47,16 @@ public final class AppPaths {
 
     private static Path locateHomeDirectory() {
         String location = AppPaths.class.getProtectionDomain().getCodeSource().getLocation().toExternalForm();
-        return homeDirectoryForLocation(location, Path.of(""));
+        return resolveHomeDirectoryForLocation(location, Path.of(""));
     }
 
     /**
      * Decodes the code-source location and rejects malformed URIs without falling back outside the JAR.
      */
-    static Path homeDirectoryForLocation(String codeLocation, Path workingDirectory) {
+    static Path resolveHomeDirectoryForLocation(String codeLocation, Path workingDirectory) {
         try {
             Path location = Path.of(new URI(codeLocation));
-            return homeDirectoryFor(location, workingDirectory);
+            return resolveHomeDirectory(location, workingDirectory);
         } catch (URISyntaxException e) {
             throw new IllegalStateException("Could not locate the Laplace application folder.", e);
         }
