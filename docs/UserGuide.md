@@ -263,7 +263,7 @@ member search q/jamie status/deleted
 ```
 
 The first example finds **members currently holding equipment, most units first**. In fresh sample
-data, Alex Tan holds two units and Priya Nair holds one, so Alex appears first. The second narrows
+data, Alex Tan holds two units and Jamie Lim holds one, so Alex appears first. The second narrows
 holders to those matching `alex`; the third finds members with `example.com` in a searchable field
 who hold nothing. The last finds a retained deleted member matching `jamie`, if one exists.
 
@@ -305,7 +305,7 @@ member view nus/NUS_ID
 
 Example: `member view nus/a0123456x` finds the same identity as `member view nus/A0123456X`.
 
-Details show the NUS ID, name, phone, email and current held-item count. The **Held Equipment** section
+Details show the NUS ID, name, phone, email and current held-item count. The **Current holdings** section
 shows each open loan's full equipment UUID, name, assignment date and expected return date. Items are
 ordered by **expected return date, equipment name, then UUID**. Returned items are not current holdings.
 The matching member row is selected when the member list is visible.
@@ -1025,7 +1025,7 @@ issue, return or delete records.
 To explore without changing the sample records:
 
 1. Run `loans list`. The Loans tab shows three open loans and the closed speaker/tripod loans in history.
-2. Run `member view nus/A0123456X`. Alex's details show the camera and laptop under Held Equipment.
+2. Run `member view nus/A0123456X`. Alex's details show the camera and laptop under **Current holdings**.
 3. Run `equipment view uuid/550e8400-e29b-41d4-a716-446655440003`. The microphone's details identify
    Jamie as the holder and show its assignment and expected return dates.
 4. Run `loans list` again to return to the Loans tab.
