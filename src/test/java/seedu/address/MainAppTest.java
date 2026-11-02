@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -32,6 +33,7 @@ import javafx.stage.Window;
 import seedu.address.commons.core.AppPaths;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
@@ -119,12 +121,39 @@ public class MainAppTest {
 
     @Test
     public void initModel_malformedContacts_omitsSourceAndContactsFromLogsButKeepsRecovery() throws Exception {
-        Path file = directory.resolve("malformed.json");
         String malformed = """
                 {"persons":[],"members":[{"nusId":"A8400001X","name":"Privacy Example",
                 "phone":"91118888","email":"privacy-audit@example.com"}],"equipment":[INVALID],"loans":[]}
                 """;
-        Files.writeString(file, malformed);
+        assertPrivateStartupDiagnostics(malformed, "JsonUtil", Level.WARNING);
+    }
+
+    @Test
+    public void initModel_invalidStoredIdentities_omitsContactsFromLogsButRetainsConversionCause() throws Exception {
+        String invalidMember = """
+                {"persons":[],"members":[{"nusId":"privacy-audit@example.com","name":"Privacy Example",
+                "phone":"91118888","email":"privacy-audit@example.com"}],"equipment":[],"loans":[]}
+                """;
+        String invalidEquipment = invalidMember.replace("\"nusId\":\"privacy-audit@example.com\"",
+                "\"nusId\":\"A8400001X\"").replace("\"equipment\":[]", """
+                "equipment":[{"uuid":"privacy-audit@example.com","name":"Camera","category":"Testing",
+                "condition":"GOOD","notes":""}]
+                """.strip());
+        for (String invalid : List.of(invalidMember, invalidEquipment)) {
+            assertPrivateStartupDiagnostics(invalid, "JsonAddressBookStorage", Level.INFO);
+            DataLoadingException failure = assertThrows(DataLoadingException.class,
+                    storage(directory.resolve("invalid.json"))::readAddressBook);
+            assertInstanceOf(IllegalValueException.class, failure.getCause());
+            assertTrue(failure.getCause().getMessage().contains("privacy-audit@example.com"),
+                    "The detailed checked cause must retain the invalid identity for recovery");
+        }
+    }
+
+    /** Verifies startup diagnostics and a real log file without changing the rejected dataset. */
+    private void assertPrivateStartupDiagnostics(String invalid, String failedLogger, Level failureLevel)
+            throws Exception {
+        Path file = directory.resolve("invalid.json");
+        Files.writeString(file, invalid);
         byte[] before = Files.readAllBytes(file);
         MainApp app = new MainApp();
         Storage storage = storage(file);
@@ -161,8 +190,8 @@ public class MainAppTest {
             logger.removeHandler(fileCapture);
             fileCapture.close();
         }
-        assertTrue(records.stream().anyMatch(record -> record.getLoggerName().endsWith(".JsonUtil")
-                && record.getLevel().equals(Level.WARNING)));
+        assertTrue(records.stream().anyMatch(record -> record.getLoggerName().endsWith("." + failedLogger)
+                && record.getLevel().equals(failureLevel)));
         assertTrue(records.stream().anyMatch(record -> record.getLoggerName().endsWith(".MainApp")
                 && record.getLevel().equals(Level.SEVERE)));
         SimpleFormatter formatter = new SimpleFormatter();
