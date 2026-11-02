@@ -813,6 +813,8 @@ The Loans row offers an **Observed return condition (optional)** choice before *
 Choose a condition you actually observed to include `condition/` in the prepared text, or leave
 **Not recorded** to omit it. Preparing never submits the command; review and press Enter yourself.
 No issue/current condition is preselected as a new observation.
+Your choice stays with that open loan while scrolling or filtering the Loans view. It is a temporary
+draft for this session; returning the unit clears it, and a later loan starts at **Not recorded**.
 
 If omitted, the current equipment condition stays unchanged and history shows the return condition
 as "Not recorded". A failed item prevents the entire batch from being returned.

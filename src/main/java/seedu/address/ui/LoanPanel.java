@@ -7,10 +7,14 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -44,6 +48,8 @@ public class LoanPanel extends UiPart<Region> {
     private final Consumer<String> onUse;
     private final Consumer<UUID> onEquipmentSelected;
     private final Consumer<NusId> onMemberSelected;
+    // Immutable loan keys keep a later loan for the same equipment from inheriting an observation.
+    private final Map<Loan, String> draftReturnConditions = new HashMap<>();
     private boolean isApplyingQuery;
 
     @FXML
@@ -92,6 +98,8 @@ public class LoanPanel extends UiPart<Region> {
      * Rebuilds current and completed loans without invoking callbacks or installing listeners.
      */
     public void refresh() {
+        Set<Loan> currentOpenLoans = data.getLoanList().stream().filter(Loan::isOpen).collect(Collectors.toSet());
+        draftReturnConditions.keySet().retainAll(currentOpenLoans);
         LoanQuery query = getQuery();
         List<Loan> open = data.getLoanList().stream().filter(Loan::isOpen).filter(query::matches)
                 .sorted(OPEN_ORDER).toList();
@@ -215,7 +223,14 @@ public class LoanPanel extends UiPart<Region> {
             for (Condition condition : Condition.values()) {
                 observedCondition.getItems().add(condition.name());
             }
-            observedCondition.setValue("Not recorded");
+            observedCondition.setValue(draftReturnConditions.getOrDefault(loan, "Not recorded"));
+            observedCondition.valueProperty().addListener((observable, previous, observation) -> {
+                if (observation == null || observation.equals("Not recorded")) {
+                    draftReturnConditions.remove(loan);
+                } else {
+                    draftReturnConditions.put(loan, observation);
+                }
+            });
             observedCondition.getStyleClass().add("loan-return-condition");
             observedCondition.setAccessibleText("Observed return condition; Not recorded leaves it unknown");
             Button prepareReturn = new Button("Prepare return command");

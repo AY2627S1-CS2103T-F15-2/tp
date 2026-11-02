@@ -2033,6 +2033,12 @@ comparison after each rejection.
 1. **Prepared return condition:** On an open loan, choose DAMAGED and prepare the return. **Expected:**
    `condition/DAMAGED` in the input. Choose Not recorded and prepare again; **Expected:** no condition field.
    Submit separate examples and verify recorded versus unknown historical conditions.
+   With 100 open loans, select DAMAGED on the first row, scroll to the bottom and back, then prepare
+   again; **Expected:** DAMAGED is still selected and included in the command. Other loans keep their
+   own choices. Filter the row out and reset filters; its choice must remain. Submit the return and
+   restart; **Expected:** the saved observation and equipment condition are DAMAGED. Mark the repaired
+   unit GOOD with `equipment edit uuid/UUID condition/GOOD`, then reassign it; **Expected:** the new loan
+   starts at Not recorded. Scrolling and preparing alone must not save data.
 2. **Condition compatibility:** Load loans with each defined issue/return condition, including DAMAGED
    and UNDER_REPAIR. Save and reload; identities and observations must remain unchanged. Repeat with
    `good`, ` FaIr ` and `under_repair`; output must use uppercase names. `BROKEN` must reject loading.
