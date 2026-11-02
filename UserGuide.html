@@ -293,7 +293,9 @@ any omitted or blank field becomes empty. For example, <code class="hljs inline 
 substring across all equipment; <code class="hljs inline no-lang">loans list uuid/400004</code> searches a unit&#39;s entire loan history.
 Supply both fields to require both matches. Matching ignores case and surrounding whitespace and
 uses identity substrings, exactly like the panel fields. Partial identities are allowed; names are not
-searched. Filters include retained open and completed history, including records for deleted entities.</p> <p><code class="hljs inline no-lang">loans reset</code> clears both fields and shows all loans, just like <strong>Reset filters</strong>. You can also clear
+searched. Filters include retained open and completed history, including records for deleted entities.
+Surrounding Unicode whitespace, including nonbreaking spaces (<code class="hljs inline no-lang">U+00A0</code> and <code class="hljs inline no-lang">U+202F</code>), is ignored in
+both command and panel filters. Spaces inside an identity substring remain significant.</p> <p><code class="hljs inline no-lang">loans reset</code> clears both fields and shows all loans, just like <strong>Reset filters</strong>. You can also clear
 both with <code class="hljs inline no-lang">loans list nus/ uuid/</code>. Commands update the visible filter fields and counts; direct edits
 to those fields take effect immediately and remain active through navigation and mutations.
 The summary shows displayed versus total counts in both sections so hidden records remain apparent.</p> <p>Unknown/repeated parameters and text before the first parameter are rejected with usage guidance,
