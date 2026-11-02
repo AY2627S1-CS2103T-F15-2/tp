@@ -857,6 +857,10 @@ Startup passes the checked loading failure to `UiManager`. The recovery dialog s
 cause's diagnostic without the exception class prefix; Jackson failures omit the source dump. A wrapped,
 read-only text area keeps long diagnostics scrollable and copyable. Startup still aborts without an
 editable main window, and the rejected file remains unchanged.
+Persistent startup logs record the file path and safe failure category or recovery guidance, without
+concatenating parser/exception messages or attaching source-bearing causes. The checked cause remains
+available to the recovery dialog and caller.
+This includes semantic conversion failures, whose raw identity fields may contain arbitrary hand-edited text.
 
 The supported unversioned schema treats omitted/null `members`, `equipment` and `loans` as empty.
 Retain both forms for legacy compatibility; saves canonicalize them to `[]` without touching populated
@@ -1841,6 +1845,14 @@ They are not prerequisites for testing the released JAR.
 3. Add/edit a synthetic member, search for their name, and submit a malformed command containing
    a synthetic phone/email. Inspect `addressbook.log.*` in the JAR folder.
    **Expected:** Input-received diagnostics without raw commands or member contact values.
+4. In a fresh disposable JAR folder, save a synthetic member, close Laplace, and replace an equipment
+   array value with the unquoted token `INVALID`. Relaunch and inspect the new log entries.
+   **Expected:** recovery guidance and unchanged data bytes; logs identify the file/failure without the
+   member's name, phone, email or a JSON source excerpt. The main editable window must not open.
+5. Restore the valid synthetic file, then replace a member's `nusId` with `privacy-audit@example.com`
+   while keeping the JSON valid. Repeat separately with that value in an equipment `uuid`.
+   **Expected:** the same log privacy and unchanged-file guarantees; recovery details still identify
+   the invalid record and field. No editable main window opens.
 
 #### Invalid saved data
 

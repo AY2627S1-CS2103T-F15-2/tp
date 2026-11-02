@@ -79,7 +79,8 @@ public class JsonAddressBookStorage {
             warnAboutFutureDates(loaded);
             return Optional.of(loaded);
         } catch (IllegalValueException ive) {
-            logger.info("Illegal values found in " + filePath + ": " + ive.getMessage());
+            // Invalid identity text can contain contacts; preserve it only in the checked cause.
+            logger.info("Illegal values found in " + filePath + ". Dataset was not loaded.");
             throw new DataLoadingException(ive);
         }
     }
