@@ -26,15 +26,15 @@ Notable uses of AI in the team's project work:
 
 * OpenAI Codex and Anthropic Claude were used for preliminary pull request reviews to identify
   potential defects and suggest improvements.
+* @Keegan4 used OpenAI Codex to draft and revise member invariant assertions and regression tests,
+  improve Java naming and Javadoc, update User Guide and Developer Guide prose and UML labels,
+  and run automated verification and prepare PR review feedback.
 * OpenAI Codex assisted with Developer Guide explanations and PlantUML diagrams, including the
   equipment directory summary section and its two diagrams. Codex also assisted with preparing
   this acknowledgement.
 
 This consolidated declaration records the uses above in accordance with the
 [CS2103/T policy on reuse](https://nus-cs2103-ay2627-s1.github.io/website/admin/appendixB-policies.html#policy-on-reuse).
-Each team member is responsible for ensuring that their own AI use is included and for understanding,
-reviewing and validating any AI-assisted work they submit. AI suggestions do not replace human review
-or testing.
 
 --------------------------------------------------------------------------------------------------------------------
 
