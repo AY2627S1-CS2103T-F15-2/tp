@@ -20,6 +20,62 @@
 * Universal macOS packaging follows Apple's [Mach-O fat binary format](https://github.com/apple-oss-distributions/cctools/blob/main/include/mach-o/fat.h); the wrapper preserves the upstream JavaFX library slices.
 * Command text uses [IBM Plex Mono](https://github.com/IBM/plex) 2.004, copyright IBM Corp., under the SIL Open Font License. The faces and license are in `src/main/resources/fonts`.
 
+### Use of AI tools
+
+Notable uses of AI in the team's project work:
+
+* OpenAI Codex and Anthropic Claude were used for preliminary pull request reviews to identify
+  potential defects and suggest improvements.
+* @Keegan4 used OpenAI Codex and Claude Code to draft and revise member invariant assertions and
+  regression tests, and to improve Java naming and Javadoc. They also used these tools to edit User
+  Guide and Developer Guide prose so that the guides match shipped behavior, and to create and update
+  PlantUML diagrams and their UML labels.
+  They followed AI-suggested workflow steps for planning issues, branching, preparing pull requests
+  and running checks before submission. AI also helped them craft commit messages and pull request
+  descriptions, prepare PR review feedback, and run automated tests and documentation builds.
+  All AI-assisted output was reviewed and edited before submission.
+* @ArjoDas used OpenAI Codex and Claude Code to help implement and test the equipment features
+  (UUID-unique equipment list, derived availability, equipment add including batch creation, and
+  equipment maintenance), the retirement of legacy AddressBook commands, and the grouped equipment
+  directory and other UI improvements. They were also used to draft User Guide and Developer Guide
+  sections, PlantUML class and activity diagrams and manual testing steps, to draft PR review comments,
+  and to maintain the contributor instructions in AGENTS.md. All AI-assisted output was reviewed,
+  edited and tested before submission.
+* @isaaaxe used OpenAI Codex to assist with implementing Undo and Redo, including command handling,
+  session history, transaction and persistence behavior, and regression tests. They also used it to
+  understand the project, triage GitHub issues, implement bug fixes, update the User Guide, Developer
+  Guide and UML diagrams, prepare commits and pull requests, track feature-freeze code changes, and
+  review teammates' pull requests. AI-assisted output was reviewed, and relevant automated tests,
+  build checks and documentation checks were run before submission. They remain responsible for
+  understanding, validating and ensuring the correctness of the submitted work.
+* @wtvlol used OpenAI Codex and Claude Code to assist with understanding the codebase, implementing
+  and testing features, investigating and fixing bugs, updating the User Guide, Developer Guide and
+  UML diagrams, and reviewing pull requests. AI-assisted output was reviewed and edited, with relevant
+  tests and checks run before submission. They remain responsible for understanding and validating
+  the submitted work.
+* @duynguyen21007 used OpenAI Codex to assist with implementing and testing the shared Laplace argument
+  parser, member/equipment/loan command routing, member and equipment directory components, directory
+  search/filter/sort and inventory planning, Tab-completion improvements, and Apple Silicon JAR
+  packaging. It also helped investigate and fix bugs, including Unicode and patronymic member-name
+  validation and no-argument command handling; draft and revise User Guide and Developer Guide prose,
+  PlantUML diagrams and manual testing instructions; run automated checks; prepare commits and pull
+  requests; track feature-freeze code changes; and review teammates' pull requests. They remain
+  responsible for understanding, reviewing and validating the submitted work.
+* @kimjunkuno used OpenAI Codex for codebase exploration and planning, drafting and modifying Java
+  implementation and regression tests, automated smoke and beta testing, performance investigation,
+  issue triage and release prioritization. They also used Codex to draft and revise User Guide and
+  Developer Guide prose and PlantUML diagrams, prepare commit messages and pull requests, track
+  feature-freeze LoC changes, and review teammates' pull requests, including drafting and posting
+  review feedback. This assistance included generated code, tests, documentation and review text,
+  as well as running automated tests, build checks and documentation builds. They remain responsible
+  for understanding, reviewing and validating the submitted work.
+* OpenAI Codex assisted with Developer Guide explanations and PlantUML diagrams, including the
+  equipment directory summary section and its two diagrams. Codex also assisted with preparing
+  this acknowledgement.
+
+This consolidated declaration records the uses above in accordance with the
+[CS2103/T policy on reuse](https://nus-cs2103-ay2627-s1.github.io/website/admin/appendixB-policies.html#policy-on-reuse).
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Setting up, getting started**
