@@ -61,6 +61,17 @@ public final class PackagedAutocompleteProbe {
         window.getPrimaryStage().getScene().getRoot().applyCss();
         TextField field = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
         try {
+            for (String whitespace : List.of(" ", "\u2003", "\u00a0", "\u202f", " \u00a0\u2003\u202f")) {
+                field.setText(whitespace);
+                AddressBook before = new AddressBook(model.getAddressBook());
+                press(field, KeyCode.ENTER, false);
+                check(logic.commands == 0 && storage.saves == 0, "Whitespace-only Enter must not dispatch or save");
+                check(before.equals(model.getAddressBook()), "Whitespace-only Enter changed records");
+                check(whitespace.equals(field.getText()), "Ignored whitespace input must remain unchanged");
+                check(!field.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS),
+                        "Ignored whitespace input must not show an error");
+                session.add("WHITESPACE-ONLY ENTER: ignored; no dispatch, save or error.");
+            }
             String first = ViewTestData.CAMERA.getUuid().toString();
             String batch = first + ", " + ViewTestData.OTHER_CAMERA.getUuid();
             String[][] examples = {

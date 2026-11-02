@@ -87,6 +87,37 @@ public class CommandBoxTest {
     }
 
     @Test
+    public void enter_unicodeWhitespaceOnly_preservesHistoryWithoutDispatchOrError() {
+        FxTestUtil.runAndWait(() -> {
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                if (!command.equals("member list")) {
+                    throw new ParseException("Unknown command");
+                }
+                return new CommandResult("OK");
+            });
+            TextField field = field(box);
+            box.prepare("member list");
+            field.fireEvent(new ActionEvent());
+            for (String whitespace : List.of(" ", "\u2003", "\u00a0", "\u202f", " \u00a0\u2003\u202f")) {
+                box.prepare(whitespace);
+                field.fireEvent(new ActionEvent());
+                assertEquals(List.of("member list"), executed);
+                assertEquals(whitespace, field.getText());
+                assertFalse(field.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+                field.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.UP,
+                        false, false, false, false));
+                assertEquals("member list", field.getText());
+            }
+            box.prepare("\u200b");
+            field.fireEvent(new ActionEvent());
+            assertEquals(List.of("member list", "\u200b"), executed);
+            assertTrue(field.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+        });
+    }
+
+    @Test
     public void enter_blankAndSuccess_ignoresWhitespaceAndExecutesOnce() {
         FxTestUtil.runAndWait(() -> {
             List<String> executed = new ArrayList<>();
