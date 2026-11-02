@@ -16,6 +16,7 @@ import seedu.address.model.member.exceptions.MemberNotFoundException;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.query.DuplicateWarnings;
 
 /**
  * Edits supplied member details while preserving the NUS ID and every loan reference.
@@ -68,7 +69,8 @@ public class MemberEditCommand extends Command {
                 throw new CommandException(MESSAGE_NO_CHANGE);
             }
             model.setMember(stored, edited);
-            return new CommandResult(String.format(MESSAGE_SUCCESS, targetNusId, edited.getName()),
+            String warning = DuplicateWarnings.member(model.getAddressBook(), edited);
+            return new CommandResult(String.format(MESSAGE_SUCCESS, targetNusId, edited.getName()) + warning,
                     DisplayRequest.memberDetails(targetNusId));
         } catch (MemberDeletedException exception) {
             throw new CommandException(String.format(MESSAGE_DELETED, targetNusId), exception);

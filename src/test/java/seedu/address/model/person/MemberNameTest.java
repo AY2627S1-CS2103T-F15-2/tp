@@ -15,18 +15,30 @@ import org.junit.jupiter.api.Test;
 public class MemberNameTest {
     @Test
     public void forMember_patronymicTokens_preservesCaseAndRestrictsOtherSlashes() {
-        for (String name : List.of("Ravi s/o Kumar", "Mary D/O Tan", "Ravi S/o Kumar", "d/o Devi")) {
+        for (String name : List.of("Ravi s/o Kumar", "Mary D/O Tan", "Ravi S/o Kumar",
+                "Muthu a/l Raju", "Priya a/p Suresh", "Muthu A/L Raju", "Priya A/p Suresh")) {
             assertEquals(name, Name.forMember(name).fullName);
             assertEquals(name, Name.fromStoredMember(name).fullName);
             assertTrue(Name.isValidMemberName(name), name);
             assertThrows(IllegalArgumentException.class, () -> new Name(name));
         }
         assertEquals("Ravi s/o Kumar", Name.forMember(" Ravi\u2003s/o\u00a0Kumar ").fullName);
-        assertEquals("A".repeat(96) + " s/o", Name.forMember("A".repeat(96) + " s/o").fullName);
+        assertEquals("Muthu a/l Raju", Name.forMember(" Muthu\u2003a/l\u00a0Raju ").fullName);
+        assertEquals("A".repeat(94) + " s/o B", Name.forMember("A".repeat(94) + " s/o B").fullName);
         for (String name : List.of("Ravi s/only Kumar", "Ravi as/o Kumar", "Ravi s/oKumar", "Ravi / Kumar",
-                "Ravi w/o Kumar", "Ravi s/o, Kumar", "A".repeat(97) + " s/o")) {
+                "Ravi w/o Kumar", "Ravi s/o, Kumar", "A".repeat(95) + " s/o B",
+                "Muthu a/long Raju", "Priya a/pSuresh", "Muthu aa/l Raju")) {
             assertFalse(Name.isValidMemberName(name), name);
             assertThrows(IllegalArgumentException.class, () -> Name.forMember(name));
+        }
+    }
+
+    @Test
+    public void forMember_patronymicConnectors_requireNamesOnBothSides() {
+        for (String name : List.of("s/o", "D/O", "Tan s/o", "d/o Devi", "a/l", "A/P",
+                "Muthu a/l", "a/p Suresh", "Ravi s/o d/o Kumar", "Ravi a/l ...", "- s/o Kumar")) {
+            assertFalse(Name.isValidMemberName(name), name);
+            assertThrows(IllegalArgumentException.class, () -> Name.forMember(name), name);
         }
     }
 
@@ -59,7 +71,8 @@ public class MemberNameTest {
 
     @Test
     public void fromStoredMember_preservesSavedSpellingAndLegacyNames() {
-        for (String name : List.of("Jose\u0301  Tan", "அருண்", "Anne O\u2019Connor", "Member  123")) {
+        for (String name : List.of("Jose\u0301  Tan", "அருண்", "Anne O\u2019Connor", "Member  123",
+                "s/o", "D/O", "Tan s/o", "d/o Devi", "A".repeat(96) + " s/o")) {
             assertEquals(name, Name.fromStoredMember(name).fullName);
         }
         assertEquals("Member 123", new Name("Member 123").fullName);

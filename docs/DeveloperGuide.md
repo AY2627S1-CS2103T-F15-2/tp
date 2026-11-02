@@ -199,6 +199,17 @@ original suffix, including Unicode separators and neighboring batch UUIDs, and n
 
 [Open full-size diagram](diagrams/AutocompleteSequence.png)
 
+#### Completion execution details
+
+`CompletionController`, described in [Tab completion](#tab-completion), is created by `CommandBox`
+and retained through the field's registered callbacks, rather than a `CommandBox` member field.
+Static vocabulary uses no model reads. Record-value suggestions read the live root synchronously on
+the FX thread and observe member/equipment collection changes with weak listeners. These notifications
+invalidate record candidates after mutations, undo/redo and reload; rejected mutations and pure queries
+leave those collections unchanged. Cached record cycles check root identity cheaply, while unchanged
+candidates cycle without copying or rescanning records. Loan history and transaction validation are
+outside suggestion reads.
+
 ### Logic component
 
 **API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/logic/Logic.java)
@@ -380,10 +391,13 @@ of clearing the replacement. Invalid replacements leave the existing collection 
 
 `Name.forMember` collapses whitespace and applies Unicode NFC before validating new names. Validation
 allows letters followed by combining marks, spaces, straight/curly apostrophes, hyphens, periods,
-and standalone `s/o` or `d/o` tokens in any letter case,
-requires at least one letter, and limits the result to 100 Unicode code points. Add and edit share this
-factory. `Name.fromStoredMember` accepts the expanded rule and legacy values while preserving their
-exact saved spelling. Editing another field retains the existing `Name`; no schema migration is needed.
+and standalone `s/o`, `d/o`, `a/l` or `a/p` tokens in any letter case. Each connector requires a
+letter-containing name on both sides; connector-only, leading, trailing and adjacent connectors are
+rejected for new input. Names require at least one letter and at most 100 Unicode code points. Add and
+edit share this factory. `Name.isValidStoredMemberName` and `Name.fromStoredMember` preserve earlier
+valid names, including formerly accepted connector positions, without changing their saved spelling.
+The JSON adapter uses that storage-specific validation. Editing another field retains the existing
+`Name`; no schema migration is needed.
 
 Deletion is blocked while a member has outstanding loans. Deleted members remain visible and
 recoverable indefinitely; editing and new loans require restoration first. Restoration has no expiry
@@ -483,8 +497,13 @@ GUI path when availability can be resolved; it does not describe the retained `s
 <puml src="diagrams/InventoryPlanningActivity.puml" alt="Grouping all equipment units and formatting active availability and retained deletion counts" />
 
 Each group uses a pair of normalized category and name values, keeping the two keys separate even
-when either contains a display separator. `InventoryGroups.group` retains all physical units under each
-key and emits groups in first-match order. For this caller, the all-records query supplies default
+when either contains a display separator. `InventoryGroups.Key` applies whitespace normalization and
+the shared `LaplaceText.caseKey` to both fields, so Greek `Σ`, `σ` and `ς` share a group identity.
+Lookup, grouping and the retained `summarize` helper use the same key without rewriting stored values.
+Equipment duplicate advisories compare those group keys too. Member advisories use the same shared
+case key as member search, preserving the existing identity and deletion eligibility rules.
+`InventoryGroups.group` retains all physical units under each key and emits groups in first-match order.
+For this caller, the all-records query supplies default
 category/name/UUID order, so groups appear in category/name order. Other callers can pass a filtered or
 sorted matching list; `group.matching()` records those matches while `group.units()` retains the full
 group. The summary uses the all-records query, so its group counts are independent of search filters.
@@ -812,16 +831,6 @@ Shell tests exercise the real command box, preserved filters, missing details, l
 `ModelManagerTest` checks history availability inside synchronous collection listeners, unchanged-record
 history transitions, and rollback when replacement records are invalid.
 
-### Completion execution details
-
-The controller is created by `CommandBox` and retained through the field's registered callbacks, rather
-than a `CommandBox` member field. Static vocabulary uses no model reads. Record-value suggestions
-read the live root synchronously on the FX thread and observe member/equipment collection changes
-with weak listeners. These notifications invalidate record candidates after mutations, undo/redo
-and reload; rejected mutations and pure queries leave those collections unchanged. Cached record
-cycles check root identity cheaply, while unchanged candidates cycle without copying or rescanning
-records. Loan history and transaction validation are outside suggestion reads.
-
 ### Loading and compatibility
 
 `SampleDataUtil` populates only members, equipment and loans on first launch. Its legacy person
@@ -869,14 +878,17 @@ no preliminary `isWritable()` check can guarantee a later replacement. New files
 owner-only policy where POSIX or ACL views are supported. Other metadata is not copied. No serialization
 schema changes are involved.
 
-### Command-word aliases and casing
+### Argument markers and no-argument validation
 
-Standalone `s/o` and `d/o` tokens, ignoring case, remain literal field text in argument parsing and
-completion. Other whitespace-delimited markers remain reserved, including unknown markers in notes.
+Standalone `s/o`, `d/o`, `a/l` and `a/p` tokens, ignoring case, remain literal field text in argument
+parsing and completion. Other markers at the start of the argument string or after whitespace remain
+reserved, including unknown markers in notes. A token immediately after another prefix's slash is
+value text: `notes/unknown/value` is accepted, while `notes/ unknown/value` rejects `unknown/`.
 The shared argument parser rejects extra input to no-argument commands with
 `This command takes no arguments.` and the leaf parser appends its usage. Help and Exit apply the
 same validation before returning a command, so invalid input cannot open Help or terminate Laplace.
 
+### Command-word aliases and casing
 
 `CommandWords.canonicalFamily` maps only `members` to `member` and `loan` to `loans`, using
 `Locale.ROOT` casing. Family parsers normalize only their action token; leaf parsers still receive
@@ -915,28 +927,9 @@ The displayed/total summary explains retained records hidden by the filters.
 * [Testing guide](Testing.md)
 * [Logging guide](Logging.md)
 * [DevOps guide](DevOps.md)
+* [Single-JAR distribution and release checks](DevOps.md#single-jar-distribution)
 
 --------------------------------------------------------------------------------------------------------------------
-
-### Single-JAR distribution
-
-Build with `./gradlew shadowJar verifyUniversalJar`. Publish only `build/libs/Laplace.jar`;
-the same file is used on Windows, Linux (including graphical WSL), Intel macOS and
-Apple Silicon macOS. Java 25 for the user's processor remains the only required installation.
-No architecture property or alternate JAR filename is needed.
-
-The build bundles JavaFX libraries for each supported platform. For macOS, it preserves both Intel and
-Apple Silicon libraries in the same JAR. `verifyUniversalJar` checks the bundled libraries and the
-100 MB limit. Packaging details are in `gradle/universal-javafx.gradle`.
-
-The configured CI matrix tests one shared candidate across the four OS/architecture combinations.
-The packaged probe uses that candidate's classes and libraries so installed JavaFX cannot hide missing
-files. See [DevOps](DevOps.md) for the workflow; verify completed runs before publication.
-
-Before publication, inspect the four jobs and repeat the [initial-launch/normal-exit checks](#launch-and-shutdown) with
-the same candidate in separate empty writable folders. Record Java version, OS, processor, SHA-256,
-launch result and persistence/restart result. WSL needs its own graphical smoke test. A configured
-CI matrix is not evidence of completed platform runs; outstanding environments must remain explicit.
 
 ## **Appendix: Requirements**
 
@@ -1257,7 +1250,7 @@ Use case ends.
     * 1a1. Laplace explains that no undo is available and leaves the data unchanged.
     * Use case ends.
 * 3a. The EXCO member decides the undo was a mistake and requests redo.
-    * The EXCO member performs UC11.
+    * 3a1. The EXCO member performs UC11.
     * Use case ends.
 
 #### UC09: Review and filter loan history
@@ -1350,6 +1343,9 @@ Use case ends.
 * 2c. The supplied details make no change.
     * 2c1. Laplace reports that there is no change to save.
     * Use case resumes at step 1.
+* 3a. The corrected member shares a name, phone number, or email address with an active member under another NUS ID.
+    * 3a1. Laplace also shows a possible-duplicate advisory identifying those records. The member stays saved under the same NUS ID.
+    * Use case ends.
 
 #### UC13: Restore a deleted member or equipment unit
 
@@ -1510,9 +1506,13 @@ They are not prerequisites for testing the released JAR.
    **Expected:** The same member details; exact lookup ignores ID case. A malformed ID or a well-formed
    nonexistent ID is rejected. A partial ID is not a member-view shortcut.
 3. Edit with `member edit nus/A8400001X name/Mary D/O Tan`. **Expected:** New name, same NUS ID and
-   contacts. Add another member with `name/Ravi S/o Kumar` and a distinct valid ID/contact set.
-   **Expected:** Case-preserved patronymic token. `name/Ravi w/o Kumar` remains invalid; only standalone
-   `s/o` and `d/o` are exceptions. Try `equipment add name/Mic category/Audio condition/GOOD notes/Use w/ XLR`;
+   contacts. Edit with `member edit nus/A8400001X phone/91234567`. **Expected:** The edit is saved and
+   followed by `Possible duplicate(s): A0123456X`. Add another member with `name/Ravi S/o Kumar` and a distinct valid ID/contact set.
+   Repeat the edit with `name/Muthu a/l Raju` and `name/Priya A/P Suresh`.
+   **Expected:** Case-preserved patronymic tokens. `name/s/o`, `name/Tan s/o`, `name/d/o Devi`,
+   `name/a/l` and `name/Priya a/p` reject without saving. `name/Ravi w/o Kumar` remains invalid;
+   only standalone `s/o`, `d/o`, `a/l` and `a/p` are exceptions.
+   Try `equipment add name/Mic category/Audio condition/GOOD notes/Use w/ XLR`;
    **Expected:** `Unknown parameter: w/` and no equipment added.
 4. Add a GOOD test unit with `equipment add name/Member Test Unit category/Testing condition/GOOD`.
    Copy its full UUID, then enter
@@ -1523,11 +1523,15 @@ They are not prerequisites for testing the released JAR.
 6. Return the unit with `loans return uuid/UUID returned/DATE condition/GOOD`, then run the deletion again.
    **Expected:** A retained deleted member with the same NUS ID, contacts and completed history. The
    record remains in `member list` and `member search status/deleted`. New loans to it are rejected.
+   Deleting a member does not select them automatically; an existing selection is retained if still
+   in the results. An active-only search removes the deleted member from its results.
 7. Repeat deletion, then try an edit while deleted. **Expected:** Both reject without changing data.
    Run `member restore nus/A8400001X`. **Expected:** The same identity, details and history become active;
    a new loan to the member is permitted. Restoring again or restoring a nonexistent ID rejects.
 8. Exit and restart after a successful change. **Expected:** Exact names, identity, deletion state and
    open/completed loan references survive. Restore never creates a replacement identity.
+   An earlier valid file containing `s/o`, `D/O` or `Tan s/o` as a saved name still loads unchanged;
+   editing another field preserves that name, while entering it as a new name is rejected.
 
 ### Member search, filters and sorting
 
@@ -1639,6 +1643,13 @@ They are not prerequisites for testing the released JAR.
 3. Inspect the totals after each filter. **Expected:** Equipment Total stays three and active
    availability stays one available, zero assigned and zero unavailable. Filters change matching
    units, not retained totals. Deleted records never inflate active availability.
+4. Add `equipment add name/ΟΣ category/Audio condition/GOOD` and
+   copy its full UUID. Add `equipment add name/οσ category/Audio condition/GOOD`.
+   **Expected:** The second add succeeds with `Possible duplicate(s): FIRST_UUID`, where `FIRST_UUID`
+   is the copied identity; the two physical units retain distinct UUIDs. Run
+   `equipment view category/Audio name/οσ`, then repeat with `name/ος` and `name/ΟΣ`.
+   **Expected:** All spellings open one group containing both distinct UUIDs. Repeat
+   `equipment search category/Audio q/ΟΣ` after restart; the same group and stored spellings remain.
 
 ### Tab completion across current commands
 
@@ -1743,8 +1754,10 @@ They are not prerequisites for testing the released JAR.
 3. Try `equipment edit uuid/A`, `equipment edit uuid/A name/`, and a no-change edit. **Expected:** an error and no save.
 4. Assign A to an active test member with valid dates. Edit its condition to DAMAGED: **Expected:** ASSIGNED until
    return, then UNAVAILABLE. Attempt deletion while assigned: **Expected:** refusal and no record/history changes.
-5. Return A, then `equipment delete uuid/A`. **Expected:** a retained `[DELETED]` row in `equipment list`, no new
-   loans permitted, and exclusion from active search/inventory totals. `equipment search status/deleted`
+5. Return A, then `equipment delete uuid/A`. **Expected:** the retained unit contributes to its group
+   deleted count in `equipment list`; open the group and include deleted units to see `Deleted` in the Status column.
+   Details identify deleted equipment and show the restore command. No new loans are permitted, and the unit is
+   excluded from active search/inventory totals. `equipment search status/deleted`
    should find it. Restart: the flag, UUID, details and closed loan records must remain in the saved data.
 6. Try editing/deleting A again: **Expected:** rejection. Run `equipment restore uuid/A`: **Expected:** the same UUID
    and details, still DAMAGED/UNAVAILABLE. Repeating restore is rejected. Repair with an edit to GOOD and

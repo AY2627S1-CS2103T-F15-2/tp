@@ -75,7 +75,7 @@ native presence, resource uniqueness and the 100 MB limit. All platforms use `bu
 To probe a downloaded candidate, run `./gradlew verifyUniversalJar verifyPackagedAutocomplete
 -PpackagedJar=build/candidate/Laplace.jar` on each target architecture. CI downloads the same candidate
 for Windows, Linux and both macOS architectures; selecting a candidate does not emulate another processor.
-See the [distribution checklist](DeveloperGuide.md#single-jar-distribution) for release verification.
+See the [distribution checklist](DevOps.md#single-jar-distribution) for release verification.
 The [universal packaging verification record](gui/UniversalPackagingVerification.txt) lists the local
 candidate hash, tested environment and outstanding platform coverage.
 

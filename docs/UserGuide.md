@@ -37,7 +37,7 @@ earlier builds may not support every behavior described here. Laplace is a local
    member and an item, issue the item and record its return. Keep the
    [Command summary](#command-summary) as a quick reference; each task links to its detailed section.
 
-[![Equipment view with the Camera group selected, two compact UUID labels, and the available camera's full details](images/BetterUi.png)](images/BetterUi.png)
+[![Equipment view with the Camera group selected, two compact UUID labels, and the available camera's full details](images/Ui.png)](images/Ui.png)
 
 *Equipment view in light mode, using the fictional first-launch samples. The available camera is selected.*
 Open the image to inspect it at full size. Locate these five areas:
@@ -182,8 +182,11 @@ For the first example, the result is `New member added: Jordan Lee (A0678901D)`.
 This example uses an ID absent from the bundled samples. If you have already added it, use another unused NUS ID.
 
 Two members are duplicates **only when their normalized NUS IDs are equal**. Different IDs can share
-a name, phone or email. A duplicate is rejected with a message such as:
+a name, phone or email. An active duplicate is rejected with a message such as:
 `A member with NUS ID A0123456X already exists.`
+If that ID belongs to a deleted member, the rejection identifies it as deleted and says
+`Use member restore nus/A0123456X first.` Restore the retained record, then use `member edit`
+to update its details; re-adding it cannot replace its identity or history.
 
 A different NUS ID sharing a normalized name, phone or email with another **active** member is
 accepted, with a `Possible duplicate(s)` advisory after the success message. Deleted members are
@@ -282,7 +285,7 @@ These rules apply to both `member search` and `equipment search`:
   parameter, invalid choices and sort fields for the other directory are rejected with usage guidance.
   For example, `member search sort/condition` and `equipment search holding/yes` are invalid.
 - Whitespace-delimited tokens such as `name/` are reserved parameter markers even inside query text.
-  Standalone `s/o` and `d/o`, in any letter case, are literal text rather than markers.
+  Standalone `s/o`, `d/o`, `a/l` and `a/p`, in any letter case, are literal text rather than markers.
   There is no quoting or escaping mechanism. Ordinary URLs and embedded slashes remain text, as in
   the [advanced input reference](#advanced-input-reference).
 - An empty result shows a reset hint when the directory contains retained records. It does not mean
@@ -338,7 +341,10 @@ The NUS ID cannot be changed; open and completed loans remain attached to the sa
 You can edit contact details while the member holds equipment. Matching another member's name
 or contacts does not merge records because NUS IDs identify members.
 
-Success reports `Edited member NUS_ID: NAME.` and opens the updated details. The directory
+Success reports `Edited member NUS_ID: NAME.` and opens the updated details. If the edited
+member then shares a normalized name, phone or email with another **active** member, the same
+`Possible duplicate(s)` advisory as [`member add`](#add-a-member-member-add) follows. The edit has
+been saved; review both records. The directory
 re-evaluates its current filters and sort order. Name then NUS ID is the default ordering; an explicit
 sort such as `sort/id order/desc` remains active. The edited member stays selected when included in
 the filtered results; their details still open if the edit moves them outside those results.
@@ -362,10 +368,12 @@ Example: `member delete nus/A0123456X`.
 
 Delete one exact member **only if they currently hold no equipment**. Equal-name members with other
 IDs remain. Success marks the member deleted, preserving their details, reserved NUS ID and all loan
-history. They remain visible and selected in the directory with a grey card, italic struck-through
-name and `(deleted)` suffix. A deleted member cannot receive new loans; restore them first.
+history. They remain visible in all-record lists with a grey card, italic struck-through name and
+`(deleted)` suffix. Active-only searches exclude them. A deleted member cannot receive new loans;
+restore them first.
 
-Example feedback: `Deleted member A0123456X: Alex Tan.` The directory keeps the same member selected.
+Example feedback: `Deleted member A0123456X: Alex Tan.` Deletion does not automatically select that member.
+The directory retains its previous selection if that member is still in the results.
 Viewing deleted details shows restore guidance. Repeating deletion is rejected without saving.
 
 | Situation | Result or correction |
@@ -608,7 +616,10 @@ Example: `equipment delete uuid/550e8400-e29b-41d4-a716-446655440000`.
 Soft-delete one exact item **only when it has no open loan**. Its condition does not prevent deletion.
 The unit, UUID, details and closed loans are retained. Feedback includes the identity and name:
 `Deleted equipment UUID: EQUIPMENT_NAME.` The equipment directory appears with its existing filters.
-Deleted units remain visible in all-record lists, labeled `[DELETED]`; active-only searches exclude them.
+Deleted units remain visible in all-record lists: group counts include deleted units, and the unit table
+shows `Deleted` in its Status column when **Show all units in this group, including deleted** is selected.
+Details identify the unit as deleted and show the restore command.
+Active-only searches exclude deleted units.
 They cannot be assigned and are excluded from active availability totals. Group retained counts include them.
 
 | Situation | Result or correction |
@@ -912,7 +923,7 @@ on or after 20 September 2026; choose valid actual dates for your own operation.
 | Field | Accepted input and stored form |
 | --- | --- |
 | NUS ID `nus/` | One English letter, exactly seven digits, and an optional final English letter, e.g. `A0123456X` or `E0123456`, in any letter case. Stored uppercase. |
-| Member name `name/` | 1–100 characters. Letters in any language, accents, spaces, apostrophes (`'` or `’`), hyphens, periods and standalone `s/o` or `d/o` tokens (any letter case) are allowed; include at least one letter. See [name counting and accents](#exact-text-and-character-rules) for the precise limit. |
+| Member name `name/` | 1–100 characters. Letters in any language, accents, spaces, apostrophes (`'` or `’`), hyphens, periods and standalone `s/o`, `d/o`, `a/l` or `a/p` tokens (any letter case) are allowed. Include at least one letter, with a name containing a letter on each side of every connector. See [name counting and accents](#exact-text-and-character-rules) for the precise limit. |
 | Phone `phone/` | Optional `+`, then 8–15 digits. Spaces and hyphens are removed: `+65 9123-4567` becomes `+6591234567`. |
 | Email `email/` | 3–254 characters using English letters, digits and the punctuation described in the [exact email rules](#exact-text-and-character-rules). Include one `@`, a dotted domain and no spaces. Stored lowercase. |
 | Equipment UUID `uuid/` | Copy the full identifier from the item's details, e.g. `550e8400-e29b-41d4-a716-446655440000`, or use Tab to complete it. Shortened identifiers and the short labels in unit tables are rejected. |
@@ -932,9 +943,13 @@ in the commands above are enough to get started.
 
 - Unicode whitespace, including EM SPACE and nonbreaking space, separates command words and parameters.
   Leading/trailing whitespace is ignored. Runs of whitespace in text values become one ordinary space.
-- A value continues to the next parameter marker. A start-of-value or whitespace-delimited token such as
-  `notes/` or `unknown/` is reserved as a marker. Unknown markers are errors, even inside free text.
-  The exceptions are standalone `s/o` and `d/o`, ignoring case: `name/Ravi s/o Kumar` is valid.
+- A parameter marker such as `notes/` or `unknown/` is recognized at the start of the argument text
+  or after whitespace. A value continues to the next recognized marker. Unknown markers are errors,
+  even inside free text. Immediately adjacent tokens remain value text: for equipment notes,
+  `notes/unknown/value` stores `unknown/value`, but `notes/ unknown/value` reports
+  `Unknown parameter: unknown/` and creates no equipment.
+  The exceptions are standalone `s/o`, `d/o`, `a/l` and `a/p`, ignoring case:
+  `name/Ravi s/o Kumar` and `name/Muthu a/l Raju` are valid.
   Other tokens remain reserved: `notes/Use w/ XLR cable` is rejected as `Unknown parameter: w/`.
   There is no quoting or escaping. An ordinary URL such as `https://example.com` is not a marker.
 
@@ -948,7 +963,7 @@ Use that shared table for phone numbers, equipment names, categories, conditions
 | Field | Exact accepted input and stored form |
 | --- | --- |
 | NUS ID `nus/` | One ASCII letter, exactly seven digits, and an optional final ASCII letter. Case-insensitive; stored/displayed uppercase, such as `A0123456X` or `E0123456`. |
-| Member name `name/` | 1–100 Unicode code points after whitespace and NFC normalization. Unicode letters with combining marks, spaces, straight (`'`) or curly (`’`) apostrophes, hyphens, periods and standalone `s/o` or `d/o` (any letter case); must contain at least one letter. Combining marks must follow a letter or its marks. Examples: `அருண்`, `Anne O’Connor`, `Ravi s/o Kumar`. |
+| Member name `name/` | 1–100 Unicode code points after whitespace and NFC normalization. Unicode letters with combining marks, spaces, straight (`'`) or curly (`’`) apostrophes, hyphens, periods and standalone `s/o`, `d/o`, `a/l` or `a/p` (any letter case); must contain at least one letter. Each connector requires a name containing a letter on both sides: `s/o`, `Tan s/o` and `d/o Devi` are rejected. Combining marks must follow a letter or its marks. Examples: `அருண்`, `Anne O’Connor`, `Ravi s/o Kumar`, `Muthu a/l Raju`, `Priya a/p Suresh`. |
 | Email `email/` | 3–254 ASCII characters, one `@`, no spaces and at least one domain dot. Local-part characters: letters, digits, `.`, `_`, `%`, `+`, `-`. Domain labels contain letters/digits/hyphens and cannot begin/end with a hyphen. ASCII validation occurs before conversion to lowercase; non-ASCII lookalikes such as `K` are rejected. Stored lowercase. |
 | Equipment UUID `uuid/` | Full `8-4-4-4-12` hexadecimal form, such as `550e8400-e29b-41d4-a716-446655440000`. Case-insensitive input; lowercase display. Shortened UUID values and compact display labels are rejected. Use Tab to complete a full UUID. |
 | Dates | Exactly `yyyy-MM-dd` with a Gregorian year from `0001` through `9999`, such as `2026-10-15`. Assignment/actual-return dates cannot be later than the computer's local date. Expected return may be in the future. |
@@ -961,6 +976,8 @@ commands, without changing the saved-file loading rules.
 Newly added or edited member names use Unicode NFC normalization: `José Tan` and `José Tan`
 (with a separate combining acute accent) are stored as the same canonical spelling. Existing saved
 names retain their exact spelling when loaded; editing another field does not rewrite the name.
+This includes earlier saved names such as `s/o` or `Tan s/o`; new add/edit name input must follow
+the connector placement rules above.
 
 ### Advanced Tab completion
 
@@ -1055,7 +1072,9 @@ member/equipment links open the exact record.
 ### Browse equipment groups and units
 
 The left equipment directory groups units with the same normalized category and name, including units
-registered in different batches. Open a group with `equipment view category/CATEGORY name/NAME`,
+registered in different batches. Matching ignores case and treats Greek `Σ`, `σ` and `ς` alike in
+both fields, while each unit keeps its stored spelling and UUID.
+Open a group with `equipment view category/CATEGORY name/NAME`,
 a click, **Enter** or **Space**, then select a row in its physical-unit table. Each unit still has its own UUID, condition, notes, holder and lifecycle state.
 
 Group counts distinguish **matching** units from **retained** units. Availability counts exclude deleted
@@ -1119,6 +1138,7 @@ described in [Completing commands and fields with Tab](#completing-commands-and-
 applicable suggestion it retains normal focus navigation.
 
 **F1** or `help` opens a scrollable command reference with copyable templates and the user-guide link.
+If Help is already open, including when minimized, the same keys restore it and bring it to the front.
 The loan-return template includes `condition/GOOD` as an example of the optional observed return
 condition. Ctrl+Space after `loans return co` also offers `condition/`; omit it to retain the existing
 equipment condition, or supply one of the conditions documented in the loan-return section.
