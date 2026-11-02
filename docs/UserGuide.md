@@ -107,7 +107,8 @@ Help, usage messages, Tab and Ctrl+Space suggestions use the canonical `member`,
   [advanced input reference](#advanced-input-reference).
 - Use the full field names: `nus/`, `name/`, `phone/` and `email/`. Short alternatives are not accepted.
 - `member list` and `equipment list` take no arguments. `loans list` accepts optional identity filters;
-  `loans reset` takes no arguments. Text before the first parameter and unsupported prefixes are rejected.
+  `loans reset` takes no arguments. These no-argument commands reject any extra text.
+  `loans list` rejects text before the first parameter and unsupported prefixes.
 - `undo`, `redo`, `help` and `exit` also take no arguments. For example, `exit extra` reports
   `This command takes no arguments.` and keeps Laplace open; `help extra` does not open Help.
 - An empty or whitespace-only submission does nothing.
@@ -859,9 +860,8 @@ Undoing equipment creation removes those units; redoing it restores their origin
 Success reports the action, for example `Undid: equipment add.`. If none is available, the error is
 `Nothing to undo.`. Undo takes no arguments: `undo 2` is rejected. The current screen refreshes while
 preserving search criteria. If the displayed member or physical unit no longer exists, its directory
-appears instead. If undo removes the last unit in the displayed equipment group, the group panel stays
-open with `Equipment group no longer exists`. Use **Back to results** or `equipment list` to return
-to the directory.
+appears instead. Equipment-group views have a [navigation limitation](#mvp-limits) when undo removes
+their last unit.
 Active filters can hide restored records; use the directory's list command to reset the search.
 
 ### Redo an undone change: `redo`
@@ -924,10 +924,10 @@ on or after 20 September 2026; choose valid actual dates for your own operation.
 | Phone `phone/` | Optional `+`, then 8–15 digits. Spaces and hyphens are removed: `+65 9123-4567` becomes `+6591234567`. |
 | Email `email/` | 3–254 characters using English letters, digits and the punctuation described in the [exact email rules](#exact-text-and-character-rules). Include one `@`, a dotted domain and no spaces. Stored lowercase. |
 | Equipment UUID `uuid/` | Copy the full identifier from the item's details, e.g. `550e8400-e29b-41d4-a716-446655440000`, or use Tab to complete it. Shortened identifiers and the short labels in unit tables are rejected. |
-| Equipment name `name/` | 1–100 printable characters; punctuation and model numbers are allowed, except reserved parameter-like slash tokens after whitespace (e.g. `f/2.8` or `A/V`). Use `f2.8` or `AV` instead; quoting and escaping are unavailable. |
-| Category `category/` | 1–50 printable characters; choose a useful description such as `Photography`. Reserved parameter-like slash tokens after whitespace are rejected; use `AV` instead of `A/V`. |
+| Equipment name `name/` | 1–100 printable characters; punctuation and model numbers are allowed, subject to the [slash-token restrictions](#advanced-input-reference). |
+| Category `category/` | 1–50 printable characters; choose a useful description such as `Photography`. See [slash-token restrictions](#advanced-input-reference). |
 | Condition `condition/` | `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`, in any letter case. Use the underscore in `UNDER_REPAIR`. |
-| Notes `notes/` | Optional, up to 300 printable characters after trimming outside spaces. Line breaks become spaces; omitted or empty notes mean no notes. Reserved parameter-like slash tokens after whitespace are rejected; use `not applicable` instead of `N/A`. |
+| Notes `notes/` | Optional, up to 300 printable characters after trimming outside spaces. Line breaks become spaces; omitted or empty notes mean no notes. See [slash-token restrictions](#advanced-input-reference). |
 | Dates | A real date in `yyyy-MM-dd` form, e.g. `2026-10-15`. Assignment and actual-return dates cannot be in the future; expected return can. |
 
 Copy the actual UUID displayed by Laplace when issuing, viewing, returning or deleting equipment.
@@ -946,7 +946,11 @@ in the commands above are enough to get started.
   Other tokens remain reserved: `notes/Use w/ XLR cable` is rejected as `Unknown parameter: w/`.
   This also affects equipment names, categories and notes: `name/Canon f/2.8 Lens`,
   `category/HDMI A/V` and `notes/Serial N/A` are rejected. Use `f2.8`, `AV` and `not applicable` instead.
-  A slash inside the first word of a value, such as `name/AC/DC Adapter`, is accepted.
+  Marker recognition depends on the character immediately before the token, not its position in a value.
+  A marker starts with a letter, continues with letters, digits, underscores or hyphens, and ends at `/`.
+  `name/AC/DC Adapter` is accepted because no whitespace precedes `AC/`, but
+  `name/ AC/DC Adapter` and `name/Adapter AC/DC` reject `AC/` as an unknown parameter.
+  A token starting with a digit, such as `name/Adapter 1/4 inch`, is accepted.
   There is no quoting or escaping. An ordinary URL such as `https://example.com` is not a marker.
 
 ### Exact text and character rules
@@ -1282,10 +1286,11 @@ Before entering real records, you can replace the fictional samples with an empt
    separate folder containing only a copy of the JAR for this fresh start. Back up any existing
    `data/addressbook.json` before replacing it.
 2. In the JAR's folder, create the `data` subfolder if needed. Create or replace `data/addressbook.json`
-   with a UTF-8 text file containing exactly:
+   with a plain UTF-8 text file named exactly `addressbook.json`, not `addressbook.json.txt`.
+   Enable filename extensions to check the name; use plain-text mode rather than rich text. Enter exactly:
 
    ```json
-   {"persons":[]}
+   {"persons":[],"members":[],"equipment":[],"loans":[]}
    ```
 
 3. Relaunch the JAR. The valid empty file takes precedence over samples; `member list`,
@@ -1403,6 +1408,10 @@ The **Menu** contains **Help** and **Exit**. Help displays the address of the
 use **Copy URL** to copy its address and open it in your browser.
 
 ## MVP limits
+
+- If undo removes the last unit in the displayed equipment group, its panel stays open with
+  `Equipment group no longer exists`. Use **Back to results** or `equipment list` to return to the
+  directory. Individual member and physical-unit details return to their directory when removed.
 
 The MVP supports member and equipment editing, soft deletion and restoration, plus search with filters
 and user-selected sorting. Batch equipment registration supports 1–100 physical units per
