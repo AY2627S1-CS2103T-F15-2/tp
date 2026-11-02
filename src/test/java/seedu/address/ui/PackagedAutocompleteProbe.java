@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -133,6 +134,25 @@ public final class PackagedAutocompleteProbe {
                         "Caret must stay after the completed name");
                 check(before.equals(model.getAddressBook()), "Unicode completion changed records");
                 check(logic.commands == 0 && storage.saves == 0, "Unicode completion executed or saved a command");
+            }
+            for (String[] example : List.of(
+                    new String[] {"equipment add name/Canon Camera category/Photography", "Camera"},
+                    new String[] {"equipment add notes/Spare lens", "lens"},
+                    new String[] {"member view nus/A0123456X", "view"})) {
+                field.setText(example[0]);
+                int caret = example[0].indexOf(example[1]);
+                field.positionCaret(caret);
+                AddressBook before = new AddressBook(model.getAddressBook());
+                boolean[] wasPassed = {false};
+                EventHandler<KeyEvent> observeTab = event -> wasPassed[0] = event.getCode() == KeyCode.TAB;
+                field.addEventFilter(KeyEvent.KEY_PRESSED, observeTab);
+                press(field, KeyCode.TAB, false);
+                field.removeEventFilter(KeyEvent.KEY_PRESSED, observeTab);
+                check(example[0].equals(field.getText()), "Tab must preserve an untouched following word");
+                check(wasPassed[0], "Boundary Tab must remain available for normal focus navigation");
+                check(before.equals(model.getAddressBook()), "Boundary Tab changed stored records");
+                check(logic.commands == 0 && storage.saves == 0, "Boundary Tab executed or saved a command");
+                session.add("UNTOUCHED WORD: " + example[1] + "; draft preserved and Tab passed through.");
             }
             String untouched = "member add name/Alex phone/91234567";
             field.setText(untouched);

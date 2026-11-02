@@ -84,6 +84,20 @@ public class CompletionServiceTest {
     }
 
     @Test
+    public void complete_caretBeforeUntouchedWord_hasNoSuggestionOrRecordRead() {
+        for (String[] example : List.of(
+                new String[] {"member view nus/A0123456X", "view"},
+                new String[] {"equipment add name/Canon Camera category/Photography", "Camera"},
+                new String[] {"equipment add name/Canon Camera category/Photography notes/Spare lens", "lens"},
+                new String[] {"equipment add name/Canon\u2003Camera category/Photography", "Camera"},
+                new String[] {"equipment add notes/Spare\u00a0lens", "lens"})) {
+            assertTrue(service.completeWithDataSource(example[0], example[0].indexOf(example[1]), () -> {
+                throw new AssertionError("Untouched words must not acquire record candidates");
+            }).isEmpty(), example[0]);
+        }
+    }
+
+    @Test
     public void complete_invalidOffsetsAndNullInputs_rejectsProgrammerErrors() {
         assertThrows(NullPointerException.class, () -> service.complete(null, 0, model.getAddressBook()));
         assertThrows(NullPointerException.class, () -> service.complete("mem", 3, null));
