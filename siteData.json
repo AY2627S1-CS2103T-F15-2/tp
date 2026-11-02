@@ -64,6 +64,7 @@
         "equipment-editing-deletion-and-restoration": "Equipment editing, deletion and restoration",
         "undo-redo-feature": "Undo/redo feature",
         "loading-and-compatibility": "Loading and compatibility",
+        "known-validation-and-feedback-limits": "Known validation and feedback limits",
         "atomic-save-access-policy": "Atomic-save access policy",
         "argument-markers-and-no-argument-validation": "Argument markers and no-argument validation",
         "command-word-aliases-and-casing": "Command-word aliases and casing",
