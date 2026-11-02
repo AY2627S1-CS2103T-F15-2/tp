@@ -20,6 +20,10 @@ import seedu.address.model.equipment.Equipment;
  * Inventory planning by normalized category and equipment name, retaining every eligible physical unit.
  */
 public final class InventoryGroups {
+    /** Orders a group's units so its first unit supplies the stored spelling shown wherever the group appears. */
+    public static final Comparator<Equipment> DISPLAY_ORDER =
+            Comparator.comparing(unit -> unit.getUuid().toString());
+
     private InventoryGroups() {
     }
 
@@ -37,7 +41,7 @@ public final class InventoryGroups {
 
         @Override
         public String toString() {
-            return "\"" + category.replace("\"", "\"\"") + "\" / \"" + name.replace("\"", "\"\"") + "\"";
+            return label(category, name);
         }
     }
 
@@ -54,21 +58,39 @@ public final class InventoryGroups {
         }
 
         public String name() {
-            return units.getFirst().getName();
+            return representative().getName();
         }
 
         public String category() {
-            return units.getFirst().getCategory();
+            return representative().getCategory();
+        }
+
+        private Equipment representative() {
+            return units.stream().min(DISPLAY_ORDER).orElseThrow();
         }
 
         /**
-         * Returns a display label that quotes both fields, so a separator inside either field
-         * cannot make two distinct groups look identical.
+         * Returns the group label using the stored spelling of its first unit.
          */
         public String label() {
-            return "\"" + category().replace("\"", "\"\"") + "\" / \""
-                    + name().replace("\"", "\"\"") + "\"";
+            return InventoryGroups.label(category(), name());
         }
+    }
+
+    /**
+     * Returns a display label that quotes both fields, so a separator inside either field
+     * cannot make two distinct groups look identical.
+     */
+    public static String label(String category, String name) {
+        return "\"" + category.replace("\"", "\"\"") + "\" / \"" + name.replace("\"", "\"\"") + "\"";
+    }
+
+    /**
+     * Returns every unit in the group, including deleted units, in display order.
+     */
+    public static List<Equipment> unitsOf(ReadOnlyAddressBook data, Key key) {
+        return data.getEquipmentList().stream().filter(unit -> keyOf(unit).equals(key))
+                .sorted(DISPLAY_ORDER).toList();
     }
 
     /**

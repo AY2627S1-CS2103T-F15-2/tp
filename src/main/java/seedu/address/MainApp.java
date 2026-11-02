@@ -68,7 +68,8 @@ public class MainApp extends Application {
             ui = new UiManager(logic, storage.getAddressBookFilePath());
         } catch (DataLoadingException e) {
             startupFailure = e;
-            logger.severe("Could not load data at " + storage.getAddressBookFilePath() + ": " + e);
+            logger.severe("Could not load data at " + storage.getAddressBookFilePath()
+                    + ". See the recovery dialog for details.");
         }
     }
 

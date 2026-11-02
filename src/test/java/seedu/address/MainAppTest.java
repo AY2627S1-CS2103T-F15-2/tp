@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -11,8 +12,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -25,6 +33,7 @@ import javafx.stage.Window;
 import seedu.address.commons.core.AppPaths;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
@@ -108,6 +117,93 @@ public class MainAppTest {
         app.init();
         assertEquals(AppPaths.getPreferencesFilePath(), app.storage.getUserPrefsFilePath());
         assertEquals(AppPaths.getDataFilePath(), app.storage.getAddressBookFilePath());
+    }
+
+    @Test
+    public void initModel_malformedContacts_omitsSourceAndContactsFromLogsButKeepsRecovery() throws Exception {
+        String malformed = """
+                {"persons":[],"members":[{"nusId":"A8400001X","name":"Privacy Example",
+                "phone":"91118888","email":"privacy-audit@example.com"}],"equipment":[INVALID],"loans":[]}
+                """;
+        assertPrivateStartupDiagnostics(malformed, "JsonUtil", Level.WARNING);
+    }
+
+    @Test
+    public void initModel_invalidStoredIdentities_omitsContactsFromLogsButRetainsConversionCause() throws Exception {
+        String invalidMember = """
+                {"persons":[],"members":[{"nusId":"privacy-audit@example.com","name":"Privacy Example",
+                "phone":"91118888","email":"privacy-audit@example.com"}],"equipment":[],"loans":[]}
+                """;
+        String invalidEquipment = invalidMember.replace("\"nusId\":\"privacy-audit@example.com\"",
+                "\"nusId\":\"A8400001X\"").replace("\"equipment\":[]", """
+                "equipment":[{"uuid":"privacy-audit@example.com","name":"Camera","category":"Testing",
+                "condition":"GOOD","notes":""}]
+                """.strip());
+        for (String invalid : List.of(invalidMember, invalidEquipment)) {
+            assertPrivateStartupDiagnostics(invalid, "JsonAddressBookStorage", Level.INFO);
+            DataLoadingException failure = assertThrows(DataLoadingException.class,
+                    storage(directory.resolve("invalid.json"))::readAddressBook);
+            assertInstanceOf(IllegalValueException.class, failure.getCause());
+            assertTrue(failure.getCause().getMessage().contains("privacy-audit@example.com"),
+                    "The detailed checked cause must retain the invalid identity for recovery");
+        }
+    }
+
+    /** Verifies startup diagnostics and a real log file without changing the rejected dataset. */
+    private void assertPrivateStartupDiagnostics(String invalid, String failedLogger, Level failureLevel)
+            throws Exception {
+        Path file = directory.resolve("invalid.json");
+        Files.writeString(file, invalid);
+        byte[] before = Files.readAllBytes(file);
+        MainApp app = new MainApp();
+        Storage storage = storage(file);
+        List<LogRecord> records = new ArrayList<>();
+        Handler capture = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                records.add(record);
+            }
+
+            @Override
+            public void flush() {
+            }
+
+            @Override
+            public void close() {
+            }
+        };
+        Logger logger = Logger.getLogger("ab3");
+        Path logFile = directory.resolve("startup.log");
+        FileHandler fileCapture = new FileHandler(logFile.toString());
+        fileCapture.setFormatter(new SimpleFormatter());
+        logger.addHandler(capture);
+        logger.addHandler(fileCapture);
+        try {
+            app.initModel(storage, new UserPrefs());
+            assertNull(app.model);
+            assertNull(app.logic);
+            assertNull(app.ui);
+            FxTestUtil.runAndWait(() -> assertFailedStartupDialog(app, file));
+            app.stop();
+        } finally {
+            logger.removeHandler(capture);
+            logger.removeHandler(fileCapture);
+            fileCapture.close();
+        }
+        assertTrue(records.stream().anyMatch(record -> record.getLoggerName().endsWith("." + failedLogger)
+                && record.getLevel().equals(failureLevel)));
+        assertTrue(records.stream().anyMatch(record -> record.getLoggerName().endsWith(".MainApp")
+                && record.getLevel().equals(Level.SEVERE)));
+        SimpleFormatter formatter = new SimpleFormatter();
+        String logged = records.stream().map(formatter::format).collect(java.util.stream.Collectors.joining());
+        String persisted = Files.readString(logFile);
+        for (String sensitive : List.of("Privacy Example", "91118888", "privacy-audit@example.com", "[Source:")) {
+            assertFalse(logged.contains(sensitive), "Persistent diagnostics must omit contact data and JSON excerpts");
+            assertFalse(persisted.contains(sensitive), "The actual log file must omit contact data and JSON excerpts");
+        }
+        assertTrue(logged.contains(file.toString()));
+        assertTrue(persisted.contains(file.toString()));
+        assertArrayEquals(before, Files.readAllBytes(file));
     }
 
     @Test
@@ -207,7 +303,8 @@ public class MainAppTest {
                 }
             }
         });
-        assertThrows(DataLoadingException.class, () -> app.start(primary));
+        DataLoadingException failure = assertThrows(DataLoadingException.class, () -> app.start(primary));
+        assertNotNull(failure.getCause());
         assertNotNull(content.get());
         assertTrue(content.get().contains(file.toAbsolutePath().toString()));
         assertTrue(content.get().contains("preserved"));

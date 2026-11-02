@@ -113,10 +113,16 @@ These checks require a source checkout and Java 25. They are separate from the r
 scenarios in the Developer Guide; testers do not need to hand-create a large dataset.
 
 `LoanHistoryCapacityTest` builds its synthetic fixture in code: 1,000 members, 5,000 equipment units
-and 10,000 completed loans. It checks retained counts and bounded history controls in the Loans and
+and 10,000 completed loans. This fixture deliberately exceeds the NFR07 dataset and serves as a stress
+check. It checks retained counts and bounded history controls in the Loans and
 detail panels. Completion controller/service tests check that static vocabulary does not read record
 collections and that unchanged cycles reuse candidates. These structural checks do not establish the
 NFR07 timing target; that benchmark needs its own repeatable fixture and measured platform results.
+
+`MemberHoldingsCapacityTest` separately creates 1,000 simultaneous current loans for one member.
+It checks bounded controls, complete identity ordering, scrolling to early/middle/last units, navigation,
+refresh after return/reassignment, and the transition between eleven virtualized and ten inline rows.
+The completed-history capacity fixture does not exercise this current-holdings path.
 
 `LaplaceTransactionTest` injects partial temporary-file writes and failed atomic replacements for real
 mutation commands, including assignment and return. It checks unchanged live records, history and

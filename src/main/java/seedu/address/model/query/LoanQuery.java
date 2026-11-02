@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.Locale;
 
+import seedu.address.commons.util.LaplaceText;
 import seedu.address.model.loan.Loan;
 
 /**
@@ -11,11 +12,11 @@ import seedu.address.model.loan.Loan;
  */
 public record LoanQuery(String memberText, String equipmentText) {
     /**
-     * Trims surrounding whitespace without interpreting partial identities as complete domain values.
+     * Trims surrounding Unicode whitespace without interpreting partial identities as complete domain values.
      */
     public LoanQuery {
-        memberText = requireNonNull(memberText).strip();
-        equipmentText = requireNonNull(equipmentText).strip();
+        memberText = LaplaceText.stripWhitespace(memberText);
+        equipmentText = LaplaceText.stripWhitespace(equipmentText);
     }
 
     /**

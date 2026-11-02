@@ -2,7 +2,6 @@ package seedu.address.ui;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -150,9 +149,7 @@ public class EquipmentGroupPanel extends VBox {
             if (key == null) {
                 return;
             }
-            List<Equipment> all = data.getEquipmentList().stream()
-                    .filter(unit -> InventoryGroups.keyOf(unit).equals(key))
-                    .sorted(Comparator.comparing(unit -> unit.getUuid().toString())).toList();
+            List<Equipment> all = InventoryGroups.unitsOf(data, key);
             List<Equipment> matching = query.equipment(data, lookup).stream()
                     .filter(unit -> InventoryGroups.keyOf(unit).equals(key)).toList();
             title.setText(all.isEmpty() ? "Equipment group no longer exists" : all.getFirst().getName());

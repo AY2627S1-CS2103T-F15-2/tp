@@ -19,6 +19,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.text.Text;
+import seedu.address.logic.commands.EquipmentBrowseCommand;
 import seedu.address.model.ModelManager;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.Condition;
@@ -77,6 +78,27 @@ class EquipmentGroupPanelTest {
             panel.showGroup(InventoryGroups.keyOf(CAMERA), DirectoryQuery.all());
             String header = ((Label) panel.lookup("#groupCounts")).getText();
             assertTrue(header.startsWith("Photo · "), header);
+        });
+    }
+
+    @Test
+    void groupSpelling_insertionOrderDiffersFromUuidOrder_headerListAndFeedbackAgree() throws Exception {
+        ModelManager model = new ModelManager();
+        model.addEquipment(new Equipment(new UUID(0, 7), "camera", "photo", Condition.GOOD, ""));
+        model.addEquipment(CAMERA);
+        String feedback = EquipmentBrowseCommand.forGroup("photo", "camera").execute(model).getFeedbackToUser();
+        InventoryGroups.Group listed = InventoryGroups.group(model.getAddressBook(),
+                model.getAddressBook().getEquipmentList()).getFirst();
+        FxTestUtil.runAndWait(() -> {
+            EquipmentGroupPanel panel = new EquipmentGroupPanel(model.getAddressBook(), model::getAvailability,
+                    unused -> { }, unused -> { }, unused -> { });
+            mount(panel);
+            panel.showGroup(InventoryGroups.keyOf(CAMERA), DirectoryQuery.all());
+            String title = ((Label) panel.lookup("#groupTitle")).getText();
+            String category = ((Label) panel.lookup("#groupCounts")).getText().split(" · ")[0];
+            assertEquals(List.of("Camera", "Photo"), List.of(title, category));
+            assertEquals(List.of(title, category), List.of(listed.name(), listed.category()));
+            assertEquals("Viewing equipment group: " + InventoryGroups.label(category, title) + ".", feedback);
         });
     }
 

@@ -2,6 +2,8 @@ package seedu.address.commons.util;
 
 import static java.util.Objects.requireNonNull;
 
+import java.text.Normalizer;
+
 /** Shared normalization for newly entered Laplace text; persisted legacy values are not rewritten. */
 public final class LaplaceText {
     private LaplaceText() {
@@ -30,11 +32,11 @@ public final class LaplaceText {
     }
 
     /**
-     * Returns a locale-independent simple case key without context-sensitive whole-string lowercasing.
+     * Returns an NFC-normalized, locale-independent simple case key without whole-string lowercasing.
      * Uppercasing first maps both Greek lowercase sigma forms to the same code point.
      */
     public static String caseKey(String value) {
-        return requireNonNull(value).codePoints()
+        return Normalizer.normalize(requireNonNull(value), Normalizer.Form.NFC).codePoints()
                 .map(codePoint -> Character.toLowerCase(Character.toUpperCase(codePoint)))
                 .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
     }
