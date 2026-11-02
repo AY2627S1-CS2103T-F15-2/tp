@@ -368,10 +368,12 @@ Example: `member delete nus/A0123456X`.
 
 Delete one exact member **only if they currently hold no equipment**. Equal-name members with other
 IDs remain. Success marks the member deleted, preserving their details, reserved NUS ID and all loan
-history. They remain visible and selected in the directory with a grey card, italic struck-through
-name and `(deleted)` suffix. A deleted member cannot receive new loans; restore them first.
+history. They remain visible in all-record lists with a grey card, italic struck-through name and
+`(deleted)` suffix. Active-only searches exclude them. A deleted member cannot receive new loans;
+restore them first.
 
-Example feedback: `Deleted member A0123456X: Alex Tan.` The directory keeps the same member selected.
+Example feedback: `Deleted member A0123456X: Alex Tan.` Deletion does not automatically select that member.
+The directory retains its previous selection if that member is still in the results.
 Viewing deleted details shows restore guidance. Repeating deletion is rejected without saving.
 
 | Situation | Result or correction |
@@ -941,9 +943,13 @@ in the commands above are enough to get started.
 
 - Unicode whitespace, including EM SPACE and nonbreaking space, separates command words and parameters.
   Leading/trailing whitespace is ignored. Runs of whitespace in text values become one ordinary space.
-- A value continues to the next parameter marker. A start-of-value or whitespace-delimited token such as
-  `notes/` or `unknown/` is reserved as a marker. Unknown markers are errors, even inside free text.
-  The exceptions are standalone `s/o` and `d/o`, ignoring case: `name/Ravi s/o Kumar` is valid.
+- A parameter marker such as `notes/` or `unknown/` is recognized at the start of the argument text
+  or after whitespace. A value continues to the next recognized marker. Unknown markers are errors,
+  even inside free text. Immediately adjacent tokens remain value text: for equipment notes,
+  `notes/unknown/value` stores `unknown/value`, but `notes/ unknown/value` reports
+  `Unknown parameter: unknown/` and creates no equipment.
+  The exceptions are standalone `s/o`, `d/o`, `a/l` and `a/p`, ignoring case:
+  `name/Ravi s/o Kumar` and `name/Muthu a/l Raju` are valid.
   Other tokens remain reserved: `notes/Use w/ XLR cable` is rejected as `Unknown parameter: w/`.
   There is no quoting or escaping. An ordinary URL such as `https://example.com` is not a marker.
 

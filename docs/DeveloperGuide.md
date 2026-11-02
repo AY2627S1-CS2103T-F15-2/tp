@@ -199,6 +199,17 @@ original suffix, including Unicode separators and neighboring batch UUIDs, and n
 
 [Open full-size diagram](diagrams/AutocompleteSequence.png)
 
+#### Completion execution details
+
+`CompletionController`, described in [Tab completion](#tab-completion), is created by `CommandBox`
+and retained through the field's registered callbacks, rather than a `CommandBox` member field.
+Static vocabulary uses no model reads. Record-value suggestions read the live root synchronously on
+the FX thread and observe member/equipment collection changes with weak listeners. These notifications
+invalidate record candidates after mutations, undo/redo and reload; rejected mutations and pure queries
+leave those collections unchanged. Cached record cycles check root identity cheaply, while unchanged
+candidates cycle without copying or rescanning records. Loan history and transaction validation are
+outside suggestion reads.
+
 ### Logic component
 
 **API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/logic/Logic.java)
@@ -815,16 +826,6 @@ Shell tests exercise the real command box, preserved filters, missing details, l
 `ModelManagerTest` checks history availability inside synchronous collection listeners, unchanged-record
 history transitions, and rollback when replacement records are invalid.
 
-### Completion execution details
-
-The controller is created by `CommandBox` and retained through the field's registered callbacks, rather
-than a `CommandBox` member field. Static vocabulary uses no model reads. Record-value suggestions
-read the live root synchronously on the FX thread and observe member/equipment collection changes
-with weak listeners. These notifications invalidate record candidates after mutations, undo/redo
-and reload; rejected mutations and pure queries leave those collections unchanged. Cached record
-cycles check root identity cheaply, while unchanged candidates cycle without copying or rescanning
-records. Loan history and transaction validation are outside suggestion reads.
-
 ### Loading and compatibility
 
 `SampleDataUtil` populates only members, equipment and loans on first launch. Its legacy person
@@ -872,14 +873,17 @@ no preliminary `isWritable()` check can guarantee a later replacement. New files
 owner-only policy where POSIX or ACL views are supported. Other metadata is not copied. No serialization
 schema changes are involved.
 
-### Command-word aliases and casing
+### Argument markers and no-argument validation
 
-Standalone `s/o` and `d/o` tokens, ignoring case, remain literal field text in argument parsing and
-completion. Other whitespace-delimited markers remain reserved, including unknown markers in notes.
+Standalone `s/o`, `d/o`, `a/l` and `a/p` tokens, ignoring case, remain literal field text in argument
+parsing and completion. Other markers at the start of the argument string or after whitespace remain
+reserved, including unknown markers in notes. A token immediately after another prefix's slash is
+value text: `notes/unknown/value` is accepted, while `notes/ unknown/value` rejects `unknown/`.
 The shared argument parser rejects extra input to no-argument commands with
 `This command takes no arguments.` and the leaf parser appends its usage. Help and Exit apply the
 same validation before returning a command, so invalid input cannot open Help or terminate Laplace.
 
+### Command-word aliases and casing
 
 `CommandWords.canonicalFamily` maps only `members` to `member` and `loan` to `loans`, using
 `Locale.ROOT` casing. Family parsers normalize only their action token; leaf parsers still receive
@@ -918,28 +922,9 @@ The displayed/total summary explains retained records hidden by the filters.
 * [Testing guide](Testing.md)
 * [Logging guide](Logging.md)
 * [DevOps guide](DevOps.md)
+* [Single-JAR distribution and release checks](DevOps.md#single-jar-distribution)
 
 --------------------------------------------------------------------------------------------------------------------
-
-### Single-JAR distribution
-
-Build with `./gradlew shadowJar verifyUniversalJar`. Publish only `build/libs/Laplace.jar`;
-the same file is used on Windows, Linux (including graphical WSL), Intel macOS and
-Apple Silicon macOS. Java 25 for the user's processor remains the only required installation.
-No architecture property or alternate JAR filename is needed.
-
-The build bundles JavaFX libraries for each supported platform. For macOS, it preserves both Intel and
-Apple Silicon libraries in the same JAR. `verifyUniversalJar` checks the bundled libraries and the
-100 MB limit. Packaging details are in `gradle/universal-javafx.gradle`.
-
-The configured CI matrix tests one shared candidate across the four OS/architecture combinations.
-The packaged probe uses that candidate's classes and libraries so installed JavaFX cannot hide missing
-files. See [DevOps](DevOps.md) for the workflow; verify completed runs before publication.
-
-Before publication, inspect the four jobs and repeat the [initial-launch/normal-exit checks](#launch-and-shutdown) with
-the same candidate in separate empty writable folders. Record Java version, OS, processor, SHA-256,
-launch result and persistence/restart result. WSL needs its own graphical smoke test. A configured
-CI matrix is not evidence of completed platform runs; outstanding environments must remain explicit.
 
 ## **Appendix: Requirements**
 
@@ -1533,6 +1518,8 @@ They are not prerequisites for testing the released JAR.
 6. Return the unit with `loans return uuid/UUID returned/DATE condition/GOOD`, then run the deletion again.
    **Expected:** A retained deleted member with the same NUS ID, contacts and completed history. The
    record remains in `member list` and `member search status/deleted`. New loans to it are rejected.
+   Deleting a member does not select them automatically; an existing selection is retained if still
+   in the results. An active-only search removes the deleted member from its results.
 7. Repeat deletion, then try an edit while deleted. **Expected:** Both reject without changing data.
    Run `member restore nus/A8400001X`. **Expected:** The same identity, details and history become active;
    a new loan to the member is permitted. Restoring again or restoring a nonexistent ID rejects.
