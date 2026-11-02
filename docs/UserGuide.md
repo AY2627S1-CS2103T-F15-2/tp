@@ -556,6 +556,9 @@ Use the full displayed category and name, without adding quotation marks. Matchi
 normalizes whitespace, just like grouping; it is not a substring search. Both fields are required.
 The group table initially shows matching units without selecting one. A group outside the active
 filter can still open; **Show all units** reveals its retained units. No group is selected arbitrarily.
+Success reports the group in its stored spelling, such as
+`Viewing equipment group: "Photography" / "Camera".`, even when you typed `category/PHOTOGRAPHY name/camera`.
+An unknown pair is reported as you typed it, such as `No equipment group "Photography" / "Cam" exists.`
 
 To open a physical unit, type `equipment view uuid/` and the beginning of its UUID, then press Tab.
 Cycle through matching full UUIDs and press Enter separately to open the intended unit. The short labels
