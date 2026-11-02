@@ -1119,6 +1119,7 @@ described in [Completing commands and fields with Tab](#completing-commands-and-
 applicable suggestion it retains normal focus navigation.
 
 **F1** or `help` opens a scrollable command reference with copyable templates and the user-guide link.
+If Help is already open, including when minimized, the same keys restore it and bring it to the front.
 The loan-return template includes `condition/GOOD` as an example of the optional observed return
 condition. Ctrl+Space after `loans return co` also offers `condition/`; omit it to retain the existing
 equipment condition, or supply one of the conditions documented in the loan-return section.
