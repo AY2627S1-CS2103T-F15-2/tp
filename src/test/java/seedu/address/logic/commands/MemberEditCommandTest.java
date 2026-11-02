@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -62,13 +63,29 @@ public class MemberEditCommandTest {
         ModelManager model = new ModelManager();
         model.addMember(ALEX);
         model.addMember(BEN);
-        parse("name/" + BEN.getName() + " phone/" + BEN.getPhone() + " email/" + BEN.getEmail()).execute(model);
+        CommandResult result = parse("name/" + BEN.getName() + " phone/" + BEN.getPhone()
+                + " email/" + BEN.getEmail()).execute(model);
         Member edited = model.findMember(ALEX.getNusId()).orElseThrow();
         assertEquals(BEN.getName(), edited.getName());
         assertEquals(BEN.getPhone(), edited.getPhone());
         assertEquals(BEN.getEmail(), edited.getEmail());
         assertEquals(2, model.getMemberList().size());
         assertEquals(BEN, model.findMember(BEN.getNusId()).orElseThrow());
+        assertEquals(String.format(MemberEditCommand.MESSAGE_SUCCESS, ALEX.getNusId(), BEN.getName())
+                + "\nPossible duplicate(s): " + BEN.getNusId()
+                + ". Distinct identities are retained; review these records.", result.getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_noActiveMatch_omitsPossibleDuplicateWarning() throws Exception {
+        ModelManager model = new ModelManager();
+        model.addMember(ALEX);
+        model.addMember(new Member(BEN.getNusId(), BEN.getName(), BEN.getPhone(), BEN.getEmail(), true));
+        CommandResult distinct = parse("phone/98765432").execute(model);
+        assertEquals(String.format(MemberEditCommand.MESSAGE_SUCCESS, ALEX.getNusId(), ALEX.getName()),
+                distinct.getFeedbackToUser());
+        CommandResult deletedMatch = parse("email/" + BEN.getEmail()).execute(model);
+        assertFalse(deletedMatch.getFeedbackToUser().contains("Possible duplicate"));
     }
 
     @Test
