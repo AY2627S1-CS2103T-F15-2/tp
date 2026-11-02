@@ -2,6 +2,8 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.List;
+
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.equipment.Equipment;
@@ -34,17 +36,18 @@ public final class EquipmentBrowseCommand extends Command {
     }
 
     /**
-     * Opens the group and reports it in the stored spelling of its first unit, matching the group header.
+     * Opens the group and reports it in the stored spelling that the group header and list card show.
      *
      * @throws CommandException if no unit belongs to the group; the message repeats the supplied spelling.
      */
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        Equipment first = model.getAddressBook().getEquipmentList().stream()
-                .filter(unit -> InventoryGroups.keyOf(unit).equals(group)).findFirst()
-                .orElseThrow(() -> new CommandException("No equipment group "
-                        + InventoryGroups.label(category, name) + " exists."));
+        List<Equipment> units = InventoryGroups.unitsOf(model.getAddressBook(), group);
+        if (units.isEmpty()) {
+            throw new CommandException("No equipment group " + InventoryGroups.label(category, name) + " exists.");
+        }
+        Equipment first = units.getFirst();
         return new CommandResult("Viewing equipment group: "
                 + InventoryGroups.label(first.getCategory(), first.getName()) + ".",
                 DisplayRequest.equipmentGroup(group));

@@ -62,13 +62,17 @@ public class EquipmentBrowseCommandTest {
     }
 
     @Test
-    public void execute_differentlyCasedUnits_reportsFirstStoredSpelling() throws Exception {
+    public void execute_differentlyCasedUnits_reportsSpellingOfLowestUuidRegardlessOfInsertionOrder()
+            throws Exception {
         ModelManager model = new ModelManager();
         model.addEquipment(new Equipment(new UUID(0, 7), "camera", "photography", Condition.GOOD, ""));
         model.addEquipment(CAMERA);
-        CommandResult result = new EquipmentViewCommandParser().parse("category/Photography name/Camera")
-                .execute(model);
-        assertEquals("Viewing equipment group: \"photography\" / \"camera\".", result.getFeedbackToUser());
+        Command command = new EquipmentViewCommandParser().parse("category/PHOTOGRAPHY name/camera");
+        assertEquals("Viewing equipment group: \"Photography\" / \"Camera\".",
+                command.execute(model).getFeedbackToUser());
+        model.addEquipment(new Equipment(new UUID(0, 0), "CAMERA", "PHOTOGRAPHY", Condition.GOOD, ""));
+        assertEquals("Viewing equipment group: \"PHOTOGRAPHY\" / \"CAMERA\".",
+                command.execute(model).getFeedbackToUser());
         model.addEquipment(new Equipment(new UUID(0, 8), "\"Quoted\" Camera", "Photography", Condition.GOOD, ""));
         CommandResult quoted = EquipmentBrowseCommand.forGroup("photography", "\"quoted\" camera").execute(model);
         assertEquals("Viewing equipment group: \"Photography\" / \"\"\"Quoted\"\" Camera\".",
