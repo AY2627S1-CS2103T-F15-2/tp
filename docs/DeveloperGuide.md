@@ -20,6 +20,22 @@
 * Universal macOS packaging follows Apple's [Mach-O fat binary format](https://github.com/apple-oss-distributions/cctools/blob/main/include/mach-o/fat.h); the wrapper preserves the upstream JavaFX library slices.
 * Command text uses [IBM Plex Mono](https://github.com/IBM/plex) 2.004, copyright IBM Corp., under the SIL Open Font License. The faces and license are in `src/main/resources/fonts`.
 
+### Use of AI tools
+
+Notable uses of AI in the team's project work:
+
+* OpenAI Codex and Anthropic Claude were used for preliminary pull request reviews to identify
+  potential defects and suggest improvements.
+* OpenAI Codex assisted with Developer Guide explanations and PlantUML diagrams, including the
+  equipment directory summary section and its two diagrams. Codex also assisted with preparing
+  this acknowledgement.
+
+This consolidated declaration records the uses above in accordance with the
+[CS2103/T policy on reuse](https://nus-cs2103-ay2627-s1.github.io/website/admin/appendixB-policies.html#policy-on-reuse).
+Each team member is responsible for ensuring that their own AI use is included and for understanding,
+reviewing and validating any AI-assisted work they submit. AI suggestions do not replace human review
+or testing.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Setting up, getting started**
