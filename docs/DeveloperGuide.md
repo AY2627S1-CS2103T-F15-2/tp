@@ -1959,7 +1959,13 @@ They are not prerequisites for testing the released JAR.
 4. Insert a second `"loans": []` property at the root, then separately a second `returnedDate` in a loan.
    **Expected:** Duplicate-field diagnostic and unchanged source bytes. Remove the duplicate and
    verify successful loading/save/reload with the original open/completed history.
-5. Rename a completed loan's `returnedDate` to `returnDate`, then separately `returnCondition` to
+5. In separate copies, set a member's `name` to `""` or `"R@chel"`, then their `phone` to
+   `"+65 8000-0001"` or `"+651234"`.
+   **Expected:** The recovery diagnostic identifies `members[0]` (for the first member) and its NUS ID,
+   and gives the same member name or phone rules as `member add`/`member edit`. Source bytes remain
+   unchanged. Restore valid values and verify loading succeeds. Older saved names containing digits
+   and digit-only phones of at least three digits remain accepted for compatibility.
+6. Rename a completed loan's `returnedDate` to `returnDate`, then separately `returnCondition` to
    `returnCondtion`. **Expected:** `Unknown loan field` and the rejected field name; unchanged bytes.
    Restore correct spellings and verify the completed loan and other records load unchanged.
 

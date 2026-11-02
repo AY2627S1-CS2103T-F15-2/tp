@@ -88,7 +88,7 @@ class JsonAdaptedMember {
                     Name.class.getSimpleName()));
         }
         if (!Name.isValidStoredMemberName(name)) {
-            throw new IllegalValueException(Name.MESSAGE_CONSTRAINTS);
+            throw new IllegalValueException(Name.MEMBER_MESSAGE_CONSTRAINTS);
         }
         Name modelName = Name.fromStoredMember(name);
 
@@ -97,7 +97,7 @@ class JsonAdaptedMember {
                     Phone.class.getSimpleName()));
         }
         if (!Phone.isValidPhone(phone) && !Phone.isValidMemberPhone(phone)) {
-            throw new IllegalValueException(Phone.MESSAGE_CONSTRAINTS);
+            throw new IllegalValueException(Phone.MEMBER_MESSAGE_CONSTRAINTS);
         }
         Phone modelPhone = Phone.fromStoredMember(phone);
 

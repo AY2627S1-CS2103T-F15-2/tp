@@ -16,6 +16,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.model.person.Name;
+import seedu.address.model.person.Phone;
 
 /**
  * Verifies failed conversions identify recoverable records without rewriting input.
@@ -23,6 +25,48 @@ import seedu.address.commons.exceptions.DataLoadingException;
 public class DataLoadingContextTest {
     @TempDir
     public Path directory;
+
+    @Test
+    public void read_invalidMemberName_reportsMemberRulesWithoutRewritingFile() throws Exception {
+        for (String name : List.of("", "R@chel")) {
+            ObjectNode json = RootPersistenceTestData.jsonSnapshot();
+            ObjectNode member = (ObjectNode) json.get("members").get(0);
+            member.put("name", name);
+            assertContext(json, "members[0]", member.get("nusId").asText(), Name.MEMBER_MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
+    public void read_invalidMemberPhone_reportsMemberRulesWithoutRewritingFile() throws Exception {
+        for (String phone : List.of("+65 8000-0001", "+651234")) {
+            ObjectNode json = RootPersistenceTestData.jsonSnapshot();
+            ObjectNode member = (ObjectNode) json.get("members").get(0);
+            member.put("phone", phone);
+            assertContext(json, "members[0]", member.get("nusId").asText(), Phone.MEMBER_MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
+    public void read_legacyMemberContacts_preservesValuesAndLoanReferences() throws Exception {
+        ObjectNode json = RootPersistenceTestData.jsonSnapshot();
+        ObjectNode member = (ObjectNode) json.get("members").get(0);
+        member.put("name", "Member  123");
+        member.put("phone", "123");
+        Path file = directory.resolve("legacy.json");
+        String original = json.toString();
+        Files.writeString(file, original);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+
+        var restored = storage.readAddressBook().orElseThrow();
+
+        assertEquals("Member  123", restored.getMemberList().get(0).getName().fullName);
+        assertEquals("123", restored.getMemberList().get(0).getPhone().value);
+        assertEquals(original, Files.readString(file));
+        storage.saveAddressBook(restored);
+        var reloaded = storage.readAddressBook().orElseThrow();
+        assertEquals(restored.getMemberList(), reloaded.getMemberList());
+        assertEquals(restored.getLoanList(), reloaded.getLoanList());
+    }
 
     @Test
     public void read_malformedDate_identifiesLoanAndRejectedValue() throws Exception {
