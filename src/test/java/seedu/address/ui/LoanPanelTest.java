@@ -151,6 +151,37 @@ public class LoanPanelTest {
     }
 
     @Test
+    public void filters_unicodeOuterWhitespace_matchesCliForBothIdentitiesWithoutMutation() {
+        FxTestUtil.runAndWait(() -> {
+            ModelManager model = new ModelManager(mixedBook(), new UserPrefs());
+            AddressBook before = new AddressBook(model.getAddressBook());
+            LoanPanel panel = panel(model.getAddressBook());
+            TextField member = (TextField) panel.getRoot().lookup("#memberFilter");
+            TextField equipment = (TextField) panel.getRoot().lookup("#equipmentFilter");
+            for (String space : List.of(" ", "\u00a0", "\u202f", "\u2003")) {
+                member.setText(space + FIRST_MEMBER.getNusId() + space);
+                equipment.setText(space + FIRST_UUID + space);
+                assertOpenCount(panel, 1);
+                assertEquals(List.of(FIRST_UUID), equipmentIds(panel, "openLoans"));
+                String completed = ((Label) panel.getRoot().lookup("#closedCount")).getText();
+                assertFalse(completed.equals("0"));
+                var query = assertDoesNotThrow(() -> new AddressBookParser().parseCommand("loans list nus/"
+                        + member.getText() + " uuid/" + equipment.getText()).execute(model))
+                        .getDisplayRequest().getLoanQuery().orElseThrow();
+                assertEquals(query, panel.getQuery());
+                panel.setQuery(query);
+                assertOpenCount(panel, 1);
+                assertEquals(completed, ((Label) panel.getRoot().lookup("#closedCount")).getText());
+                member.setText(space);
+                equipment.setText(space);
+                assertOpenCount(panel, 2);
+                assertEquals("3", ((Label) panel.getRoot().lookup("#closedCount")).getText());
+            }
+            assertEquals(before, model.getAddressBook());
+        });
+    }
+
+    @Test
     public void filters_narrowCurrentAndCompletedLoansByStableIdentities() {
         FxTestUtil.runAndWait(() -> {
             LoanPanel panel = panel(mixedBook());
