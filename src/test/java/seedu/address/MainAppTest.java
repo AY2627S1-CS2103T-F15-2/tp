@@ -11,8 +11,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -108,6 +115,66 @@ public class MainAppTest {
         app.init();
         assertEquals(AppPaths.getPreferencesFilePath(), app.storage.getUserPrefsFilePath());
         assertEquals(AppPaths.getDataFilePath(), app.storage.getAddressBookFilePath());
+    }
+
+    @Test
+    public void initModel_malformedContacts_omitsSourceAndContactsFromLogsButKeepsRecovery() throws Exception {
+        Path file = directory.resolve("malformed.json");
+        String malformed = """
+                {"persons":[],"members":[{"nusId":"A8400001X","name":"Privacy Example",
+                "phone":"91118888","email":"privacy-audit@example.com"}],"equipment":[INVALID],"loans":[]}
+                """;
+        Files.writeString(file, malformed);
+        byte[] before = Files.readAllBytes(file);
+        MainApp app = new MainApp();
+        Storage storage = storage(file);
+        List<LogRecord> records = new ArrayList<>();
+        Handler capture = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                records.add(record);
+            }
+
+            @Override
+            public void flush() {
+            }
+
+            @Override
+            public void close() {
+            }
+        };
+        Logger logger = Logger.getLogger("ab3");
+        Path logFile = directory.resolve("startup.log");
+        FileHandler fileCapture = new FileHandler(logFile.toString());
+        fileCapture.setFormatter(new SimpleFormatter());
+        logger.addHandler(capture);
+        logger.addHandler(fileCapture);
+        try {
+            app.initModel(storage, new UserPrefs());
+            assertNull(app.model);
+            assertNull(app.logic);
+            assertNull(app.ui);
+            FxTestUtil.runAndWait(() -> assertFailedStartupDialog(app, file));
+            app.stop();
+        } finally {
+            logger.removeHandler(capture);
+            logger.removeHandler(fileCapture);
+            fileCapture.close();
+        }
+        assertTrue(records.stream().anyMatch(record -> record.getLoggerName().endsWith(".JsonUtil")
+                && record.getLevel().equals(Level.WARNING)));
+        assertTrue(records.stream().anyMatch(record -> record.getLoggerName().endsWith(".MainApp")
+                && record.getLevel().equals(Level.SEVERE)));
+        SimpleFormatter formatter = new SimpleFormatter();
+        String logged = records.stream().map(formatter::format).collect(java.util.stream.Collectors.joining());
+        String persisted = Files.readString(logFile);
+        for (String sensitive : List.of("Privacy Example", "91118888", "privacy-audit@example.com", "[Source:")) {
+            assertFalse(logged.contains(sensitive), "Persistent diagnostics must omit contact data and JSON excerpts");
+            assertFalse(persisted.contains(sensitive), "The actual log file must omit contact data and JSON excerpts");
+        }
+        assertTrue(logged.contains(file.toString()));
+        assertTrue(persisted.contains(file.toString()));
+        assertArrayEquals(before, Files.readAllBytes(file));
     }
 
     @Test
@@ -207,7 +274,8 @@ public class MainAppTest {
                 }
             }
         });
-        assertThrows(DataLoadingException.class, () -> app.start(primary));
+        DataLoadingException failure = assertThrows(DataLoadingException.class, () -> app.start(primary));
+        assertNotNull(failure.getCause());
         assertNotNull(content.get());
         assertTrue(content.get().contains(file.toAbsolutePath().toString()));
         assertTrue(content.get().contains("preserved"));

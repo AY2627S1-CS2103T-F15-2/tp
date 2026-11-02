@@ -1330,6 +1330,8 @@ Command diagnostics record that input was received and, at detailed log levels, 
 type. They omit raw input and contact values, including rejected input. Existing logs from older
 versions may still contain commands recorded before this change. Logs are diagnostic evidence, not a
 replacement for a known-good data backup.
+Malformed saved-data failures also omit JSON source excerpts and contact values from new log entries;
+use the recovery dialog for the detailed error and repair guidance.
 
 ## FAQ
 

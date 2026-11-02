@@ -67,7 +67,9 @@ public class JsonUtil {
                 throw new IOException("The JSON root must not be null.");
             }
         } catch (IOException e) {
-            logger.warning("Error reading from jsonFile file " + filePath + ": " + e);
+            // Parser messages may embed the JSON source, including member contact details.
+            logger.warning("Could not read JSON file " + filePath
+                    + " (" + e.getClass().getSimpleName() + ").");
             throw new DataLoadingException(e);
         }
 
