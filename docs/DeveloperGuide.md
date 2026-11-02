@@ -29,6 +29,25 @@ Notable uses of AI in the team's project work:
 * @Keegan4 used OpenAI Codex to draft and revise member invariant assertions and regression tests,
   improve Java naming and Javadoc, update User Guide and Developer Guide prose and UML labels,
   and run automated verification and prepare PR review feedback.
+* @ArjoDas used OpenAI Codex and Claude Code to help implement and test the equipment features
+  (UUID-unique equipment list, derived availability, equipment add including batch creation, and
+  equipment maintenance), the retirement of legacy AddressBook commands, and the grouped equipment
+  directory and other UI improvements. They were also used to draft User Guide and Developer Guide
+  sections, PlantUML class and activity diagrams and manual testing steps, to draft PR review comments,
+  and to maintain the contributor instructions in AGENTS.md. All AI-assisted output was reviewed,
+  edited and tested before submission.
+* @isaaaxe used OpenAI Codex to assist with implementing Undo and Redo, including command handling,
+  session history, transaction and persistence behavior, and regression tests. They also used it to
+  understand the project, triage GitHub issues, implement bug fixes, update the User Guide, Developer
+  Guide and UML diagrams, prepare commits and pull requests, track feature-freeze code changes, and
+  review teammates' pull requests. AI-assisted output was reviewed, and relevant automated tests,
+  build checks and documentation checks were run before submission. They remain responsible for
+  understanding, validating and ensuring the correctness of the submitted work.
+* @wtvlol used OpenAI Codex and Claude Code to assist with understanding the codebase, implementing
+  and testing features, investigating and fixing bugs, updating the User Guide, Developer Guide and
+  UML diagrams, and reviewing pull requests. AI-assisted output was reviewed and edited, with relevant
+  tests and checks run before submission. They remain responsible for understanding and validating
+  the submitted work.
 * OpenAI Codex assisted with Developer Guide explanations and PlantUML diagrams, including the
   equipment directory summary section and its two diagrams. Codex also assisted with preparing
   this acknowledgement.
