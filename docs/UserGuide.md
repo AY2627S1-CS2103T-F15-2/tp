@@ -37,7 +37,7 @@ earlier builds may not support every behavior described here. Laplace is a local
    member and an item, issue the item and record its return. Keep the
    [Command summary](#command-summary) as a quick reference; each task links to its detailed section.
 
-[![Equipment view with the Camera group selected, two compact UUID labels, and the available camera's full details](images/BetterUi.png)](images/BetterUi.png)
+[![Equipment view with the Camera group selected, two compact UUID labels, and the available camera's full details](images/Ui.png)](images/Ui.png)
 
 *Equipment view in light mode, using the fictional first-launch samples. The available camera is selected.*
 Open the image to inspect it at full size. Locate these five areas:

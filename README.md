@@ -5,7 +5,7 @@
 
 ![Ui](docs/images/Laplace.png)
 
-![Laplace grouped equipment](docs/images/BetterUi.png)
+![Laplace grouped equipment](docs/images/Ui.png)
 
 
 
