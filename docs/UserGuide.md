@@ -182,8 +182,11 @@ For the first example, the result is `New member added: Jordan Lee (A0678901D)`.
 This example uses an ID absent from the bundled samples. If you have already added it, use another unused NUS ID.
 
 Two members are duplicates **only when their normalized NUS IDs are equal**. Different IDs can share
-a name, phone or email. A duplicate is rejected with a message such as:
+a name, phone or email. An active duplicate is rejected with a message such as:
 `A member with NUS ID A0123456X already exists.`
+If that ID belongs to a deleted member, the rejection identifies it as deleted and says
+`Use member restore nus/A0123456X first.` Restore the retained record, then use `member edit`
+to update its details; re-adding it cannot replace its identity or history.
 
 A different NUS ID sharing a normalized name, phone or email with another **active** member is
 accepted, with a `Possible duplicate(s)` advisory after the success message. Deleted members are

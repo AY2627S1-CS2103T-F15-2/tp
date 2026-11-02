@@ -47,8 +47,26 @@ public class MemberAddCommandTest {
             new MemberAddCommand(duplicate).execute(model);
         });
         assertInstanceOf(DuplicateMemberException.class, error.getCause());
-        assertTrue(error.getMessage().contains("A0123456X"));
+        assertEquals("A member with NUS ID A0123456X already exists.", error.getMessage());
         assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
+    public void execute_duplicateDeletedId_preservesRecordAndExplainsRestore() {
+        ModelManager model = new ModelManager();
+        model.addMember(ALEX);
+        model.deleteMember(ALEX);
+        AddressBook before = new AddressBook(model.getAddressBook());
+        Member replacement = new Member(new NusId("a0123456x"), new Name("Different Name"),
+                new Phone("98765432"), new Email("different@example.com"));
+        CommandException error = assertThrows(CommandException.class, () -> {
+            new MemberAddCommand(replacement).execute(model);
+        });
+        assertEquals("A deleted member with NUS ID A0123456X already exists. "
+                + "Use member restore nus/A0123456X first.", error.getMessage());
+        assertInstanceOf(DuplicateMemberException.class, error.getCause());
+        assertEquals(before, model.getAddressBook());
+        assertTrue(model.findMember(ALEX.getNusId()).orElseThrow().isDeleted());
     }
 
     @Test
