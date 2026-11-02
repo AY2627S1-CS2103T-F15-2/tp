@@ -1350,6 +1350,9 @@ Use case ends.
 * 2c. The supplied details make no change.
     * 2c1. Laplace reports that there is no change to save.
     * Use case resumes at step 1.
+* 3a. The corrected member shares a name, phone number, or email address with an active member under another NUS ID.
+    * 3a1. Laplace also shows a possible-duplicate advisory identifying those records. The member stays saved under the same NUS ID.
+    * Use case ends.
 
 #### UC13: Restore a deleted member or equipment unit
 
@@ -1510,7 +1513,8 @@ They are not prerequisites for testing the released JAR.
    **Expected:** The same member details; exact lookup ignores ID case. A malformed ID or a well-formed
    nonexistent ID is rejected. A partial ID is not a member-view shortcut.
 3. Edit with `member edit nus/A8400001X name/Mary D/O Tan`. **Expected:** New name, same NUS ID and
-   contacts. Add another member with `name/Ravi S/o Kumar` and a distinct valid ID/contact set.
+   contacts. Edit with `member edit nus/A8400001X phone/91234567`. **Expected:** The edit is saved and
+   followed by `Possible duplicate(s): A0123456X`. Add another member with `name/Ravi S/o Kumar` and a distinct valid ID/contact set.
    **Expected:** Case-preserved patronymic token. `name/Ravi w/o Kumar` remains invalid; only standalone
    `s/o` and `d/o` are exceptions. Try `equipment add name/Mic category/Audio condition/GOOD notes/Use w/ XLR`;
    **Expected:** `Unknown parameter: w/` and no equipment added.

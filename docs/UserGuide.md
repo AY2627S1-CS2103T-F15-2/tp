@@ -341,7 +341,10 @@ The NUS ID cannot be changed; open and completed loans remain attached to the sa
 You can edit contact details while the member holds equipment. Matching another member's name
 or contacts does not merge records because NUS IDs identify members.
 
-Success reports `Edited member NUS_ID: NAME.` and opens the updated details. The directory
+Success reports `Edited member NUS_ID: NAME.` and opens the updated details. If the edited
+member then shares a normalized name, phone or email with another **active** member, the same
+`Possible duplicate(s)` advisory as [`member add`](#add-a-member-member-add) follows. The edit has
+been saved; review both records. The directory
 re-evaluates its current filters and sort order. Name then NUS ID is the default ordering; an explicit
 sort such as `sort/id order/desc` remains active. The edited member stays selected when included in
 the filtered results; their details still open if the edit moves them outside those results.
