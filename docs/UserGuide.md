@@ -1064,7 +1064,9 @@ member/equipment links open the exact record.
 ### Browse equipment groups and units
 
 The left equipment directory groups units with the same normalized category and name, including units
-registered in different batches. Open a group with `equipment view category/CATEGORY name/NAME`,
+registered in different batches. Matching ignores case and treats Greek `Σ`, `σ` and `ς` alike in
+both fields, while each unit keeps its stored spelling and UUID.
+Open a group with `equipment view category/CATEGORY name/NAME`,
 a click, **Enter** or **Space**, then select a row in its physical-unit table. Each unit still has its own UUID, condition, notes, holder and lifecycle state.
 
 Group counts distinguish **matching** units from **retained** units. Availability counts exclude deleted

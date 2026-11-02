@@ -11,6 +11,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import seedu.address.commons.util.LaplaceText;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.equipment.Availability;
 import seedu.address.model.equipment.Equipment;
@@ -30,8 +31,8 @@ public final class InventoryGroups {
          * Normalizes a presentation key without changing any stored unit.
          */
         public Key {
-            category = DirectoryQuery.normalize(category);
-            name = DirectoryQuery.normalize(name);
+            category = LaplaceText.caseKey(LaplaceText.normalize(category));
+            name = LaplaceText.caseKey(LaplaceText.normalize(name));
         }
 
         @Override
@@ -98,8 +99,7 @@ public final class InventoryGroups {
         Map<Key, EnumMap<Availability, Integer>> counts = new TreeMap<>(
                 Comparator.comparing(Key::category).thenComparing(Key::name));
         data.getEquipmentList().stream().filter(item -> !item.isDeleted()).filter(eligible).forEach(item -> {
-            Key key = new Key(DirectoryQuery.normalize(item.getCategory()),
-                    DirectoryQuery.normalize(item.getName()));
+            Key key = keyOf(item);
             EnumMap<Availability, Integer> values = counts.computeIfAbsent(key,
                     unused -> new EnumMap<>(Availability.class));
             values.merge(lookup.apply(item.getUuid()), 1, Integer::sum);

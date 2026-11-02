@@ -483,8 +483,11 @@ GUI path when availability can be resolved; it does not describe the retained `s
 <puml src="diagrams/InventoryPlanningActivity.puml" alt="Grouping all equipment units and formatting active availability and retained deletion counts" />
 
 Each group uses a pair of normalized category and name values, keeping the two keys separate even
-when either contains a display separator. `InventoryGroups.group` retains all physical units under each
-key and emits groups in first-match order. For this caller, the all-records query supplies default
+when either contains a display separator. `InventoryGroups.Key` applies whitespace normalization and
+the shared `LaplaceText.caseKey` to both fields, so Greek `Σ`, `σ` and `ς` share a group identity.
+Lookup, grouping and the retained `summarize` helper use the same key without rewriting stored values.
+`InventoryGroups.group` retains all physical units under each key and emits groups in first-match order.
+For this caller, the all-records query supplies default
 category/name/UUID order, so groups appear in category/name order. Other callers can pass a filtered or
 sorted matching list; `group.matching()` records those matches while `group.units()` retains the full
 group. The summary uses the all-records query, so its group counts are independent of search filters.
@@ -1643,6 +1646,11 @@ They are not prerequisites for testing the released JAR.
 3. Inspect the totals after each filter. **Expected:** Equipment Total stays three and active
    availability stays one available, zero assigned and zero unavailable. Filters change matching
    units, not retained totals. Deleted records never inflate active availability.
+4. Add `equipment add name/ΟΣ category/Audio condition/GOOD` and
+   `equipment add name/οσ category/Audio condition/GOOD`. Run
+   `equipment view category/Audio name/οσ`, then repeat with `name/ος` and `name/ΟΣ`.
+   **Expected:** All spellings open one group containing both distinct UUIDs. Repeat
+   `equipment search category/Audio q/ΟΣ` after restart; the same group and stored spellings remain.
 
 ### Tab completion across current commands
 
