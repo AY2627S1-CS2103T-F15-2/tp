@@ -61,6 +61,14 @@ Notable uses of AI in the team's project work:
   PlantUML diagrams and manual testing instructions; run automated checks; prepare commits and pull
   requests; track feature-freeze code changes; and review teammates' pull requests. They remain
   responsible for understanding, reviewing and validating the submitted work.
+* **Nicholas (@kimjunkuno):** I used OpenAI Codex for codebase exploration and planning, drafting
+  and modifying Java implementation and regression tests, automated smoke and beta testing,
+  performance investigation, issue triage and release prioritization. I also used Codex to draft and
+  revise User Guide and Developer Guide prose and PlantUML diagrams, prepare commit messages and pull
+  requests, track feature-freeze LoC changes, and review teammates' pull requests, including drafting
+  and posting review feedback. This assistance included generated code, tests, documentation and
+  review text, as well as running automated tests, build checks and documentation builds. I remain
+  responsible for understanding, reviewing and validating the work I submit.
 * OpenAI Codex assisted with Developer Guide explanations and PlantUML diagrams, including the
   equipment directory summary section and its two diagrams. Codex also assisted with preparing
   this acknowledgement.
