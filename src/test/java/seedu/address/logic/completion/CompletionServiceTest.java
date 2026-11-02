@@ -36,6 +36,26 @@ public class CompletionServiceTest {
     private final ModelManager model = ViewTestData.model();
 
     @Test
+    public void complete_canonicalNameSpellings_preservesCandidateAndReplacementOffsets() {
+        for (String stored : List.of("José Tan", "Jose\u0301 Tan")) {
+            ModelManager data = new ModelManager();
+            data.addMember(new Member(new NusId("A8400001X"), Name.fromStoredMember(stored),
+                    Phone.forMember("91234567"), Email.forMember("jose@example.com")));
+            for (String fragment : List.of("José Ta", "Jose\u0301 Ta", "JOSÉ TA")) {
+                String input = "member edit nus/A8400001X name/" + fragment + " phone/91112222";
+                int caret = input.indexOf(" phone/");
+                Completion completion = service.complete(input, caret, data.getAddressBook()).orElseThrow();
+                assertEquals(List.of(stored), completion.candidates());
+                assertEquals("member edit nus/A8400001X name/" + stored + " phone/91112222",
+                        input.substring(0, completion.start()) + stored + input.substring(completion.end()));
+            }
+            assertEquals(stored, data.getMemberList().getFirst().getName().fullName);
+            String unaccented = "member edit name/Jose Ta";
+            assertTrue(service.complete(unaccented, unaccented.length(), data.getAddressBook()).isEmpty());
+        }
+    }
+
+    @Test
     public void complete_patronymicName_keepsLiteralTokensAndFollowingFields() {
         for (String token : List.of("s/o", "S/O", "d/o", "D/o")) {
             ModelManager data = new ModelManager();

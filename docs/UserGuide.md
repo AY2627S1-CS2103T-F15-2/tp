@@ -243,6 +243,9 @@ Matching ignores case, trims surrounding whitespace and treats runs of whitespac
 For example, `q/ALEX TAN` matches `Alex Tan`. The complete query text must occur within one searchable
 field; it does not search the names of equipment the member holds. Greek `Σ`, `σ` and `ς` are
 case-equivalent. Search does not change stored spelling, correct typos or interpret regular expressions.
+Canonically equivalent accented spellings, such as `José` and `José` (a separate combining accent),
+match the same records and give the same Tab name suggestions. Accents are still significant: `Jose`
+does not match `José`.
 For phone matches, spaces and hyphens in the query are ignored: `q/9123 4567` and
 `q/9123-4567` both match `91234567`. This does not remove punctuation from names or emails.
 All supplied filters must match: `q/alex holding/yes` finds members whose name, NUS ID, phone or email
