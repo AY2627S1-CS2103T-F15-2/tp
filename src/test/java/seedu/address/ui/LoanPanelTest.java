@@ -74,6 +74,8 @@ public class LoanPanelTest {
             assertEquals("No open loans. Available equipment is ready to assign.",
                     openEmpty.getText());
             assertEquals("0", ((Label) panel.getRoot().lookup("#closedCount")).getText());
+            Label closedEmpty = (Label) section(panel, "closedLoans").getChildren().get(0);
+            assertEquals("No completed loans yet.", closedEmpty.getText());
         });
     }
 
@@ -172,6 +174,8 @@ public class LoanPanelTest {
             assertEquals("0", ((Label) panel.getRoot().lookup("#closedCount")).getText());
             emptyOpenLoans = (Label) section(panel, "openLoans").getChildren().get(0);
             assertEquals("No open loans match these filters.", emptyOpenLoans.getText());
+            Label emptyClosedLoans = (Label) section(panel, "closedLoans").getChildren().get(0);
+            assertEquals("No completed loans match these filters.", emptyClosedLoans.getText());
         });
     }
 
