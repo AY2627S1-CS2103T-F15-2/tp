@@ -24,6 +24,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.query.DirectoryQuery;
+import seedu.address.model.query.InventoryGroups;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -90,6 +91,43 @@ public class DirectorySearchIntegrationTest {
         assertEquals(1, storage.saves);
         assertTrue(java.util.Arrays.equals(saved, Files.readAllBytes(storage.getAddressBookFilePath())));
         assertEquals("ΝΙΚΟΣ", reloaded.getMemberList().getFirst().getName().fullName);
+    }
+
+    @Test
+    public void browse_sigmaVariantsAfterReload_keepsOneGroupAndDistinctUnitsWithoutSaving() throws Exception {
+        ModelManager model = new ModelManager();
+        CountingStorage storage = new CountingStorage(directory);
+        LogicManager logic = new LogicManager(model, storage);
+        logic.execute("equipment add name/ΟΣ category/Audio condition/GOOD");
+        String firstUuid = model.getEquipmentList().getFirst().getUuid().toString();
+        String feedback = logic.execute("equipment add name/οσ category/Audio condition/DAMAGED").getFeedbackToUser();
+        assertTrue(feedback.contains("Possible duplicate(s): " + firstUuid));
+        ModelManager reopened = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        LogicManager reader = new LogicManager(reopened, storage);
+        AddressBook before = new AddressBook(reopened.getAddressBook());
+        byte[] saved = Files.readAllBytes(storage.getAddressBookFilePath());
+        storage.fail = true;
+        var units = reopened.getEquipmentList();
+        assertNotEquals(units.get(0).getUuid(), units.get(1).getUuid());
+        assertEquals(List.of("ΟΣ", "οσ"), units.stream().map(unit -> unit.getName()).toList());
+        for (String spelling : List.of("ΟΣ", "οσ", "ος")) {
+            var result = reader.execute("equipment view category/Audio name/" + spelling);
+            assertEquals(DisplayRequest.equipmentGroup(InventoryGroups.keyOf(units.getFirst())),
+                    result.getDisplayRequest());
+            DirectoryQuery query = reader.execute("equipment search category/Audio q/" + spelling)
+                    .getDisplayRequest().getQuery().orElseThrow();
+            var groups = InventoryGroups.group(reopened.getAddressBook(),
+                    query.equipment(reopened.getAddressBook(), reopened::getAvailability));
+            assertEquals(1, groups.size());
+            assertEquals(units, groups.getFirst().units());
+            assertEquals(2, groups.getFirst().matching().size());
+        }
+        assertEquals(new InventoryGroups.Key("ΟΣ", "ΟΣ"), new InventoryGroups.Key("οσ", "ος"));
+        assertEquals(1, InventoryGroups.summarize(reopened.getAddressBook(), reopened::getAvailability,
+                unit -> true).size());
+        assertEquals(2, storage.saves);
+        assertEquals(before, reopened.getAddressBook());
+        assertTrue(java.util.Arrays.equals(saved, Files.readAllBytes(storage.getAddressBookFilePath())));
     }
 
     @Test
