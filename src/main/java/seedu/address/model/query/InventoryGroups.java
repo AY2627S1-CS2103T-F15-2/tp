@@ -36,7 +36,7 @@ public final class InventoryGroups {
 
         @Override
         public String toString() {
-            return "\"" + category.replace("\"", "\"\"") + "\" / \"" + name.replace("\"", "\"\"") + "\"";
+            return label(category, name);
         }
     }
 
@@ -61,13 +61,19 @@ public final class InventoryGroups {
         }
 
         /**
-         * Returns a display label that quotes both fields, so a separator inside either field
-         * cannot make two distinct groups look identical.
+         * Returns the group label using the stored spelling of its first unit.
          */
         public String label() {
-            return "\"" + category().replace("\"", "\"\"") + "\" / \""
-                    + name().replace("\"", "\"\"") + "\"";
+            return InventoryGroups.label(category(), name());
         }
+    }
+
+    /**
+     * Returns a display label that quotes both fields, so a separator inside either field
+     * cannot make two distinct groups look identical.
+     */
+    public static String label(String category, String name) {
+        return "\"" + category.replace("\"", "\"\"") + "\" / \"" + name.replace("\"", "\"\"") + "\"";
     }
 
     /**
