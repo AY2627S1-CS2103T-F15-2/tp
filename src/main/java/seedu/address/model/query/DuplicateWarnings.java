@@ -2,6 +2,7 @@ package seedu.address.model.query;
 
 import java.util.List;
 
+import seedu.address.commons.util.LaplaceText;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.equipment.Equipment;
 import seedu.address.model.member.Member;
@@ -25,16 +26,17 @@ public final class DuplicateWarnings {
 
     /** Reports same-type physical units without rejecting legitimate multiple units. */
     public static String equipment(ReadOnlyAddressBook data, Equipment candidate) {
+        InventoryGroups.Key key = InventoryGroups.keyOf(candidate);
         List<String> matches = data.getEquipmentList().stream()
                 .filter(item -> !item.getUuid().equals(candidate.getUuid()))
-                .filter(item -> same(item.getName(), candidate.getName())
-                        && same(item.getCategory(), candidate.getCategory()))
+                .filter(item -> InventoryGroups.keyOf(item).equals(key))
                 .map(item -> item.getUuid().toString()).sorted().toList();
         return warning(matches);
     }
 
     private static boolean same(String first, String second) {
-        return DirectoryQuery.normalize(first).equals(DirectoryQuery.normalize(second));
+        return LaplaceText.caseKey(LaplaceText.normalize(first))
+                .equals(LaplaceText.caseKey(LaplaceText.normalize(second)));
     }
 
     private static String warning(List<String> matches) {

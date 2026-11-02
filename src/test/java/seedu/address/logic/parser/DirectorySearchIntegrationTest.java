@@ -99,7 +99,9 @@ public class DirectorySearchIntegrationTest {
         CountingStorage storage = new CountingStorage(directory);
         LogicManager logic = new LogicManager(model, storage);
         logic.execute("equipment add name/ΟΣ category/Audio condition/GOOD");
-        logic.execute("equipment add name/οσ category/Audio condition/DAMAGED");
+        String firstUuid = model.getEquipmentList().getFirst().getUuid().toString();
+        String feedback = logic.execute("equipment add name/οσ category/Audio condition/DAMAGED").getFeedbackToUser();
+        assertTrue(feedback.contains("Possible duplicate(s): " + firstUuid));
         ModelManager reopened = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
         LogicManager reader = new LogicManager(reopened, storage);
         AddressBook before = new AddressBook(reopened.getAddressBook());

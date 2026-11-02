@@ -486,6 +486,8 @@ Each group uses a pair of normalized category and name values, keeping the two k
 when either contains a display separator. `InventoryGroups.Key` applies whitespace normalization and
 the shared `LaplaceText.caseKey` to both fields, so Greek `Σ`, `σ` and `ς` share a group identity.
 Lookup, grouping and the retained `summarize` helper use the same key without rewriting stored values.
+Equipment duplicate advisories compare those group keys too. Member advisories use the same shared
+case key as member search, preserving the existing identity and deletion eligibility rules.
 `InventoryGroups.group` retains all physical units under each key and emits groups in first-match order.
 For this caller, the all-records query supplies default
 category/name/UUID order, so groups appear in category/name order. Other callers can pass a filtered or
@@ -1647,7 +1649,9 @@ They are not prerequisites for testing the released JAR.
    availability stays one available, zero assigned and zero unavailable. Filters change matching
    units, not retained totals. Deleted records never inflate active availability.
 4. Add `equipment add name/ΟΣ category/Audio condition/GOOD` and
-   `equipment add name/οσ category/Audio condition/GOOD`. Run
+   copy its full UUID. Add `equipment add name/οσ category/Audio condition/GOOD`.
+   **Expected:** The second add succeeds with `Possible duplicate(s): FIRST_UUID`, where `FIRST_UUID`
+   is the copied identity; the two physical units retain distinct UUIDs. Run
    `equipment view category/Audio name/οσ`, then repeat with `name/ος` and `name/ΟΣ`.
    **Expected:** All spellings open one group containing both distinct UUIDs. Repeat
    `equipment search category/Audio q/ΟΣ` after restart; the same group and stored spellings remain.
