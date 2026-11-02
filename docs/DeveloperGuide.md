@@ -1261,8 +1261,6 @@ Use case ends.
 
 1. The EXCO member requests loan history, optionally filtering by member and/or equipment identity text.
 2. Laplace shows matching open and completed loans and their displayed/total counts. Open loans show Overdue or Due today status when applicable.
-3. The EXCO member requests a filter reset.
-4. Laplace shows all retained loans.
 
 Use case ends.
 
@@ -1273,10 +1271,14 @@ Use case ends.
     * Use case resumes at step 1.
 * 2a. No retained loans match the supplied criteria.
     * 2a1. Laplace shows empty matching results with the displayed/total counts and preserves the criteria.
-    * Use case resumes at step 3.
-* 3a. The reset request has extra arguments.
-    * 3a1. Laplace rejects it without changing criteria or records.
-    * Use case resumes at step 3.
+    * Use case continues at step 2b1 if the EXCO member requests a reset; otherwise it ends.
+* 2b. The EXCO member wants to see all retained loans again.
+    * 2b1. The EXCO member requests a filter reset.
+    * 2b2. Laplace shows all retained loans.
+    * Use case ends.
+* 2b1a. The reset request has extra arguments.
+    * 2b1a1. Laplace rejects it without changing criteria or records.
+    * Use case resumes at step 2b1.
 
 #### UC10: Edit equipment details
 
