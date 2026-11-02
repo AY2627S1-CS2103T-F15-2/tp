@@ -151,6 +151,9 @@ public final class CompletionService {
         if (!words.find()) {
             return suggest(caret, caret, "", children.stream(), true);
         }
+        if (caret == words.start()) {
+            return Optional.empty();
+        }
         if (caret <= words.end()) {
             if (caret < words.start()) {
                 return suggest(caret, caret, "", children.stream(), true);
@@ -184,8 +187,9 @@ public final class CompletionService {
             ends.add(matcher.end());
             markers.add(marker);
         }
-        // An empty fragment at a following marker must not replace that untouched field.
-        if (starts.contains(caret)) {
+        // No typed fragment precedes a following word or marker, so leave that token untouched.
+        if (caret < text.length() && isArgumentWhitespace(text.charAt(caret - 1))
+                && !isArgumentWhitespace(text.charAt(caret))) {
             return Optional.empty();
         }
         int tokenStart = caret;

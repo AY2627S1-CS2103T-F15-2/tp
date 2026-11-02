@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
@@ -306,6 +307,35 @@ public class CompletionControllerTest {
             assertThrows(NullPointerException.class, () -> new CompletionController(null, model::getAddressBook));
             assertThrows(NullPointerException.class, () -> new CompletionController(field, null));
             assertThrows(NullPointerException.class, () -> new CommandBox(command -> new CommandResult("OK"), null));
+        });
+    }
+
+    @Test
+    public void tab_caretBeforeUntouchedValueWord_preservesDraftAndDoesNotExecute() {
+        FxTestUtil.runAndWait(() -> {
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("OK");
+            }, () -> ViewTestData.model().getAddressBook());
+            new Scene(new VBox(box.getRoot()));
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            for (String[] example : List.of(
+                    new String[] {"equipment add name/Canon Camera category/Photography", "Camera"},
+                    new String[] {"equipment add notes/Spare lens", "lens"},
+                    new String[] {"member view nus/A0123456X", "view"})) {
+                type(field, example[0]);
+                int caret = example[0].indexOf(example[1]);
+                field.positionCaret(caret);
+                List<KeyEvent> passed = new ArrayList<>();
+                EventHandler<KeyEvent> observeTab = passed::add;
+                field.addEventFilter(KeyEvent.KEY_PRESSED, observeTab);
+                tab(field);
+                field.removeEventFilter(KeyEvent.KEY_PRESSED, observeTab);
+                assertEquals(example[0], field.getText());
+                assertEquals(1, passed.size());
+                assertTrue(executed.isEmpty());
+            }
         });
     }
 
