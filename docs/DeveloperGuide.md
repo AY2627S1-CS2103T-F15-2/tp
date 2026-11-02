@@ -48,6 +48,14 @@ Notable uses of AI in the team's project work:
   UML diagrams, and reviewing pull requests. AI-assisted output was reviewed and edited, with relevant
   tests and checks run before submission. They remain responsible for understanding and validating
   the submitted work.
+* @duynguyen21007 used OpenAI Codex to assist with implementing and testing the shared Laplace argument
+  parser, member/equipment/loan command routing, member and equipment directory components, directory
+  search/filter/sort and inventory planning, Tab-completion improvements, and Apple Silicon JAR
+  packaging. It also helped investigate and fix bugs, including Unicode and patronymic member-name
+  validation and no-argument command handling; draft and revise User Guide and Developer Guide prose,
+  PlantUML diagrams and manual testing instructions; run automated checks; prepare commits and pull
+  requests; track feature-freeze code changes; and review teammates' pull requests. They remain
+  responsible for understanding, reviewing and validating the submitted work.
 * OpenAI Codex assisted with Developer Guide explanations and PlantUML diagrams, including the
   equipment directory summary section and its two diagrams. Codex also assisted with preparing
   this acknowledgement.
