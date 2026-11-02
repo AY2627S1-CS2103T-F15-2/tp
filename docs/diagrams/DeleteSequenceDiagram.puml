@@ -34,6 +34,8 @@ deactivate root
 logic -> command : isTransactional()
 command --> logic : true
 logic -> live : createTransactionSnapshot()
+create candidate
+live -> candidate : ModelManager(records, prefs, history)
 live --> logic : candidate
 logic -> command : execute(candidate)
 activate command
