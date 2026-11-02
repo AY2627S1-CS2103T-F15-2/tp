@@ -137,18 +137,27 @@ public class HelpWindowTest {
 
     @Test
     public void focus_minimizedWindow_restoresIt() {
-        FxTestUtil.runAndWait(() -> {
-            HelpWindow help = new HelpWindow(new Stage());
-            try {
-                help.show();
-                help.getRoot().setIconified(true);
-                help.focus();
-                assertTrue(help.isShowing());
-                assertFalse(help.getRoot().isIconified());
-            } finally {
-                help.hide();
-            }
-        });
+        HelpWindow[] help = new HelpWindow[1];
+        try {
+            FxTestUtil.runAndWait(() -> {
+                help[0] = new HelpWindow(new Stage());
+                help[0].show();
+                help[0].getRoot().setIconified(true);
+            });
+            // Separate FX actions let GTK deliver the native minimize event before the restore, as
+            // happens when a user minimizes the window. Otherwise that late event re-minimizes it.
+            FxTestUtil.runAndWait(() -> help[0].focus());
+            FxTestUtil.runAndWait(() -> {
+                assertTrue(help[0].isShowing());
+                assertFalse(help[0].getRoot().isIconified());
+            });
+        } finally {
+            FxTestUtil.runAndWait(() -> {
+                if (help[0] != null) {
+                    help[0].hide();
+                }
+            });
+        }
     }
 
     @Test
