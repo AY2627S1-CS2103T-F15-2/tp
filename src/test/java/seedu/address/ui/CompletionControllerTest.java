@@ -338,6 +338,28 @@ public class CompletionControllerTest {
     }
 
     @Test
+    public void tab_unicodeCommandSeparators_completesWordsAndPrefixesWithoutExecution() {
+        FxTestUtil.runAndWait(() -> {
+            List<String> executed = new ArrayList<>();
+            CommandBox box = new CommandBox(command -> {
+                executed.add(command);
+                return new CommandResult("OK");
+            });
+            new Scene(new VBox(box.getRoot()));
+            TextField field = (TextField) box.getRoot().lookup("#commandTextField");
+            for (String separator : List.of("\u00a0", "\u2003", "\u202f")) {
+                type(field, "member" + separator + "vi");
+                tab(field);
+                assertEquals("member" + separator + "view", field.getText());
+                type(field, "member view" + separator + "nu");
+                tab(field);
+                assertEquals("member view" + separator + "nus/", field.getText());
+                assertTrue(executed.isEmpty());
+            }
+        });
+    }
+
+    @Test
     public void tab_modifiersAndUnsupportedInput_passThroughWithoutEditing() {
         FxTestUtil.runAndWait(() -> {
             TextField field = new TextField();

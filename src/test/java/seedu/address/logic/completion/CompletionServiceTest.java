@@ -97,6 +97,29 @@ public class CompletionServiceTest {
     }
 
     @Test
+    public void complete_unicodeCommandSeparators_preservesOffsetsAndProducesParsableCommands() {
+        for (String separator : List.of(" ", "\u00a0", "\u2003", "\u202f", "\u0085", "\u3000", "\t")) {
+            String subcommand = "member" + separator + "vi";
+            Completion view = service.complete(subcommand, subcommand.length(), model.getAddressBook()).orElseThrow();
+            assertEquals(List.of("view"), view.candidates());
+            assertEquals("member" + separator + "view", apply(subcommand, view));
+            String prefix = "member" + separator + "view" + separator + "nu";
+            Completion nus = service.complete(prefix, prefix.length(), model.getAddressBook()).orElseThrow();
+            String completed = apply(prefix, nus) + "A0123456X";
+            assertEquals("member" + separator + "view" + separator + "nus/A0123456X", completed);
+            assertDoesNotThrow(() -> new AddressBookParser().parseCommand(completed));
+            String leading = separator + "mem";
+            Completion family = service.complete(leading, leading.length(), model.getAddressBook()).orElseThrow();
+            assertEquals(separator + "member", apply(leading, family));
+        }
+        String mixed = "MEMBERS\u00a0view\u2003nu";
+        Completion completion = service.completeWithDataSource(mixed, mixed.length(), () -> {
+            throw new AssertionError("Command and field vocabulary must not read records");
+        }).orElseThrow();
+        assertEquals("MEMBERS\u00a0view\u2003nus/", apply(mixed, completion));
+    }
+
+    @Test
     public void complete_commandWordsAndSubcommands_usesParserSpellingAndStableOrder() {
         assertCandidates("mem", "member");
         assertCandidates("und", "undo");
