@@ -33,7 +33,8 @@
         "continuous-integration-ci": "Continuous integration (CI)",
         "code-coverage": "Code coverage",
         "repository-wide-checks": "Repository-wide checks",
-        "making-a-release": "Making a release"
+        "making-a-release": "Making a release",
+        "single-jar-distribution": "Single-JAR distribution"
       },
       "headingKeywords": {}
     },
@@ -61,14 +62,13 @@
         "adding-multiple-physical-equipment-units": "Adding multiple physical equipment units",
         "equipment-editing-deletion-and-restoration": "Equipment editing, deletion and restoration",
         "undo-redo-feature": "Undo/redo feature",
-        "completion-execution-details": "Completion execution details",
         "loading-and-compatibility": "Loading and compatibility",
         "atomic-save-access-policy": "Atomic-save access policy",
+        "argument-markers-and-no-argument-validation": "Argument markers and no-argument validation",
         "command-word-aliases-and-casing": "Command-word aliases and casing",
         "batch-loan-validation-diagnostics": "Batch loan validation diagnostics",
         "command-based-loans-filters": "Command-based Loans filters",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
-        "single-jar-distribution": "Single-JAR distribution",
         "appendix-requirements": "Appendix: Requirements",
         "product-scope": "Product scope",
         "user-stories": "User stories",
