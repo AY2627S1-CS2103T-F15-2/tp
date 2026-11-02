@@ -608,7 +608,10 @@ Example: `equipment delete uuid/550e8400-e29b-41d4-a716-446655440000`.
 Soft-delete one exact item **only when it has no open loan**. Its condition does not prevent deletion.
 The unit, UUID, details and closed loans are retained. Feedback includes the identity and name:
 `Deleted equipment UUID: EQUIPMENT_NAME.` The equipment directory appears with its existing filters.
-Deleted units remain visible in all-record lists, labeled `[DELETED]`; active-only searches exclude them.
+Deleted units remain visible in all-record lists: group counts include deleted units, and the unit table
+shows `Deleted` in its Status column when **Show all units in this group, including deleted** is selected.
+Details identify the unit as deleted and show the restore command.
+Active-only searches exclude deleted units.
 They cannot be assigned and are excluded from active availability totals. Group retained counts include them.
 
 | Situation | Result or correction |

@@ -1257,7 +1257,7 @@ Use case ends.
     * 1a1. Laplace explains that no undo is available and leaves the data unchanged.
     * Use case ends.
 * 3a. The EXCO member decides the undo was a mistake and requests redo.
-    * The EXCO member performs UC11.
+    * 3a1. The EXCO member performs UC11.
     * Use case ends.
 
 #### UC09: Review and filter loan history
@@ -1743,8 +1743,10 @@ They are not prerequisites for testing the released JAR.
 3. Try `equipment edit uuid/A`, `equipment edit uuid/A name/`, and a no-change edit. **Expected:** an error and no save.
 4. Assign A to an active test member with valid dates. Edit its condition to DAMAGED: **Expected:** ASSIGNED until
    return, then UNAVAILABLE. Attempt deletion while assigned: **Expected:** refusal and no record/history changes.
-5. Return A, then `equipment delete uuid/A`. **Expected:** a retained `[DELETED]` row in `equipment list`, no new
-   loans permitted, and exclusion from active search/inventory totals. `equipment search status/deleted`
+5. Return A, then `equipment delete uuid/A`. **Expected:** the retained unit contributes to its group
+   deleted count in `equipment list`; open the group and include deleted units to see `Deleted` in the Status column.
+   Details identify deleted equipment and show the restore command. No new loans are permitted, and the unit is
+   excluded from active search/inventory totals. `equipment search status/deleted`
    should find it. Restart: the flag, UUID, details and closed loan records must remain in the saved data.
 6. Try editing/deleting A again: **Expected:** rejection. Run `equipment restore uuid/A`: **Expected:** the same UUID
    and details, still DAMAGED/UNAVAILABLE. Repeating restore is rejected. Repair with an edit to GOOD and
