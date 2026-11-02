@@ -30,6 +30,8 @@ earlier builds may not support every behavior described here. Laplace is a local
 5. On the first launch without a saved data file, Laplace provides sample records. Existing saved data
    takes precedence; restarting does not add another set of samples.
    Try the [sample-record walkthrough](#sample-records-on-first-launch) to explore without changing them.
+   Before entering real records, follow [Start with an empty dataset](#start-with-an-empty-dataset)
+   if you do not want to keep the samples.
 6. Type `member list` in the command box and press **Enter**. Try `equipment list`, then `loans list`
    to open each directory and the current-loans tab.
 7. Use `help` or **F1** to open Help, and `exit` to close the application normally.
@@ -105,7 +107,7 @@ Help, usage messages, Tab and Ctrl+Space suggestions use the canonical `member`,
   [advanced input reference](#advanced-input-reference).
 - Use the full field names: `nus/`, `name/`, `phone/` and `email/`. Short alternatives are not accepted.
 - `member list` and `equipment list` take no arguments. `loans list` accepts optional identity filters;
-  `loans reset` takes no arguments. Extra text and unsupported prefixes are rejected.
+  `loans reset` takes no arguments. Text before the first parameter and unsupported prefixes are rejected.
 - `undo`, `redo`, `help` and `exit` also take no arguments. For example, `exit extra` reports
   `This command takes no arguments.` and keeps Laplace open; `help extra` does not open Help.
 - An empty or whitespace-only submission does nothing.
@@ -658,9 +660,12 @@ both with `loans list nus/ uuid/`. Commands update the visible filter fields and
 to those fields take effect immediately and remain active through navigation and mutations.
 The summary shows displayed versus total counts in both sections so hidden records remain apparent.
 
-Unknown/repeated parameters and extra text are rejected with usage guidance, leaving the view and
-filters unchanged. Use `loans reset` without parameters. For example, `loans list nus/a nus/b` and
-`loans reset uuid/anything` are errors.
+Unknown/repeated parameters and text before the first parameter are rejected with usage guidance,
+leaving the view and filters unchanged. Text after a parameter belongs to its value until the next
+parameter marker. For example, `loans list nus/A0123456X extra` searches for the entire substring
+`A0123456X extra`; if no identity matches, both sections show no matching loans rather than an error.
+`loans list extra nus/A0123456X` is an error. Use `loans reset` without parameters:
+`loans list nus/a nus/b` and `loans reset uuid/anything` are also errors.
 
 ### Assign equipment: `loans add`
 
@@ -853,7 +858,10 @@ Undoing equipment creation removes those units; redoing it restores their origin
 
 Success reports the action, for example `Undid: equipment add.`. If none is available, the error is
 `Nothing to undo.`. Undo takes no arguments: `undo 2` is rejected. The current screen refreshes while
-preserving search criteria; if the displayed record no longer exists, its directory appears instead.
+preserving search criteria. If the displayed member or physical unit no longer exists, its directory
+appears instead. If undo removes the last unit in the displayed equipment group, the group panel stays
+open with `Equipment group no longer exists`. Use **Back to results** or `equipment list` to return
+to the directory.
 Active filters can hide restored records; use the directory's list command to reset the search.
 
 ### Redo an undone change: `redo`
@@ -916,10 +924,10 @@ on or after 20 September 2026; choose valid actual dates for your own operation.
 | Phone `phone/` | Optional `+`, then 8–15 digits. Spaces and hyphens are removed: `+65 9123-4567` becomes `+6591234567`. |
 | Email `email/` | 3–254 characters using English letters, digits and the punctuation described in the [exact email rules](#exact-text-and-character-rules). Include one `@`, a dotted domain and no spaces. Stored lowercase. |
 | Equipment UUID `uuid/` | Copy the full identifier from the item's details, e.g. `550e8400-e29b-41d4-a716-446655440000`, or use Tab to complete it. Shortened identifiers and the short labels in unit tables are rejected. |
-| Equipment name `name/` | 1–100 printable characters; punctuation and model numbers are allowed. |
-| Category `category/` | 1–50 printable characters; choose a useful description such as `Photography`. |
+| Equipment name `name/` | 1–100 printable characters; punctuation and model numbers are allowed, except reserved parameter-like slash tokens after whitespace (e.g. `f/2.8` or `A/V`). Use `f2.8` or `AV` instead; quoting and escaping are unavailable. |
+| Category `category/` | 1–50 printable characters; choose a useful description such as `Photography`. Reserved parameter-like slash tokens after whitespace are rejected; use `AV` instead of `A/V`. |
 | Condition `condition/` | `GOOD`, `FAIR`, `DAMAGED` or `UNDER_REPAIR`, in any letter case. Use the underscore in `UNDER_REPAIR`. |
-| Notes `notes/` | Optional, up to 300 printable characters after trimming outside spaces. Line breaks become spaces; omitted or empty notes mean no notes. |
+| Notes `notes/` | Optional, up to 300 printable characters after trimming outside spaces. Line breaks become spaces; omitted or empty notes mean no notes. Reserved parameter-like slash tokens after whitespace are rejected; use `not applicable` instead of `N/A`. |
 | Dates | A real date in `yyyy-MM-dd` form, e.g. `2026-10-15`. Assignment and actual-return dates cannot be in the future; expected return can. |
 
 Copy the actual UUID displayed by Laplace when issuing, viewing, returning or deleting equipment.
@@ -936,6 +944,9 @@ in the commands above are enough to get started.
   `notes/` or `unknown/` is reserved as a marker. Unknown markers are errors, even inside free text.
   The exceptions are standalone `s/o` and `d/o`, ignoring case: `name/Ravi s/o Kumar` is valid.
   Other tokens remain reserved: `notes/Use w/ XLR cable` is rejected as `Unknown parameter: w/`.
+  This also affects equipment names, categories and notes: `name/Canon f/2.8 Lens`,
+  `category/HDMI A/V` and `notes/Serial N/A` are rejected. Use `f2.8`, `AV` and `not applicable` instead.
+  A slash inside the first word of a value, such as `name/AC/DC Adapter`, is accepted.
   There is no quoting or escaping. An ordinary URL such as `https://example.com` is not a marker.
 
 ### Exact text and character rules
@@ -1260,6 +1271,30 @@ To explore samples while resolving the problem, copy **only the JAR** into a sep
 folder and launch that copy. Its own missing data file causes a fresh fictional sample set to load.
 This does not restore your records. Launching the original JAR from another terminal folder still uses
 the original JAR's data path. Do not overwrite the preserved file with empty JSON or sample records.
+The [empty-dataset setup](#start-with-an-empty-dataset) below is only for a deliberate fresh start,
+not recovery of existing records.
+
+### Start with an empty dataset
+
+Before entering real records, you can replace the fictional samples with an empty dataset:
+
+1. Close Laplace. If you have already entered records you want to keep, keep that dataset and use a
+   separate folder containing only a copy of the JAR for this fresh start. Back up any existing
+   `data/addressbook.json` before replacing it.
+2. In the JAR's folder, create the `data` subfolder if needed. Create or replace `data/addressbook.json`
+   with a UTF-8 text file containing exactly:
+
+   ```json
+   {"persons":[]}
+   ```
+
+3. Relaunch the JAR. The valid empty file takes precedence over samples; `member list`,
+   `equipment list` and `loans list` show empty directories. You can now enter your own records.
+
+Replacing this file discards the records in that dataset unless you kept a backup. It is not a
+recovery procedure or a way to remove only samples from a mixed dataset. `member delete` and
+`equipment delete` retain deleted records, their reserved identities and loan history; they do not
+permanently remove samples. There is no bulk-clear command.
 
 ### Advanced: manual editing and compatibility
 
