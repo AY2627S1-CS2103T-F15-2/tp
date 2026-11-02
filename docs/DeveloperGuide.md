@@ -932,6 +932,37 @@ retains the parser's duplicate-field name and location. Reading a rejected file 
 markers elsewhere. Strict root and duplicate-property validation still apply. Stored string contents
 are preserved. See the [manual design contract checks](#design-contract-checks) for disposable-file checks.
 
+### Known validation and feedback limits
+
+This release intentionally retains a narrower validation boundary for manually edited files than
+for commands. The loader checks JSON structure, stored field validity, identity uniqueness, loan
+references and duplicate open loans. It does not rerun every command-time normalization or chronology
+check. This preserves supported legacy values and avoids treating storage conversion as a replay of
+user commands; it does not establish that every accepted dataset is internally consistent.
+
+The following issues are documented without changing production behavior:
+
+| Issue | Retained behavior and operator guidance |
+| --- | --- |
+| [#403](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/403): formatted stored phones | `Phone.forMember` removes spaces/hyphens for commands, whereas `JsonAdaptedMember` and `Phone.fromStoredMember` expect a supported stored representation. Use normalized phone strings when editing JSON; retain acceptance of previously valid legacy strings. |
+| [#405](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/405): email local-part dots | `Email.isValidMemberEmail` accepts leading and consecutive dots in the local part. This affects command input as well as loading; it is not solely a manual-edit limitation. Operators must check contact addresses. Tightening validation would also require a deliberate compatibility policy for saved records. |
+| [#406](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/406): compact feedback | The collapsed Last result box can partially hide multiline usage guidance at the default size. Scrolling or Details exposes the complete message. This normal-use display limitation is separate from loading validation. |
+| [#408](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/408): overlapping history | `UniqueLoanList` rejects duplicate open loans but does not validate overlap between open/completed or completed/completed loans for a UUID. Commands enforce availability and the latest-return boundary. Manual edits require chronological review, allowing return and reassignment on the same day. |
+
+These are explicit release limitations, not equivalent to implementing the requested fixes or proving
+that accepted data is correct. Keep the existing rejection checks and whole-load failure behavior.
+See the UG's [manual editing guidance](UserGuide.md#advanced-manual-editing-and-compatibility) and
+[feedback guidance](UserGuide.md#read-command-feedback).
+
+Manual documentation checks:
+
+1. Compare formatted phone input through `member edit` with the normalized phone stored in JSON;
+   verify that the UG distinguishes command normalization from supported stored values.
+2. Check that the email limitation explicitly applies to commands as well as manual edits.
+3. Read a multiline rejected-command result through scrolling or Details.
+4. Review the overlap example in #408 against the stated loading boundary. Do not treat successful
+   loading as validation of manually edited history; retain same-day return/reassignment guidance.
+
 ### Atomic-save access policy
 
 `AtomicFileWriter` creates an empty sibling candidate and restricts its POSIX mode or ACL before
@@ -1475,7 +1506,7 @@ These are acceptance targets for the intended product, not measurements of the c
 1. **NFR01 — Platform compatibility:** The release shall launch and support its documented operations on Windows, Linux, and macOS with Java 25 as the only installed Java version.
 2. **NFR02 — Portable distribution:** The application shall run from a single downloadable JAR without an installer or separate installation of dependencies other than Java. The JAR shall not exceed 100 MB.
 3. **NFR03 — Local operation:** Member, equipment, and loan operations shall work without a network connection, remote server, or external account. Each dataset belongs to one local operator; shared or concurrent access is unsupported.
-4. **NFR04 — Editable storage:** Persistent records shall use local, human-editable text files without a DBMS. Valid edits made while the application is closed shall load on restart; invalid files shall produce a diagnostic rather than be silently accepted.
+4. **NFR04 — Editable storage:** Persistent records shall use local, human-editable text files without a DBMS. Edits made while the application is closed that meet the documented loading rules shall load on restart; failures of those checks shall produce a diagnostic rather than be silently accepted. Loading is not a complete audit of manually edited history; see [known validation and feedback limits](#known-validation-and-feedback-limits).
 5. **NFR05 — Keyboard operation:** Every documented record-management operation shall be completable with keyboard input alone. Users shall not need mouse actions to submit commands, inspect results, or correct input.
 6. **NFR06 — Display compatibility:** At 1920×1080 with 100% or 125% scaling, essential controls and feedback shall not overlap or be clipped. At 1280×720 with 150% scaling, every operation and its result shall remain accessible, using scrolling where necessary.
 7. **NFR07 — Capacity and response time:** With 300 members, 1,000 equipment items, and 2,000 loans on a computer with a four-core CPU, 8 GB RAM, and an SSD, at least 95 of 100 executions of each core add, list, exact lookup, delete, issue, and return operation shall display a result within two seconds of submission. Measure after startup, with valid data and no competing intensive workload; include local saving for mutations. Startup with the same dataset shall complete within ten seconds. Larger datasets are accepted, but response times may exceed this target.

@@ -136,15 +136,20 @@ public class HelpWindowTest {
     }
 
     @Test
-    public void focus_minimizedWindow_restoresIt() {
+    public void focus_minimizedWindow_requestsRestoreAndKeepsItShowing() {
         FxTestUtil.runAndWait(() -> {
             HelpWindow help = new HelpWindow(new Stage());
             try {
                 help.show();
                 help.getRoot().setIconified(true);
+                assertTrue(help.getRoot().isIconified());
+                List<Boolean> iconifiedStates = new ArrayList<>();
+                help.getRoot().iconifiedProperty().addListener((observable, previous, value) ->
+                        iconifiedStates.add(value));
                 help.focus();
                 assertTrue(help.isShowing());
-                assertFalse(help.getRoot().isIconified());
+                // A window manager can reject restoration and immediately report iconified again.
+                assertTrue(iconifiedStates.contains(false), "Focus must request restoration of the minimized stage");
             } finally {
                 help.hide();
             }

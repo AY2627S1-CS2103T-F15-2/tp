@@ -28,6 +28,7 @@ import javafx.event.ActionEvent;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
@@ -1486,15 +1487,19 @@ public class MainWindowShellTest {
         FxTestUtil.runAndWait(() -> {
             window.dispose();
             window.getPrimaryStage().hide();
-            int x = (int) Screen.getPrimary().getVisualBounds().getMinX() + 20;
-            int y = (int) Screen.getPrimary().getVisualBounds().getMinY() + 20;
+            Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+            double width = Math.min(850, bounds.getWidth());
+            double height = Math.min(550, bounds.getHeight());
+            // The entire saved window must fit, including on small or scaled displays.
+            int x = (int) Math.ceil(bounds.getMinX() + Math.min(20, (bounds.getWidth() - width) / 2));
+            int y = (int) Math.ceil(bounds.getMinY() + Math.min(20, (bounds.getHeight() - height) / 2));
             model.setGuiSettings(new GuiSettings(850, 550, x, y));
             window = new MainWindow(new Stage(), logic, temporaryDirectory.resolve("laplace.json"));
             window.fillInnerParts();
             assertEquals(x, window.getPrimaryStage().getX(), 1);
             assertEquals(y, window.getPrimaryStage().getY(), 1);
-            assertEquals(Math.min(850, Screen.getPrimary().getVisualBounds().getWidth()),
-                    window.getPrimaryStage().getWidth(), 1);
+            assertEquals(width, window.getPrimaryStage().getWidth(), 1);
+            assertEquals(height, window.getPrimaryStage().getHeight(), 1);
             window.show();
         });
     }
