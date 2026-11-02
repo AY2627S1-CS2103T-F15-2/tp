@@ -30,7 +30,6 @@ Notable uses of AI in the team's project work:
   regression tests, and to improve Java naming and Javadoc. They also used these tools to edit User
   Guide and Developer Guide prose so that the guides match shipped behavior, and to create and update
   PlantUML diagrams and their UML labels.
-
   They followed AI-suggested workflow steps for planning issues, branching, preparing pull requests
   and running checks before submission. AI also helped them craft commit messages and pull request
   descriptions, prepare PR review feedback, and run automated tests and documentation builds.
