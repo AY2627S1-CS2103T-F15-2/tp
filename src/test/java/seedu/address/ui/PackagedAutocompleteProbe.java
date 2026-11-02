@@ -116,6 +116,23 @@ public final class PackagedAutocompleteProbe {
                 check(before.equals(model.getAddressBook()), "Tab changed stored records");
                 check(logic.commands == 0 && storage.saves == 0, "Tab executed or saved a command");
             }
+            for (String separator : List.of("\u00a0", "\u2003", "\u202f")) {
+                for (String[] example : List.of(
+                        new String[] {"member" + separator + "vi", "member" + separator + "view"},
+                        new String[] {"member view" + separator + "nu", "member view" + separator + "nus/"},
+                        new String[] {"member" + separator + "view" + separator + "nu",
+                            "member" + separator + "view" + separator + "nus/"})) {
+                    field.setText(example[0]);
+                    field.positionCaret(field.getLength());
+                    AddressBook before = new AddressBook(model.getAddressBook());
+                    press(field, KeyCode.TAB, false);
+                    check(example[1].equals(field.getText()), "Unicode command headers must complete");
+                    check(before.equals(model.getAddressBook()), "Header completion changed records");
+                    check(logic.commands == 0 && storage.saves == 0, "Header completion executed or saved");
+                    session.add(String.format("HEADER SEPARATOR U+%04X: %s", (int) separator.charAt(0),
+                            field.getText()));
+                }
+            }
             for (String separator : List.of("\u2003", "\u00a0", "\u202f", "\u3000")) {
                 String input = "member edit name/Alex" + separator + "phone/91234567"
                         + separator + "email/alex@example.com";
