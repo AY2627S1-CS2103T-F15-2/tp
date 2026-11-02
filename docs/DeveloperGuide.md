@@ -55,11 +55,13 @@ The bulk of the app's work is done by the following four components:
 
 **How the architecture components interact with each other**
 
-The *Sequence Diagram* below traces `member delete nus/A0123456X` for an active member without
-open loans. Logic parses the command, changes an isolated candidate, saves it atomically and then
-publishes to the live model. Failures before publication leave live records unchanged.
+The *Sequence Diagram* below summarizes component responsibilities for deleting an active member
+without open loans. Model represents both the isolated pending state and the live records. Logic
+coordinates validation, atomic saving and publication; failures before publication leave live records
+unchanged. Messages summarize responsibilities rather than individual API calls. The
+[Logic component](#logic-component) expands the parser, command and candidate-creation interaction.
 
-<puml src="diagrams/ArchitectureSequenceDiagram.puml" alt="Member deletion across UI, Logic, candidate model and atomic storage" />
+<puml src="diagrams/ArchitectureSequenceDiagram.puml" alt="Component responsibilities across UI, Logic, Model and Storage" />
 
 [Open full-size diagram](diagrams/ArchitectureSequenceDiagram.png)
 
@@ -225,6 +227,7 @@ The sequence below expands `member delete nus/A0123456X`: `AddressBookParser` de
 and retained history. Deletion is blocked when the member has open loans. `LogicManager` records the
 change and saves before publishing; the result requests the Members directory through `DisplayRequest`.
 The storage lifeline abbreviates `StorageManager`, JSON serialization and `AtomicFileWriter`.
+The candidate's lifeline starts when the live model constructs its isolated `ModelManager` snapshot.
 
 <puml src="diagrams/DeleteSequenceDiagram.puml" alt="Member delete family and leaf parsing, candidate execution, save and publication" />
 
