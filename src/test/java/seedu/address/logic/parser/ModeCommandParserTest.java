@@ -22,7 +22,8 @@ class ModeCommandParserTest {
         GuiSettings original = new GuiSettings(1100, 700, 20, 30);
         model.setGuiSettings(original);
         AddressBook before = new AddressBook(model.getAddressBook());
-        for (String input : List.of("mode dark", "mode light", "MODE DARK", "Mode Light", " mode \t dark \n")) {
+        for (String input : List.of("mode dark", "mode light", "MODE DARK", "Mode Light", " mode \t dark \n",
+                "mode\u00a0dark", "mode\u2003light", "mode\u202fDARK", "mode \u00a0light\u202f")) {
             var command = new AddressBookParser().parseCommand(input);
             assertTrue(command.isReadOnly());
             assertEquals(DisplayRequest.unchanged(), command.execute(model).getDisplayRequest());
@@ -34,7 +35,8 @@ class ModeCommandParserTest {
 
     @Test
     void parse_invalidModes_rejectMissingExtraAndUnsupportedArguments() {
-        for (String input : List.of("mode", "mode sepia", "mode dark light", "mode dark extra/yes")) {
+        for (String input : List.of("mode", "mode sepia", "mode dark light", "mode dark extra/yes",
+                "mode\u00a0", "mode da\u00a0rk", "mode dark\u2003light")) {
             assertThrows(ParseException.class, () -> new AddressBookParser().parseCommand(input));
         }
     }
