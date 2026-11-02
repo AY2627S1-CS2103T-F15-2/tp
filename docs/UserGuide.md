@@ -1150,8 +1150,11 @@ it and use the arrow, Page Up/Down, Home and End keys, to reach all entries with
 successful command, a red box is an error, and the box is neutral before the first command.
 The heading displays only **Last result**; assistive text includes the status and full message.
 **Details** expands the complete feedback and **Copy** includes all UUIDs from batch creation.
-Feedback starts as one compact line. In short windows, tighter spacing gives more room to the
-directories and Loans; scroll within those views to reach further records and controls.
+Feedback starts as one compact line. At the default window size, a multiline error can show only part
+of its usage guidance ([#406](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/406)). Scroll within
+the result box or open **Details** to read the complete message before correcting the command.
+In short windows, tighter spacing gives more room to the directories and Loans; scroll within those
+views to reach further records and controls.
 
 ### Keyboard controls and Help
 
@@ -1335,8 +1338,10 @@ permanently remove samples. There is no bulk-clear command.
 
 ### Advanced: manual editing and compatibility
 
-Correct manual edits to the local JSON file are supported: Laplace loads data that meets its JSON,
-field, identity and cross-record validation rules. Prefer normal commands for routine changes.
+Correct manual edits to the local JSON file are supported within the loading rules below. Loading
+checks JSON structure, supported stored field values, identity uniqueness and loan references, but
+does not repeat every command-time check or establish that all recorded history is consistent.
+Prefer normal commands for routine changes.
 Close Laplace, back up the file and edit a disposable copy first, keeping valid JSON and every required
 reference. Check the edited copy with a compatible JAR in its own folder before installing it in the
 original location. Changing a member NUS ID or equipment UUID without updating all loan references
@@ -1347,13 +1352,39 @@ Saving writes ordinary UTF-8 without a BOM. Embedded text characters are preserv
 misplaced markers and genuinely malformed JSON remain invalid. A marker does not permit a null
 root or content after the single JSON root; both are rejected without changing the saved bytes.
 
-Invalid data is rejected as a complete load, without replacing the file with samples or an empty book.
+Data that fails these loading checks is rejected as a complete load, without replacing the file with
+samples or an empty book.
 Examples include a JSON `null` root, non-whitespace content after the root object, duplicate identities,
 missing loan references and invalid field values. For conversion/reference errors, loading diagnostics
 identify the collection, zero-based record position and available NUS ID/UUID. Keep the diagnostic
 when asking the team for help. If a view reports inconsistent data after loading, stop making changes,
 close the app and preserve the file for investigation; an incomplete view is not evidence that the
 remaining data is safe to overwrite.
+
+**Known validation limits**
+
+Loading deliberately preserves supported legacy stored values rather than applying all new-input
+normalization and validation rules. Manual file editing therefore has fewer consistency safeguards
+than normal commands. Successful loading is not a complete audit of manually edited data.
+
+* **Stored phone formatting ([#403](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/403)):**
+  Spaces and hyphens are removed by member add/edit commands, not by the file loader. In JSON, use
+  the normalized form, such as `+6580000001`, rather than `+65 8000-0001`; the latter fails loading.
+  Previously supported legacy phone values remain accepted.
+* **Email syntax ([#405](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/405)):**
+  Validation checks the documented character and domain rules, but accepts a local part beginning
+  with a dot or containing consecutive dots, such as `.a@b.co` or `a..b@b.co`. This also affects
+  member add/edit commands. Acceptance does not verify that an address can receive mail; check and
+  correct contact addresses before using them.
+* **Loan chronology ([#408](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues/408)):**
+  Loading rejects multiple open loans for one equipment UUID, but does not detect overlapping
+  open/completed or completed/completed loan periods for that UUID. Commands prevent assignment
+  while a unit is on loan and reject assignment before its latest recorded return. When editing
+  history manually, check that each assignment is on or after the preceding return; an open loan
+  must follow all completed loans for that unit. A return and reassignment on the same date are allowed.
+
+These are known limits retained in this release, not a guarantee that accepted records are correct.
+Keep a known-good backup and verify manually edited records before issuing or returning equipment.
 
 Saved loan fields are `equipmentUuid`, `memberNusId`, `assignedDate`, `expectedReturnDate`,
 `returnedDate`, `issueCondition` and `returnCondition`. Unknown loan fields are rejected so misspelled
