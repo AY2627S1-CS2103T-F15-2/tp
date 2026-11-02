@@ -7,7 +7,7 @@
 
 We are a team based in the [School of Computing, National University of Singapore](http://www.comp.nus.edu.sg).
 
-You can reach us at the email `seer[at]comp.nus.edu.sg`
+You can reach us through the [team issue tracker](https://github.com/AY2627S1-CS2103T-F15-2/tp/issues).
 
 ## Project team
 
@@ -28,7 +28,7 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[github](https://github.com/wtvlol)]
 
 * Role: CS2103T Team Member
-* Responsibilities: Some Features
+* Responsibilities: Tab autocomplete, member and equipment deletion, Unicode command input, release packaging
 
 ### Arjo
 
@@ -58,7 +58,7 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[github](https://github.com/isaaaxe)]
 
 * Role: Integration, Fork CEO
-* In charge of: Undo, 
+* In charge of: Undo and redo, loan assignment and returns, data-file validation
 
 ### Nguyen Anh Duy
 
@@ -67,4 +67,4 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 [[github](http://github.com/duynguyen21007)]
 
 * Role: Testing
-* In charge of: Some features
+* In charge of: Directory search, filtering and sorting, command parsing, member name validation
