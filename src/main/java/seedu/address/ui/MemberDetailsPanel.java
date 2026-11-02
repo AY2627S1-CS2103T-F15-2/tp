@@ -134,11 +134,11 @@ public class MemberDetailsPanel extends UiPart<Region> {
         holdings.setId("holdings");
         holdings.setMinWidth(0);
         content.getChildren().add(holdings);
-        loans.stream().sorted(Comparator.comparing(Loan::getExpectedReturnDate)
+        List<Loan> orderedLoans = loans.stream().sorted(Comparator.comparing(Loan::getExpectedReturnDate)
                 .thenComparing(loan -> LaplaceText.normalize(holdingEquipment(loan).getName())
                         .toLowerCase(Locale.ROOT))
-                .thenComparing(loan -> loan.getEquipmentUuid().toString()))
-                .forEach(loan -> addHolding(holdings, holdingEquipment(loan), loan));
+                .thenComparing(loan -> loan.getEquipmentUuid().toString())).toList();
+        LoanRows.show(holdings, orderedLoans, loan -> holdingRow(holdingEquipment(loan), loan));
         LoanHistoryContent.add(content, data.getLoanList().stream()
                 .filter(loan -> loan.getMemberNusId().equals(selectedNusId)).toList());
     }
@@ -151,7 +151,10 @@ public class MemberDetailsPanel extends UiPart<Region> {
                 .findFirst().orElseThrow();
     }
 
-    private void addHolding(VBox holdings, Equipment item, Loan loan) {
+    /**
+     * Creates one visible holding with its matching equipment identity, dates and navigation action.
+     */
+    private VBox holdingRow(Equipment item, Loan loan) {
         VBox row = new VBox(6);
         row.setMinWidth(0);
         row.getStyleClass().add("details-holding");
@@ -173,6 +176,6 @@ public class MemberDetailsPanel extends UiPart<Region> {
         }
         field(row, "assignedDate", "Assigned", loan.getAssignedDate());
         field(row, "expectedReturnDate", "Expected return", loan.getExpectedReturnDate());
-        holdings.getChildren().add(row);
+        return row;
     }
 }

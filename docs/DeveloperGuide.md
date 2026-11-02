@@ -102,6 +102,9 @@ Equipment groups are derived from category and name. Each group retains its dist
 selecting a group does not select an arbitrary unit. Member and equipment details link to related
 records through identity-based commands. `LoanPanel` shows open and completed loans and shares its
 identity filters with command-based navigation.
+`MemberDetailsPanel` also uses `LoanRows` for current holdings: at most ten rows stay inline, while
+larger sections use reusable list cells. The sorted loan list retains every UUID and its dates;
+refresh resolves the selected member again without callbacks or record changes.
 
 `CommandPreview` copies text or prepares the command box for review; execution requires Enter.
 Open-loan rows can prepare a return with an optional observed condition. `ResultDisplay` presents a
@@ -1771,6 +1774,11 @@ They are not prerequisites for testing the released JAR.
    details and Loans and scroll to the oldest record. Filter Loans to no matches, then reset.
    **Expected:** All twelve completed records remain accessible and counts return after reset.
    This small manual case checks browsing; it does not establish the NFR07 capacity/timing target.
+5. Assign eleven distinct available units to one test member, then open the member's details.
+   **Expected:** scroll within Current holdings to reach all eleven UUIDs and their View equipment
+   actions, ordered by expected date, name and UUID. Return one unit and reopen the member: ten
+   holdings appear inline, with the returned unit retained in history. Changing members shows only
+   the selected member's holdings. These navigation operations do not change the saved data.
 
 ### Stored loan date validation
 

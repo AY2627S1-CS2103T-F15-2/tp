@@ -309,6 +309,8 @@ Details show the NUS ID, name, phone, email and current held-item count. The **C
 shows each open loan's full equipment UUID, name, assignment date and expected return date. Items are
 ordered by **expected return date, equipment name, then UUID**. Returned items are not current holdings.
 The matching member row is selected when the member list is visible.
+When more than ten units are held, scroll within the holdings list to reach every unit and its
+**View equipment** action. All units remain in the same order.
 
 Example feedback: `Viewing member: Alex Tan (A0123456X). Currently holds N item(s).`
 With no current loans, the holdings section says `This member currently holds no equipment.`

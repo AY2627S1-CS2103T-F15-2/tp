@@ -118,6 +118,11 @@ detail panels. Completion controller/service tests check that static vocabulary 
 collections and that unchanged cycles reuse candidates. These structural checks do not establish the
 NFR07 timing target; that benchmark needs its own repeatable fixture and measured platform results.
 
+`MemberHoldingsCapacityTest` separately creates 1,000 simultaneous current loans for one member.
+It checks bounded controls, complete identity ordering, scrolling to early/middle/last units, navigation,
+refresh after return/reassignment, and the transition between eleven virtualized and ten inline rows.
+The completed-history capacity fixture does not exercise this current-holdings path.
+
 `LaplaceTransactionTest` injects partial temporary-file writes and failed atomic replacements for real
 mutation commands, including assignment and return. It checks unchanged live records, history and
 previous file bytes, then successful retry after the injected failure is removed. Run it with
