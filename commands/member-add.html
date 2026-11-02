@@ -24,7 +24,9 @@
 </span></code></pre><p>Example: <code class="hljs inline no-lang">member add nus/a0123456x name/Anne-Marie Lim phone/+65 9123-4567 email/ANNE@EXAMPLE.COM</code></p> <p>All four fields are required in any order. NUS IDs are stored uppercase and identify a member exactly.
 Names allow 1-100 Unicode code points after whitespace and NFC normalization, with at least one letter.
 Letters may carry combining marks; spaces, straight/curly apostrophes, hyphens, periods and standalone
-<code class="hljs inline no-lang">s/o</code> or <code class="hljs inline no-lang">d/o</code> tokens in any letter case are allowed, such as <code class="hljs inline no-lang">Ravi s/o Kumar</code> or <code class="hljs inline no-lang">Mary D/O Tan</code>.
+<code class="hljs inline no-lang">s/o</code>, <code class="hljs inline no-lang">d/o</code>, <code class="hljs inline no-lang">a/l</code> or <code class="hljs inline no-lang">a/p</code> tokens in any letter case are allowed, such as <code class="hljs inline no-lang">Ravi s/o Kumar</code>,
+<code class="hljs inline no-lang">Mary D/O Tan</code> or <code class="hljs inline no-lang">Muthu a/l Raju</code>. Each connector requires a name containing a letter on both sides;
+connector-only, leading, trailing and adjacent connectors are rejected for new names.
 Combining marks must follow a letter or its marks. For example, <code class="hljs inline no-lang">அருண்</code>, <code class="hljs inline no-lang">Anne O’Connor</code>, and both
 precomposed and decomposed spellings of <code class="hljs inline no-lang">José Tan</code> are accepted. Phone
 whitespace/hyphens are removed, leaving 8-15 digits and an optional leading <code class="hljs inline no-lang">+</code>. Emails follow the MVP
@@ -35,7 +37,7 @@ and <code class="hljs inline no-lang">e/</code> are not member aliases; their se
 atomically saves the candidate, then publishes it through the existing live root. A failed save leaves
 memory and saved records unchanged. The command and member card do not write storage themselves.</p> <p>The route and shell are integrated through merged #95/#93. The member card still uses its existing
 snapshot/callback contract; parent lists own selection, sorting and refresh. Final milestone acceptance
-remains tracked separately in #75.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Mon, 2 Nov 2026, 18:02:34 GMT+8]</small></div></footer><!--]--></div>
+remains tracked separately in #75.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Mon, 2 Nov 2026, 18:45:46 GMT+8]</small></div></footer><!--]--></div>
 </body><script src="/tp/markbind/js/bootstrap-utility.min.js"></script>
 <script src="/tp/markbind/js/polyfill.min.js"></script>
 <script src="/tp/markbind/js/vue.global.prod.min.js"></script>
