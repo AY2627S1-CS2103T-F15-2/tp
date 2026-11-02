@@ -119,7 +119,7 @@ public class JsonAdaptedMemberTest {
         JsonAdaptedMember adaptedMember =
                 new JsonAdaptedMember(VALID_NUS_ID, "R@chel", VALID_PHONE, VALID_EMAIL);
 
-        assertThrows(IllegalValueException.class, Name.MESSAGE_CONSTRAINTS, adaptedMember::toModelType);
+        assertThrows(IllegalValueException.class, Name.MEMBER_MESSAGE_CONSTRAINTS, adaptedMember::toModelType);
     }
 
     @Test
@@ -135,7 +135,7 @@ public class JsonAdaptedMemberTest {
         JsonAdaptedMember adaptedMember =
                 new JsonAdaptedMember(VALID_NUS_ID, VALID_NAME, "+651234", VALID_EMAIL);
 
-        assertThrows(IllegalValueException.class, Phone.MESSAGE_CONSTRAINTS, adaptedMember::toModelType);
+        assertThrows(IllegalValueException.class, Phone.MEMBER_MESSAGE_CONSTRAINTS, adaptedMember::toModelType);
     }
 
     @Test
