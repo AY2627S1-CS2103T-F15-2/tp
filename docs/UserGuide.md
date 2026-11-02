@@ -672,6 +672,8 @@ substring across all equipment; `loans list uuid/400004` searches a unit's entir
 Supply both fields to require both matches. Matching ignores case and surrounding whitespace and
 uses identity substrings, exactly like the panel fields. Partial identities are allowed; names are not
 searched. Filters include retained open and completed history, including records for deleted entities.
+Surrounding Unicode whitespace, including nonbreaking spaces (`U+00A0` and `U+202F`), is ignored in
+both command and panel filters. Spaces inside an identity substring remain significant.
 
 `loans reset` clears both fields and shows all loans, just like **Reset filters**. You can also clear
 both with `loans list nus/ uuid/`. Commands update the visible filter fields and counts; direct edits

@@ -912,6 +912,7 @@ Transaction, persistence and domain relationships are unchanged; no serializatio
 any explicit field replaces both (omitted/blank fields clear). `loans reset` applies `LoanQuery.all()`.
 `LoanQuery` is an immutable value sharing case-insensitive identity-substring matching between CLI
 and GUI across open and completed history. It does not validate partial text as a complete identity.
+It uses `LaplaceText.stripWhitespace` for Unicode boundary trimming while preserving internal spaces.
 `DisplayRequest` optionally carries that query; `MainWindow` applies it without interpreting feedback.
 `LoanPanel.setQuery` updates both fields together and refreshes once; direct edits use the same predicate.
 No filter state is persisted or placed in undo history, and refresh/select never invokes command callbacks.
@@ -1872,6 +1873,9 @@ failures are developer tests documented in the [Testing guide](Testing.md#capaci
 6. Repeat valid filter/reset commands with a disposable saved data file set read-only using the next
    section's method. **Expected:** Filters work with unchanged file bytes and undo state. Restore write
    access afterward. Bare list still preserves criteria; explicit fields replace both criteria.
+7. Paste a valid borrower ID and UUID with surrounding nonbreaking spaces (`U+00A0` and `U+202F`)
+   into the panel fields, then repeat through `loans list nus/TEXT uuid/TEXT`. **Expected:** identical
+   matching open/completed rows. Whitespace-only filters reveal all loans; internal spaces do not disappear.
 
 ### Undo and redo
 
