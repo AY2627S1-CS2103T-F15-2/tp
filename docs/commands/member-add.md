@@ -9,7 +9,9 @@ Example: `member add nus/a0123456x name/Anne-Marie Lim phone/+65 9123-4567 email
 All four fields are required in any order. NUS IDs are stored uppercase and identify a member exactly.
 Names allow 1-100 Unicode code points after whitespace and NFC normalization, with at least one letter.
 Letters may carry combining marks; spaces, straight/curly apostrophes, hyphens, periods and standalone
-`s/o` or `d/o` tokens in any letter case are allowed, such as `Ravi s/o Kumar` or `Mary D/O Tan`.
+`s/o`, `d/o`, `a/l` or `a/p` tokens in any letter case are allowed, such as `Ravi s/o Kumar`,
+`Mary D/O Tan` or `Muthu a/l Raju`. Each connector requires a name containing a letter on both sides;
+connector-only, leading, trailing and adjacent connectors are rejected for new names.
 Combining marks must follow a letter or its marks. For example, `அருண்`, `Anne O’Connor`, and both
 precomposed and decomposed spellings of `José Tan` are accepted. Phone
 whitespace/hyphens are removed, leaving 8-15 digits and an optional leading `+`. Emails follow the MVP
