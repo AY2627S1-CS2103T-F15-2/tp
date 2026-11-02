@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.logic.LogicManager;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.MemberAddCommandParser;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -17,6 +18,8 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.member.NusId;
 import seedu.address.storage.JsonAddressBookStorage;
+import seedu.address.storage.JsonUserPrefsStorage;
+import seedu.address.storage.StorageManager;
 
 /**
  * Verifies direct parser/command/storage component integration before family routing is activated.
@@ -46,6 +49,29 @@ public class MemberAddCommandIntegrationTest {
                 "nus/a0123456x name/Other Name phone/99999999 email/other@example.com").execute(reloaded));
         assertEquals(model.getAddressBook(), reloaded.getAddressBook());
         assertEquals(before, Files.readString(file));
+    }
+
+    @Test
+    public void readdDeletedMember_rejectsWithoutSavingAndRestoreRetainsOriginalDetails() throws Exception {
+        ModelManager model = new ModelManager();
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("members.json"));
+        LogicManager logic = new LogicManager(model, new StorageManager(storage,
+                new JsonUserPrefsStorage(testFolder.resolve("preferences.json"))));
+        logic.execute("member add nus/A0123456X name/Alex Tan phone/91234567 email/alex@example.com");
+        var original = model.findMember(new NusId("A0123456X")).orElseThrow();
+        logic.execute("member delete nus/A0123456X");
+        AddressBook before = new AddressBook(model.getAddressBook());
+        String saved = Files.readString(storage.getAddressBookFilePath());
+        CommandException error = assertThrows(CommandException.class, () -> logic.execute(
+                "member add nus/a0123456x name/Other Name phone/99999999 email/other@example.com"));
+        assertEquals("A deleted member with NUS ID A0123456X already exists. "
+                + "Use member restore nus/A0123456X first.", error.getMessage());
+        assertEquals(before, model.getAddressBook());
+        assertEquals(saved, Files.readString(storage.getAddressBookFilePath()));
+        assertEquals(before, storage.readAddressBook().orElseThrow());
+        logic.execute("member restore nus/A0123456X");
+        assertEquals(original, model.findMember(original.getNusId()).orElseThrow());
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
     }
 
     @Test

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -60,6 +61,17 @@ public final class PackagedAutocompleteProbe {
         window.getPrimaryStage().getScene().getRoot().applyCss();
         TextField field = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
         try {
+            for (String whitespace : List.of(" ", "\u2003", "\u00a0", "\u202f", " \u00a0\u2003\u202f")) {
+                field.setText(whitespace);
+                AddressBook before = new AddressBook(model.getAddressBook());
+                press(field, KeyCode.ENTER, false);
+                check(logic.commands == 0 && storage.saves == 0, "Whitespace-only Enter must not dispatch or save");
+                check(before.equals(model.getAddressBook()), "Whitespace-only Enter changed records");
+                check(whitespace.equals(field.getText()), "Ignored whitespace input must remain unchanged");
+                check(!field.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS),
+                        "Ignored whitespace input must not show an error");
+                session.add("WHITESPACE-ONLY ENTER: ignored; no dispatch, save or error.");
+            }
             String first = ViewTestData.CAMERA.getUuid().toString();
             String batch = first + ", " + ViewTestData.OTHER_CAMERA.getUuid();
             String[][] examples = {
@@ -115,6 +127,23 @@ public final class PackagedAutocompleteProbe {
                 check(before.equals(model.getAddressBook()), "Tab changed stored records");
                 check(logic.commands == 0 && storage.saves == 0, "Tab executed or saved a command");
             }
+            for (String separator : List.of("\u00a0", "\u2003", "\u202f")) {
+                for (String[] example : List.of(
+                        new String[] {"member" + separator + "vi", "member" + separator + "view"},
+                        new String[] {"member view" + separator + "nu", "member view" + separator + "nus/"},
+                        new String[] {"member" + separator + "view" + separator + "nu",
+                            "member" + separator + "view" + separator + "nus/"})) {
+                    field.setText(example[0]);
+                    field.positionCaret(field.getLength());
+                    AddressBook before = new AddressBook(model.getAddressBook());
+                    press(field, KeyCode.TAB, false);
+                    check(example[1].equals(field.getText()), "Unicode command headers must complete");
+                    check(before.equals(model.getAddressBook()), "Header completion changed records");
+                    check(logic.commands == 0 && storage.saves == 0, "Header completion executed or saved");
+                    session.add(String.format("HEADER SEPARATOR U+%04X: %s", (int) separator.charAt(0),
+                            field.getText()));
+                }
+            }
             for (String separator : List.of("\u2003", "\u00a0", "\u202f", "\u3000")) {
                 String input = "member edit name/Alex" + separator + "phone/91234567"
                         + separator + "email/alex@example.com";
@@ -133,6 +162,25 @@ public final class PackagedAutocompleteProbe {
                         "Caret must stay after the completed name");
                 check(before.equals(model.getAddressBook()), "Unicode completion changed records");
                 check(logic.commands == 0 && storage.saves == 0, "Unicode completion executed or saved a command");
+            }
+            for (String[] example : List.of(
+                    new String[] {"equipment add name/Canon Camera category/Photography", "Camera"},
+                    new String[] {"equipment add notes/Spare lens", "lens"},
+                    new String[] {"member view nus/A0123456X", "view"})) {
+                field.setText(example[0]);
+                int caret = example[0].indexOf(example[1]);
+                field.positionCaret(caret);
+                AddressBook before = new AddressBook(model.getAddressBook());
+                boolean[] wasPassed = {false};
+                EventHandler<KeyEvent> observeTab = event -> wasPassed[0] = event.getCode() == KeyCode.TAB;
+                field.addEventFilter(KeyEvent.KEY_PRESSED, observeTab);
+                press(field, KeyCode.TAB, false);
+                field.removeEventFilter(KeyEvent.KEY_PRESSED, observeTab);
+                check(example[0].equals(field.getText()), "Tab must preserve an untouched following word");
+                check(wasPassed[0], "Boundary Tab must remain available for normal focus navigation");
+                check(before.equals(model.getAddressBook()), "Boundary Tab changed stored records");
+                check(logic.commands == 0 && storage.saves == 0, "Boundary Tab executed or saved a command");
+                session.add("UNTOUCHED WORD: " + example[1] + "; draft preserved and Tab passed through.");
             }
             String untouched = "member add name/Alex phone/91234567";
             field.setText(untouched);

@@ -69,6 +69,23 @@ public class EquipmentAddCommandIntegrationTest {
         assertEquals(saved, Files.readString(storage.getAddressBookFilePath()));
     }
     @Test
+    public void execute_adjacentMarkerText_isNotesButWhitespaceDelimitedMarkerRejectsWithoutSaving() throws Exception {
+        ModelManager model = new ModelManager();
+        CountingStorage storage = new CountingStorage(testFolder);
+        LogicManager logic = new LogicManager(model, storage);
+        String command = "equipment add name/Probe category/Testing condition/GOOD notes/";
+        logic.execute(command + "unknown/value");
+        assertEquals("unknown/value", model.getEquipmentList().getFirst().getNotes());
+        AddressBook before = new AddressBook(model.getAddressBook());
+        byte[] saved = Files.readAllBytes(storage.getAddressBookFilePath());
+        ParseException error = assertThrows(ParseException.class, () -> logic.execute(command + " unknown/value"));
+        assertEquals("Unknown parameter: unknown/", error.getMessage().lines().findFirst().orElseThrow());
+        assertEquals(1, storage.saves);
+        assertEquals(before, model.getAddressBook());
+        assertArrayEquals(saved, Files.readAllBytes(storage.getAddressBookFilePath()));
+    }
+
+    @Test
     public void execute_batch_savesOnceAndReloadsSeparateRecords() throws Exception {
         ModelManager model = new ModelManager(SampleDataUtil.getSampleAddressBook(), new UserPrefs());
         int initialCount = model.getEquipmentList().size();

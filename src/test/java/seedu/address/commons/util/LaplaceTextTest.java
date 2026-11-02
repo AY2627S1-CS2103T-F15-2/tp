@@ -44,6 +44,13 @@ public class LaplaceTextTest {
     }
 
     @Test
+    public void caseKey_canonicalSpellings_matchesWithoutRemovingAccents() {
+        assertEquals(LaplaceText.caseKey("JOSÉ"), LaplaceText.caseKey("Jose\u0301"));
+        assertEquals(LaplaceText.caseKey("Å"), LaplaceText.caseKey("A\u030a"));
+        assertFalse(LaplaceText.caseKey("José").equals(LaplaceText.caseKey("Jose")));
+    }
+
+    @Test
     public void caseKey_contextAndSupplementaryLetters_comparesWithoutRewritingValues() {
         assertEquals(LaplaceText.caseKey("ΝΙΚΟΣ"), LaplaceText.caseKey("νικοσ"));
         assertEquals(LaplaceText.caseKey("Σ"), LaplaceText.caseKey("ς"));

@@ -68,9 +68,9 @@ import seedu.address.model.query.DirectoryQuery;
 /** Computes suggestions from parser vocabulary and a live read-only root, without executing commands. */
 public final class CompletionService {
     private static final Logger logger = LogsCenter.getLogger(CompletionService.class);
-    private static final Pattern WORD = Pattern.compile("\\S+");
+    private static final Pattern WORD = Pattern.compile("(?U)\\S+");
     private static final Pattern MARKER = Pattern.compile(
-            "(?U)(?<!\\S)(?!(?i:[sd]/o)(?=\\s|$))[A-Za-z][A-Za-z0-9_-]*/");
+            "(?U)(?<!\\S)(?!(?i:[sd]/o|a/[lp])(?=\\s|$))[A-Za-z][A-Za-z0-9_-]*/");
     private static final Pattern ARGUMENT_WHITESPACE = Pattern.compile("(?U)\\s");
     private static final Map<String, List<Prefix>> COMMANDS = Map.ofEntries(
             Map.entry(MemberAddCommand.COMMAND_WORD,
@@ -151,6 +151,9 @@ public final class CompletionService {
         if (!words.find()) {
             return suggest(caret, caret, "", children.stream(), true);
         }
+        if (caret == words.start()) {
+            return Optional.empty();
+        }
         if (caret <= words.end()) {
             if (caret < words.start()) {
                 return suggest(caret, caret, "", children.stream(), true);
@@ -184,8 +187,9 @@ public final class CompletionService {
             ends.add(matcher.end());
             markers.add(marker);
         }
-        // An empty fragment at a following marker must not replace that untouched field.
-        if (starts.contains(caret)) {
+        // No typed fragment precedes a following word or marker, so leave that token untouched.
+        if (caret < text.length() && isArgumentWhitespace(text.charAt(caret - 1))
+                && !isArgumentWhitespace(text.charAt(caret))) {
             return Optional.empty();
         }
         int tokenStart = caret;

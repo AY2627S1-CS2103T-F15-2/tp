@@ -20,6 +20,62 @@
 * Universal macOS packaging follows Apple's [Mach-O fat binary format](https://github.com/apple-oss-distributions/cctools/blob/main/include/mach-o/fat.h); the wrapper preserves the upstream JavaFX library slices.
 * Command text uses [IBM Plex Mono](https://github.com/IBM/plex) 2.004, copyright IBM Corp., under the SIL Open Font License. The faces and license are in `src/main/resources/fonts`.
 
+### Use of AI tools
+
+Notable uses of AI in the team's project work:
+
+* OpenAI Codex and Anthropic Claude were used for preliminary pull request reviews to identify
+  potential defects and suggest improvements.
+* @Keegan4 used OpenAI Codex and Claude Code to draft and revise member invariant assertions and
+  regression tests, and to improve Java naming and Javadoc. They also used these tools to edit User
+  Guide and Developer Guide prose so that the guides match shipped behavior, and to create and update
+  PlantUML diagrams and their UML labels.
+  They followed AI-suggested workflow steps for planning issues, branching, preparing pull requests
+  and running checks before submission. AI also helped them craft commit messages and pull request
+  descriptions, prepare PR review feedback, and run automated tests and documentation builds.
+  All AI-assisted output was reviewed and edited before submission.
+* @ArjoDas used OpenAI Codex and Claude Code to help implement and test the equipment features
+  (UUID-unique equipment list, derived availability, equipment add including batch creation, and
+  equipment maintenance), the retirement of legacy AddressBook commands, and the grouped equipment
+  directory and other UI improvements. They were also used to draft User Guide and Developer Guide
+  sections, PlantUML class and activity diagrams and manual testing steps, to draft PR review comments,
+  and to maintain the contributor instructions in AGENTS.md. All AI-assisted output was reviewed,
+  edited and tested before submission.
+* @isaaaxe used OpenAI Codex to assist with implementing Undo and Redo, including command handling,
+  session history, transaction and persistence behavior, and regression tests. They also used it to
+  understand the project, triage GitHub issues, implement bug fixes, update the User Guide, Developer
+  Guide and UML diagrams, prepare commits and pull requests, track feature-freeze code changes, and
+  review teammates' pull requests. AI-assisted output was reviewed, and relevant automated tests,
+  build checks and documentation checks were run before submission. They remain responsible for
+  understanding, validating and ensuring the correctness of the submitted work.
+* @wtvlol used OpenAI Codex and Claude Code to assist with understanding the codebase, implementing
+  and testing features, investigating and fixing bugs, updating the User Guide, Developer Guide and
+  UML diagrams, and reviewing pull requests. AI-assisted output was reviewed and edited, with relevant
+  tests and checks run before submission. They remain responsible for understanding and validating
+  the submitted work.
+* @duynguyen21007 used OpenAI Codex to assist with implementing and testing the shared Laplace argument
+  parser, member/equipment/loan command routing, member and equipment directory components, directory
+  search/filter/sort and inventory planning, Tab-completion improvements, and Apple Silicon JAR
+  packaging. It also helped investigate and fix bugs, including Unicode and patronymic member-name
+  validation and no-argument command handling; draft and revise User Guide and Developer Guide prose,
+  PlantUML diagrams and manual testing instructions; run automated checks; prepare commits and pull
+  requests; track feature-freeze code changes; and review teammates' pull requests. They remain
+  responsible for understanding, reviewing and validating the submitted work.
+* @kimjunkuno used OpenAI Codex for codebase exploration and planning, drafting and modifying Java
+  implementation and regression tests, automated smoke and beta testing, performance investigation,
+  issue triage and release prioritization. They also used Codex to draft and revise User Guide and
+  Developer Guide prose and PlantUML diagrams, prepare commit messages and pull requests, track
+  feature-freeze LoC changes, and review teammates' pull requests, including drafting and posting
+  review feedback. This assistance included generated code, tests, documentation and review text,
+  as well as running automated tests, build checks and documentation builds. They remain responsible
+  for understanding, reviewing and validating the submitted work.
+* OpenAI Codex assisted with Developer Guide explanations and PlantUML diagrams, including the
+  equipment directory summary section and its two diagrams. Codex also assisted with preparing
+  this acknowledgement.
+
+This consolidated declaration records the uses above in accordance with the
+[CS2103/T policy on reuse](https://nus-cs2103-ay2627-s1.github.io/website/admin/appendixB-policies.html#policy-on-reuse).
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Setting up, getting started**
@@ -55,11 +111,13 @@ The bulk of the app's work is done by the following four components:
 
 **How the architecture components interact with each other**
 
-The *Sequence Diagram* below traces `member delete nus/A0123456X` for an active member without
-open loans. Logic parses the command, changes an isolated candidate, saves it atomically and then
-publishes to the live model. Failures before publication leave live records unchanged.
+The *Sequence Diagram* below summarizes component responsibilities for deleting an active member
+without open loans. Model represents both the isolated pending state and the live records. Logic
+coordinates validation, atomic saving and publication; failures before publication leave live records
+unchanged. Messages summarize responsibilities rather than individual API calls. The
+[Logic component](#logic-component) expands the parser, command and candidate-creation interaction.
 
-<puml src="diagrams/ArchitectureSequenceDiagram.puml" alt="Member deletion across UI, Logic, candidate model and atomic storage" />
+<puml src="diagrams/ArchitectureSequenceDiagram.puml" alt="Component responsibilities across UI, Logic, Model and Storage" />
 
 [Open full-size diagram](diagrams/ArchitectureSequenceDiagram.png)
 
@@ -102,6 +160,9 @@ Equipment groups are derived from category and name. Each group retains its dist
 selecting a group does not select an arbitrary unit. Member and equipment details link to related
 records through identity-based commands. `LoanPanel` shows open and completed loans and shares its
 identity filters with command-based navigation.
+`MemberDetailsPanel` also uses `LoanRows` for current holdings: at most ten rows stay inline, while
+larger sections use reusable list cells. The sorted loan list retains every UUID and its dates;
+refresh resolves the selected member again without callbacks or record changes.
 
 `CommandPreview` copies text or prepares the command box for review; execution requires Enter.
 Open-loan rows can prepare a return with an optional observed condition. `ResultDisplay` presents a
@@ -199,6 +260,17 @@ original suffix, including Unicode separators and neighboring batch UUIDs, and n
 
 [Open full-size diagram](diagrams/AutocompleteSequence.png)
 
+#### Completion execution details
+
+`CompletionController`, described in [Tab completion](#tab-completion), is created by `CommandBox`
+and retained through the field's registered callbacks, rather than a `CommandBox` member field.
+Static vocabulary uses no model reads. Record-value suggestions read the live root synchronously on
+the FX thread and observe member/equipment collection changes with weak listeners. These notifications
+invalidate record candidates after mutations, undo/redo and reload; rejected mutations and pure queries
+leave those collections unchanged. Cached record cycles check root identity cheaply, while unchanged
+candidates cycle without copying or rescanning records. Loan history and transaction validation are
+outside suggestion reads.
+
 ### Logic component
 
 **API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-F15-2/tp/tree/master/src/main/java/seedu/address/logic/Logic.java)
@@ -214,6 +286,7 @@ The sequence below expands `member delete nus/A0123456X`: `AddressBookParser` de
 and retained history. Deletion is blocked when the member has open loans. `LogicManager` records the
 change and saves before publishing; the result requests the Members directory through `DisplayRequest`.
 The storage lifeline abbreviates `StorageManager`, JSON serialization and `AtomicFileWriter`.
+The candidate's lifeline starts when the live model constructs its isolated `ModelManager` snapshot.
 
 <puml src="diagrams/DeleteSequenceDiagram.puml" alt="Member delete family and leaf parsing, candidate execution, save and publication" />
 
@@ -380,10 +453,13 @@ of clearing the replacement. Invalid replacements leave the existing collection 
 
 `Name.forMember` collapses whitespace and applies Unicode NFC before validating new names. Validation
 allows letters followed by combining marks, spaces, straight/curly apostrophes, hyphens, periods,
-and standalone `s/o` or `d/o` tokens in any letter case,
-requires at least one letter, and limits the result to 100 Unicode code points. Add and edit share this
-factory. `Name.fromStoredMember` accepts the expanded rule and legacy values while preserving their
-exact saved spelling. Editing another field retains the existing `Name`; no schema migration is needed.
+and standalone `s/o`, `d/o`, `a/l` or `a/p` tokens in any letter case. Each connector requires a
+letter-containing name on both sides; connector-only, leading, trailing and adjacent connectors are
+rejected for new input. Names require at least one letter and at most 100 Unicode code points. Add and
+edit share this factory. `Name.isValidStoredMemberName` and `Name.fromStoredMember` preserve earlier
+valid names, including formerly accepted connector positions, without changing their saved spelling.
+The JSON adapter uses that storage-specific validation. Editing another field retains the existing
+`Name`; no schema migration is needed.
 
 Deletion is blocked while a member has outstanding loans. Deleted members remain visible and
 recoverable indefinitely; editing and new loans require restoration first. Restoration has no expiry
@@ -483,8 +559,13 @@ GUI path when availability can be resolved; it does not describe the retained `s
 <puml src="diagrams/InventoryPlanningActivity.puml" alt="Grouping all equipment units and formatting active availability and retained deletion counts" />
 
 Each group uses a pair of normalized category and name values, keeping the two keys separate even
-when either contains a display separator. `InventoryGroups.group` retains all physical units under each
-key and emits groups in first-match order. For this caller, the all-records query supplies default
+when either contains a display separator. `InventoryGroups.Key` applies whitespace normalization and
+the shared `LaplaceText.caseKey` to both fields, so Greek `Σ`, `σ` and `ς` share a group identity.
+Lookup, grouping and the retained `summarize` helper use the same key without rewriting stored values.
+Equipment duplicate advisories compare those group keys too. Member advisories use the same shared
+case key as member search, preserving the existing identity and deletion eligibility rules.
+`InventoryGroups.group` retains all physical units under each key and emits groups in first-match order.
+For this caller, the all-records query supplies default
 category/name/UUID order, so groups appear in category/name order. Other callers can pass a filtered or
 sorted matching list; `group.matching()` records those matches while `group.units()` retains the full
 group. The summary uses the all-records query, so its group counts are independent of search filters.
@@ -812,16 +893,6 @@ Shell tests exercise the real command box, preserved filters, missing details, l
 `ModelManagerTest` checks history availability inside synchronous collection listeners, unchanged-record
 history transitions, and rollback when replacement records are invalid.
 
-### Completion execution details
-
-The controller is created by `CommandBox` and retained through the field's registered callbacks, rather
-than a `CommandBox` member field. Static vocabulary uses no model reads. Record-value suggestions
-read the live root synchronously on the FX thread and observe member/equipment collection changes
-with weak listeners. These notifications invalidate record candidates after mutations, undo/redo
-and reload; rejected mutations and pure queries leave those collections unchanged. Cached record
-cycles check root identity cheaply, while unchanged candidates cycle without copying or rescanning
-records. Loan history and transaction validation are outside suggestion reads.
-
 ### Loading and compatibility
 
 `SampleDataUtil` populates only members, equipment and loans on first launch. Its legacy person
@@ -842,6 +913,10 @@ Startup passes the checked loading failure to `UiManager`. The recovery dialog s
 cause's diagnostic without the exception class prefix; Jackson failures omit the source dump. A wrapped,
 read-only text area keeps long diagnostics scrollable and copyable. Startup still aborts without an
 editable main window, and the rejected file remains unchanged.
+Persistent startup logs record the file path and safe failure category or recovery guidance, without
+concatenating parser/exception messages or attaching source-bearing causes. The checked cause remains
+available to the recovery dialog and caller.
+This includes semantic conversion failures, whose raw identity fields may contain arbitrary hand-edited text.
 
 The supported unversioned schema treats omitted/null `members`, `equipment` and `loans` as empty.
 Retain both forms for legacy compatibility; saves canonicalize them to `[]` without touching populated
@@ -869,14 +944,17 @@ no preliminary `isWritable()` check can guarantee a later replacement. New files
 owner-only policy where POSIX or ACL views are supported. Other metadata is not copied. No serialization
 schema changes are involved.
 
-### Command-word aliases and casing
+### Argument markers and no-argument validation
 
-Standalone `s/o` and `d/o` tokens, ignoring case, remain literal field text in argument parsing and
-completion. Other whitespace-delimited markers remain reserved, including unknown markers in notes.
+Standalone `s/o`, `d/o`, `a/l` and `a/p` tokens, ignoring case, remain literal field text in argument
+parsing and completion. Other markers at the start of the argument string or after whitespace remain
+reserved, including unknown markers in notes. A token immediately after another prefix's slash is
+value text: `notes/unknown/value` is accepted, while `notes/ unknown/value` rejects `unknown/`.
 The shared argument parser rejects extra input to no-argument commands with
 `This command takes no arguments.` and the leaf parser appends its usage. Help and Exit apply the
 same validation before returning a command, so invalid input cannot open Help or terminate Laplace.
 
+### Command-word aliases and casing
 
 `CommandWords.canonicalFamily` maps only `members` to `member` and `loan` to `loans`, using
 `Locale.ROOT` casing. Family parsers normalize only their action token; leaf parsers still receive
@@ -900,6 +978,7 @@ Transaction, persistence and domain relationships are unchanged; no serializatio
 any explicit field replaces both (omitted/blank fields clear). `loans reset` applies `LoanQuery.all()`.
 `LoanQuery` is an immutable value sharing case-insensitive identity-substring matching between CLI
 and GUI across open and completed history. It does not validate partial text as a complete identity.
+It uses `LaplaceText.stripWhitespace` for Unicode boundary trimming while preserving internal spaces.
 `DisplayRequest` optionally carries that query; `MainWindow` applies it without interpreting feedback.
 `LoanPanel.setQuery` updates both fields together and refreshes once; direct edits use the same predicate.
 No filter state is persisted or placed in undo history, and refresh/select never invokes command callbacks.
@@ -915,28 +994,9 @@ The displayed/total summary explains retained records hidden by the filters.
 * [Testing guide](Testing.md)
 * [Logging guide](Logging.md)
 * [DevOps guide](DevOps.md)
+* [Single-JAR distribution and release checks](DevOps.md#single-jar-distribution)
 
 --------------------------------------------------------------------------------------------------------------------
-
-### Single-JAR distribution
-
-Build with `./gradlew shadowJar verifyUniversalJar`. Publish only `build/libs/Laplace.jar`;
-the same file is used on Windows, Linux (including graphical WSL), Intel macOS and
-Apple Silicon macOS. Java 25 for the user's processor remains the only required installation.
-No architecture property or alternate JAR filename is needed.
-
-The build bundles JavaFX libraries for each supported platform. For macOS, it preserves both Intel and
-Apple Silicon libraries in the same JAR. `verifyUniversalJar` checks the bundled libraries and the
-100 MB limit. Packaging details are in `gradle/universal-javafx.gradle`.
-
-The configured CI matrix tests one shared candidate across the four OS/architecture combinations.
-The packaged probe uses that candidate's classes and libraries so installed JavaFX cannot hide missing
-files. See [DevOps](DevOps.md) for the workflow; verify completed runs before publication.
-
-Before publication, inspect the four jobs and repeat the [initial-launch/normal-exit checks](#launch-and-shutdown) with
-the same candidate in separate empty writable folders. Record Java version, OS, processor, SHA-256,
-launch result and persistence/restart result. WSL needs its own graphical smoke test. A configured
-CI matrix is not evidence of completed platform runs; outstanding environments must remain explicit.
 
 ## **Appendix: Requirements**
 
@@ -1257,7 +1317,7 @@ Use case ends.
     * 1a1. Laplace explains that no undo is available and leaves the data unchanged.
     * Use case ends.
 * 3a. The EXCO member decides the undo was a mistake and requests redo.
-    * The EXCO member performs UC11.
+    * 3a1. The EXCO member performs UC11.
     * Use case ends.
 
 #### UC09: Review and filter loan history
@@ -1268,8 +1328,6 @@ Use case ends.
 
 1. The EXCO member requests loan history, optionally filtering by member and/or equipment identity text.
 2. Laplace shows matching open and completed loans and their displayed/total counts. Open loans show Overdue or Due today status when applicable.
-3. The EXCO member requests a filter reset.
-4. Laplace shows all retained loans.
 
 Use case ends.
 
@@ -1280,10 +1338,14 @@ Use case ends.
     * Use case resumes at step 1.
 * 2a. No retained loans match the supplied criteria.
     * 2a1. Laplace shows empty matching results with the displayed/total counts and preserves the criteria.
-    * Use case resumes at step 3.
-* 3a. The reset request has extra arguments.
-    * 3a1. Laplace rejects it without changing criteria or records.
-    * Use case resumes at step 3.
+    * Use case continues at step 2b1 if the EXCO member requests a reset; otherwise it ends.
+* 2b. The EXCO member wants to see all retained loans again.
+    * 2b1. The EXCO member requests a filter reset.
+    * 2b2. Laplace shows all retained loans.
+    * Use case ends.
+* 2b1a. The reset request has extra arguments.
+    * 2b1a1. Laplace rejects it without changing criteria or records.
+    * Use case resumes at step 2b1.
 
 #### UC10: Edit equipment details
 
@@ -1350,6 +1412,9 @@ Use case ends.
 * 2c. The supplied details make no change.
     * 2c1. Laplace reports that there is no change to save.
     * Use case resumes at step 1.
+* 3a. The corrected member shares a name, phone number, or email address with an active member under another NUS ID.
+    * 3a1. Laplace also shows a possible-duplicate advisory identifying those records. The member stays saved under the same NUS ID.
+    * Use case ends.
 
 #### UC13: Restore a deleted member or equipment unit
 
@@ -1413,7 +1478,7 @@ These are acceptance targets for the intended product, not measurements of the c
 4. **NFR04 — Editable storage:** Persistent records shall use local, human-editable text files without a DBMS. Valid edits made while the application is closed shall load on restart; invalid files shall produce a diagnostic rather than be silently accepted.
 5. **NFR05 — Keyboard operation:** Every documented record-management operation shall be completable with keyboard input alone. Users shall not need mouse actions to submit commands, inspect results, or correct input.
 6. **NFR06 — Display compatibility:** At 1920×1080 with 100% or 125% scaling, essential controls and feedback shall not overlap or be clipped. At 1280×720 with 150% scaling, every operation and its result shall remain accessible, using scrolling where necessary.
-7. **NFR07 — Capacity and response time:** With 1,000 members, 5,000 equipment items, and 10,000 loans on a computer with a four-core CPU, 8 GB RAM, and an SSD, at least 95 of 100 executions of each core add, list, exact lookup, delete, issue, and return operation shall display a result within two seconds of submission. Measure after startup, with valid data and no competing intensive workload; include local saving for mutations. Startup with the same dataset shall complete within ten seconds.
+7. **NFR07 — Capacity and response time:** With 300 members, 1,000 equipment items, and 2,000 loans on a computer with a four-core CPU, 8 GB RAM, and an SSD, at least 95 of 100 executions of each core add, list, exact lookup, delete, issue, and return operation shall display a result within two seconds of submission. Measure after startup, with valid data and no competing intensive workload; include local saving for mutations. Startup with the same dataset shall complete within ten seconds. Larger datasets are accepted, but response times may exceed this target.
 8. **NFR08 — Atomicity and durability:** After a successful mutation and normal shutdown, restarting shall recover the same records and loan relationships. Validation or reported save failures shall not leave partially updated member, equipment, or loan data. A failed file replacement shall preserve the last valid saved dataset. The same guarantee applies to batch and undo/redo operations as a whole, and to future import/restore operations.
 9. **NFR09 — Consistent feedback:** Every rejected command shall identify the first detected problem and provide an accepted format or corrective action. Input errors shall not terminate the application, and the submitted command shall remain available for correction. Success and error messages shall be distinguishable by text, without relying on color alone.
 10. **NFR10 — Data confidentiality:** Laplace shall not transmit member details or inventory records over the network. Diagnostic logs shall omit member names, phone numbers, email addresses, and raw commands containing those values. Local text data and user-created exports rely on the operating system's file access controls; application-level encryption is not promised.
@@ -1510,9 +1575,13 @@ They are not prerequisites for testing the released JAR.
    **Expected:** The same member details; exact lookup ignores ID case. A malformed ID or a well-formed
    nonexistent ID is rejected. A partial ID is not a member-view shortcut.
 3. Edit with `member edit nus/A8400001X name/Mary D/O Tan`. **Expected:** New name, same NUS ID and
-   contacts. Add another member with `name/Ravi S/o Kumar` and a distinct valid ID/contact set.
-   **Expected:** Case-preserved patronymic token. `name/Ravi w/o Kumar` remains invalid; only standalone
-   `s/o` and `d/o` are exceptions. Try `equipment add name/Mic category/Audio condition/GOOD notes/Use w/ XLR`;
+   contacts. Edit with `member edit nus/A8400001X phone/91234567`. **Expected:** The edit is saved and
+   followed by `Possible duplicate(s): A0123456X`. Add another member with `name/Ravi S/o Kumar` and a distinct valid ID/contact set.
+   Repeat the edit with `name/Muthu a/l Raju` and `name/Priya A/P Suresh`.
+   **Expected:** Case-preserved patronymic tokens. `name/s/o`, `name/Tan s/o`, `name/d/o Devi`,
+   `name/a/l` and `name/Priya a/p` reject without saving. `name/Ravi w/o Kumar` remains invalid;
+   only standalone `s/o`, `d/o`, `a/l` and `a/p` are exceptions.
+   Try `equipment add name/Mic category/Audio condition/GOOD notes/Use w/ XLR`;
    **Expected:** `Unknown parameter: w/` and no equipment added.
 4. Add a GOOD test unit with `equipment add name/Member Test Unit category/Testing condition/GOOD`.
    Copy its full UUID, then enter
@@ -1523,11 +1592,15 @@ They are not prerequisites for testing the released JAR.
 6. Return the unit with `loans return uuid/UUID returned/DATE condition/GOOD`, then run the deletion again.
    **Expected:** A retained deleted member with the same NUS ID, contacts and completed history. The
    record remains in `member list` and `member search status/deleted`. New loans to it are rejected.
+   Deleting a member does not select them automatically; an existing selection is retained if still
+   in the results. An active-only search removes the deleted member from its results.
 7. Repeat deletion, then try an edit while deleted. **Expected:** Both reject without changing data.
    Run `member restore nus/A8400001X`. **Expected:** The same identity, details and history become active;
    a new loan to the member is permitted. Restoring again or restoring a nonexistent ID rejects.
 8. Exit and restart after a successful change. **Expected:** Exact names, identity, deletion state and
    open/completed loan references survive. Restore never creates a replacement identity.
+   An earlier valid file containing `s/o`, `D/O` or `Tan s/o` as a saved name still loads unchanged;
+   editing another field preserves that name, while entering it as a new name is rejected.
 
 ### Member search, filters and sorting
 
@@ -1639,6 +1712,13 @@ They are not prerequisites for testing the released JAR.
 3. Inspect the totals after each filter. **Expected:** Equipment Total stays three and active
    availability stays one available, zero assigned and zero unavailable. Filters change matching
    units, not retained totals. Deleted records never inflate active availability.
+4. Add `equipment add name/ΟΣ category/Audio condition/GOOD` and
+   copy its full UUID. Add `equipment add name/οσ category/Audio condition/GOOD`.
+   **Expected:** The second add succeeds with `Possible duplicate(s): FIRST_UUID`, where `FIRST_UUID`
+   is the copied identity; the two physical units retain distinct UUIDs. Run
+   `equipment view category/Audio name/οσ`, then repeat with `name/ος` and `name/ΟΣ`.
+   **Expected:** All spellings open one group containing both distinct UUIDs. Repeat
+   `equipment search category/Audio q/ΟΣ` after restart; the same group and stored spellings remain.
 
 ### Tab completion across current commands
 
@@ -1715,6 +1795,10 @@ They are not prerequisites for testing the released JAR.
    at the limit must be counted after NFC composition, not by UTF-16 units or the raw pasted length.
 4. Load an existing file with a decomposed accented member name and repeated spaces. **Expected:** exact saved
    spelling to remain when loading, saving, and editing only the phone/email. New name input uses NFC.
+5. Search using both `member search q/José Tan` and `member search q/José Tan`, then press Tab after
+   `member edit nus/NUS_ID name/José Ta`. **Expected:** both searches find the same member; Tab inserts
+   the stored name and preserves following fields. Repeat with a legacy decomposed name. Queries and
+   completion must preserve the saved file and original stored spelling; unaccented `Jose Tan` does not match.
 
 ### Adding a batch of equipment
 
@@ -1743,8 +1827,10 @@ They are not prerequisites for testing the released JAR.
 3. Try `equipment edit uuid/A`, `equipment edit uuid/A name/`, and a no-change edit. **Expected:** an error and no save.
 4. Assign A to an active test member with valid dates. Edit its condition to DAMAGED: **Expected:** ASSIGNED until
    return, then UNAVAILABLE. Attempt deletion while assigned: **Expected:** refusal and no record/history changes.
-5. Return A, then `equipment delete uuid/A`. **Expected:** a retained `[DELETED]` row in `equipment list`, no new
-   loans permitted, and exclusion from active search/inventory totals. `equipment search status/deleted`
+5. Return A, then `equipment delete uuid/A`. **Expected:** the retained unit contributes to its group
+   deleted count in `equipment list`; open the group and include deleted units to see `Deleted` in the Status column.
+   Details identify deleted equipment and show the restore command. No new loans are permitted, and the unit is
+   excluded from active search/inventory totals. `equipment search status/deleted`
    should find it. Restart: the flag, UUID, details and closed loan records must remain in the saved data.
 6. Try editing/deleting A again: **Expected:** rejection. Run `equipment restore uuid/A`: **Expected:** the same UUID
    and details, still DAMAGED/UNAVAILABLE. Repeating restore is rejected. Repair with an edit to GOOD and
@@ -1771,6 +1857,11 @@ They are not prerequisites for testing the released JAR.
    details and Loans and scroll to the oldest record. Filter Loans to no matches, then reset.
    **Expected:** All twelve completed records remain accessible and counts return after reset.
    This small manual case checks browsing; it does not establish the NFR07 capacity/timing target.
+5. Assign eleven distinct available units to one test member, then open the member's details.
+   **Expected:** scroll within Current holdings to reach all eleven UUIDs and their View equipment
+   actions, ordered by expected date, name and UUID. Return one unit and reopen the member: ten
+   holdings appear inline, with the returned unit retained in history. Changing members shows only
+   the selected member's holdings. These navigation operations do not change the saved data.
 
 ### Stored loan date validation
 
@@ -1810,6 +1901,14 @@ They are not prerequisites for testing the released JAR.
 3. Add/edit a synthetic member, search for their name, and submit a malformed command containing
    a synthetic phone/email. Inspect `addressbook.log.*` in the JAR folder.
    **Expected:** Input-received diagnostics without raw commands or member contact values.
+4. In a fresh disposable JAR folder, save a synthetic member, close Laplace, and replace an equipment
+   array value with the unquoted token `INVALID`. Relaunch and inspect the new log entries.
+   **Expected:** recovery guidance and unchanged data bytes; logs identify the file/failure without the
+   member's name, phone, email or a JSON source excerpt. The main editable window must not open.
+5. Restore the valid synthetic file, then replace a member's `nusId` with `privacy-audit@example.com`
+   while keeping the JSON valid. Repeat separately with that value in an equipment `uuid`.
+   **Expected:** the same log privacy and unchanged-file guarantees; recovery details still identify
+   the invalid record and field. No editable main window opens.
 
 #### Invalid saved data
 
@@ -1853,6 +1952,9 @@ failures are developer tests documented in the [Testing guide](Testing.md#capaci
 6. Repeat valid filter/reset commands with a disposable saved data file set read-only using the next
    section's method. **Expected:** Filters work with unchanged file bytes and undo state. Restore write
    access afterward. Bare list still preserves criteria; explicit fields replace both criteria.
+7. Paste a valid borrower ID and UUID with surrounding nonbreaking spaces (`U+00A0` and `U+202F`)
+   into the panel fields, then repeat through `loans list nus/TEXT uuid/TEXT`. **Expected:** identical
+   matching open/completed rows. Whitespace-only filters reveal all loans; internal spaces do not disappear.
 
 ### Undo and redo
 

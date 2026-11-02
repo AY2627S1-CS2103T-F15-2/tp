@@ -53,7 +53,8 @@ public class LaplaceArgumentParserTest {
 
     @Test
     public void parse_patronymicTokens_preservesLiteralTextAndRejectsOtherMarkers() throws Exception {
-        for (String token : new String[] {"s/o", "S/O", "s/O", "d/o", "D/O", "D/o"}) {
+        for (String token : new String[] {"s/o", "S/O", "s/O", "d/o", "D/O", "D/o",
+            "a/l", "A/L", "a/L", "a/p", "A/P", "A/p"}) {
             String name = "Ravi " + token + " Kumar";
             ArgumentMultimap result = LaplaceArgumentParser.parse("name/" + name + " nus/A0123456X",
                     Set.of(PREFIX_MEMBER_NAME, PREFIX_NUS_ID), Set.of());

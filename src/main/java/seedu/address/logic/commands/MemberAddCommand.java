@@ -21,6 +21,9 @@ public class MemberAddCommand extends Command {
     public static final String MESSAGE_SUCCESS = "New member added: %1$s (%2$s)";
     public static final String MESSAGE_DUPLICATE_MEMBER = "A member with NUS ID %1$s already exists.";
 
+    public static final String MESSAGE_DELETED_MEMBER = "A deleted member with NUS ID %1$s already exists. "
+            + "Use member restore nus/%1$s first.";
+
     private final Member toAdd;
 
     /**
@@ -42,7 +45,9 @@ public class MemberAddCommand extends Command {
         try {
             model.addMember(toAdd);
         } catch (DuplicateMemberException e) {
-            throw new CommandException(String.format(MESSAGE_DUPLICATE_MEMBER, toAdd.getNusId()), e);
+            String message = model.findMember(toAdd.getNusId()).filter(Member::isDeleted).isPresent()
+                    ? MESSAGE_DELETED_MEMBER : MESSAGE_DUPLICATE_MEMBER;
+            throw new CommandException(String.format(message, toAdd.getNusId()), e);
         }
         return new CommandResult(String.format(MESSAGE_SUCCESS, toAdd.getName(), toAdd.getNusId()) + warning,
                 DisplayRequest.memberDetails(toAdd.getNusId()));

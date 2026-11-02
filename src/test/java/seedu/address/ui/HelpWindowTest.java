@@ -136,6 +136,22 @@ public class HelpWindowTest {
     }
 
     @Test
+    public void focus_minimizedWindow_restoresIt() {
+        FxTestUtil.runAndWait(() -> {
+            HelpWindow help = new HelpWindow(new Stage());
+            try {
+                help.show();
+                help.getRoot().setIconified(true);
+                help.focus();
+                assertTrue(help.isShowing());
+                assertFalse(help.getRoot().isIconified());
+            } finally {
+                help.hide();
+            }
+        });
+    }
+
+    @Test
     public void helpMessageAndCopyUrl_usePublishedLaplaceUserGuide() {
         FxTestUtil.runAndWait(() -> {
             Clipboard clipboard = Clipboard.getSystemClipboard();

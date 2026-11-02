@@ -36,8 +36,28 @@ public class CompletionServiceTest {
     private final ModelManager model = ViewTestData.model();
 
     @Test
+    public void complete_canonicalNameSpellings_preservesCandidateAndReplacementOffsets() {
+        for (String stored : List.of("José Tan", "Jose\u0301 Tan")) {
+            ModelManager data = new ModelManager();
+            data.addMember(new Member(new NusId("A8400001X"), Name.fromStoredMember(stored),
+                    Phone.forMember("91234567"), Email.forMember("jose@example.com")));
+            for (String fragment : List.of("José Ta", "Jose\u0301 Ta", "JOSÉ TA")) {
+                String input = "member edit nus/A8400001X name/" + fragment + " phone/91112222";
+                int caret = input.indexOf(" phone/");
+                Completion completion = service.complete(input, caret, data.getAddressBook()).orElseThrow();
+                assertEquals(List.of(stored), completion.candidates());
+                assertEquals("member edit nus/A8400001X name/" + stored + " phone/91112222",
+                        input.substring(0, completion.start()) + stored + input.substring(completion.end()));
+            }
+            assertEquals(stored, data.getMemberList().getFirst().getName().fullName);
+            String unaccented = "member edit name/Jose Ta";
+            assertTrue(service.complete(unaccented, unaccented.length(), data.getAddressBook()).isEmpty());
+        }
+    }
+
+    @Test
     public void complete_patronymicName_keepsLiteralTokensAndFollowingFields() {
-        for (String token : List.of("s/o", "S/O", "d/o", "D/o")) {
+        for (String token : List.of("s/o", "S/O", "d/o", "D/o", "a/l", "A/L", "a/p", "A/p")) {
             ModelManager data = new ModelManager();
             String name = "Ravi " + token + " Kumar";
             data.addMember(new Member(new NusId("A8400001X"), Name.forMember(name),
@@ -84,6 +104,20 @@ public class CompletionServiceTest {
     }
 
     @Test
+    public void complete_caretBeforeUntouchedWord_hasNoSuggestionOrRecordRead() {
+        for (String[] example : List.of(
+                new String[] {"member view nus/A0123456X", "view"},
+                new String[] {"equipment add name/Canon Camera category/Photography", "Camera"},
+                new String[] {"equipment add name/Canon Camera category/Photography notes/Spare lens", "lens"},
+                new String[] {"equipment add name/Canon\u2003Camera category/Photography", "Camera"},
+                new String[] {"equipment add notes/Spare\u00a0lens", "lens"})) {
+            assertTrue(service.completeWithDataSource(example[0], example[0].indexOf(example[1]), () -> {
+                throw new AssertionError("Untouched words must not acquire record candidates");
+            }).isEmpty(), example[0]);
+        }
+    }
+
+    @Test
     public void complete_invalidOffsetsAndNullInputs_rejectsProgrammerErrors() {
         assertThrows(NullPointerException.class, () -> service.complete(null, 0, model.getAddressBook()));
         assertThrows(NullPointerException.class, () -> service.complete("mem", 3, null));
@@ -94,6 +128,29 @@ public class CompletionServiceTest {
         }
         assertTrue(service.complete("   mem", 2, model.getAddressBook()).isEmpty());
         assertThrows(UnsupportedOperationException.class, () -> proposal("mem").candidates().add("other"));
+    }
+
+    @Test
+    public void complete_unicodeCommandSeparators_preservesOffsetsAndProducesParsableCommands() {
+        for (String separator : List.of(" ", "\u00a0", "\u2003", "\u202f", "\u0085", "\u3000", "\t")) {
+            String subcommand = "member" + separator + "vi";
+            Completion view = service.complete(subcommand, subcommand.length(), model.getAddressBook()).orElseThrow();
+            assertEquals(List.of("view"), view.candidates());
+            assertEquals("member" + separator + "view", apply(subcommand, view));
+            String prefix = "member" + separator + "view" + separator + "nu";
+            Completion nus = service.complete(prefix, prefix.length(), model.getAddressBook()).orElseThrow();
+            String completed = apply(prefix, nus) + "A0123456X";
+            assertEquals("member" + separator + "view" + separator + "nus/A0123456X", completed);
+            assertDoesNotThrow(() -> new AddressBookParser().parseCommand(completed));
+            String leading = separator + "mem";
+            Completion family = service.complete(leading, leading.length(), model.getAddressBook()).orElseThrow();
+            assertEquals(separator + "member", apply(leading, family));
+        }
+        String mixed = "MEMBERS\u00a0view\u2003nu";
+        Completion completion = service.completeWithDataSource(mixed, mixed.length(), () -> {
+            throw new AssertionError("Command and field vocabulary must not read records");
+        }).orElseThrow();
+        assertEquals("MEMBERS\u00a0view\u2003nus/", apply(mixed, completion));
     }
 
     @Test

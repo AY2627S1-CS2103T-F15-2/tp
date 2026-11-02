@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import seedu.address.commons.util.LaplaceText;
 import seedu.address.logic.parser.exceptions.ParseException;
 
 /** Parses a comma-separated set of equipment identities for loan commands. */
@@ -19,7 +20,7 @@ final class LoanUuidListParser {
         List<UUID> identifiers = new ArrayList<>();
         Set<UUID> seen = new HashSet<>();
         for (String entry : entries) {
-            UUID uuid = ParserUtil.parseUuid(entry.strip());
+            UUID uuid = ParserUtil.parseUuid(LaplaceText.stripWhitespace(entry));
             if (!seen.add(uuid)) {
                 throw new ParseException("Repeated equipment UUID: " + uuid);
             }

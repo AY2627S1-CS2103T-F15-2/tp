@@ -23,7 +23,9 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.loan.Loan;
+import seedu.address.model.member.Member;
 import seedu.address.model.member.NusId;
+import seedu.address.model.person.Name;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -36,7 +38,8 @@ public class MemberPatronymicIntegrationTest {
 
     @Test
     public void addAndEdit_patronymicNames_preservesIdentityReferencesAndSavedSpelling() throws Exception {
-        for (String name : List.of("Ravi s/o Kumar", "Mary D/O Tan", "Ravi S/o Kumar")) {
+        for (String name : List.of("Ravi s/o Kumar", "Mary D/O Tan", "Ravi S/o Kumar",
+                "Muthu a/l Raju", "Priya a/p Suresh", "Muthu A/L Raju", "Priya A/p Suresh")) {
             ModelManager model = ViewTestData.model();
             model.addLoan(ViewTestData.loan(CAMERA, ALEX, true));
             model.addLoan(ViewTestData.loan(OTHER_CAMERA, ALEX, false));
@@ -57,8 +60,11 @@ public class MemberPatronymicIntegrationTest {
 
             byte[] saved = Files.readAllBytes(records.getAddressBookFilePath());
             AddressBook before = new AddressBook(model.getAddressBook());
-            for (String invalid : List.of("Ravi s/only Kumar", "Ravi w/o Kumar", "Ravi / Kumar")) {
+            for (String invalid : List.of("Ravi s/only Kumar", "Ravi w/o Kumar", "Ravi / Kumar",
+                    "s/o", "D/O", "Tan s/o", "d/o Devi", "a/l", "Priya a/p", "Ravi s/o d/o Kumar")) {
                 assertThrows(ParseException.class, () -> logic.execute("member edit nus/A0123456X name/" + invalid));
+                assertThrows(ParseException.class, () -> logic.execute("member add nus/A8400002X name/" + invalid
+                        + " phone/91113333 email/invalid@example.com"));
                 assertEquals(before, model.getAddressBook());
                 assertArrayEquals(saved, Files.readAllBytes(records.getAddressBookFilePath()));
             }
@@ -73,6 +79,31 @@ public class MemberPatronymicIntegrationTest {
                     .execute("member edit nus/A0123456X name/Another d/o Member"));
             assertEquals(before, model.getAddressBook());
             assertArrayEquals(saved, Files.readAllBytes(records.getAddressBookFilePath()));
+        }
+    }
+
+    @Test
+    public void load_previouslyAcceptedPatronymicNames_preservesSpellingAndLoanReferences() throws Exception {
+        for (String name : List.of("s/o", "D/O", "Tan s/o", "d/o Devi")) {
+            ModelManager model = ViewTestData.model();
+            model.setMember(ALEX, new Member(ALEX.getNusId(),
+                    Name.fromStoredMember(name), ALEX.getPhone(), ALEX.getEmail()));
+            model.addLoan(ViewTestData.loan(CAMERA, ALEX, true));
+            model.addLoan(ViewTestData.loan(OTHER_CAMERA, ALEX, false));
+            JsonAddressBookStorage records = new JsonAddressBookStorage(directory.resolve("legacy.json"));
+            records.saveAddressBook(model.getAddressBook());
+            byte[] saved = Files.readAllBytes(records.getAddressBookFilePath());
+            ModelManager reopened = new ModelManager(records.readAddressBook().orElseThrow(), new UserPrefs());
+            assertEquals(model.getAddressBook(), reopened.getAddressBook());
+            assertEquals(name, reopened.findMember(ALEX.getNusId()).orElseThrow().getName().fullName);
+            records.saveAddressBook(reopened.getAddressBook());
+            assertArrayEquals(saved, Files.readAllBytes(records.getAddressBookFilePath()));
+            LogicManager logic = new LogicManager(reopened, new StorageManager(records,
+                    new JsonUserPrefsStorage(directory.resolve("legacy-preferences.json"))));
+            logic.execute("member edit nus/A0123456X phone/98765432");
+            assertEquals(name, reopened.findMember(ALEX.getNusId()).orElseThrow().getName().fullName);
+            assertEquals(model.getLoanList(), reopened.getLoanList());
+            assertEquals(reopened.getAddressBook(), records.readAddressBook().orElseThrow());
         }
     }
 }

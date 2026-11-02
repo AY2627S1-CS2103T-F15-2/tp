@@ -120,7 +120,8 @@ public class LoanPanel extends UiPart<Region> {
                 : "No open loans. Available equipment is ready to assign.";
         refreshSection(openLoans, open, openEmptyMessage);
         closedCount.setText(Integer.toString(closed.size()));
-        refreshSection(closedLoans, closed, "No completed loans match these filters.");
+        refreshSection(closedLoans, closed, hasFilter ? "No completed loans match these filters."
+                : "No completed loans yet.");
     }
 
     /**
