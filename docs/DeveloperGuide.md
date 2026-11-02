@@ -1278,7 +1278,7 @@ Use case ends.
     * Use case resumes at step 1.
 * 2a. No retained loans match the supplied criteria.
     * 2a1. Laplace shows empty matching results with the displayed/total counts and preserves the criteria.
-    * Use case ends.
+    * Use case continues at step 2b1 if the EXCO member requests a reset; otherwise it ends.
 * 2b. The EXCO member wants to see all retained loans again.
     * 2b1. The EXCO member requests a filter reset.
     * 2b2. Laplace shows all retained loans.
