@@ -26,9 +26,21 @@ Notable uses of AI in the team's project work:
 
 * OpenAI Codex and Anthropic Claude were used for preliminary pull request reviews to identify
   potential defects and suggest improvements.
-* @Keegan4 used OpenAI Codex to draft and revise member invariant assertions and regression tests,
-  improve Java naming and Javadoc, update User Guide and Developer Guide prose and UML labels,
-  and run automated verification and prepare PR review feedback.
+* @Keegan4 used OpenAI Codex and Claude Code throughout their project work:
+  * Code: drafting and revising member invariant assertions and regression tests, and improving
+    Java naming and Javadoc.
+  * Documentation: editing User Guide and Developer Guide prose, including command descriptions,
+    examples, use cases, requirements and glossary wording, so that the guides match shipped behavior.
+  * Diagrams: creating and updating PlantUML (`.puml`) diagrams and their UML labels for the
+    Developer Guide.
+  * Workflow: following AI-suggested steps for planning issues, branching, preparing pull requests,
+    running checks before submission and responding to review feedback.
+  * Commits and pull requests: crafting commit messages and pull request descriptions, and preparing
+    PR review feedback.
+  * Verification: running automated tests and documentation builds.
+
+  All AI-assisted output was reviewed and edited before submission. They remain responsible for
+  understanding, validating and ensuring the correctness of the submitted work.
 * @ArjoDas used OpenAI Codex and Claude Code to help implement and test the equipment features
   (UUID-unique equipment list, derived availability, equipment add including batch creation, and
   equipment maintenance), the retirement of legacy AddressBook commands, and the grouped equipment
