@@ -1728,6 +1728,10 @@ They are not prerequisites for testing the released JAR.
    at the limit must be counted after NFC composition, not by UTF-16 units or the raw pasted length.
 4. Load an existing file with a decomposed accented member name and repeated spaces. **Expected:** exact saved
    spelling to remain when loading, saving, and editing only the phone/email. New name input uses NFC.
+5. Search using both `member search q/José Tan` and `member search q/José Tan`, then press Tab after
+   `member edit nus/NUS_ID name/José Ta`. **Expected:** both searches find the same member; Tab inserts
+   the stored name and preserves following fields. Repeat with a legacy decomposed name. Queries and
+   completion must preserve the saved file and original stored spelling; unaccented `Jose Tan` does not match.
 
 ### Adding a batch of equipment
 

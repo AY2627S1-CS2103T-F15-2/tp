@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -23,6 +24,11 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.member.Member;
+import seedu.address.model.member.NusId;
+import seedu.address.model.person.Email;
+import seedu.address.model.person.Name;
+import seedu.address.model.person.Phone;
 import seedu.address.model.query.DirectoryQuery;
 import seedu.address.model.query.InventoryGroups;
 import seedu.address.storage.JsonAddressBookStorage;
@@ -33,6 +39,34 @@ import seedu.address.testutil.SearchData;
 public class DirectorySearchIntegrationTest {
     @TempDir
     public Path directory;
+
+    @Test
+    public void search_canonicalNamesAfterReload_preservesNewAndLegacySpellingWithoutSaving() throws Exception {
+        CountingStorage storage = new CountingStorage(directory);
+        ModelManager original = new ModelManager();
+        LogicManager writer = new LogicManager(original, storage);
+        writer.execute("member add nus/A8400001X name/Jose\u0301 Tan phone/91234567 email/jose@example.com");
+        assertEquals("José Tan", original.getMemberList().getFirst().getName().fullName);
+        original.addMember(new Member(new NusId("A8400002X"), Name.fromStoredMember("Jose\u0301 Tan"),
+                Phone.forMember("91112222"), Email.forMember("legacy@example.com")));
+        storage.saveAddressBook(original.getAddressBook());
+        ModelManager reloaded = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        LogicManager reader = new LogicManager(reloaded, storage);
+        byte[] saved = Files.readAllBytes(storage.getAddressBookFilePath());
+        int saves = storage.saves;
+        storage.fail = true;
+        for (String query : List.of("José Tan", "Jose\u0301 Tan", "JOSÉ\u00a0TAN")) {
+            var result = reader.execute("member search q/" + query);
+            assertEquals("Found 2 members.", result.getFeedbackToUser());
+            assertEquals(Set.copyOf(reloaded.getMemberList()), Set.copyOf(result.getDisplayRequest().getQuery()
+                    .orElseThrow().members(reloaded.getAddressBook())));
+        }
+        assertEquals("Found 0 members.", reader.execute("member search q/Jose Tan").getFeedbackToUser());
+        assertEquals(original.getAddressBook(), reloaded.getAddressBook());
+        assertEquals("Jose\u0301 Tan", reloaded.getMemberList().get(1).getName().fullName);
+        assertEquals(saves, storage.saves);
+        assertTrue(java.util.Arrays.equals(saved, Files.readAllBytes(storage.getAddressBookFilePath())));
+    }
 
     @Test
     public void search_formattedPhoneAfterSaveReload_returnsTypedQueryWithoutSaving() throws Exception {
