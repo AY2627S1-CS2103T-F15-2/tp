@@ -15,12 +15,12 @@ import seedu.address.logic.parser.exceptions.ParseException;
 /**
  * Strict argument parsing for Laplace commands. Legacy AB3 tokenization is unchanged.
  * Start-of-input or whitespace-delimited parameter markers are reserved, including in notes.
- * Standalone s/o and d/o tokens ignore case and remain text. There is no quoting or escaping.
+ * Standalone s/o, d/o, a/l and a/p tokens ignore case and remain text. There is no quoting or escaping.
  */
 public final class LaplaceArgumentParser {
 
     private static final Pattern MARKER = Pattern.compile(
-            "(?U)(?<!\\S)(?!(?i:[sd]/o)(?=\\s|$))[A-Za-z][A-Za-z0-9_-]*/");
+            "(?U)(?<!\\S)(?!(?i:[sd]/o|a/[lp])(?=\\s|$))[A-Za-z][A-Za-z0-9_-]*/");
 
     private LaplaceArgumentParser() {
     }

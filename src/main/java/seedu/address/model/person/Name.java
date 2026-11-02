@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import java.text.Normalizer;
+import java.util.Arrays;
 import java.util.function.Predicate;
 
 import seedu.address.commons.util.LaplaceText;
@@ -25,7 +26,10 @@ public class Name {
 
     public static final String MEMBER_MESSAGE_CONSTRAINTS =
             "Invalid member name. Use 1-100 characters: letters with optional combining marks, spaces, "
-                    + "apostrophes, hyphens, periods, or standalone s/o and d/o. Include at least one letter.";
+                    + "apostrophes, hyphens, periods, or standalone s/o, d/o, a/l and a/p. "
+                    + "Include at least one letter; each connector needs a name on both sides.";
+
+    private static final String PATRONYMIC_TOKEN = "(?i)(?<!\\S)(?:[sd]/o|a/[lp])(?!\\S)";
 
     public final String fullName;
 
@@ -46,11 +50,28 @@ public class Name {
 
     /**
      * Validates a member name, accepting combining marks only after a letter or its preceding marks.
-     * Standalone s/o and d/o tokens ignore case. Legacy person names retain their original rules.
+     * Standalone patronymic connectors ignore case and require a name on each side.
+     * Legacy person names retain their original rules.
      */
     public static boolean isValidMemberName(String value) {
+        return hasValidMemberNameCharacters(value)
+                && Arrays.stream(value.split(PATRONYMIC_TOKEN, -1))
+                        .allMatch(part -> part.codePoints().anyMatch(Character::isLetter));
+    }
+
+    /**
+     * Accepts saved member names, including connector positions allowed by earlier releases.
+     */
+    public static boolean isValidStoredMemberName(String value) {
+        return isValidName(value) || hasValidMemberNameCharacters(value);
+    }
+
+    /**
+     * Checks the shared character rules without applying new-input connector placement restrictions.
+     */
+    private static boolean hasValidMemberNameCharacters(String value) {
         return LaplaceText.isPrintable(value, 1, 100)
-                && value.replaceAll("(?i)(?<!\\S)[sd]/o(?!\\S)", "s").matches("(?:\\p{L}\\p{M}*|[ .'\u2019-])+")
+                && value.replaceAll(PATRONYMIC_TOKEN, "s").matches("(?:\\p{L}\\p{M}*|[ .'\u2019-])+")
                 && value.codePoints().anyMatch(Character::isLetter);
     }
 
@@ -65,8 +86,7 @@ public class Name {
 
     /** Accepts either the former stored form or the MVP form, preserving the exact saved value. */
     public static Name fromStoredMember(String value) {
-        return new Name(value, candidate -> isValidName(candidate) || isValidMemberName(candidate),
-                MESSAGE_CONSTRAINTS);
+        return new Name(value, Name::isValidStoredMemberName, MESSAGE_CONSTRAINTS);
     }
 
     /**

@@ -37,7 +37,7 @@ public class CompletionServiceTest {
 
     @Test
     public void complete_patronymicName_keepsLiteralTokensAndFollowingFields() {
-        for (String token : List.of("s/o", "S/O", "d/o", "D/o")) {
+        for (String token : List.of("s/o", "S/O", "d/o", "D/o", "a/l", "A/L", "a/p", "A/p")) {
             ModelManager data = new ModelManager();
             String name = "Ravi " + token + " Kumar";
             data.addMember(new Member(new NusId("A8400001X"), Name.forMember(name),

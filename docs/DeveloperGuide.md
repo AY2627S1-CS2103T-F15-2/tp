@@ -380,10 +380,13 @@ of clearing the replacement. Invalid replacements leave the existing collection 
 
 `Name.forMember` collapses whitespace and applies Unicode NFC before validating new names. Validation
 allows letters followed by combining marks, spaces, straight/curly apostrophes, hyphens, periods,
-and standalone `s/o` or `d/o` tokens in any letter case,
-requires at least one letter, and limits the result to 100 Unicode code points. Add and edit share this
-factory. `Name.fromStoredMember` accepts the expanded rule and legacy values while preserving their
-exact saved spelling. Editing another field retains the existing `Name`; no schema migration is needed.
+and standalone `s/o`, `d/o`, `a/l` or `a/p` tokens in any letter case. Each connector requires a
+letter-containing name on both sides; connector-only, leading, trailing and adjacent connectors are
+rejected for new input. Names require at least one letter and at most 100 Unicode code points. Add and
+edit share this factory. `Name.isValidStoredMemberName` and `Name.fromStoredMember` preserve earlier
+valid names, including formerly accepted connector positions, without changing their saved spelling.
+The JSON adapter uses that storage-specific validation. Editing another field retains the existing
+`Name`; no schema migration is needed.
 
 Deletion is blocked while a member has outstanding loans. Deleted members remain visible and
 recoverable indefinitely; editing and new loans require restoration first. Restoration has no expiry
@@ -1515,8 +1518,11 @@ They are not prerequisites for testing the released JAR.
 3. Edit with `member edit nus/A8400001X name/Mary D/O Tan`. **Expected:** New name, same NUS ID and
    contacts. Edit with `member edit nus/A8400001X phone/91234567`. **Expected:** The edit is saved and
    followed by `Possible duplicate(s): A0123456X`. Add another member with `name/Ravi S/o Kumar` and a distinct valid ID/contact set.
-   **Expected:** Case-preserved patronymic token. `name/Ravi w/o Kumar` remains invalid; only standalone
-   `s/o` and `d/o` are exceptions. Try `equipment add name/Mic category/Audio condition/GOOD notes/Use w/ XLR`;
+   Repeat the edit with `name/Muthu a/l Raju` and `name/Priya A/P Suresh`.
+   **Expected:** Case-preserved patronymic tokens. `name/s/o`, `name/Tan s/o`, `name/d/o Devi`,
+   `name/a/l` and `name/Priya a/p` reject without saving. `name/Ravi w/o Kumar` remains invalid;
+   only standalone `s/o`, `d/o`, `a/l` and `a/p` are exceptions.
+   Try `equipment add name/Mic category/Audio condition/GOOD notes/Use w/ XLR`;
    **Expected:** `Unknown parameter: w/` and no equipment added.
 4. Add a GOOD test unit with `equipment add name/Member Test Unit category/Testing condition/GOOD`.
    Copy its full UUID, then enter
@@ -1532,6 +1538,8 @@ They are not prerequisites for testing the released JAR.
    a new loan to the member is permitted. Restoring again or restoring a nonexistent ID rejects.
 8. Exit and restart after a successful change. **Expected:** Exact names, identity, deletion state and
    open/completed loan references survive. Restore never creates a replacement identity.
+   An earlier valid file containing `s/o`, `D/O` or `Tan s/o` as a saved name still loads unchanged;
+   editing another field preserves that name, while entering it as a new name is rejected.
 
 ### Member search, filters and sorting
 
